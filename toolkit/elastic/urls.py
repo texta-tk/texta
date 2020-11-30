@@ -4,7 +4,7 @@ from . import views
 
 
 router = routers.DefaultRouter()
-router.register('reindexer', views.ReindexerViewSet, base_name='reindexer')
+router.register('reindexer', views.ReindexerViewSet, basename='reindexer')
 
 index_router = routers.DefaultRouter()
-index_router.register("index", views.IndexViewSet, base_name="index")
+index_router.register("index", views.IndexViewSet, basename="index")

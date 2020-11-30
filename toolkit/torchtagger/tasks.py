@@ -1,7 +1,7 @@
-from celery.decorators import task
-import secrets
 import json
 import os
+import secrets
+from celery.decorators import task
 
 from texta_torch_tagger.tagger import TorchTagger
 from texta_tools.text_processor import TextProcessor
@@ -11,23 +11,14 @@ from texta_tools.mlp_analyzer import get_mlp_analyzer
 from toolkit.core.task.models import Task
 from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
 from toolkit.tools.show_progress import ShowProgress
-from toolkit.base_task import BaseTask
+from toolkit.base_tasks import TransactionAwareTask
 from toolkit.elastic.data_sample import DataSample
 from toolkit.torchtagger.plots import create_torchtagger_plot
-from toolkit.settings import MODELS_DIR
+from toolkit.settings import RELATIVE_MODELS_PATH, CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.helper_functions import get_core_setting
 
 
-def get_tokenizer(tokenize):
-    tokenizer = None
-    if tokenize:
-        mlp_url = get_core_setting("TEXTA_MLP_URL")
-        mlp_major_version = get_core_setting("TEXTA_MLP_MAJOR_VERSION")
-        tokenizer = get_mlp_analyzer(mlp_host=mlp_url, mlp_major_version=mlp_major_version)
-    return tokenizer
-
-
-@task(name="train_torchtagger", base=BaseTask)
+@task(name="train_torchtagger", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def train_torchtagger(tagger_id, testing=False):
     try:
         # retrieve neurotagger & task objects
@@ -37,9 +28,7 @@ def train_torchtagger(tagger_id, testing=False):
         show_progress = ShowProgress(task_object, multiplier=1)
         # load embedding
         embedding = W2VEmbedding()
-        embedding.load_django(tagger_object.embedding)
         # get MLP tokenizer if asked
-        tokenizer = get_tokenizer(tagger_object.tokenize)
         # create Datasample object for retrieving positive and negative sample
         data_sample = DataSample(tagger_object, show_progress=show_progress, join_fields=True)
         show_progress.update_step('training')
@@ -47,14 +36,14 @@ def train_torchtagger(tagger_id, testing=False):
         # create TorchTagger
         tagger = TorchTagger(
             embedding,
-            tokenizer=tokenizer,
-            model_arch=tagger_object.model_architecture
+            model_arch=tagger_object.model_architecture,
+            num_epochs=int(tagger_object.num_epochs)
         )
         # train tagger and get result statistics
         tagger_stats = tagger.train(data_sample.data, num_epochs=int(tagger_object.num_epochs))
         # save tagger to disk
-        tagger_path = os.path.join(MODELS_DIR, model_type, f'{model_type}_{tagger_id}_{secrets.token_hex(10)}')
-        tagger.save(tagger_path)
+        tagger_path = os.path.join(RELATIVE_MODELS_PATH, model_type, f'{model_type}_{tagger_id}_{secrets.token_hex(10)}')
+        tagger_path, text_field_path = tagger.save(tagger_path)
         # set tagger location
         tagger_object.model.name = tagger_path
         # save tagger plot
@@ -75,7 +64,6 @@ def train_torchtagger(tagger_id, testing=False):
         return True
 
     except Exception as e:
-        # declare the job failed
-        show_progress.update_errors(e)
+        task_object.add_error(str(e))
         task_object.update_status(Task.STATUS_FAILED)
         raise

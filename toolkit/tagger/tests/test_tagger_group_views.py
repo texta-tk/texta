@@ -2,37 +2,32 @@ import json
 import pathlib
 from io import BytesIO
 
+from django.test import override_settings
+from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APITransactionTestCase
 
-from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
-from toolkit.elastic.core import ElasticCore
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.test_settings import (TEST_FACT_NAME,
                                    TEST_FIELD,
                                    TEST_FIELD_CHOICE,
                                    TEST_INDEX,
                                    TEST_VERSION_PREFIX)
-from toolkit.tools.utils_for_tests import project_creation
-from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
+from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
-class TaggerGroupViewTests(APITestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        # Owner of the project
-        cls.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
-        # cls.user.is_superuser = True
-        # cls.user.save()
-        cls.project = project_creation("taggerGroupTestProject", TEST_INDEX, cls.user)
-        cls.project.users.add(cls.user)
-        cls.url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/tagger_groups/'
-        cls.test_tagger_group_id = None
-
+@override_settings(CELERY_ALWAYS_EAGER=True)
+class TaggerGroupViewTests(APITransactionTestCase):
 
     def setUp(self):
+        # Owner of the project
+        self.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
+        self.project = project_creation("taggerGroupTestProject", TEST_INDEX, self.user)
+        self.project.users.add(self.user)
+        self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/tagger_groups/'
+        self.test_tagger_group_id = None
+
         self.client.login(username='taggerOwner', password='pw')
 
 
@@ -45,6 +40,7 @@ class TaggerGroupViewTests(APITestCase):
         self.run_models_retrain()
         self.create_taggers_with_empty_fields()
         self.run_model_export_import()
+        self.run_tagger_instances_have_mention_to_tagger_group()
 
 
     def run_create_tagger_group_training_and_task_signal(self):
@@ -115,7 +111,11 @@ class TaggerGroupViewTests(APITestCase):
 
     def run_tag_doc(self):
         """Tests the endpoint for the tag_doc action"""
-        payload = {"doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"}), "n_similar_docs": 20, "n_candidate_tags": 20}
+        payload = {
+            "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"}),
+            "n_similar_docs": 20,
+            "n_candidate_tags": 20,
+        }
         url = f'{self.url}{self.test_tagger_group_id}/tag_doc/'
         response = self.client.post(url, payload)
         print_output('test_tag_doc_group:response.data', response.data)
@@ -126,8 +126,11 @@ class TaggerGroupViewTests(APITestCase):
 
     def run_tag_random_doc(self):
         """Tests the endpoint for the tag_random_doc action"""
+        payload = {
+            "indices": [{"name": TEST_INDEX}]
+        }
         url = f'{self.url}{self.test_tagger_group_id}/tag_random_doc/'
-        response = self.client.get(url)
+        response = self.client.post(url, format="json", data=payload)
         print_output('test_tag_random_doc_group:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response is list
@@ -229,8 +232,19 @@ class TaggerGroupViewTests(APITestCase):
 
         # Tests the endpoint for the tag_random_doc action"""
         url = f'{self.url}{tg.pk}/tag_random_doc/'
-        response = self.client.get(url)
+        response = self.client.post(url, format="json", data={"indices": [{"name": TEST_INDEX}]})
         print_output('test_tag_random_doc_group:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, dict))
         self.assertTrue('tags' in response.data)
+
+
+    def run_tagger_instances_have_mention_to_tagger_group(self):
+        tg = TaggerGroup.objects.get(pk=self.test_tagger_group_id)
+        description = tg.description
+
+        for tagger in tg.taggers.all():
+            tagger_url = reverse("v1:tagger-detail", kwargs={"project_pk": self.project.pk, "pk": tagger.pk})
+            response = self.client.get(tagger_url)
+            self.assertTrue(response.status_code == status.HTTP_200_OK)
+            self.assertTrue(tg.description in response.data["tagger_groups"])

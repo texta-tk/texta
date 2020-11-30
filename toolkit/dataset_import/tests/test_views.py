@@ -1,29 +1,25 @@
+from django.test import override_settings
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APITransactionTestCase
 
-from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.dataset_import.models import DatasetImport
 from toolkit.elastic.core import ElasticCore
 from toolkit.test_settings import TEST_DATASETS, TEST_IMPORT_DATASET, TEST_VERSION_PREFIX
-from toolkit.tools.utils_for_tests import project_creation
-from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
+from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
-class DatasetImportViewTests(APITestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        # Owner of the project
-        cls.user = create_test_user('Owner', 'my@email.com', 'pw')
-        cls.project = project_creation("testImportDatasetProject", None, cls.user)
-        cls.project.users.add(cls.user)
-        cls.url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/dataset_imports/'
-        cls.project_url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}'
-        cls.created_indices = []
-
+@override_settings(CELERY_ALWAYS_EAGER=True)
+class DatasetImportViewTests(APITransactionTestCase):
 
     def setUp(self):
+        # Owner of the project
+        self.user = create_test_user('Owner', 'my@email.com', 'pw')
+        self.project = project_creation("testImportDatasetProject", None, self.user)
+        self.project.users.add(self.user)
+        self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/dataset_imports/'
+        self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
+        self.created_indices = []
         self.client.login(username='Owner', password='pw')
 
 
@@ -55,6 +51,21 @@ class DatasetImportViewTests(APITestCase):
                 # test delete
                 response = self.client.delete(import_url)
                 self.assertTrue(response.status_code == 204)
+
+
+    def test_elasticsearch_index_name_validation(self):
+        file_path = TEST_DATASETS[0]
+        index_names = ["_start", "UPPERCASE_INDEX", "wild*_index", "colon:index"]
+        with open(file_path, 'rb') as fh:
+            for index in index_names:
+                payload = {
+                    "description": "Testimport",
+                    "file": fh,
+                    "index": index
+                }
+                response = self.client.post(self.url, payload)
+                print_output('test_import_dataset:response.data', response.data)
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
     def tearDown(self):

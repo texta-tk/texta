@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 import subprocess
 import sys
 
@@ -44,7 +46,7 @@ class DockerBuilder:
         return True
 
 def main():
-    try:
+        #try:
         # declare project name
         project = "texta-rest"
         # load version from file system
@@ -59,9 +61,9 @@ def main():
         #db.test()
         # push
         db.push()
-    except Exception as e:
-        print("Build failed:", e)
-        return
+        #except Exception as e:
+        #    print("Build failed:", e)
+        #    return
 
 if __name__ == "__main__": 
     main()

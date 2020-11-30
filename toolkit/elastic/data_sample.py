@@ -1,3 +1,5 @@
+from typing import List
+
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.feedback import Feedback
@@ -7,9 +9,11 @@ import json
 
 class DataSample:
     """Re-usable object for handling positive and negative data samples for Taggers and TorchTaggers."""
-    def __init__(self, model_object, show_progress=None, join_fields=False, text_processor=None, add_negative_sample=False):
+    def __init__(self, model_object, indices: List[str], field_data: List[str], show_progress=None, join_fields=False, text_processor=None, add_negative_sample=False):
         self.tagger_object = model_object
         self.show_progress = show_progress
+        self.indices = indices
+        self.field_data = field_data
         self.join_fields = join_fields
         self.text_processor = text_processor
         self.add_negative_sample = add_negative_sample
@@ -105,8 +109,8 @@ class DataSample:
         # iterator for retrieving positive sample by query
         positive_sample_iterator = ElasticSearcher(
             query=query,
-            indices=self.tagger_object.project.get_indices(),
-            field_data=json.loads(self.tagger_object.fields),
+            indices=self.indices,
+            field_data=self.field_data,
             output=ElasticSearcher.OUT_DOC_WITH_ID,
             callback_progress=self.show_progress,
             scroll_limit=limit,
@@ -146,7 +150,7 @@ class DataSample:
         # set positive ids to ignore while scrolling for negatives
         for doc in feedback_sample:
             self.ignore_ids.add(doc["_id"])
-            content = json.loads(doc['predicted_content'])
+            content = json.loads(doc['content'])
             feedback_sample_content.append(content)
         if self.join_fields:
             feedback_sample_content = self._join_fields(feedback_sample_content)
@@ -158,7 +162,7 @@ class DataSample:
         self.show_progress.update_view(0)
         # iterator for retrieving negative examples
         negative_sample_iterator = ElasticSearcher(
-            indices=self.tagger_object.project.get_indices(),
+            indices=self.indices,
             field_data=json.loads(self.tagger_object.fields),
             output=ElasticSearcher.OUT_DOC,
             callback_progress=self.show_progress,

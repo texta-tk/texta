@@ -1,8 +1,9 @@
 import json
 from time import sleep
 
+from django.test import override_settings
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, APITransactionTestCase
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
@@ -19,22 +20,22 @@ from toolkit.tools.utils_for_tests import project_creation
 from toolkit.tools.utils_for_tests import create_test_user, print_output
 
 
-class ReindexerViewTests(APITestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        ''' user needs to be admin, because of changed indices permissions '''
-        cls.default_password = 'pw'
-        cls.default_username = 'indexOwner'
-        cls.user = create_test_user(cls.default_username, 'my@email.com', cls.default_password)
-        # create admin to test indices removal from project
-        cls.admin = create_test_user(name='admin', password='1234')
-        cls.admin.is_superuser = True
-        cls.admin.save()
-        cls.project = project_creation("ReindexerTestProject", TEST_INDEX, cls.user)
-        cls.project.users.add(cls.user)
+@override_settings(CELERY_ALWAYS_EAGER=True)
+class ReindexerViewTests(APITransactionTestCase):
 
     def setUp(self):
+        ''' user needs to be admin, because of changed indices permissions '''
+        self.default_password = 'pw'
+        self.default_username = 'indexOwner'
+        self.user = create_test_user(self.default_username, 'my@email.com', self.default_password)
+
+        # create admin to test indices removal from project
+        self.admin = create_test_user(name='admin', password='1234')
+        self.admin.is_superuser = True
+        self.admin.save()
+        self.project = project_creation("ReindexerTestProject", TEST_INDEX, self.user)
+        self.project.users.add(self.user)
+
         self.client.login(username=self.default_username, password=self.default_password)
 
     def test_run(self):

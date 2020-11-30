@@ -1,6 +1,12 @@
+import json
+import pathlib
+
+import elasticsearch
+import elasticsearch_dsl
 import rest_framework.filters as drf_filters
 from celery import group
 from django.db.models import Count
+from django.urls import reverse
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
@@ -8,9 +14,10 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from toolkit.core.health.utils import get_redis_status
 from toolkit.core.project.models import Project
 from toolkit.core.project.serializers import (
-    ProjectGetFactsSerializer,
+    ExportSearcherResultsSerializer, ProjectGetFactsSerializer,
     ProjectGetSpamSerializer,
     ProjectMultiTagSerializer,
     ProjectSearchByQuerySerializer,
@@ -26,14 +33,14 @@ from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.serializers import ElasticScrollSerializer
 from toolkit.elastic.spam_detector import SpamDetector
-from toolkit.exceptions import ProjectValidationFailed, SerializerNotValid, RedisNotAvailable, NonExistantModelError
-from toolkit.helper_functions import add_finite_url_to_feedback, apply_celery_task
+from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, RedisNotAvailable, SerializerNotValid
+from toolkit.helper_functions import add_finite_url_to_feedback, hash_string
 from toolkit.permissions.project_permissions import (ExtraActionResource, IsSuperUser, ProjectAllowed)
+from toolkit.settings import CELERY_SHORT_TERM_TASK_QUEUE, RELATIVE_PROJECT_DATA_PATH, SEARCHER_FOLDER_KEY
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
 from toolkit.tools.autocomplete import Autocomplete
 from toolkit.view_constants import FeedbackIndexView
-from toolkit.core.health.utils import get_redis_status
 
 
 class ProjectFilter(filters.FilterSet):
@@ -77,6 +84,42 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         return queryset
 
 
+    @action(detail=True, methods=["post"], serializer_class=ExportSearcherResultsSerializer, permission_classes=[IsAuthenticated, ExtraActionResource])
+    def export_search(self, request, pk=None, project_pk=None):
+        try:
+            serializer: ExportSearcherResultsSerializer = self.get_serializer(data=request.data)
+            model: Project = self.get_object()
+            serializer.is_valid(raise_exception=True)
+
+            # Use the query as a hash to avoid creating duplicate files.
+            query = serializer.validated_data["query"]
+            query_str = json.dumps(query, sort_keys=True, ensure_ascii=False)
+
+            indices = model.get_available_or_all_project_indices(serializer.validated_data["indices"])
+            indices = ",".join(indices)
+
+            original_query = elasticsearch_dsl.Search().from_dict(query)
+            with_es = original_query.using(ElasticCore().es)
+            index_limitation = with_es.index(indices)
+            limit_by_n_docs = index_limitation.extra(size=10000)
+
+            path = pathlib.Path(RELATIVE_PROJECT_DATA_PATH) / str(pk) / SEARCHER_FOLDER_KEY
+            path.mkdir(parents=True, exist_ok=True)
+            file_name = f"{hash_string(query_str)}.jl"
+
+            with open(path / file_name, "w+", encoding="utf8") as fp:
+                for item in limit_by_n_docs.scan():
+                    item = item.to_dict()
+                    json_string = json.dumps(item, ensure_ascii=False)
+                    fp.write(f"{json_string}\n")
+
+            url = reverse("protected_serve", kwargs={"project_id": int(pk), "application": SEARCHER_FOLDER_KEY, "file_name": file_name})
+            return Response(request.build_absolute_uri(url))
+
+        except elasticsearch.exceptions.RequestError:
+            return Response({"detail": "Could not parse the query you sent!"}, status=status.HTTP_400_BAD_REQUEST)
+
+
     @action(detail=True, methods=["post"], serializer_class=ElasticScrollSerializer, permission_classes=[IsAuthenticated, ExtraActionResource])
     def scroll(self, request, pk=None, project_pk=None):
         serializer = ElasticScrollSerializer(data=request.data)
@@ -90,7 +133,9 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         return_only_docs = serializer.validated_data.get("with_meta", False)
         project = self.get_object()
 
-        indices = project.filter_from_indices(indices)
+        indices = project.get_available_or_all_project_indices(indices)
+        if not indices:
+            raise ValidationError("No indices available for scrolling.")
 
         ec = ElasticCore()
         documents = ec.scroll(indices=indices, query=query, scroll_id=scroll_id, size=size, with_meta=return_only_docs, fields=fields)
@@ -101,17 +146,23 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
     def get_fields(self, request, pk=None, project_pk=None):
         """Returns list of fields from all Elasticsearch indices inside the project."""
         project_object = self.get_object()
+
+        # Fetch the indices to return an empty list for project with empty
+        # indices.
         project_indices = list(project_object.get_indices())
         if not project_indices:
-            raise ProjectValidationFailed(detail="Project has no indices")
+            return Response([])
+
         fields = project_object.get_elastic_fields()
         field_map = {}
+
         for field in fields:
             if field['index'] not in field_map:
                 field_map[field['index']] = []
             field_info = dict(field)
             del field_info['index']
             field_map[field['index']].append(field_info)
+
         field_map_list = [{'index': k, 'fields': v} for k, v in field_map.items()]
         return Response(field_map_list, status=status.HTTP_200_OK)
 
@@ -126,6 +177,9 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         serializer.is_valid(raise_exception=True)
 
         indices = list(self.get_object().get_indices())
+        if not indices:
+            return Response([])
+
         detector = SpamDetector(indices)
 
         all_fields = ElasticCore().get_fields(indices)
@@ -136,18 +190,25 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         return Response(response, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get'], serializer_class=ProjectGetFactsSerializer)
+    @action(detail=True, methods=['post'], serializer_class=ProjectGetFactsSerializer, permission_classes=[IsAuthenticated, ExtraActionResource])
     def get_facts(self, request, pk=None, project_pk=None):
         """
         Returns existing fact names and values from Elasticsearch.
         """
         serializer = ProjectGetFactsSerializer(data=request.data)
+
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
+
+        indices = serializer.validated_data["indices"]
+        indices = [index["name"] for index in indices]
+
         # retrieve and validate project indices
-        project_indices = list(self.get_object().get_indices())
+        project = self.get_object()
+        project_indices = project.get_available_or_all_project_indices(indices)  # Gives all if n   one, the default, is entered.
+
         if not project_indices:
-            raise ProjectValidationFailed(detail="Project has no indices")
+            return Response([])
 
         vals_per_name = serializer.validated_data['values_per_name']
         include_values = serializer.validated_data['output_type']
@@ -174,6 +235,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         serializer = ProjectSimplifiedSearchSerializer(data=request.data)
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
+
         project_object = self.get_object()
         project_indices = list(project_object.get_indices())
         project_fields = project_object.get_elastic_fields(path_list=True)
@@ -213,14 +275,13 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
     @action(detail=True, methods=['post'], serializer_class=ProjectSearchByQuerySerializer, permission_classes=[ExtraActionResource])
     def search_by_query(self, request, pk=None, project_pk=None):
         """Executes **raw** Elasticsearch query on all project indices."""
+        project: Project = self.get_object()
         serializer = ProjectSearchByQuerySerializer(data=request.data)
+
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
 
-        if serializer.validated_data["indices"]:
-            indices = serializer.validated_data["indices"]
-        else:
-            indices = self.get_object().get_indices()
+        indices = project.get_available_or_all_project_indices(serializer.validated_data["indices"])
 
         if not indices:
             raise ProjectValidationFailed(detail="No indices supplied and project has no indices")
@@ -263,9 +324,10 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             raise RedisNotAvailable()
         # tag text using celery group primitive
         group_task = group(apply_tagger.s(tagger.pk, text, input_type='text', lemmatize=lemmatize, feedback=feedback) for tagger in taggers)
-        group_results = [a for a in apply_celery_task(group_task).get() if a]
+        group_results = [a for a in group_task.apply(queue=CELERY_SHORT_TERM_TASK_QUEUE).get() if a]
+
         # remove non-hits
-        if hide_false == True:
+        if hide_false is True:
             group_results = [a for a in group_results if a['result']]
         # if feedback was enabled, add urls
         group_results = [add_finite_url_to_feedback(a, request) for a in group_results]
@@ -276,21 +338,22 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
 
     @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactValuesSerializer, permission_classes=[ExtraActionResource])
     def autocomplete_fact_values(self, request, pk=None, project_pk=None):
-        data = request.data
-        serializer = ProjectSuggestFactValuesSerializer(data=data)
+
+        serializer = ProjectSuggestFactValuesSerializer(data=request.data)
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
 
-        project_object = self.get_object()
-        project_indices = list(project_object.get_indices())
-        if not project_indices:
-            raise ProjectValidationFailed(detail="Project has no indices")
+        project_object: Project = self.get_object()
+        indices = [index["name"] for index in serializer.validated_data["indices"]]
+        indices = project_object.get_available_or_all_project_indices(indices)
+        if not indices:
+            return Response([])
 
         limit = serializer.validated_data['limit']
         startswith = serializer.validated_data['startswith']
         fact_name = serializer.validated_data['fact_name']
 
-        autocomplete = Autocomplete(project_object, project_indices, limit)
+        autocomplete = Autocomplete(project_object, indices, limit)
         fact_values = autocomplete.get_fact_values(startswith, fact_name)
 
         return Response(fact_values, status=status.HTTP_200_OK)
@@ -298,19 +361,22 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
 
     @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactNamesSerializer, permission_classes=[ExtraActionResource])
     def autocomplete_fact_names(self, request, pk=None, project_pk=None):
-        data = request.data
-        serializer = ProjectSuggestFactNamesSerializer(data=data)
+
+        serializer = ProjectSuggestFactNamesSerializer(data=request.data)
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
+
         project_object = self.get_object()
-        project_indices = list(project_object.get_indices())
-        if not project_indices:
-            raise ProjectValidationFailed(detail="Project has no indices")
+        indices = [index["name"] for index in serializer.validated_data["indices"]]
+        indices = project_object.get_available_or_all_project_indices(indices)
+
+        if not indices:
+            return Response([])
 
         limit = serializer.validated_data['limit']
         startswith = serializer.validated_data['startswith']
 
-        autocomplete = Autocomplete(project_object, project_indices, limit)
+        autocomplete = Autocomplete(project_object, indices, limit)
         fact_values = autocomplete.get_fact_names(startswith)
 
         return Response(fact_values, status=status.HTTP_200_OK)
@@ -324,7 +390,14 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             'num_torchtaggers': proj.torchtagger_set.count(),
             'num_taggers': proj.tagger_set.count(),
             'num_tagger_groups': proj.taggergroup_set.count(),
-            'num_embeddings': proj.embedding_set.count()
+            'num_embeddings': proj.embedding_set.count(),
+            'num_clusterings': proj.clusteringresult_set.count(),
+            'num_regex_taggers': proj.regextagger_set.count(),
+            'num_regex_tagger_groups': proj.regextaggergroup_set.count(),
+            'num_anonymizers': proj.anonymizer_set.count(),
+            'num_mlp_workers': proj.mlpworker_set.count(),
+            'num_reindexers': proj.reindexer_set.count(),
+            'num_dataset_importers': proj.reindexer_set.count()
         }
 
         return Response(response, status=status.HTTP_200_OK)

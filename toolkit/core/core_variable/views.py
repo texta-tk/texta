@@ -1,10 +1,8 @@
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
-from rest_framework.response import Response
+from rest_framework import viewsets
 
-from ...permissions.project_permissions import IsSuperUser
 from .models import CoreVariable
 from .serializers import CoreVariableSerializer
+from ...permissions.project_permissions import IsSuperUser
 
 
 class CoreVariableViewSet(viewsets.ModelViewSet):
@@ -13,6 +11,7 @@ class CoreVariableViewSet(viewsets.ModelViewSet):
     permission_classes = (
         IsSuperUser,
     )
+
 
     def get_queryset(self):
         return CoreVariable.objects.all()

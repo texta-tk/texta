@@ -9,7 +9,6 @@ from rest_framework.response import Response
 from toolkit.core.health.utils import (
     get_active_tasks,
     get_elastic_status,
-    get_mlp_status,
     get_redis_status,
     get_version
 )
@@ -24,7 +23,6 @@ class HealthView(views.APIView):
 
         toolkit_status["services"]["elastic"] = get_elastic_status()
 
-        toolkit_status["services"]["mlp"] = get_mlp_status()
         toolkit_status["toolkit"]["version"] = get_version()
 
         disk_total, disk_used, disk_free = shutil.disk_usage("/")
@@ -51,6 +49,6 @@ class HealthView(views.APIView):
         gpu_devices = [torch.cuda.get_device_name(i) for i in range(0, gpu_count)]
 
         toolkit_status["host"]["gpu"] = {"count": gpu_count, "devices": gpu_devices}
-        toolkit_status["toolkit"]["active_tasks"] = get_active_tasks()
+        toolkit_status["toolkit"]["active_tasks"] = get_active_tasks(toolkit_status["services"]["redis"]["alive"])
 
         return Response(toolkit_status, status=status.HTTP_200_OK)

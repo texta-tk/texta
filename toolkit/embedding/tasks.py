@@ -4,16 +4,16 @@ import json
 from texta_tools.text_processor import TextProcessor
 from texta_tools.embedding import W2VEmbedding
 
-from toolkit.base_task import BaseTask
+from toolkit.base_tasks import BaseTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.models import Embedding
-from toolkit.settings import MODELS_DIR, NUM_WORKERS
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH, NUM_WORKERS
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.helper_functions import get_indices_from_object
 
 
-@task(name="train_embedding", base=BaseTask)
+@task(name="train_embedding", base=BaseTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def train_embedding(embedding_id):
     # retrieve embedding & task objects
     embedding_object = Embedding.objects.get(pk=embedding_id)
@@ -37,10 +37,11 @@ def train_embedding(embedding_id):
         embedding.train(sentences)
         # save model
         show_progress.update_step('saving')
-        model_path = embedding_object.generate_name("embedding")
-        embedding.save(model_path)
-        # save model paths
-        embedding_object.embedding_model.name = model_path
+        full_model_path, relative_model_path = embedding_object.generate_name("embedding")
+        embedding.save(full_model_path)
+
+        # save model path
+        embedding_object.embedding_model.name = relative_model_path
         embedding_object.vocab_size = len(embedding.model.wv.vocab)
         embedding_object.save()
         # declare the job done
@@ -48,6 +49,6 @@ def train_embedding(embedding_id):
         return True
     except Exception as e:
         # declare the job failed
-        show_progress.update_errors(e)
+        task_object.add_error(str(e))
         task_object.update_status(Task.STATUS_FAILED)
         raise

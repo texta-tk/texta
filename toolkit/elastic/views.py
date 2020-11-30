@@ -7,7 +7,6 @@ from django_filters import rest_framework as filters
 from rest_auth import views
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
@@ -17,6 +16,17 @@ from toolkit.elastic.models import Index, Reindexer
 from toolkit.elastic.serializers import IndexSerializer, ReindexerCreateSerializer
 from toolkit.permissions.project_permissions import IsSuperUser, ProjectResourceAllowed
 from toolkit.view_constants import BulkDelete
+
+
+class IndicesFilter(filters.FilterSet):
+    id = filters.CharFilter('id', lookup_expr='exact')
+    name = filters.CharFilter('name', lookup_expr='icontains')
+    is_open = filters.BooleanFilter("is_open")
+
+
+    class Meta:
+        model = Index
+        fields = []
 
 
 class ElasticGetIndices(views.APIView):
@@ -43,10 +53,53 @@ class IndexViewSet(mixins.CreateModelMixin,
     serializer_class = IndexSerializer
     permission_classes = [IsSuperUser]
 
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+    pagination_class = None
+    filterset_class = IndicesFilter
+
+    ordering_fields = (
+        'id',
+        'name',
+        'is_open'
+    )
+
 
     def list(self, request, *args, **kwargs):
-        ElasticCore().syncher()
-        return super(IndexViewSet, self).list(request, *args, **kwargs)
+        ec = ElasticCore()
+        ec.syncher()
+        response = super(IndexViewSet, self).list(request, *args, **kwargs)
+
+        data = response.data  # Get the paginated and sorted queryset results.
+        open_indices = [index for index in data if index["is_open"]]
+
+        # Doing a stats request with no indices causes trouble.
+        if open_indices:
+            stats = ec.get_index_stats()
+
+            # Update the paginated and sorted queryset results.
+            for index in response.data:
+                name = index["name"]
+                is_open = index["is_open"]
+                if is_open:
+                    index.update(**stats[name])
+                else:
+                    # For the sake of courtesy on the front-end, make closed indices values zero.
+                    index.update(size=0, doc_count=0)
+
+        return response
+
+
+    def retrieve(self, request, *args, **kwargs):
+        ec = ElasticCore()
+        response = super(IndexViewSet, self).retrieve(*args, *kwargs)
+        if response.data["is_open"]:
+            index_name = response.data["name"]
+            stats = ec.get_index_stats()
+            response.data.update(**stats[index_name])
+        else:
+            response.data.update(size=0, doc_count=0)
+
+        return response
 
 
     def create(self, request, **kwargs):
@@ -110,6 +163,17 @@ class IndexViewSet(mixins.CreateModelMixin,
             index.save()
 
         return Response({"message": f"Opened the index {index.name}"})
+
+
+    @action(detail=True, methods=['post'])
+    def add_facts_mapping(self, request, pk=None, project_pk=None):
+        es_core = ElasticCore()
+        index = Index.objects.get(pk=pk)
+        if index.is_open:
+            es_core.add_texta_facts_mapping(index.name)
+            return Response({"message": f"Added the Texta Facts mapping for: {index.name}"})
+        else:
+            return Response({"message": f"Index {index.name} is closed, could not add the mapping!"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ReindexerFilter(filters.FilterSet):

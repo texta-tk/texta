@@ -5,12 +5,12 @@ from io import BytesIO
 from time import sleep
 from typing import List
 
+from django.test import override_settings
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APITransactionTestCase
 
-from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
-from toolkit.settings import MODELS_DIR
+from toolkit.settings import RELATIVE_MODELS_PATH
 from toolkit.tagger.models import Tagger
 from toolkit.test_settings import (TEST_FIELD,
                                    TEST_FIELD_CHOICE,
@@ -18,31 +18,28 @@ from toolkit.test_settings import (TEST_FIELD,
                                    TEST_MATCH_TEXT,
                                    TEST_QUERY,
                                    TEST_VERSION_PREFIX)
-from toolkit.tools.utils_for_tests import project_creation
-from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
+from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
-class TaggerViewTests(APITestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        # Owner of the project
-        cls.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
-        cls.project = project_creation("taggerTestProject", TEST_INDEX, cls.user)
-        cls.project.users.add(cls.user)
-        cls.url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/taggers/'
-        cls.project_url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}'
-        cls.multitag_text_url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/multitag_text/'
-
-        # set vectorizer & classifier options
-        cls.vectorizer_opts = ('Count Vectorizer', 'Hashing Vectorizer', 'TfIdf Vectorizer')
-        cls.classifier_opts = ('Logistic Regression', 'LinearSVC')
-
-        # list tagger_ids for testing. is populated during training test
-        cls.test_tagger_ids = []
+@override_settings(CELERY_ALWAYS_EAGER=True)
+class TaggerViewTests(APITransactionTestCase):
 
 
     def setUp(self):
+        # Owner of the project
+        self.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
+        self.project = project_creation("taggerTestProject", TEST_INDEX, self.user)
+        self.project.users.add(self.user)
+        self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/taggers/'
+        self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
+        self.multitag_text_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/multitag_text/'
+
+        # set vectorizer & classifier options
+        self.vectorizer_opts = ('Count Vectorizer', 'Hashing Vectorizer', 'TfIdf Vectorizer')
+        self.classifier_opts = ('Logistic Regression', 'LinearSVC')
+
+        # list tagger_ids for testing. is populated during training test
+        self.test_tagger_ids = []
         self.client.login(username='taggerOwner', password='pw')
 
 
@@ -254,8 +251,11 @@ class TaggerViewTests(APITestCase):
     def run_tag_random_doc(self):
         """Tests the endpoint for the tag_random_doc action"""
         for test_tagger_id in self.test_tagger_ids:
+            payload = {
+                "indices": [{"name": TEST_INDEX}]
+            }
             url = f'{self.url}{test_tagger_id}/tag_random_doc/'
-            response = self.client.get(url)
+            response = self.client.post(url, format="json", data=payload)
             print_output('test_tag_random_doc:response.data', response.data)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response is list
@@ -276,6 +276,8 @@ class TaggerViewTests(APITestCase):
                 # Check if response data is not empty, but a result instead
                 self.assertTrue(response.data)
                 self.assertTrue('features' in response.data)
+                # Check if any features listed
+                self.assertTrue(len(response.data['features']) > 0)
 
 
     def run_stop_word_list(self):
@@ -380,13 +382,13 @@ class TaggerViewTests(APITestCase):
 
         tagger = Tagger.objects.get(id=imported_tagger_id)
 
-        tagger_model_dir = pathlib.Path(MODELS_DIR) / "tagger"
+        tagger_model_dir = pathlib.Path(RELATIVE_MODELS_PATH) / "tagger"
         tagger_model_path = pathlib.Path(tagger.model.name)
 
         self.assertTrue(tagger_model_path.exists())
 
         # Check whether the model was saved into the right location.
-        self.assertTrue(str(tagger_model_dir) in str(tagger_model_path))
+        self.assertTrue(str(tagger_model_dir) in str(tagger.model.path))
 
         self.run_tag_text([imported_tagger_id])
 

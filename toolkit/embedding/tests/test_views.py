@@ -3,19 +3,20 @@ import os
 import pathlib
 from io import BytesIO
 
-from django.test import TransactionTestCase
+from django.test import TransactionTestCase, override_settings
 from rest_framework import status
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
-from toolkit.settings import MODELS_DIR
+from toolkit.settings import RELATIVE_MODELS_PATH
 from toolkit.test_settings import TEST_FIELD_CHOICE, TEST_INDEX, TEST_VERSION_PREFIX
 from toolkit.tools.utils_for_tests import project_creation
 from toolkit.tools.utils_for_tests import create_test_user, print_output
 
 
+@override_settings(CELERY_ALWAYS_EAGER=True)
 class EmbeddingViewTests(TransactionTestCase):
 
     def setUp(self):
@@ -164,9 +165,35 @@ class EmbeddingViewTests(TransactionTestCase):
         imported_embedding_id = response.data['id']
         print_output('test_import_model:response.data', response.data)
         embedding = Embedding.objects.get(id=imported_embedding_id)
-        embedding_model_dir = pathlib.Path(MODELS_DIR) / "embedding"
+
+        embedding_model_dir = pathlib.Path(RELATIVE_MODELS_PATH) / "embedding"
         embedding_model_path = pathlib.Path(embedding.embedding_model.name)
         self.assertTrue(embedding_model_path.exists())
         # Check whether the model was saved into the right location.
-        self.assertTrue(str(embedding_model_dir) in str(embedding_model_path))
+        self.assertTrue(str(embedding_model_dir) in str(embedding.embedding_model.path))
         self.run_predict(imported_embedding_id)
+
+
+    def run_embedding_training_with_specified_index_name(self):
+        """
+        Since index management got rewritten, it's necessary to separately test
+        if the field is handled correctly.
+        """
+        payload = {
+            "description": "TestEmbedding",
+            "query": json.dumps(EMPTY_QUERY),
+            "fields": TEST_FIELD_CHOICE,
+            "max_vocab": 10000,
+            "min_freq": 5,
+            "num_dimensions": 100,
+            "indices": [{"name": TEST_INDEX}]
+        }
+
+        response = self.client.post(self.url, json.dumps(payload), content_type='application/json')
+        print_output("run_embedding_training_with_specified_index_name:response.data", response.data)
+        # Check if Embedding gets created
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        created_embedding = Embedding.objects.get(id=response.data['id'])
+        self.test_embedding_id = created_embedding.id
+        # Remove Embedding files after test is done
+        print_output("created embedding", created_embedding.task.status)

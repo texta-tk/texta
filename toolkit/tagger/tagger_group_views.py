@@ -1,32 +1,36 @@
 import json
 import os
 import re
+import logging
 
 import rest_framework.filters as drf_filters
 from celery import group
+from celery.result import allow_join_result
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from texta_tools.mlp_analyzer import get_mlp_analyzer
-
+from toolkit.settings import ERROR_LOGGER, INFO_LOGGER
+from toolkit.core.health.utils import get_redis_status
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.helper_functions import apply_celery_task, add_finite_url_to_feedback, get_core_setting
-from toolkit.exceptions import MLPNotAvailable, NonExistantModelError, SerializerNotValid, RedisNotAvailable
+from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, SerializerNotValid
+from toolkit.helper_functions import add_finite_url_to_feedback
+from toolkit.mlp.tasks import apply_mlp_on_list
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE
 from toolkit.tagger.models import TaggerGroup
-from toolkit.tagger.serializers import TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer
-from toolkit.tagger.tasks import apply_tagger, create_tagger_objects, train_tagger
+from toolkit.tagger.serializers import TagRandomDocSerializer, TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer
+from toolkit.tagger.tasks import apply_tagger, create_tagger_objects, save_tagger_results, start_tagger_task, train_tagger_task
 from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import BulkDelete, TagLogicViews
-from toolkit.core.health.utils import get_redis_status
 
 
 class TaggerGroupFilter(filters.FilterSet):
@@ -42,6 +46,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
                          mixins.ListModelMixin,
                          mixins.RetrieveModelMixin,
                          mixins.DestroyModelMixin,
+                         mixins.UpdateModelMixin,
                          viewsets.GenericViewSet,
                          TagLogicViews,
                          BulkDelete):
@@ -72,9 +77,13 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
         fact_name = serializer.validated_data['fact_name']
         active_project = Project.objects.get(id=self.kwargs['project_pk'])
+        serialized_indices = [index["name"] for index in serializer.validated_data["tagger"]["indices"]]
+        indices = Project.objects.get(pk=kwargs["project_pk"]).get_available_or_all_project_indices(serialized_indices)
+        if not indices:
+            raise ValidationError("No indices are available to you!")
 
         # retrieve tags with sufficient counts & create queries to build models
-        tags = self.get_tags(fact_name, active_project, min_count=serializer.validated_data['minimum_sample_size'])
+        tags = self.get_tags(fact_name, active_project, min_count=serializer.validated_data['minimum_sample_size'], indices=indices)
 
         # check if found any tags to build models on
         if not tags:
@@ -96,7 +105,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
         # create taggers objects inside tagger group object
         # use async to make things faster
-        apply_celery_task(create_tagger_objects, tagger_group.pk, validated_tagger_data, tags, tag_queries)
+        create_tagger_objects.apply_async(args=(tagger_group.pk, validated_tagger_data, tags, tag_queries), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
         # retrieve headers and create response
         headers = self.get_success_headers(serializer.data)
@@ -155,12 +164,15 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         API endpoint for retraining tagger model.
         """
         instance = self.get_object()
+        chain = start_tagger_task.s() | train_tagger_task.s() | save_tagger_results.s()
+
         # start retraining tasks
         for tagger in instance.taggers.all():
             # update task status so statistics are correct during retraining
             tagger.status = Task.STATUS_CREATED
             tagger.save()
-            apply_celery_task(train_tagger, tagger.pk)
+            chain.apply_async(args=(tagger.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
+
         return Response({'success': 'retraining tasks created', 'tagger_group_id': instance.id}, status=status.HTTP_200_OK)
 
 
@@ -173,18 +185,23 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         tags = []
         hybrid_tagger_object = self.get_object()
         taggers = {t.description.lower(): {"tag": t.description, "id": t.id} for t in hybrid_tagger_object.taggers.all()}
-        # retrieve MLP & process
-        mlp_url = get_core_setting("TEXTA_MLP_URL")
-        mlp_major_version = get_core_setting("TEXTA_MLP_MAJOR_VERSION")
-        mlp_analyzer = get_mlp_analyzer(mlp_host=mlp_url, mlp_major_version=mlp_major_version)
-        mlp_output = mlp_analyzer.process(text)
+
+        if lemmatize or use_ner:
+            logging.getLogger(INFO_LOGGER).info(f"[Get MLP] Applying lemmatization and NER...")
+            with allow_join_result():
+                mlp = apply_mlp_on_list.apply_async(kwargs={"texts": [text], "analyzers": ["all"]}, queue=CELERY_MLP_TASK_QUEUE).get()
+                mlp_result = mlp[0]
+                logging.getLogger(INFO_LOGGER).info(f"[Get MLP] Finished applying MLP.")
+
         # lemmatize
-        if lemmatize and mlp_output:
-            text = mlp_output["text"]["lemmas"]
+        if lemmatize and mlp_result:
+            text = mlp_result["text"]["lemmas"]
+            lemmas_exists = True if text.strip() else False
+            logging.getLogger(INFO_LOGGER).info(f"[Get MLP] Lemmatization result exists: {lemmas_exists}")
         # retrieve tags
-        if use_ner and mlp_output:
+        if use_ner and mlp_result:
             seen_tags = {}
-            for fact in mlp_output["texta_facts"]:
+            for fact in mlp_result["texta_facts"]:
                 fact_val = fact["str_val"].lower().strip()
                 if fact_val in taggers and fact_val not in seen_tags:
                     fact_val_dict = {
@@ -195,6 +212,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
                     }
                     tags.append(fact_val_dict)
                     seen_tags[fact_val] = True
+            logging.getLogger(INFO_LOGGER).info(f"[Get MLP] Detected {len(tags)} with NER.")
         return text, tags
 
 
@@ -206,13 +224,16 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         hybrid_tagger_object = self.get_object()
         field_paths = json.loads(hybrid_tagger_object.taggers.first().fields)
         indices = hybrid_tagger_object.project.get_indices()
+        logging.getLogger(INFO_LOGGER).info(f"[Get Tag Candidates] Selecting from following indices: {indices}.")
         ignore_tags = {tag["tag"]: True for tag in ignore_tags}
         # create query
         query = Query()
         query.add_mlt(field_paths, text)
         # create Searcher object for MLT
         es_s = ElasticSearcher(indices=indices, query=query.query)
+        logging.getLogger(INFO_LOGGER).info(f"[Get Tag Candidates] Trying to retrieve {n_similar_docs} documents from Elastic...")
         docs = es_s.search(size=n_similar_docs)
+        logging.getLogger(INFO_LOGGER).info(f"[Get Tag Candidates] Successfully retrieved {len(docs)} documents from Elastic.")
         # dict for tag candidates from elastic
         tag_candidates = {}
         # retrieve tags from elastic response
@@ -227,6 +248,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
                             tag_candidates[fact_val] += 1
         # sort and limit candidates
         tag_candidates = [item[0] for item in sorted(tag_candidates.items(), key=lambda k: k[1], reverse=True)][:max_candidates]
+        logging.getLogger(INFO_LOGGER).info(f"[Get Tag Candidates] Retrieved {len(tag_candidates)} tag candidates.")
         return tag_candidates
 
 
@@ -235,6 +257,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         """
         API endpoint for tagging raw text with tagger group.
         """
+        logging.getLogger(INFO_LOGGER).info(f"[Tag Text] Starting tag_text...")
         data = request.data
         serializer = TaggerGroupTagTextSerializer(data=data)
         # check if valid request
@@ -268,6 +291,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         """
         API endpoint for tagging JSON documents with tagger group.
         """
+        logging.getLogger(INFO_LOGGER).info(f"[Tag Doc] Starting tag_doc...")
         data = request.data
         serializer = TaggerGroupTagDocumentSerializer(data=data)
         # check if valid request
@@ -292,6 +316,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
             return input_document
         # combine document field values into one string
         combined_texts = '\n'.join(input_document.values())
+
         # declare tag candidates variables
         n_similar_docs = serializer.validated_data['n_similar_docs']
         n_candidate_tags = serializer.validated_data['n_candidate_tags']
@@ -307,25 +332,38 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         return Response(tags, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=['post'])
     def tag_random_doc(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging a random document.
         """
+        logging.getLogger(INFO_LOGGER).info(f"[Tag Random doc] Starting tag_random_doc...")
         # get hybrid tagger object
         hybrid_tagger_object = self.get_object()
+
         # check if any of the models ready
         if not hybrid_tagger_object.taggers.filter(task__status=Task.STATUS_COMPLETED):
             raise NonExistantModelError()
+
         # retrieve tagger fields from the first object
         tagger_fields = json.loads(hybrid_tagger_object.taggers.first().fields)
         # error if redis not available
+
         if not get_redis_status()['alive']:
             raise RedisNotAvailable('Redis not available. Check if Redis is running.')
-        if not ElasticCore().check_if_indices_exist(hybrid_tagger_object.project.get_indices()):
+
+        serializer = TagRandomDocSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        project_object = Project.objects.get(pk=project_pk)
+        indices = [index["name"] for index in serializer.validated_data["indices"]]
+        indices = project_object.get_available_or_all_project_indices(indices)
+
+        if not ElasticCore().check_if_indices_exist(indices):
             return Response({'error': f'One or more index from {list(hybrid_tagger_object.project.get_indices())} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+
         # retrieve random document
-        random_doc = ElasticSearcher(indices=hybrid_tagger_object.project.get_indices()).random_documents(size=1)[0]
+        random_doc = ElasticSearcher(indices=indices).random_documents(size=1)[0]
         # filter out correct fields from the document
         random_doc_filtered = {k: v for k, v in random_doc.items() if k in tagger_fields}
         # combine document field values into one string
@@ -342,19 +380,25 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
     def apply_tagger_group(self, text, tag_candidates, request, input_type='text', lemmatize=False, feedback=False):
         # get tagger group object
+        logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Starting apply_tagger_group...")
         tagger_group_object = self.get_object()
         # get tagger objects
         candidates_str = "|".join(tag_candidates)
         tagger_objects = tagger_group_object.taggers.filter(description__iregex=f"^({candidates_str})$")
         # filter out completed
         tagger_objects = [tagger for tagger in tagger_objects if tagger.task.status == tagger.task.STATUS_COMPLETED]
+        logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Loaded {len(tagger_objects)} tagger objects.")
         # predict tags
         group_task = group(apply_tagger.s(tagger.pk, text, input_type=input_type, lemmatize=lemmatize, feedback=feedback) for tagger in tagger_objects)
-        group_results = apply_celery_task(group_task)
+        group_results = group_task.apply_async(queue=CELERY_SHORT_TERM_TASK_QUEUE)
+        logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Group task applied.")
+
         # retrieve results & remove non-hits
         tags = [tag for tag in group_results.get() if tag]
+        logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Retrieved results for {len(tags)} taggers.")
         # remove non-hits
         tags = [tag for tag in tags if tag['result']]
+        logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Retrieved {len(tags)} positive tags.")
         # if feedback was enabled, add urls
         tags = [add_finite_url_to_feedback(tag, request) for tag in tags]
         # sort by probability and return

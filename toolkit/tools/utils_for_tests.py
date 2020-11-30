@@ -1,11 +1,13 @@
 import os
+from typing import Optional
+
 from django.contrib.auth.models import User
 from toolkit.core.project.models import Project
 from toolkit.elastic.models import Index
 from termcolor import colored
 
 
-def create_test_user(name: str='tester', email: str='test@mail.com', password: str='password', superuser=False):
+def create_test_user(name: str = 'tester', email: str = 'test@mail.com', password: str = 'password', superuser=False):
     '''Creates an User for Testing'''
     if superuser:
         user = User.objects.create_superuser(username=name, email=email, password=password)
@@ -16,7 +18,7 @@ def create_test_user(name: str='tester', email: str='test@mail.com', password: s
     return user
 
 
-def print_output(test_name, data,  main_color: str='magenta', output_color: str='yellow', main_attrs=['bold'], output_attrs=[]):
+def print_output(test_name, data, main_color: str = 'magenta', output_color: str = 'yellow', main_attrs=['bold'], output_attrs=[]):
     main_string = f'\nTEST_OUTPUT  "{test_name}":'
     data_string = f'{data}\n'
     print(colored(main_string, main_color, attrs=main_attrs))
@@ -29,7 +31,7 @@ def remove_file(path):
         os.remove(path)
 
 
-def project_creation(project_title: str, index_title: str, author: User) -> Project:
+def project_creation(project_title: str, index_title: Optional["str"], author: User) -> Project:
     """
     Creates Project.
     """

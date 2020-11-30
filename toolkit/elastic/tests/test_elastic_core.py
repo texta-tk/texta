@@ -12,12 +12,16 @@ from toolkit.tools.utils_for_tests import print_output
 
 
 ES_URL = CORE_SETTINGS["TEXTA_ES_URL"]
+DOCTYPE_INDEX_NAME = "test_index_two_2"
+DOCTYPE_FIELD_NAME = "sample_field"
+DOCTYPE_NAME = "doc"
 
 
 class TestElasticXpackSecurity(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.elastic_core = ElasticCore()
+
 
     @unittest.skipIf(ElasticCore.check_for_security_xpack(), "authentication is turned on")
     def test_check_without_xpack(self):
@@ -28,11 +32,13 @@ class TestElasticXpackSecurity(TestCase):
         es.es.indices.get("*")
         print_output("test_run_existing_auth", "Successfully accessed data with auth parameters in env.")
 
+
     @unittest.skipUnless(ElasticCore.check_for_security_xpack(), "authentification exists")
     def test_whether_auth_works_with_xpack(self):
         es = ElasticCore()
         es.es.indices.get("*")
         print_output("test_run_existing_auth", "Successfully accessed data with XPACK enabled.")
+
 
     @unittest.skipIf(ElasticCore.check_for_security_xpack(), "authentication is turned on")
     def test_whether_auth_works_with_no_env_values_and_no_xpack(self):
@@ -53,9 +59,15 @@ class TestElasticCore(TestCase):
     def setUpTestData(cls):
         cls.elastic_core = ElasticCore()
 
+
+    def tearDown(self) -> None:
+        self.elastic_core.es.indices.delete(DOCTYPE_INDEX_NAME, ignore=[400, 404])
+
+
     def test_connection(self):
         """Tests ElasticCore initialization."""
         self.assertTrue(self.elastic_core.connection is True)
+
 
     def test_indices(self):
         """Tests ElasticCore index retrieval."""
@@ -65,6 +77,7 @@ class TestElasticCore(TestCase):
         self.assertTrue(isinstance(closed_indices, list))
         self.assertTrue(TEST_INDEX in open_indices + closed_indices)
 
+
     def test_fields(self):
         """Tests ElasticCore field operations."""
         # test field list retrieval
@@ -72,6 +85,7 @@ class TestElasticCore(TestCase):
         print_output("test_run_fields:fields", fields[:10])
         self.assertTrue(isinstance(fields, list))
         self.assertTrue(len(fields) > 0)
+
 
     def test_unknown_index_exception_catching(self):
         self.assertRaises(ElasticIndexNotFoundException, self.elastic_core.get_fields, ["texta_test_index", "the_holy_hand_grenade"])
@@ -90,3 +104,9 @@ class TestElasticCore(TestCase):
 
         self.assertRaises(ElasticAuthorizationException, self.elastic_core.create_index, "locked_index")
         requests.delete(index_url)
+
+
+    def test_getting_all_mappings_of_index(self):
+        self.elastic_core.es.index(index=DOCTYPE_INDEX_NAME, doc_type=DOCTYPE_NAME, body={DOCTYPE_FIELD_NAME: "hello there, kenobi!"})
+        doc_types = self.elastic_core.get_index_doc_types(DOCTYPE_INDEX_NAME)
+        self.assertTrue(doc_types[0] == DOCTYPE_NAME)

@@ -4,20 +4,14 @@ from django.db.models import Avg, Sum
 from rest_framework import serializers
 
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.elastic.serializers import IndexSerializer
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
-from toolkit.tagger.choices import (
-    DEFAULT_SCORE_THRESHOLD,
-    DEFAULT_MAX_SAMPLE_SIZE, 
-    DEFAULT_MIN_SAMPLE_SIZE, 
-    DEFAULT_NEGATIVE_MULTIPLIER, 
-    DEFAULT_NUM_DOCUMENTS, 
-    DEFAULT_NUM_CANDIDATES,
-    DEFAULT_TAGGER_GROUP_FACT_NAME,
-    get_classifier_choices, 
-    get_vectorizer_choices
-    )
+from toolkit.tagger.choices import (DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE, DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_NUM_CANDIDATES, DEFAULT_NUM_DOCUMENTS, DEFAULT_SCORE_THRESHOLD, DEFAULT_TAGGER_GROUP_FACT_NAME, get_classifier_choices, get_vectorizer_choices)
 from toolkit.tagger.models import Tagger, TaggerGroup
-from toolkit.tools.logger import Logger
+
+
+class TagRandomDocSerializer(serializers.Serializer):
+    indices = IndexSerializer(many=True, default=[])
 
 
 class TaggerTagTextSerializer(serializers.Serializer):
@@ -57,10 +51,10 @@ class TaggerGroupTagDocumentSerializer(serializers.Serializer):
 class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True)
     description = serializers.CharField(help_text=f'Description for the Tagger. Will be used as tag.')
+    indices = IndexSerializer(many=True, default=[])
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
-    lemmatize = serializers.BooleanField(help_text='If input text is lemmatized on training. Do not used if training on already lemmatized text. Default: False.', required=False)
-    vectorizer = serializers.ChoiceField(choices=get_vectorizer_choices(), help_text=f'Vectorizer algorithm to create document vectors. NB! HashingVectorizer does not support feature name extraction!')
-    classifier = serializers.ChoiceField(choices=get_classifier_choices(), help_text=f'Classification algorithm used in the model.')
+    vectorizer = serializers.ChoiceField(choices=get_vectorizer_choices(), default=get_vectorizer_choices()[0][0], help_text=f'Vectorizer algorithm to create document vectors. NB! HashingVectorizer does not support feature name extraction!')
+    classifier = serializers.ChoiceField(choices=get_classifier_choices(), default=get_classifier_choices()[0][0], help_text=f'Classification algorithm used in the model.')
     negative_multiplier = serializers.IntegerField(default=DEFAULT_NEGATIVE_MULTIPLIER, help_text=f'Multiplies the size of positive samples to determine negative example set size. Default: {DEFAULT_NEGATIVE_MULTIPLIER}')
     maximum_sample_size = serializers.IntegerField(default=DEFAULT_MAX_SAMPLE_SIZE, help_text=f'Maximum number of documents used to build a model. Default: {DEFAULT_MAX_SAMPLE_SIZE}')
     score_threshold = serializers.FloatField(default=DEFAULT_SCORE_THRESHOLD, help_text=f'Elasticsearch score threshold for filtering out irrelevant examples. All examples below first document\'s score * score threshold are ignored. Float between 0 and 1. Default: {DEFAULT_SCORE_THRESHOLD}')
@@ -68,14 +62,15 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     plot = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
     url = serializers.SerializerMethodField()
+    tagger_groups = serializers.SerializerMethodField(read_only=True)
 
 
     class Meta:
         model = Tagger
-        fields = ('id', 'url', 'author_username', 'description', 'query', 'fields', 'lemmatize', 'embedding', 'vectorizer', 'classifier', 'stop_words',
-                  'maximum_sample_size', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score', 
-                  'num_features', 'num_positives', 'num_negatives', 'plot', 'task')
-        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'stop_words', 'num_positives', 'num_negatives')
+        fields = ('id', 'url', 'author_username', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
+                  'maximum_sample_size', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score',
+                  'num_features', 'num_positives', 'num_negatives', 'plot', 'task', "indices", "tagger_groups")
+        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'stop_words', 'num_positives', 'num_negatives', "tagger_groups")
         fields_to_parse = ('fields',)
 
 
@@ -91,6 +86,12 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
             # for multiple fields in a list
             for field_name in remove_fields:
                 self.fields.pop(field_name)
+
+
+    def get_tagger_groups(self, value: Tagger):
+        tgs = TaggerGroup.objects.filter(taggers__project_id=value.project.pk, taggers__id=value.pk)
+        descriptions = [tgs.description for tgs in tgs]
+        return descriptions
 
 
 class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):

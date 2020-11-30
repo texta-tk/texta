@@ -4,11 +4,11 @@ from .dataset import Dataset
 from .models import DatasetImport
 from toolkit.core.task.models import Task
 from toolkit.tools.show_progress import ShowProgress
-from toolkit.base_task import BaseTask
+from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from ..elastic.models import Index
 
 
-@task(name="import_dataset", base=BaseTask)
+@task(name="import_dataset", base=TransactionAwareTask)
 def import_dataset(dataset_import_id):
     # retrieve object & task
     import_object = DatasetImport.objects.get(pk=dataset_import_id)
@@ -25,10 +25,12 @@ def import_dataset(dataset_import_id):
         # update errors
         if errors:
             show_progress.update_errors(errors)
+
         # update num_documents
         import_object.num_documents = ds.num_records
         import_object.num_documents_success = ds.num_records_success
         import_object.save()
+
         # add imported index to project indices
         project_obj = import_object.project
         index, is_created = Index.objects.get_or_create(name=import_object.index)
@@ -37,8 +39,9 @@ def import_dataset(dataset_import_id):
         # declare the job done
         task_object.complete()
         return True
+
     except Exception as e:
         # declare the job failed
-        show_progress.update_errors(e)
+        show_progress.update_errors(str(e))
         task_object.update_status(Task.STATUS_FAILED)
-        raise
+        raise e

@@ -1,8 +1,4 @@
-import json
-import logging
-
 from toolkit.core.task.models import Task
-from toolkit.settings import ERROR_LOGGER
 
 
 class ShowProgress(object):
@@ -10,7 +6,7 @@ class ShowProgress(object):
     """
 
 
-    def __init__(self, task, multiplier=None):
+    def __init__(self, task: Task, multiplier=None):
         self.n_total = None
         self.n_count = 0
         self.task_id = task.id
@@ -45,15 +41,6 @@ class ShowProgress(object):
         task.update_progress(percentage, self.step)
 
 
-    def update_errors(self, error):
+    def update_errors(self, error: str):
         task = Task.objects.get(pk=self.task_id)
-
-        try:
-            errors_json = json.loads(task.errors)
-        except Exception as e:
-            logging.getLogger(ERROR_LOGGER).exception(e)
-            errors_json = []
-
-        errors_json.append('Error at {0}: {1}'.format(self.step, error))
-        task.errors = json.dumps(errors_json)
-        task.save()
+        task.add_error(error)

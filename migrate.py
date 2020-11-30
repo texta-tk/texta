@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#! /usr/bin/env python3
 
 import django # For making sure the correct Python environment is used.
 from django.db import connections

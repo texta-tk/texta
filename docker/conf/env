@@ -1,21 +1,37 @@
-TEXTA_HOST=http://localhost
-TEXTA_ES_URL=http://elastic-dev.texta.ee:9200
-TEXTA_DEBUG=False
-
+# Service URLs
+TEXTA_ES_URL=http://texta-elasticsearch:9200
 TEXTA_REDIS_URL=redis://texta-redis:6379/0
-TEXTA_MLP_URL=http://mlp-dev.texta.ee:5000
+TEXTA_API_URL=http://localhost
 
-# Elastic is one of the root accounts, only usable with the X-Pack security.
-#TEXTA_ES_USER=elastic
-#TEXTA_ES_PASSWORD=changeme
+# ETC
+TEXTA_TEST_LIVE_SERVER_PORT=7000
+TEXTA_DEBUG=False
+TEXTA_LANGUAGE_CODES=et,en,ru
 
-# Creates indices with the prefix in their name
-#TEXTA_ES_PREFIX=live
-
-
+# DB settings for TK
 #DJANGO_DATABASE_ENGINE=django.db.backends.postgresql
 #DJANGO_DATABASE_NAME=docker
 #DJANGO_DATABASE_USER=docker
 #DJANGO_DATABASE_PASSWORD=docker
-#DJANGO_DATABASE_HOST=localhost
+#DJANGO_DATABASE_HOST=texta-postgres
 #DJANGO_DATABASE_PORT=5432
+
+# UAA settings for TK
+USE_UAA=False
+TEXTA_UAA_REDIRECT_URI=http://localhost/api/v1/uaa/callback
+TEXTA_UAA_FRONT_REDIRECT_URL=http://localhost/oauth
+TEXTA_UAA_URL=http://localhost:8080/uaa
+
+# UUA settings for UUA server & TK
+TEXTA_UAA_CLIENT_ID=login
+TEXTA_UAA_CLIENT_SECRET=loginsecret
+
+# UUA settings for for UAA Server
+TEXTA_UAA_USER=test1
+TEXTA_UAA_EMAIL=test1@test1.com
+TEXTA_UAA_PWD=test1
+
+# Elastic authentication
+# Only usable with the X-Pack security
+#TEXTA_ES_USER=elastic
+#TEXTA_ES_PASSWORD=changeme

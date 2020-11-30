@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('embedding', '0010_auto_20200312_1804'),
+        ('embedding', '0011_rename_file_to_relative'),
     ]
 
     operations = [

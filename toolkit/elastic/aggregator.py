@@ -1,3 +1,7 @@
+from typing import List
+
+from elasticsearch_dsl import Search, Q
+
 from toolkit.elastic.core import ElasticCore
 
 
@@ -18,8 +22,14 @@ class ElasticAggregator:
         self.indices = indices
         self.query = query
 
+
+    def _get_indices_string(self):
+        return ",".join(self.indices)
+
+
     def update_query(self, query):
         self.query = query
+
 
     def update_field_data(self, field_data):
         """
@@ -27,10 +37,12 @@ class ElasticAggregator:
         """
         self.field_data = field_data
 
+
     def _aggregate(self, agg_query):
         self.query["aggregations"] = agg_query
         response = self.core.es.search(index=self.indices, body=self.query)
         return response
+
 
     def facts(self, size=30, filter_by_fact_name=None, min_count=0, max_count=None, include_values=True):
         """
@@ -83,3 +95,43 @@ class ElasticAggregator:
             entities = list(entities.keys())
 
         return entities
+
+
+    def filter_aggregation_maker(self, agg_type: str, field: str, filter_query: dict = None, size=1000, return_size=15, stop_words: List = None, exclude=""):
+
+        container = []
+
+        s = Search(using=self.core.es, index=self._get_indices_string())
+        if filter_query:
+            filter_query = Q(filter_query)
+            s.aggs.bucket("limits", "filter", filter=filter_query).bucket("placekeeper", agg_type, field=field, size=size, exclude=exclude)
+            r = s.execute()
+            for hit in r.aggs.limits.placekeeper:
+                container.append(hit.to_dict())
+        else:
+            s.aggs.bucket("placekeeper", agg_type, field=field)
+            r = s.execute()
+            for hit in r.aggs.limits.placekeeper:
+                container.append(hit.to_dict())
+
+        if stop_words:
+            container = [item for item in container if item["key"] not in set(stop_words)]
+
+        return container[:return_size]
+
+
+    def get_significant_words(self, document_ids: List[str], field: str, stop_words: List = None, exclude="") -> List[dict]:
+        """
+        Args:
+            stop_words: Optional parameter to remove stop words from significant words.
+            document_ids: List of document ids to limit the range of the significant words.
+            field: Path name of the field we're comparing text from for significant words.
+            exclude: regex string for which values to exclude.
+
+        Returns: List of dicts with the aggregation results.
+
+        """
+        query = {'ids': {'values': document_ids}}
+        sw = self.filter_aggregation_maker(agg_type="significant_text", field=field, filter_query=query, stop_words=stop_words, exclude=exclude)
+        sw = [{"key": hit["key"], "count": hit["doc_count"]} for hit in sw]
+        return sw

@@ -18,29 +18,29 @@ Creating environment:
 
 Running migrations:
 
-`python migrate.py`
+`python3 migrate.py`
 
 Running application:
 
-`python manage.py runserver`
+`python3 manage.py runserver`
 
 `celery -A toolkit.taskman worker -l info`
 
 Import testing data:
 
-`python import_test_data.py`
+`python3 import_test_data.py`
 
 Run all tests:
 
-`python manage.py test`
+`python3 manage.py test`
 
 Run tests for specific app:
 
-`python manage.py test appname (eg python manage.py test toolkit.neurotagger)`
+`python3 manage.py test appname (eg python3 manage.py test toolkit.neurotagger)`
 
 Run performance tests (not run by default as they are slow):
 
-`python manage.py test toolkit.performance_tests`
+`python3 manage.py test toolkit.performance_tests`
 
 Building Docker:
 
@@ -63,11 +63,18 @@ Running Docker with GPU support:
 
 ## Deploy & Testing variables
 * TEXTA_ADMIN_PASSWORD - Password of the admin user created on first run.
-* TEXTA_DISABLE_CSRF - Disable CSRF for integration tests.
+* TEXTA_USE_CSRF - Disable CSRF for integration tests.
+* TEXTA_CELERY_ALWAYS_EAGER - Whether to use Celerys async features or not, useful for testing purposes locally. By default False.
+* TEXTA_SHORT_TASK_WORKERS - Number of processes available for short term tasks (default=3).
+* TEXTA_LONG_TASK_WORKERS - Number of processes available for long term tasks (default=5)
+* TEXTA_MLP_TASK_WORKERS - Number of processes available for MLP based tasks (default=2)
+* TEXTA_RELATIVE_MODELS_DIR - Relative path of the directory in which all the different types of models are stored in. Defaults to "/data/models".
+* TEXTA_LANGUAGE_CODES - Comma separated string of Stanza supported language codes to use for Multilingual Processing. Defaults to "et,en,ru".
+* TEXTA_MLP_MODEL_DIRECTORY_PATH - Relative path to the directory into which Stanza models will be stored under the "stanza" folder (setting this to ./home/texta will
+create ./home/texta/stanza which contains subfolders for every language like ./home/texta/stanza/et etc). Defaults to "./data/models".
 
 ## External services
 * TEXTA_ES_URL - URL of the Elasticsearch instance including the protocol, host and port (ex. http://localhost:9200).
-* TEXTA_MLP_URL - URL of the Texta MLP instance including the protocol, host and port (ex. http://localhost:5000).
 * TEXTA_REDIS_URL - URL of the Redis instance including the protocol, host and port (ex. redis://localhost:6379).
 
 ## Django specifics

@@ -1,5 +1,6 @@
 import io
 import json
+import logging
 import os
 import pathlib
 import secrets
@@ -19,8 +20,7 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
-from toolkit.helper_functions import apply_celery_task
-from toolkit.settings import MODELS_DIR
+from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, RELATIVE_MODELS_PATH
 from toolkit.tagger.choices import (DEFAULT_CLASSIFIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE, DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_VECTORIZER)
 
 
@@ -34,7 +34,6 @@ class Tagger(models.Model):
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     indices = models.ManyToManyField(Index)
     fields = models.TextField(default=json.dumps([]))
-    lemmatize = models.BooleanField(default=False)
     embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
     stop_words = models.TextField(default='')
     vectorizer = models.CharField(default=DEFAULT_VECTORIZER, max_length=MAX_DESC_LEN)
@@ -58,7 +57,7 @@ class Tagger(models.Model):
 
 
     def get_indices(self):
-        return [index.name for index in self.indices.all()]
+        return [index.name for index in self.indices.filter(is_open=True)]
 
 
     def __str__(self):
@@ -66,8 +65,18 @@ class Tagger(models.Model):
 
 
     def generate_name(self, name="tagger"):
-        """Model import/export is dependant on the name, do not change carelessly."""
-        return os.path.join(MODELS_DIR, 'tagger', f'{name}_{str(self.pk)}_{secrets.token_hex(10)}')
+        """
+        Do not change this carelessly as import/export functionality depends on this.
+        Returns full and relative filepaths for the intended models.
+        Args:
+            name: Name for the model to distinguish itself from others in the same directory.
+
+        Returns: Full and relative file paths, full for saving the model object and relative for actual DB storage.
+        """
+        model_file_name = f'{name}_{str(self.pk)}_{secrets.token_hex(10)}'
+        full_path = pathlib.Path(BASE_DIR) / RELATIVE_MODELS_PATH / "tagger" / model_file_name
+        relative_path = pathlib.Path(RELATIVE_MODELS_PATH) / "tagger" / model_file_name
+        return str(full_path), str(relative_path)
 
 
     def to_json(self) -> dict:
@@ -112,13 +121,13 @@ class Tagger(models.Model):
 
                 for index in indices:
                     index_model, is_created = Index.objects.get_or_create(name=index)
-                    Tagger.indices.add(index_model)
+                    new_model.indices.add(index_model)
 
-                new_tagger_name = new_model.generate_name("tagger")
-                with open(new_tagger_name, "wb") as fp:
+                full_tagger_path, relative_tagger_path = new_model.generate_name("tagger")
+                with open(full_tagger_path, "wb") as fp:
                     path = pathlib.Path(model_json["model"]).name
                     fp.write(archive.read(path))
-                    new_model.model.name = new_tagger_name
+                    new_model.model.name = relative_tagger_path
 
                 plot_name = pathlib.Path(model_json["plot"])
                 path = plot_name.name
@@ -140,8 +149,10 @@ class Tagger(models.Model):
         new_task = Task.objects.create(tagger=self, status='created')
         self.task = new_task
         self.save()
-        from toolkit.tagger.tasks import train_tagger
-        apply_celery_task(train_tagger, self.pk)
+        from toolkit.tagger.tasks import start_tagger_task, train_tagger_task, save_tagger_results
+        logging.getLogger(INFO_LOGGER).info(f"Celery: Starting task for training of tagger: {self.to_json()}")
+        chain = start_tagger_task.s() | train_tagger_task.s() | save_tagger_results.s()
+        transaction.on_commit(lambda: chain.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE))
 
 
 @receiver(models.signals.post_delete, sender=Tagger)
@@ -216,11 +227,11 @@ class TaggerGroup(models.Model):
                         index, is_created = Index.objects.get_or_create(name=index_name)
                         tagger_model.indices.add(index)
 
-                    new_tagger_name = tagger_model.generate_name("tagger")
-                    with open(new_tagger_name, "wb") as fp:
+                    full_tagger_path, relative_tagger_path = tagger_model.generate_name("tagger")
+                    with open(full_tagger_path, "wb") as fp:
                         path = pathlib.Path(tagger["model"]).name
                         fp.write(archive.read(path))
-                        tagger_model.model.name = new_tagger_name
+                        tagger_model.model.name = relative_tagger_path
 
                         plot_name = pathlib.Path(tagger["plot"])
                         path = plot_name.name

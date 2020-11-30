@@ -5,6 +5,7 @@ from toolkit.elastic.query import Query
 from toolkit.tools.logger import Logger
 from toolkit.helper_functions import get_core_setting
 
+from datetime import datetime
 import json
 
 
@@ -77,19 +78,20 @@ class Feedback:
         model_fields = json.loads(self.model_object.fields)
         return {field_path: text for field_path in model_fields}
 
-    def store(self, predicted_content, prediction):
+    def store(self, content, prediction):
         """
         Stores document with initial prediction in ES.
         """
         # if predicted on text, generate doc
-        if isinstance(predicted_content, str):
-            predicted_content = self._text_to_doc(predicted_content)
+        if isinstance(content, str):
+            content = self._text_to_doc(content)
         # generate feedback doc wrapping predicted doc
         feedback_doc = {
             "model_id": str(self.model_object.pk),
             "model_type": self.model_object.MODEL_TYPE,
-            "predicted_content": json.dumps(predicted_content),
-            "original_prediction": str(prediction)
+            "content": json.dumps(content),
+            "original_prediction": str(prediction),
+            "prediction_time": datetime.now()
         }
 
         try:
@@ -105,9 +107,11 @@ class Feedback:
         """
         try:
             document = self.es_doc.get(feedback_id)
-            document["correct_result"] = json.dumps(correct_result)
-            self.es_doc.update(feedback_id, document)
+            document["_source"]["correct_result"] = json.dumps(correct_result)
+            document["_source"]["feedback_time"] = datetime.now()
+            self.es_doc.update(index=document["_index"], doc_type=document["_type"], doc_id=feedback_id, doc=document["_source"])
             return {"success": "Tagger feedback updated."}
+
         except Exception as e:
             error_msg = "Failed changing model feedback."
             Logger().error(error_msg, exc_info=e)

@@ -1,0 +1,52 @@
+name: texta-rest-gpu
+
+channels:
+  - conda-forge
+  - anaconda
+  - bioconda
+
+dependencies:
+  - python=3.7
+  - pip
+  - pandas
+  - scikit-learn==0.*
+  - matplotlib
+  - graphviz
+  - gensim==3.*
+  - pydot
+  - psutil
+  - uwsgi
+  - nginx
+  - supervisor
+  - psycopg2
+  - mysqlclient
+  - pip:
+      - django==2.*
+      - django-multiselectfield
+      - django-rest-serializer-field-permissions
+      - django-cors-headers
+      - django-extensions
+      - django-filter
+      - django-rest-auth[with_social]
+      - djangorestframework==3.11.*
+      - drf-nested-routers
+      - celery==4.*
+      - redis==3.*
+      - elasticsearch<7
+      - elasticsearch_dsl<7
+      - termcolor
+      - joblib
+      - python-json-logger
+      - drf-yasg
+      - xlrd
+      - dill
+      - texta-anonymizer==1.1.*
+      - texta-mlp==1.4.*
+      - texta-lexicon-matcher==1.1.*
+      - texta-tools==1.0.*
+      - texta-tagger==1.1.*
+      - texta-torch-tagger==1.0.*
+      - torch==1.5.*
+      - torchtext==0.6.*
+      - pyjwt
+      - beautifulsoup4

@@ -3,6 +3,7 @@ FROM continuumio/miniconda3:latest
 # Copy environment file
 COPY environment-nogpu.yaml /var/environment.yaml
 
+# Build Conda environment
 RUN set -x \
     && conda env create -f /var/environment.yaml \
     && conda clean -afy \
@@ -12,6 +13,12 @@ RUN set -x \
 
 # Copy project files
 COPY . /var/texta-rest
+
+# Retrieve pre-built front
+RUN wget https://packages.texta.ee/texta-rest-front/texta-rest-front-latest.tar.gz \
+    && tar -zxvf texta-rest-front-latest.tar.gz \
+    && cp -r dist/TEXTA /var/texta-rest/front \
+    && rm texta-rest-front-latest.tar.gz && rm -R dist
 
 # Ownership to www-data and entrypoint
 RUN chown -R www-data:www-data /var/texta-rest \
@@ -23,6 +30,7 @@ RUN chown -R www-data:www-data /var/texta-rest \
 
 # System configuration files
 COPY docker/conf/supervisord.conf /opt/conda/envs/texta-rest/etc/supervisord/conf.d/supervisord.conf
+COPY docker/conf/nginx.conf /opt/conda/envs/texta-rest/etc/nginx/sites.d/default-site.conf
 ENV UWSGI_INI /var/texta-rest/docker/conf/texta-rest.ini
 
 # Set environment variables
@@ -31,12 +39,22 @@ ENV PYTHONIOENCODING=UTF-8
 ENV UWSGI_CHEAPER 2
 ENV UWSGI_PROCESSES 16
 
+
 # Expose ports
 EXPOSE 80
 EXPOSE 8000
 EXPOSE 8001
+EXPOSE 8080
+
+# change dir & run collectstatic
+WORKDIR /var/texta-rest
+
+# Do not add MLP resources do the image.
+ENV SKIP_MLP_RESOURCES True
+RUN /opt/conda/envs/texta-rest/bin/python manage.py collectstatic --no-input --clear
+# set back to False
+ENV SKIP_MLP_RESOURCES False
 
 # Ignition!
-WORKDIR /var/texta-rest
 ENTRYPOINT ["/var/texta-rest/docker/conf/entrypoint.sh"]
 CMD ["supervisord", "-n"]

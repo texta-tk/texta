@@ -15,10 +15,10 @@ from django.http import HttpResponse
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
+from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
-from toolkit.helper_functions import apply_celery_task
-from toolkit.settings import MODELS_DIR
+from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
 from toolkit.torchtagger import choices
 
 
@@ -30,6 +30,7 @@ class TorchTagger(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     fields = models.TextField(default=json.dumps([]))
+    indices = models.ManyToManyField(Index, default=None)
 
     embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE, default=None)
 
@@ -61,7 +62,7 @@ class TorchTagger(models.Model):
 
 
     def get_indices(self):
-        return [index.name for index in self.indices.all()]
+        return [index.name for index in self.indices.filter(is_open=True)]
 
 
     def to_json(self) -> dict:
@@ -83,28 +84,44 @@ class TorchTagger(models.Model):
 
                 torchtagger_json = torch_and_embedding["torchtagger"]
                 embedding_json = torch_and_embedding["embedding"]
+
                 embedding_fields = embedding_json["fields"]
                 extra_embeddings = embedding_json["embedding_extras"]
+
+                indices = torchtagger_json.pop("indices")
                 torchtagger_json.pop("embedding", None)
+
                 torchtagger_model = TorchTagger(**torchtagger_json)
 
                 torchtagger_model.task = Task.objects.create(torchtagger=torchtagger_model, status=Task.STATUS_COMPLETED)
                 torchtagger_model.author = User.objects.get(id=request.user.id)
                 torchtagger_model.project = Project.objects.get(id=pk)
 
-                embedding_model = Embedding.create_embedding_object(embedding_fields, request.user.id, pk)
+                embedding_model = Embedding.create_embedding_object(embedding_fields, user_id=request.user.id, project_id=pk)
+                embedding_model = Embedding.add_file_to_embedding_object(archive, embedding_model, embedding_fields, "phraser", "phraser_model")
                 embedding_model = Embedding.add_file_to_embedding_object(archive, embedding_model, embedding_fields, "embedding", "embedding_model")
                 Embedding.save_embedding_extra_files(archive, embedding_model, embedding_fields, extra_paths=extra_embeddings)
-
                 embedding_model.save()
+
                 torchtagger_model.embedding = embedding_model
                 torchtagger_model.save()
 
-                new_tagger_name = torchtagger_model.generate_name("torchtagger")
-                with open(new_tagger_name, "wb") as fp:
+                for index in indices:
+                    index_model, is_created = Index.objects.get_or_create(name=index)
+                    torchtagger_model.indices.add(index_model)
+
+                full_model_path, relative_model_path = torchtagger_model.generate_name("torchtagger")
+                with open(full_model_path, "wb") as fp:
                     path = pathlib.Path(torchtagger_json["model"]).name
                     fp.write(archive.read(path))
-                    torchtagger_model.model.name = new_tagger_name
+                    torchtagger_model.model.name = relative_model_path
+
+                text_field = "{}_text_field".format(str(full_model_path))
+                with open(text_field, "wb") as fp:
+                    path = pathlib.Path(torchtagger_json["text_field"]).name
+                    fp.write(archive.read(path))
+                    relative_path = "{}_text_field".format(str(relative_model_path))
+                    torchtagger_model.text_field.name = relative_path
 
                 plot_name = pathlib.Path(torchtagger_json["plot"])
                 path = plot_name.name
@@ -138,8 +155,19 @@ class TorchTagger(models.Model):
             return tmp.read()
 
 
-    def generate_name(self, name):
-        return os.path.join(MODELS_DIR, 'torchtagger', f'{name}_{str(self.pk)}_{secrets.token_hex(10)}')
+    def generate_name(self, name: str):
+        """
+        Do not change this carelessly as import/export functionality depends on this.
+        Returns full and relative filepaths for the intended models.
+        Args:
+            name: Name for the model to distinguish itself from others in the same directory.
+
+        Returns: Full and relative file paths, full for saving the model object and relative for actual DB storage.
+        """
+        model_file_name = f'{name}_{str(self.pk)}_{secrets.token_hex(10)}'
+        full_path = pathlib.Path(BASE_DIR) / RELATIVE_MODELS_PATH / "torchtagger" / model_file_name
+        relative_path = pathlib.Path(RELATIVE_MODELS_PATH) / "torchtagger" / model_file_name
+        return str(full_path), str(relative_path)
 
 
     def __str__(self):
@@ -151,7 +179,7 @@ class TorchTagger(models.Model):
         self.task = new_task
         self.save()
         from toolkit.torchtagger.tasks import train_torchtagger
-        apply_celery_task(train_torchtagger, self.pk)
+        train_torchtagger.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
 
     def get_resource_paths(self):

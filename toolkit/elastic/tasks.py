@@ -1,16 +1,16 @@
 import json
-
 from collections import defaultdict
+
 from celery.decorators import task
 
-from toolkit.core.task.models import Task
-from toolkit.elastic.models import Reindexer
-from toolkit.base_task import BaseTask
-from toolkit.tools.show_progress import ShowProgress
+from toolkit.base_tasks import BaseTask
 from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.document import ElasticDocument
 from toolkit.elastic.mapping_generator import SchemaGenerator
+from toolkit.elastic.models import Reindexer
+from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.tools.show_progress import ShowProgress
+
 
 """ TODOs:
     unique name problem and testing it.
@@ -19,6 +19,7 @@ from toolkit.elastic.mapping_generator import SchemaGenerator
 # TODO: add this to reindex task params
 FLATTEN_DOC = False
 
+
 def get_selected_fields(indices, fields):
     # get all fields in given indices
     all_fields = ElasticCore().get_fields(indices)
@@ -26,19 +27,25 @@ def get_selected_fields(indices, fields):
     selected_fields = [field for field in all_fields if field["path"] in fields]
     return selected_fields
 
+
 def add_nested(fields):
     for field in fields:
         if '.' in field['path']:
             field['type'] = 'nested'
     return fields
 
+
 def reformat_for_schema_generator(fields, flatten_doc=False):
     if not flatten_doc:
         fields = add_nested(fields)
     formatted_fields = defaultdict(list)
     for field in fields:
-        formatted_fields[field['type']].append(field['path'])
+        if field['path'] == 'texta_facts':
+            formatted_fields['texta_facts'].append('texta_facts')
+        else:
+            formatted_fields[field['type']].append(field['path'])
     return dict(formatted_fields)
+
 
 def update_field_types(indices, fields, field_type, flatten_doc=False):
     ''' if fieldtype, for field named fieldtype change its type'''
@@ -62,16 +69,18 @@ def update_field_types(indices, fields, field_type, flatten_doc=False):
     updated_field_types = reformat_for_schema_generator(my_fields, flatten_doc)
     return updated_field_types
 
+
 def update_mapping(schema_input, new_index):
     mod_schema = SchemaGenerator().generate_schema(schema_input)
     return {'mappings': {new_index: mod_schema}}
+
 
 def unflatten_doc(doc):
     """ Unflatten document retrieved from ElasticSearcher.
     """
     unflattened_doc = {}
-    nested_fields = [(k,v) for k, v in doc.items() if '.' in k]
-    not_nested_fields = {k:v for k, v in doc.items() if '.' not in k}
+    nested_fields = [(k, v) for k, v in doc.items() if '.' in k]
+    not_nested_fields = {k: v for k, v in doc.items() if '.' not in k}
     unflattened_doc.update(not_nested_fields)
     for k, v in nested_fields:
         layers = k.split('.')
@@ -80,15 +89,16 @@ def unflatten_doc(doc):
                 if layer not in unflattened_doc:
                     unflattened_doc[layer] = {}
                 nested_branch = unflattened_doc
-            elif i < len(layers)-1:
-                if layer not in nested_branch[layers[i-1]]:
-                    nested_branch[layers[i-1]][layer] = {}
-                nested_branch = nested_branch[layers[i-1]]
+            elif i < len(layers) - 1:
+                if layer not in nested_branch[layers[i - 1]]:
+                    nested_branch[layers[i - 1]][layer] = {}
+                nested_branch = nested_branch[layers[i - 1]]
             else:
-                if layer not in nested_branch[layers[i-1]]:
-                    nested_branch[layers[i-1]][layer] = v
-                nested_branch = nested_branch[layers[i-1]]
+                if layer not in nested_branch[layers[i - 1]]:
+                    nested_branch[layers[i - 1]][layer] = v
+                nested_branch = nested_branch[layers[i - 1]]
     return unflattened_doc
+
 
 def apply_elastic_search(elastic_search, fields, flatten_doc=False):
     new_docs = []
@@ -100,9 +110,11 @@ def apply_elastic_search(elastic_search, fields, flatten_doc=False):
             new_docs.append(new_doc)
     return new_docs
 
+
 def bulk_add_documents(elastic_search, fields, elastic_doc, flatten_doc=False):
     new_docs = apply_elastic_search(elastic_search, fields, flatten_doc)
     elastic_doc.bulk_add(new_docs)
+
 
 @task(name="reindex_task", base=BaseTask)
 def reindex_task(reindexer_task_id):

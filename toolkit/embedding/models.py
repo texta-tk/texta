@@ -16,8 +16,7 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
-from toolkit.helper_functions import apply_celery_task
-from toolkit.settings import MODELS_DIR
+from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
 
 
 class Embedding(models.Model):
@@ -60,7 +59,7 @@ class Embedding(models.Model):
             path = pathlib.Path(filename).name
             old_file_content = archive.read(path)
             new_file_name = filename.replace(old_embedding_path, new_embedding_path)
-            new_file_path = pathlib.Path(MODELS_DIR) / "embedding" / new_file_name
+            new_file_path = pathlib.Path(RELATIVE_MODELS_PATH) / "embedding" / new_file_name
             with open(new_file_path, "wb") as fp:
                 fp.write(old_file_content)
 
@@ -71,12 +70,14 @@ class Embedding(models.Model):
         Get all the informational segments from the name, later used in changing the id
         to avoid any collisions just in case.
         """
-        new_path = pathlib.Path(model_object.generate_name(name_key))
+        full_model_path, relative_model_path = model_object.generate_name(name_key)
+
         old_path = pathlib.Path(model_json[model_json_key])
-        with open(new_path, "wb") as fp:
+        with open(full_model_path, "wb") as fp:
             fp.write(archive.read(old_path.name))
             ref = getattr(model_object, model_json_key)  # Get reference to the field in the Embedding.
-            setattr(ref, "name", str(new_path))  # Set the fields name parameter to the new path.
+            setattr(ref, "name", str(relative_model_path))  # Set the fields name parameter to the new path.
+
         return model_object
 
 
@@ -151,8 +152,18 @@ class Embedding(models.Model):
 
 
     def generate_name(self, name="embedding"):
-        """Model import/export is dependant on the name, do not change carelessly."""
-        return os.path.join(MODELS_DIR, 'embedding', f'{name}_{str(self.pk)}_{secrets.token_hex(10)}')
+        """
+        Do not change this carelessly as import/export functionality depends on this.
+        Returns full and relative filepaths for the intended models.
+        Args:
+            name: Name for the model to distinguish itself from others in the same directory.
+
+        Returns: Full and relative file paths, full for saving the model object and relative for actual DB storage.
+        """
+        model_file_name = f'{name}_{str(self.pk)}_{secrets.token_hex(10)}'
+        full_path = pathlib.Path(BASE_DIR) / RELATIVE_MODELS_PATH / "embedding" / model_file_name
+        relative_path = pathlib.Path(RELATIVE_MODELS_PATH) / "embedding" / model_file_name
+        return str(full_path), str(relative_path)
 
 
     def train(self):
@@ -160,7 +171,7 @@ class Embedding(models.Model):
         self.task = new_task
         self.save()
         from toolkit.embedding.tasks import train_embedding
-        apply_celery_task(train_embedding, self.pk)
+        train_embedding.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
 
     def __str__(self):

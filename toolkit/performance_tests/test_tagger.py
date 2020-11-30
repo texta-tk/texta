@@ -1,6 +1,7 @@
 import json
 from time import time
 
+from django.test import override_settings
 from rest_framework.test import APITestCase
 from rest_framework import status
 
@@ -12,6 +13,8 @@ from toolkit.core.project.models import Project
 from toolkit.tools.utils_for_tests import project_creation
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
+
+@override_settings(CELERY_ALWAYS_EAGER=True)
 class TaggerPerformanceTests(APITestCase):
     @classmethod
     def setUpTestData(cls):

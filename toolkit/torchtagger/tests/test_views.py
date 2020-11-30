@@ -2,18 +2,18 @@ import pathlib
 from io import BytesIO
 from time import sleep
 
-from django.test import TransactionTestCase
+from django.test import override_settings
 from rest_framework import status
+from rest_framework.test import APITransactionTestCase
 
-from toolkit.core.project.models import Project
 from toolkit.test_settings import (TEST_FACT_NAME, TEST_FIELD_CHOICE, TEST_INDEX, TEST_VERSION_PREFIX)
-from toolkit.tools.utils_for_tests import project_creation
-from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
+from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 from toolkit.torchtagger.models import TorchTagger
 from toolkit.torchtagger.torch_models.models import TORCH_MODELS
 
 
-class TorchTaggerViewTests(TransactionTestCase):
+@override_settings(CELERY_ALWAYS_EAGER=True)
+class TorchTaggerViewTests(APITransactionTestCase):
     def setUp(self):
         # Owner of the project
         self.user = create_test_user('torchTaggerOwner', 'my@email.com', 'pw')
@@ -52,12 +52,13 @@ class TorchTaggerViewTests(TransactionTestCase):
             "fields": TEST_FIELD_CHOICE,
             "max_vocab": 10000,
             "min_freq": 5,
-            "num_dimensions": 300,
+            "num_dimensions": 300
         }
         # post
         embeddings_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/embeddings/'
         response = self.client.post(embeddings_url, payload, format='json')
         self.test_embedding_id = response.data["id"]
+        print_output("run_train_embedding", 201)
 
 
     def run_train_tagger(self):
@@ -71,10 +72,14 @@ class TorchTaggerViewTests(TransactionTestCase):
             "num_epochs": 3,
             "embedding": self.test_embedding_id,
         }
+
+        print_output(f"training tagger with payload: {payload}", 200)
         response = self.client.post(self.url, payload, format='json')
         print_output('test_create_torchtagger_training_and_task_signal:response.data', response.data)
+
         # Check if Neurotagger gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
         # Check if f1 not NULL (train and validation success)
         tagger_id = response.data['id']
         response = self.client.get(f'{self.url}{tagger_id}/')
@@ -123,8 +128,11 @@ class TorchTaggerViewTests(TransactionTestCase):
 
     def run_tag_random_doc(self):
         """Tests the endpoint for the tag_random_doc action"""
+        payload = {
+            "indices": [{"name": TEST_INDEX}]
+        }
         url = f'{self.url}{self.test_tagger_id}/tag_random_doc/'
-        response = self.client.get(url)
+        response = self.client.post(url, format="json", data=payload)
         print_output('test_tag_random_doc:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response is list
@@ -157,7 +165,7 @@ class TorchTaggerViewTests(TransactionTestCase):
 
         # Tests the endpoint for the tag_random_doc action"""
         url = f'{self.url}{torchtagger.pk}/tag_random_doc/'
-        response = self.client.get(url)
+        response = self.client.post(url)
         print_output('test_tag_random_doc_group:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, dict))

@@ -9,9 +9,11 @@ from django.http import HttpResponse
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
+from toolkit.elastic.models import Index
 from toolkit.embedding.models import Embedding
 from toolkit.embedding.serializers import EmbeddingPredictSimilarWordsSerializer, EmbeddingSerializer
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, SerializerNotValid
@@ -69,12 +71,26 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
 
 
     def perform_create(self, serializer):
-        embedding: Embedding = serializer.save(
-            author=self.request.user,
-            project=Project.objects.get(id=self.kwargs['project_pk']),
-            fields=json.dumps(serializer.validated_data['fields'])
-        )
-        embedding.train()
+        project = Project.objects.get(id=self.kwargs['project_pk'])
+        indices = [index["name"] for index in serializer.validated_data["indices"]]
+        indices = project.get_available_or_all_project_indices(indices)
+
+        # If no indices are sent with the request, it gets all.
+        # If all indices still means none, then we have a problem.
+        if indices is not None:
+            serializer.validated_data.pop("indices")
+            embedding: Embedding = serializer.save(
+                author=self.request.user,
+                project=Project.objects.get(id=self.kwargs['project_pk']),
+                fields=json.dumps(serializer.validated_data['fields'])
+            )
+
+            for index in Index.objects.filter(name__in=indices, is_open=True):
+                embedding.indices.add(index)
+
+            embedding.train()
+        else:
+            raise ValidationError("Can't train Embedding with zero configured indices.")
 
 
     def destroy(self, request, *args, **kwargs):
