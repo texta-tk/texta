@@ -13,25 +13,36 @@ import numpy as np
 def create_tagger_plot(statistics: dict):
     """
     This function is for plotting tagger statistics.
+    Only plot ROC curve for binary problems.
     """
-    plt.figure(figsize=(8, 4))
+    # retrieve class names
+    classes = statistics['classes']
+    # set plot size based on number of classes
+    if len(classes) == 2:
+        plt.figure(figsize=(8, 4))
+    else:
+        plt.figure(figsize=(4, 4))
     # calculate & plot roc curve
-    plt.subplot(1, 3, 1)
-    lw = 2
-    plt.plot(statistics['false_positive_rate'], statistics['true_positive_rate'], color='darkorange',
-             lw=lw, label='ROC curve (area = %0.2f)' % statistics['area_under_curve'])
-    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Receiver operating characteristic')
-    plt.legend(loc="lower right")
+    if len(classes) == 2:
+        plt.subplot(1, 2, 1)
+        lw = 2
+        plt.plot(statistics['false_positive_rate'], statistics['true_positive_rate'], color='darkorange',
+                lw=lw, label='ROC curve (area = %0.2f)' % statistics['area_under_curve'])
+        plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('Receiver operating characteristic')
+        plt.legend(loc="lower right")
     # plot confusion matrix
-    plt.subplot(1, 3, 2)
-    classes = ['negative', 'positive']
+    # set values based on number of classes
+    if len(classes) == 2:
+        plt.subplot(1, 2, 2)
+    else:
+        plt.subplot(1, 1, 1)
     cm = np.asarray(statistics['confusion_matrix'])
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
     plt.title('Confusion matrix')
-    tick_marks = np.arange(2)
+    tick_marks = np.arange(len(classes))
     plt.xticks(tick_marks, classes, rotation=45)
     plt.yticks(tick_marks, classes)
     fmt = 'd'
@@ -43,4 +54,5 @@ def create_tagger_plot(statistics: dict):
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
     plt.tight_layout()
+    # save & return
     return save_plot(plt)

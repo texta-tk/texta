@@ -26,6 +26,18 @@ class TaggerTagDocumentSerializer(serializers.Serializer):
     feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 
+class TaggerMultiTagSerializer(serializers.Serializer):
+    text = serializers.CharField(help_text='Text to be tagged.')
+    hide_false = serializers.BooleanField(default=False, help_text='Hide negative tagging results in response.')
+    lemmatize = serializers.BooleanField(default=False, help_text='Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
+    feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
+    taggers = serializers.ListField(
+        help_text='List of Tagger IDs to be used.',
+        child=serializers.IntegerField(),
+        default=[]
+    )
+
+
 class TaggerListFeaturesSerializer(serializers.Serializer):
     size = serializers.IntegerField(default=100, help_text='Default: 100')
 
@@ -61,16 +73,17 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
+    fact_name = serializers.CharField(default=None, required=False, help_text=f'Fact name used to filter tags (fact values). Default: None')
     url = serializers.SerializerMethodField()
     tagger_groups = serializers.SerializerMethodField(read_only=True)
 
 
     class Meta:
         model = Tagger
-        fields = ('id', 'url', 'author_username', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
+        fields = ('id', 'url', 'author_username', 'description', 'query', 'fact_name', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
                   'maximum_sample_size', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score',
-                  'num_features', 'num_positives', 'num_negatives', 'plot', 'task', "indices", "tagger_groups")
-        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'stop_words', 'num_positives', 'num_negatives', "tagger_groups")
+                  'num_features', 'num_examples', 'plot', 'task', "indices", "tagger_groups")
+        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'stop_words', 'num_examples', "tagger_groups")
         fields_to_parse = ('fields',)
 
 
@@ -99,7 +112,7 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     description = serializers.CharField(help_text=f'Description for the Tagger Group.')
     minimum_sample_size = serializers.IntegerField(default=DEFAULT_MIN_SAMPLE_SIZE, help_text=f'Minimum number of documents required to train a model. Default: {DEFAULT_MIN_SAMPLE_SIZE}')
     fact_name = serializers.CharField(default=DEFAULT_TAGGER_GROUP_FACT_NAME, help_text=f'Fact name used to filter tags (fact values). Default: {DEFAULT_TAGGER_GROUP_FACT_NAME}')
-    tagger = TaggerSerializer(write_only=True, remove_fields=['description', 'query'])
+    tagger = TaggerSerializer(write_only=True, remove_fields=['description', 'query', 'fact_name'])
     num_tags = serializers.IntegerField(read_only=True)
     tagger_status = serializers.SerializerMethodField()
     tagger_statistics = serializers.SerializerMethodField()

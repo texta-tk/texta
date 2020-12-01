@@ -57,12 +57,14 @@ class DataSample:
         :return: list of class names, list of queries
         """
         fact_name = None
+        min_count = 0
         if hasattr(self.tagger_object, 'fact_name'):
             fact_name = self.tagger_object.fact_name
 
         if fact_name:
             # retrieve class names using fact_name field
-            min_count = self.tagger_object.minimum_sample_size
+            if hasattr(self.tagger_object, 'minimum_sample_size'):
+                min_count = self.tagger_object.minimum_sample_size
             class_names = self._get_tags(fact_name, min_count)
             queries = self._create_queries(fact_name, class_names)
         else:

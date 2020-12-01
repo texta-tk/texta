@@ -32,7 +32,7 @@ class TaggerViewTests(APITransactionTestCase):
         self.project.users.add(self.user)
         self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/taggers/'
         self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
-        self.multitag_text_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/multitag_text/'
+        self.multitag_text_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/taggers/multitag_text/'
 
         # set vectorizer & classifier options
         self.vectorizer_opts = ('Count Vectorizer', 'Hashing Vectorizer', 'TfIdf Vectorizer')

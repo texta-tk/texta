@@ -4,7 +4,6 @@ import pathlib
 import elasticsearch
 import elasticsearch_dsl
 import rest_framework.filters as drf_filters
-from celery import group
 from django.db.models import Count
 from django.urls import reverse
 from django_filters import rest_framework as filters
@@ -14,12 +13,10 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from toolkit.core.health.utils import get_redis_status
 from toolkit.core.project.models import Project
 from toolkit.core.project.serializers import (
     ExportSearcherResultsSerializer, ProjectGetFactsSerializer,
     ProjectGetSpamSerializer,
-    ProjectMultiTagSerializer,
     ProjectSearchByQuerySerializer,
     ProjectSerializer,
     ProjectSimplifiedSearchSerializer,
@@ -36,12 +33,11 @@ from toolkit.elastic.spam_detector import SpamDetector
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, RedisNotAvailable, SerializerNotValid
 from toolkit.helper_functions import add_finite_url_to_feedback, hash_string
 from toolkit.permissions.project_permissions import (ExtraActionResource, IsSuperUser, ProjectAllowed)
-from toolkit.settings import CELERY_SHORT_TERM_TASK_QUEUE, RELATIVE_PROJECT_DATA_PATH, SEARCHER_FOLDER_KEY
+from toolkit.settings import RELATIVE_PROJECT_DATA_PATH, SEARCHER_FOLDER_KEY
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
 from toolkit.tools.autocomplete import Autocomplete
 from toolkit.view_constants import FeedbackIndexView
-from toolkit.tools.celery_lemmatizer import CeleryLemmatizer
 
 
 class ProjectFilter(filters.FilterSet):
@@ -292,51 +288,6 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         es.update_query(serializer.validated_data["query"])
         results = es.search()
         return Response(results, status=status.HTTP_200_OK)
-
-
-    @action(detail=True, methods=['post'], serializer_class=ProjectMultiTagSerializer, permission_classes=[ExtraActionResource])
-    def multitag_text(self, request, pk=None, project_pk=None):
-        """
-        Applies list of tagger objects inside project to any text.
-        This is different from Tagger Group as **all** taggers in project are used and they do not have to reside in the same Tagger Group.
-        Returns list of tags.
-        """
-        serializer = ProjectMultiTagSerializer(data=request.data)
-        # validate serializer
-        if not serializer.is_valid():
-            raise SerializerNotValid(detail=serializer.errors)
-        # get project object
-        project_object = self.get_object()
-        # get available taggers from project
-        taggers = Tagger.objects.filter(project=project_object).filter(task__status=Task.STATUS_COMPLETED)
-        # filter again
-        if serializer.validated_data['taggers']:
-            taggers = taggers.filter(pk__in=serializer.validated_data['taggers'])
-        # error if filtering resulted 0 taggers
-        if not taggers:
-            raise NonExistantModelError(detail='No tagging models available.')
-        # retrieve params
-        lemmatize = serializer.validated_data['lemmatize']
-        feedback = serializer.validated_data['feedback_enabled']
-        text = serializer.validated_data['text']
-        hide_false = serializer.validated_data['hide_false']
-        # error if redis not available
-        if not get_redis_status()['alive']:
-            raise RedisNotAvailable()
-        # lemmatize text just once before giving it to taggers!
-        if lemmatize:
-            text = CeleryLemmatizer().lemmatize(text)
-        # tag text using celery group primitive
-        group_task = group(apply_tagger.s(tagger.pk, text, input_type='text', lemmatize=False, feedback=feedback) for tagger in taggers)
-        group_results = [a for a in group_task.apply(queue=CELERY_SHORT_TERM_TASK_QUEUE).get() if a]
-        # remove non-hits
-        if hide_false is True:
-            group_results = [a for a in group_results if a['result']]
-        # if feedback was enabled, add urls
-        group_results = [add_finite_url_to_feedback(a, request) for a in group_results]
-        # sort & return tags
-        sorted_tags = sorted(group_results, key=lambda k: k['probability'], reverse=True)
-        return Response(sorted_tags, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactValuesSerializer, permission_classes=[ExtraActionResource])

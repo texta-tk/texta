@@ -92,7 +92,6 @@ def train_tagger_task(tagger_id: int):
     logging.getLogger(INFO_LOGGER).info(f"Starting task 'train_tagger' for tagger with ID: {tagger_id}!")
     tagger_object = Tagger.objects.get(id=tagger_id)
     task_object = tagger_object.task
-
     try:
         # create progress object
         show_progress = ShowProgress(task_object, multiplier=1)
@@ -142,9 +141,8 @@ def train_tagger_task(tagger_id: int):
         tagger_object.plot.save(image_name, create_tagger_plot(tagger.report.to_dict()), save=False)
         image_path = pathlib.Path(MEDIA_URL) / image_name
 
-        # get num positives & negatives
-        num_positives = len(data_sample.data["true"])
-        num_negatives = len(data_sample.data["false"])
+        # get num examples
+        num_examples = {k:len(v) for k,v in data_sample.data.items()}
 
         return {
             "id": tagger_id,
@@ -153,8 +151,7 @@ def train_tagger_task(tagger_id: int):
             "recall": float(tagger.report.recall),
             "f1_score": float(tagger.report.f1_score),
             "num_features": tagger.report.num_features,
-            "num_positives": num_positives,
-            "num_negatives": num_negatives,
+            "num_examples": num_examples,
             "model_size": round(float(os.path.getsize(tagger_full_path)) / 1000000, 1),  # bytes to mb
             "plot": str(image_path)
         }
@@ -182,8 +179,7 @@ def save_tagger_results(result_data: dict):
         tagger_object.recall = result_data["recall"]
         tagger_object.f1_score = result_data["f1_score"]
         tagger_object.num_features = result_data["num_features"]
-        tagger_object.num_positives = result_data["num_positives"]
-        tagger_object.num_negatives = result_data["num_negatives"]
+        tagger_object.num_examples = json.dumps(result_data["num_examples"])
         tagger_object.model_size = result_data["model_size"]
         tagger_object.plot.name = result_data["plot"]
         tagger_object.save()
