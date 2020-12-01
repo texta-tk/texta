@@ -41,6 +41,7 @@ from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
 from toolkit.tools.autocomplete import Autocomplete
 from toolkit.view_constants import FeedbackIndexView
+from toolkit.tools.celery_lemmatizer import CeleryLemmatizer
 
 
 class ProjectFilter(filters.FilterSet):
@@ -322,10 +323,12 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         # error if redis not available
         if not get_redis_status()['alive']:
             raise RedisNotAvailable()
+        # lemmatize text just once before giving it to taggers!
+        if lemmatize:
+            text = CeleryLemmatizer().lemmatize(text)
         # tag text using celery group primitive
-        group_task = group(apply_tagger.s(tagger.pk, text, input_type='text', lemmatize=lemmatize, feedback=feedback) for tagger in taggers)
+        group_task = group(apply_tagger.s(tagger.pk, text, input_type='text', lemmatize=False, feedback=feedback) for tagger in taggers)
         group_results = [a for a in group_task.apply(queue=CELERY_SHORT_TERM_TASK_QUEUE).get() if a]
-
         # remove non-hits
         if hide_false is True:
             group_results = [a for a in group_results if a['result']]

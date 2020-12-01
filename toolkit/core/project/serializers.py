@@ -95,14 +95,13 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
     def update(self, instance, validated_data):
         from toolkit.elastic.models import Index
 
-        ec = ElasticCore()
-        ec.syncher()
-
         if "title" in validated_data:
             instance.title = validated_data["title"]
             instance.save()
 
         if "get_indices" in validated_data:
+            ec = ElasticCore()
+            ec.syncher()
             container = []
             for index_name in validated_data["get_indices"]:
                 index, is_created = Index.objects.get_or_create(name=index_name)
@@ -124,19 +123,18 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
         title = validated_data["title"]
         users = validated_data["users"]
         author = self.context["request"].user
-
-        ec = ElasticCore()
-        ec.syncher()
-
+        # create object
         project = Project.objects.create(title=title, author=author)
         project.users.set(users)
-
-        for index_name in indices:
-            index, is_created = Index.objects.get_or_create(name=index_name)
-            project.indices.add(index)
-
+        # only run if indices given as we might not have elastic running
+        if indices:
+            ec = ElasticCore()
+            ec.syncher()
+            for index_name in indices:
+                index, is_created = Index.objects.get_or_create(name=index_name)
+                project.indices.add(index)
+        # save project
         project.save()
-
         return project
 
 
