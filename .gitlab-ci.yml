@@ -35,6 +35,10 @@ Test:
   stage: test
   tags:
     - ci-test
+  artifacts:
+    paths:
+      - data/media
+    expire_in: 1 week
   script:
     - sh wait-for-uaa.sh
     - python manage.py test
