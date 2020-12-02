@@ -13,7 +13,7 @@ from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.base_tasks import TransactionAwareTask
 from toolkit.elastic.data_sample import DataSample
-from toolkit.torchtagger.plots import create_torchtagger_plot
+from toolkit.tools.plots import create_tagger_plot
 from toolkit.settings import RELATIVE_MODELS_PATH, CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.helper_functions import get_core_setting, get_indices_from_object
 
@@ -48,22 +48,23 @@ def train_torchtagger(tagger_id, testing=False):
             model_arch=tagger_object.model_architecture
         )
         # train tagger and get result statistics
-        tagger_stats = tagger.train(data_sample.data, num_epochs=int(tagger_object.num_epochs))
+        report = tagger.train(data_sample.data, num_epochs=int(tagger_object.num_epochs))
         # save tagger to disk
         tagger_path = os.path.join(RELATIVE_MODELS_PATH, model_type, f'{model_type}_{tagger_id}_{secrets.token_hex(10)}')
         tagger.save(tagger_path)
         # set tagger location
         tagger_object.model.name = tagger_path
         # save tagger plot
-        tagger_object.plot.save(f'{secrets.token_hex(15)}.png', create_torchtagger_plot(tagger_stats))
+        report_dict = report.to_dict()
+        tagger_object.plot.save(f'{secrets.token_hex(15)}.png', create_tagger_plot(report_dict), save=False)
         # save label index
         tagger_object.label_index = json.dumps(tagger.label_reverse_index)
         # stats to model object
-        tagger_object.f1_score = tagger_stats.f1_score
-        tagger_object.precision = tagger_stats.precision
-        tagger_object.recall = tagger_stats.recall
-        tagger_object.accuracy = tagger_stats.accuracy
-        tagger_object.training_loss = tagger_stats.training_loss
+        tagger_object.f1_score = report.f1_score
+        tagger_object.precision = report.precision
+        tagger_object.recall = report.recall
+        tagger_object.accuracy = report.accuracy
+        tagger_object.training_loss = report.training_loss
         tagger_object.epoch_reports = json.dumps([a.to_dict() for a in tagger.epoch_reports])
         # save tagger object
         tagger_object.save()

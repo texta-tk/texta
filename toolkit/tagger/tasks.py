@@ -19,7 +19,7 @@ from toolkit.elastic.models import Index
 from toolkit.helper_functions import get_indices_from_object
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, MEDIA_URL
 from toolkit.tagger.models import Tagger, TaggerGroup
-from toolkit.tagger.plots import create_tagger_plot
+from toolkit.tools.plots import create_tagger_plot
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.tools.celery_lemmatizer import CeleryLemmatizer
 

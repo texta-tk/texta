@@ -1,13 +1,18 @@
 from itertools import product
-
+from io import BytesIO
+from django.core.files.base import ContentFile
 import matplotlib
-
 
 # For non-GUI rendering
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
-from toolkit.tools.plot_utils import save_plot
 import numpy as np
+
+
+def save_plot(plt):
+    f = BytesIO()
+    plt.savefig(f)
+    return ContentFile(f.getvalue())
 
 
 def create_tagger_plot(statistics: dict):
