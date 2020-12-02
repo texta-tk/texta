@@ -17,7 +17,9 @@ from toolkit.test_settings import (TEST_FIELD,
                                    TEST_INDEX,
                                    TEST_MATCH_TEXT,
                                    TEST_QUERY,
-                                   TEST_VERSION_PREFIX)
+                                   TEST_VERSION_PREFIX,
+                                   TEST_KEEP_PLOT_FILES
+                                   )
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
@@ -98,7 +100,8 @@ class TaggerViewTests(APITransactionTestCase):
                 self.assertEqual(created_tagger.task.errors, '[]')
                 # Remove tagger files after test is done
                 self.addCleanup(remove_file, created_tagger.model.path)
-                self.addCleanup(remove_file, created_tagger.plot.path)
+                if not TEST_KEEP_PLOT_FILES:
+                    self.addCleanup(remove_file, created_tagger.plot.path)
                 # Check if Task gets created via a signal
                 self.assertTrue(created_tagger.task is not None)
                 # Check if Tagger gets trained and completed

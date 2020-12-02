@@ -6,7 +6,13 @@ from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
-from toolkit.test_settings import (TEST_FACT_NAME, TEST_FIELD_CHOICE, TEST_INDEX, TEST_VERSION_PREFIX)
+from toolkit.test_settings import (
+    TEST_FACT_NAME,
+    TEST_FIELD_CHOICE,
+    TEST_INDEX,
+    TEST_VERSION_PREFIX,
+    TEST_KEEP_PLOT_FILES
+    )
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 from toolkit.torchtagger.models import TorchTagger
 from toolkit.torchtagger.torch_models.models import TORCH_MODELS
@@ -41,7 +47,8 @@ class TorchTaggerViewTests(APITransactionTestCase):
     def add_cleanup_files(self, tagger_id):
         tagger_object = TorchTagger.objects.get(pk=tagger_id)
         self.addCleanup(remove_file, tagger_object.model.path)
-        self.addCleanup(remove_file, tagger_object.plot.path)
+        if not TEST_KEEP_PLOT_FILES:
+            self.addCleanup(remove_file, tagger_object.plot.path)
         self.addCleanup(remove_file, tagger_object.embedding.embedding_model.path)
 
 
