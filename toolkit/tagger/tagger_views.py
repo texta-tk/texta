@@ -1,6 +1,6 @@
+from celery import group
 import json
 import os
-
 import rest_framework.filters as drf_filters
 from django.db import transaction
 from django.http import HttpResponse
@@ -8,8 +8,10 @@ from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from texta_tagger.tagger import Tagger as TextTagger
 
 from toolkit.core.project.models import Project
+from toolkit.core.task.models import Task
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import ElasticSearcher
@@ -19,16 +21,24 @@ from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import (
     GeneralTextSerializer,
     ProjectResourceImportModelSerializer)
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE
 from toolkit.tagger.models import Tagger
-from toolkit.tagger.serializers import (TagRandomDocSerializer, TaggerListFeaturesSerializer, TaggerSerializer, TaggerTagDocumentSerializer, TaggerTagTextSerializer)
+from toolkit.tagger.serializers import (
+    TagRandomDocSerializer,
+    TaggerListFeaturesSerializer,
+    TaggerSerializer,
+    TaggerTagDocumentSerializer,
+    TaggerTagTextSerializer,
+    TaggerMultiTagSerializer
+    )
 from toolkit.tagger.tasks import apply_tagger, save_tagger_results, start_tagger_task, train_tagger_task
-from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import (
     BulkDelete,
     FeedbackModelView,
 )
+from toolkit.tools.celery_lemmatizer import CeleryLemmatizer
+from toolkit.core.health.utils import get_redis_status
 
 
 class TaggerFilter(filters.FilterSet):
@@ -89,15 +99,12 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         serializer.is_valid(raise_exception=True)
         # retrieve tagger object
         tagger_object: Tagger = self.get_object()
-
         # check if tagger exists
         if not tagger_object.model.path:
             raise NonExistantModelError()
-
         # retrieve model
-        tagger = TextTagger(tagger_object.id)
-        tagger.load()
-
+        tagger = TextTagger()
+        tagger.load_django(tagger_object)
         try:
             # get feature names
             features = tagger.get_feature_names()
@@ -266,3 +273,48 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         tagger_response = apply_tagger(tagger_object.id, random_doc_filtered, input_type='doc')
         response = {"document": random_doc, "prediction": tagger_response}
         return Response(response, status=status.HTTP_200_OK)
+
+
+    @action(detail=False, methods=['post'], serializer_class=TaggerMultiTagSerializer)
+    def multitag_text(self, request, pk=None, project_pk=None):
+        """
+        Applies list of tagger objects inside project to any text.
+        This is different from Tagger Group as **all** taggers in project are used and they do not have to reside in the same Tagger Group.
+        Returns list of tags.
+        """
+        serializer = TaggerMultiTagSerializer(data=request.data)
+        # validate serializer
+        if not serializer.is_valid():
+            raise SerializerNotValid(detail=serializer.errors)
+        # get project object
+        project_object = Project.objects.get(pk=project_pk)
+        # get available taggers from project
+        taggers = Tagger.objects.filter(project=project_object).filter(task__status=Task.STATUS_COMPLETED)
+        # filter again
+        if serializer.validated_data['taggers']:
+            taggers = taggers.filter(pk__in=serializer.validated_data['taggers'])
+        # error if filtering resulted 0 taggers
+        if not taggers:
+            raise NonExistantModelError(detail='No tagging models available.')
+        # retrieve params
+        lemmatize = serializer.validated_data['lemmatize']
+        feedback = serializer.validated_data['feedback_enabled']
+        text = serializer.validated_data['text']
+        hide_false = serializer.validated_data['hide_false']
+        # error if redis not available
+        if not get_redis_status()['alive']:
+            raise RedisNotAvailable()
+        # lemmatize text just once before giving it to taggers!
+        if lemmatize:
+            text = CeleryLemmatizer().lemmatize(text)
+        # tag text using celery group primitive
+        group_task = group(apply_tagger.s(tagger.pk, text, input_type='text', lemmatize=False, feedback=feedback) for tagger in taggers)
+        group_results = [a for a in group_task.apply(queue=CELERY_SHORT_TERM_TASK_QUEUE).get() if a]
+        # remove non-hits
+        if hide_false is True:
+            group_results = [a for a in group_results if a['result']]
+        # if feedback was enabled, add urls
+        group_results = [add_finite_url_to_feedback(a, request) for a in group_results]
+        # sort & return tags
+        sorted_tags = sorted(group_results, key=lambda k: k['probability'], reverse=True)
+        return Response(sorted_tags, status=status.HTTP_200_OK)

@@ -6,7 +6,7 @@ channels:
   - bioconda
 
 dependencies:
-  - python=3.6
+  - python=3.7
   - pip
   - pandas
   - scikit-learn==0.*
@@ -43,9 +43,10 @@ dependencies:
       - texta-anonymizer==1.1.*
       - texta-mlp==1.4.*
       - texta-lexicon-matcher==1.1.*
+      - texta-tools==1.1.*
+      - texta-tagger==1.1.*
+      - texta-torch-tagger==1.0.*
       - torch==1.5.*
       - torchtext==0.6.*
-      # For UAA
       - pyjwt
-      # For UAA tests
       - beautifulsoup4

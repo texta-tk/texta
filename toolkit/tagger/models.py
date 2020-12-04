@@ -32,6 +32,7 @@ class Tagger(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
+    fact_name = models.CharField(max_length=MAX_DESC_LEN, null=True)
     indices = models.ManyToManyField(Index)
     fields = models.TextField(default=json.dumps([]))
     embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
@@ -46,9 +47,7 @@ class Tagger(models.Model):
     recall = models.FloatField(default=None, null=True)
     f1_score = models.FloatField(default=None, null=True)
     num_features = models.IntegerField(default=None, null=True)
-
-    num_positives = models.IntegerField(default=None, null=True)
-    num_negatives = models.IntegerField(default=None, null=True)
+    num_examples = models.TextField(default="{}", null=True)
 
     model = models.FileField(null=True, verbose_name='', default=None)
     model_size = models.FloatField(default=None, null=True)

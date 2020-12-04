@@ -224,12 +224,10 @@ class ElasticSearcher:
         scroll_break = False
         # iterate through scroll
         while page_size > 0 and scroll_break is False:
-
             # process output
             if self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID, self.OUT_TEXT, self.OUT_TEXT_WITH_ID):
                 if self.callback_progress:
                     self.callback_progress.update(page_size)
-
                 for hit in page['hits']['hits']:
                     # if scroll limit reached, break the scroll
                     if self.scroll_limit and num_scrolled >= self.scroll_limit:
@@ -244,8 +242,9 @@ class ElasticSearcher:
                         parsed_doc = self._parse_doc(hit)
                         if self.output == self.OUT_TEXT:
                             for field in parsed_doc.values():
-                                processed_field = self.text_processor.process(field)
-                                for text in processed_field:
+                                if self.text_processor:
+                                    field = self.text_processor.process(field)
+                                for text in field:
                                     yield text
 
                         elif self.output == self.OUT_TEXT_WITH_ID:
@@ -253,8 +252,7 @@ class ElasticSearcher:
                             for key, value in parsed_doc.items():
                                 if key in self.field_data:
                                     processed_field = self.text_processor.process(value)
-                                    for text in processed_field:
-                                        document[key] = text
+                                    document[key] = processed_field
                             yield hit["_id"], document
 
 

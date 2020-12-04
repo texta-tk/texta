@@ -16,6 +16,8 @@ variables:
   TEXTA_UAA_FRONT_REDIRECT_URL: http://localhost:4200/oauth
   TEXTA_UAA_CLIENT_ID: login
   TEXTA_UAA_CLIENT_SECRET: loginsecret
+  # For keeping plots as artifacts
+  TEXTA_TEST_KEEP_PLOT_FILES: "True"
 
 services:
   - name: redis:latest
@@ -35,6 +37,10 @@ Test:
   stage: test
   tags:
     - ci-test
+  artifacts:
+    paths:
+      - data/media
+    expire_in: 1 week
   script:
     - sh wait-for-uaa.sh
     - python manage.py test

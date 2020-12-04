@@ -8,23 +8,24 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from texta_torch_tagger.tagger import TorchTagger
+from texta_tools.text_processor import TextProcessor
+from texta_tools.embedding import W2VEmbedding
+
 from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.embedding.phraser import Phraser
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed
 from toolkit.helper_functions import add_finite_url_to_feedback
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.tagger.serializers import TaggerTagTextSerializer
-from toolkit.tools.text_processor import TextProcessor
 from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
 from toolkit.torchtagger.serializers import TagRandomDocSerializer, TorchTaggerSerializer
 from toolkit.torchtagger.tasks import train_torchtagger
-from toolkit.torchtagger.torchtagger import TorchTagger
 from toolkit.view_constants import BulkDelete, FeedbackModelView
 
 
@@ -157,23 +158,24 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         return Response(prediction, status=status.HTTP_200_OK)
 
 
-    def apply_tagger(self, tagger_object, tagger_input, input_type='text', lemmatize=None, feedback=False):
-        # use phraser is embedding used
-        if tagger_object.embedding:
-            phraser = Phraser(tagger_object.embedding.id)
-            phraser.load()
-            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, lemmatize=lemmatize)
-        else:
-            text_processor = TextProcessor(remove_stop_words=True, lemmatize=lemmatize)
+    def apply_tagger(self, tagger_object, tagger_input, input_type='text', feedback=False):
+        # load embedding & phraser
+        embedding = W2VEmbedding()
+        embedding.load_django(tagger_object.embedding)
         # retrieve model
-        tagger = TorchTagger(tagger_object.id)
-        tagger.load()
+        tagger = TorchTagger(embedding)
+        tagger.load_django(tagger_object)
         # tag text
         if input_type == 'doc':
             tagger_result = tagger.tag_doc(tagger_input)
         else:
             tagger_result = tagger.tag_text(tagger_input)
-        prediction = {'result': tagger_result[0], 'probability': tagger_result[1]}
+        # reform output
+        prediction = {
+            'probability': tagger_result['probability'],
+            'tagger_id': tagger_object.id,
+            'result': tagger_result['prediction']
+        }
         # add optional feedback
         if feedback:
             project_pk = tagger_object.project.pk

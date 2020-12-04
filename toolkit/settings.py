@@ -232,8 +232,8 @@ ES_CONNECTION_PARAMETERS = {
     "sniff_on_connection_fail": True if os.getenv("TEXTA_ES_SNIFF_ON_FAIL", "true").lower() == "true" else False
 }
 
-# CELERY OPTIONS
-BROKER_URL = os.getenv("TEXTA_REDIS_URL", "redis://localhost:6379")
+# CELERY
+BROKER_URL = os.getenv('TEXTA_REDIS_URL', 'redis://localhost:6379')
 CELERY_RESULT_BACKEND = BROKER_URL
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"

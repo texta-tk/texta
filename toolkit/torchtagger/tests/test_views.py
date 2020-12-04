@@ -6,7 +6,13 @@ from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
-from toolkit.test_settings import (TEST_FACT_NAME, TEST_FIELD_CHOICE, TEST_INDEX, TEST_VERSION_PREFIX)
+from toolkit.test_settings import (
+    TEST_FACT_NAME,
+    TEST_FIELD_CHOICE,
+    TEST_INDEX,
+    TEST_VERSION_PREFIX,
+    TEST_KEEP_PLOT_FILES
+    )
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 from toolkit.torchtagger.models import TorchTagger
 from toolkit.torchtagger.torch_models.models import TORCH_MODELS
@@ -30,8 +36,8 @@ class TorchTaggerViewTests(APITransactionTestCase):
 
     def test(self):
         self.run_train_embedding()
-        self.run_train_tagger()
-        self.run_train_multiclass_tagger()
+        self.run_train_tagger_using_query()
+        self.run_train_multiclass_tagger_using_fact_name()
         self.run_tag_text()
         self.run_tag_random_doc()
         self.run_tag_and_feedback_and_retrain()
@@ -41,10 +47,9 @@ class TorchTaggerViewTests(APITransactionTestCase):
     def add_cleanup_files(self, tagger_id):
         tagger_object = TorchTagger.objects.get(pk=tagger_id)
         self.addCleanup(remove_file, tagger_object.model.path)
-        self.addCleanup(remove_file, tagger_object.text_field.path)
-        self.addCleanup(remove_file, tagger_object.plot.path)
+        if not TEST_KEEP_PLOT_FILES:
+            self.addCleanup(remove_file, tagger_object.plot.path)
         self.addCleanup(remove_file, tagger_object.embedding.embedding_model.path)
-        self.addCleanup(remove_file, tagger_object.embedding.phraser_model.path)
 
 
     def run_train_embedding(self):
@@ -63,11 +68,10 @@ class TorchTaggerViewTests(APITransactionTestCase):
         print_output("run_train_embedding", 201)
 
 
-    def run_train_tagger(self):
+    def run_train_tagger_using_query(self):
         """Tests TorchTagger training, and if a new Task gets created via the signal"""
         payload = {
             "description": "TestTorchTaggerTraining",
-            # "fact_name": TEST_FACT_NAME,
             "fields": TEST_FIELD_CHOICE,
             "maximum_sample_size": 500,
             "model_architecture": self.torch_models[0],
@@ -77,7 +81,7 @@ class TorchTaggerViewTests(APITransactionTestCase):
 
         print_output(f"training tagger with payload: {payload}", 200)
         response = self.client.post(self.url, payload, format='json')
-        print_output('test_create_torchtagger_training_and_task_signal:response.data', response.data)
+        print_output('test_create_binary_torchtagger_training_and_task_signal:response.data', response.data)
 
         # Check if Neurotagger gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -93,7 +97,7 @@ class TorchTaggerViewTests(APITransactionTestCase):
         self.add_cleanup_files(tagger_id)
 
 
-    def run_train_multiclass_tagger(self):
+    def run_train_multiclass_tagger_using_fact_name(self):
         """Tests TorchTagger training with multiple classes and if a new Task gets created via the signal"""
         payload = {
             "description": "TestTorchTaggerTraining",
@@ -105,7 +109,7 @@ class TorchTaggerViewTests(APITransactionTestCase):
             "embedding": self.test_embedding_id,
         }
         response = self.client.post(self.url, payload, format='json')
-        print_output('test_create_torchtagger_training_and_task_signal:response.data', response.data)
+        print_output('test_create_multiclass_torchtagger_training_and_task_signal:response.data', response.data)
         # Check if Neurotagger gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         # Check if f1 not NULL (train and validation success)

@@ -84,9 +84,7 @@ class EmbeddingViewTests(TransactionTestCase):
         created_embedding_url = f'{self.url}{created_embedding_id}/'
         created_embedding_obj = Embedding.objects.get(id=created_embedding_id)
         embedding_model_location = created_embedding_obj.embedding_model.path
-        phraser_model_location = created_embedding_obj.phraser_model.path
         self.assertEqual(os.path.isfile(embedding_model_location), True)
-        self.assertEqual(os.path.isfile(phraser_model_location), True)
 
         additional_path = pathlib.Path(embedding_model_location + ".trainables.syn1neg.npy")
         additional_path_2 = pathlib.Path(embedding_model_location + ".wv.vectors.npy")
@@ -97,7 +95,6 @@ class EmbeddingViewTests(TransactionTestCase):
         print_output('delete_response.data: ', delete_response.data)
         self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(os.path.isfile(embedding_model_location), False)
-        self.assertEqual(os.path.isfile(phraser_model_location), False)
 
         print_output('delete_additional_embedding_files: ', not additional_path.exists())
         self.assertFalse(additional_path.exists())
@@ -156,35 +153,24 @@ class EmbeddingViewTests(TransactionTestCase):
 
     def run_model_export_import(self):
         """Tests endpoint for model export and import"""
-
         # Retrieve model zip
         url = f'{self.url}{self.test_embedding_id}/export_model/'
         response = self.client.get(url)
-
         # Post model zip
         import_url = f'{self.url}import_model/'
         response = self.client.post(import_url, data={'file': BytesIO(response.content)})
         print_output('test_import_model:response.data', import_url)
-
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
         # Test prediction with imported embedding
         imported_embedding_id = response.data['id']
         print_output('test_import_model:response.data', response.data)
-
         embedding = Embedding.objects.get(id=imported_embedding_id)
 
         embedding_model_dir = pathlib.Path(RELATIVE_MODELS_PATH) / "embedding"
         embedding_model_path = pathlib.Path(embedding.embedding_model.name)
-        embedding_phraser_path = pathlib.Path(embedding.phraser_model.name)
-
         self.assertTrue(embedding_model_path.exists())
-        self.assertTrue(embedding_phraser_path.exists())
-
         # Check whether the model was saved into the right location.
         self.assertTrue(str(embedding_model_dir) in str(embedding.embedding_model.path))
-        self.assertTrue(str(embedding_model_dir) in str(embedding.phraser_model.path))
-
         self.run_predict(imported_embedding_id)
 
 

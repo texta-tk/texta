@@ -17,7 +17,9 @@ from toolkit.test_settings import (TEST_FIELD,
                                    TEST_INDEX,
                                    TEST_MATCH_TEXT,
                                    TEST_QUERY,
-                                   TEST_VERSION_PREFIX)
+                                   TEST_VERSION_PREFIX,
+                                   TEST_KEEP_PLOT_FILES
+                                   )
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
@@ -32,7 +34,7 @@ class TaggerViewTests(APITransactionTestCase):
         self.project.users.add(self.user)
         self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/taggers/'
         self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
-        self.multitag_text_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/multitag_text/'
+        self.multitag_text_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/taggers/multitag_text/'
 
         # set vectorizer & classifier options
         self.vectorizer_opts = ('Count Vectorizer', 'Hashing Vectorizer', 'TfIdf Vectorizer')
@@ -69,6 +71,7 @@ class TaggerViewTests(APITransactionTestCase):
 
     def run_create_tagger_training_and_task_signal(self):
         """Tests the endpoint for a new Tagger, and if a new Task gets created via the signal"""
+        lemmatize = True
         # run test for each vectorizer & classifier option
         for vectorizer_opt in self.vectorizer_opts:
             for classifier_opt in self.classifier_opts:
@@ -76,13 +79,16 @@ class TaggerViewTests(APITransactionTestCase):
                     "description": "TestTagger",
                     "query": json.dumps(TEST_QUERY),
                     "fields": TEST_FIELD_CHOICE,
+                    "lemmatize": lemmatize,
                     "vectorizer": vectorizer_opt,
                     "classifier": classifier_opt,
                     "maximum_sample_size": 500,
                     "negative_multiplier": 1.0,
                     "score_threshold": 0.1
                 }
-
+                # as lemmatization is slow, do it only once
+                lemmatize = False
+                # procees to analyze result
                 response = self.client.post(self.url, payload, format='json')
                 print_output('test_create_tagger_training_and_task_signal:response.data', response.data)
                 # Check if Tagger gets created
@@ -94,7 +100,8 @@ class TaggerViewTests(APITransactionTestCase):
                 self.assertEqual(created_tagger.task.errors, '[]')
                 # Remove tagger files after test is done
                 self.addCleanup(remove_file, created_tagger.model.path)
-                self.addCleanup(remove_file, created_tagger.plot.path)
+                if not TEST_KEEP_PLOT_FILES:
+                    self.addCleanup(remove_file, created_tagger.plot.path)
                 # Check if Task gets created via a signal
                 self.assertTrue(created_tagger.task is not None)
                 # Check if Tagger gets trained and completed

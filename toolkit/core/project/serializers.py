@@ -17,18 +17,6 @@ class ExportSearcherResultsSerializer(serializers.Serializer):
     query = serializers.JSONField(help_text="Which query results to fetch.", default=EMPTY_QUERY)
 
 
-class ProjectMultiTagSerializer(serializers.Serializer):
-    text = serializers.CharField(help_text='Text to be tagged.')
-    hide_false = serializers.BooleanField(default=False, help_text='Hide negative tagging results in response.')
-    lemmatize = serializers.BooleanField(default=False, help_text='Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
-    feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
-    taggers = serializers.ListField(
-        help_text='List of Tagger IDs to be used.',
-        child=serializers.IntegerField(),
-        default=[]
-    )
-
-
 class ProjectSearchByQuerySerializer(serializers.Serializer):
     query = serializers.JSONField(help_text='Query to search', default=EMPTY_QUERY)
     indices = serializers.ListField(

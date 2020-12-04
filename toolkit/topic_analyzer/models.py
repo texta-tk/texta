@@ -18,7 +18,7 @@ from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, RELATIVE_MODELS_PATH
-from toolkit.tools.text_processor import StopWords
+from texta_tools.text_processor import StopWords
 from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
 
 

@@ -55,7 +55,6 @@ class TorchTagger(models.Model):
     recall = models.FloatField(default=None, null=True)
     f1_score = models.FloatField(default=None, null=True)
     model = models.FileField(null=True, verbose_name='', default=None)
-    text_field = models.FileField(null=True, verbose_name='', default=None)
     plot = models.FileField(upload_to='data/media', null=True, verbose_name='')
 
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
@@ -98,7 +97,6 @@ class TorchTagger(models.Model):
                 torchtagger_model.project = Project.objects.get(id=pk)
 
                 embedding_model = Embedding.create_embedding_object(embedding_fields, user_id=request.user.id, project_id=pk)
-                embedding_model = Embedding.add_file_to_embedding_object(archive, embedding_model, embedding_fields, "phraser", "phraser_model")
                 embedding_model = Embedding.add_file_to_embedding_object(archive, embedding_model, embedding_fields, "embedding", "embedding_model")
                 Embedding.save_embedding_extra_files(archive, embedding_model, embedding_fields, extra_paths=extra_embeddings)
                 embedding_model.save()
@@ -115,13 +113,6 @@ class TorchTagger(models.Model):
                     path = pathlib.Path(torchtagger_json["model"]).name
                     fp.write(archive.read(path))
                     torchtagger_model.model.name = relative_model_path
-
-                text_field = "{}_text_field".format(str(full_model_path))
-                with open(text_field, "wb") as fp:
-                    path = pathlib.Path(torchtagger_json["text_field"]).name
-                    fp.write(archive.read(path))
-                    relative_path = "{}_text_field".format(str(relative_model_path))
-                    torchtagger_model.text_field.name = relative_path
 
                 plot_name = pathlib.Path(torchtagger_json["plot"])
                 path = plot_name.name
@@ -147,9 +138,6 @@ class TorchTagger(models.Model):
 
                 embedding_path = pathlib.Path(embedding["fields"]["embedding_model"])
                 archive.write(str(embedding_path), arcname=str(embedding_path.name))
-
-                phraser_path = pathlib.Path(embedding["fields"]["phraser_model"])
-                archive.write(str(phraser_path), arcname=str(phraser_path.name))
 
                 for file in embedding["embedding_extras"]:
                     archive.write(str(file), arcname=str(pathlib.Path(file).name))
@@ -186,7 +174,7 @@ class TorchTagger(models.Model):
 
 
     def get_resource_paths(self):
-        return {"plot": self.plot.path, "model": self.model.path, "text_field": self.text_field.path}
+        return {"plot": self.plot.path, "model": self.model.path}
 
 
 @receiver(models.signals.post_delete, sender=TorchTagger)
@@ -198,10 +186,6 @@ def auto_delete_torchtagger_on_delete(sender, instance: TorchTagger, **kwargs):
     if instance.model:
         if os.path.isfile(instance.model.path):
             os.remove(instance.model.path)
-
-    if instance.text_field:
-        if os.path.isfile(instance.text_field.path):
-            os.remove(instance.text_field.path)
 
     if instance.plot:
         if os.path.isfile(instance.plot.path):

@@ -5,27 +5,28 @@ import pathlib
 import re
 import secrets
 
-from celery.decorators import task
+from texta_tagger.tagger import Tagger as TextTagger
+from texta_tools.text_processor import TextProcessor
+from texta_tools.mlp_analyzer import get_mlp_analyzer
+from texta_tools.embedding import Phraser, W2VEmbedding
 
+from celery.decorators import task
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.data_sample import DataSample
 from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.models import Index
-from toolkit.embedding.phraser import Phraser
 from toolkit.helper_functions import get_indices_from_object
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, MEDIA_URL
 from toolkit.tagger.models import Tagger, TaggerGroup
-from toolkit.tagger.plots import create_tagger_plot
-from toolkit.tagger.text_tagger import TextTagger
+from toolkit.tools.plots import create_tagger_plot
 from toolkit.tools.show_progress import ShowProgress
-from toolkit.tools.text_processor import TextProcessor
+from toolkit.tools.celery_lemmatizer import CeleryLemmatizer
 
 
 def create_tagger_batch(tagger_group_id, taggers_to_create):
     """Creates Tagger objects from list of tagger data and saves into tagger group object."""
     # retrieve Tagger Group object
-
     tagger_group_object = TaggerGroup.objects.get(pk=tagger_group_id)
     # iterate through batch
     logging.getLogger(INFO_LOGGER).info(f"Creating {len(taggers_to_create)} taggers for TaggerGroup ID: {tagger_group_id}!")
@@ -46,7 +47,7 @@ def create_tagger_batch(tagger_group_id, taggers_to_create):
         # add and save
         tagger_group_object.taggers.add(created_tagger)
         tagger_group_object.save()
-
+        # train
         created_tagger.train()
 
 
@@ -59,9 +60,9 @@ def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries,
     taggers_to_create = []
     for i, tag in enumerate(tags):
         tagger_data = tagger_serializer.copy()
-        tagger_data.update({'query': json.dumps(tag_queries[i])})
-        tagger_data.update({'description': tag})
-        tagger_data.update({'fields': json.dumps(tagger_data['fields'])})
+        tagger_data.update({"query": json.dumps(tag_queries[i])})
+        tagger_data.update({"description": tag})
+        tagger_data.update({"fields": json.dumps(tagger_data["fields"])})
         taggers_to_create.append(tagger_data)
         # if batch size reached, save result
         if len(taggers_to_create) >= batch_size:
@@ -91,7 +92,6 @@ def train_tagger_task(tagger_id: int):
     logging.getLogger(INFO_LOGGER).info(f"Starting task 'train_tagger' for tagger with ID: {tagger_id}!")
     tagger_object = Tagger.objects.get(id=tagger_id)
     task_object = tagger_object.task
-
     try:
         # create progress object
         show_progress = ShowProgress(task_object, multiplier=1)
@@ -101,43 +101,34 @@ def train_tagger_task(tagger_id: int):
         # retrieve indices & field data
         indices = get_indices_from_object(tagger_object)
         field_data = json.loads(tagger_object.fields)
-
-        # split stop words by space or newline
-        stop_words = re.split(' |\n|\r\n', tagger_object.stop_words)
-
-        # remove empty strings
+        # split stop words by space or newline and remove empties
+        stop_words = re.split(" |\n|\r\n", tagger_object.stop_words)
         stop_words = [stop_word for stop_word in stop_words if stop_word]
-
-        # load embedding and create text processor
+        # load embedding if any
         if tagger_object.embedding:
-            logging.getLogger(INFO_LOGGER).info(f"Applying embedding ID {tagger_object.embedding.id} for tagger with ID {tagger_object.pk}!")
-            phraser = Phraser(embedding_id=tagger_object.embedding.pk)
-            phraser.load()
-            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words)
+            embedding = W2VEmbedding()
+            embedding.load_django(tagger_object.embedding)
         else:
-            text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
-
+            embedding = None
         # create Datasample object for retrieving positive and negative sample
         data_sample = DataSample(
             tagger_object,
             indices=indices,
             field_data=field_data,
-            show_progress=show_progress,
-            text_processor=text_processor
+            show_progress=show_progress
         )
-
         # update status to training
-        show_progress.update_step('training')
+        show_progress.update_step("training")
         show_progress.update_view(0)
-
         # train model
-        tagger = TextTagger(tagger_id)
-        logging.getLogger(INFO_LOGGER).info(f"Starting training process for tagger ID: {tagger_id}")
-        tagger.train(
-            data_sample,
-            field_list=json.loads(tagger_object.fields),
+        tagger = TextTagger(
+            embedding=embedding,
+            custom_stop_words=stop_words,
             classifier=tagger_object.classifier,
-            vectorizer=tagger_object.vectorizer
+            vectorizer=tagger_object.vectorizer)
+        tagger.train(
+            data_sample.data,
+            field_list=field_data
         )
 
         # save tagger to disk
@@ -147,18 +138,20 @@ def train_tagger_task(tagger_id: int):
 
         # Save the image before its path.
         image_name = f'{secrets.token_hex(15)}.png'
-        tagger_object.plot.save(image_name, create_tagger_plot(tagger.statistics), save=False)
+        tagger_object.plot.save(image_name, create_tagger_plot(tagger.report.to_dict()), save=False)
         image_path = pathlib.Path(MEDIA_URL) / image_name
+
+        # get num examples
+        num_examples = {k:len(v) for k,v in data_sample.data.items()}
 
         return {
             "id": tagger_id,
             "tagger_path": relative_tagger_path,
-            "precision": float(tagger.statistics['precision']),
-            "recall": float(tagger.statistics['recall']),
-            "f1_score": float(tagger.statistics['f1_score']),
-            "num_features": tagger.statistics['num_features'],
-            "num_positives": tagger.statistics['num_positives'],
-            "num_negatives": tagger.statistics['num_negatives'],
+            "precision": float(tagger.report.precision),
+            "recall": float(tagger.report.recall),
+            "f1_score": float(tagger.report.f1_score),
+            "num_features": tagger.report.num_features,
+            "num_examples": num_examples,
             "model_size": round(float(os.path.getsize(tagger_full_path)) / 1000000, 1),  # bytes to mb
             "plot": str(image_path)
         }
@@ -173,30 +166,24 @@ def train_tagger_task(tagger_id: int):
 @task(name="save_tagger_results", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def save_tagger_results(result_data: dict):
     try:
-
         tagger_id = result_data['id']
         logging.getLogger(INFO_LOGGER).info(f"Starting task results for tagger with ID: {tagger_id}!")
         tagger_object = Tagger.objects.get(pk=tagger_id)
         task_object = tagger_object.task
         show_progress = ShowProgress(task_object, multiplier=1)
-
         # update status to saving
         show_progress.update_step('saving')
         show_progress.update_view(0)
-
         tagger_object.model.name = result_data["tagger_path"]
         tagger_object.precision = result_data["precision"]
         tagger_object.recall = result_data["recall"]
         tagger_object.f1_score = result_data["f1_score"]
         tagger_object.num_features = result_data["num_features"]
-        tagger_object.num_positives = result_data["num_positives"]
-        tagger_object.num_negatives = result_data["num_negatives"]
+        tagger_object.num_examples = json.dumps(result_data["num_examples"])
         tagger_object.model_size = result_data["model_size"]
         tagger_object.plot.name = result_data["plot"]
-
         tagger_object.save()
         task_object.complete()
-
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(e)
         task_object.add_error(str(e))
@@ -208,27 +195,24 @@ def save_tagger_results(result_data: dict):
 def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=None):
     """Task for applying tagger to text."""
     logging.getLogger(INFO_LOGGER).info(f"Starting task 'apply_tagger' for tagger with ID: {tagger_id} with params (input_type : {input_type}, lemmatize: {lemmatize}, feedback: {feedback})!")
-
     # get tagger object
     tagger_object = Tagger.objects.get(pk=tagger_id)
-
+    # get lemmatizer
+    lemmatizer = CeleryLemmatizer()
     # create text processor object for tagger
     stop_words = tagger_object.stop_words.split(' ')
+    # load embedding
     if tagger_object.embedding:
-        logging.getLogger(INFO_LOGGER).info(f"Applying embedding ID {tagger_object.embedding.id} for tagger with ID {tagger_object.pk}!")
-        phraser = Phraser(tagger_object.embedding.id)
-        phraser.load()
-        text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatize=lemmatize)
+        embedding = W2VEmbedding()
+        embedding.load_django(tagger_object.embedding)
     else:
-        text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatize=lemmatize)
+        embedding = False
     # load tagger
-    tagger = TextTagger(tagger_id)
-    tagger.load()
-    # if not loaded return None
-    if not tagger:
+    tagger = TextTagger(embedding=embedding, mlp=lemmatizer, custom_stop_words=stop_words)
+    tagger_loaded = tagger.load_django(tagger_object)
+    # check if tagger gets loaded
+    if not tagger_loaded:
         return None
-    # add text processor
-    tagger.add_text_processor(text_processor)
     # check input type
     if input_type == 'doc':
         logging.getLogger(INFO_LOGGER).info(f"Tagging document with content: {text}!")
@@ -236,19 +220,22 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
     else:
         logging.getLogger(INFO_LOGGER).info(f"Tagging text with content: {text}!")
         tagger_result = tagger.tag_text(text)
-
-    # check if prediction positive
-    decision = bool(tagger_result[0])
+    # set bool result
+    result = bool(tagger_result['prediction'])
     # create output dict
-    prediction = {'tag': tagger.description, 'probability': tagger_result[1], 'tagger_id': tagger_id, 'result': decision}
-
+    prediction = {
+        'tag': tagger.description,
+        'probability': tagger_result['probability'],
+        'tagger_id': tagger_id,
+        'result': result
+    }
     # add feedback if asked
     if feedback:
         logging.getLogger(INFO_LOGGER).info(f"Adding feedback for Tagger id: {tagger_object.pk}")
         project_pk = tagger_object.project.pk
         feedback_object = Feedback(project_pk, model_object=tagger_object)
-        processed_text = text_processor.process(text)[0]
-        feedback_id = feedback_object.store(processed_text, decision)
+        processed_text = tagger.text_processor.process(text)[0]
+        feedback_id = feedback_object.store(processed_text, prediction)
         feedback_url = f'/projects/{project_pk}/taggers/{tagger_object.pk}/feedback/'
         prediction['feedback'] = {'id': feedback_id, 'url': feedback_url}
 
