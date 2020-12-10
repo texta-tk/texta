@@ -163,6 +163,8 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
             view_url = reverse(f"v1:{item}")
             resource_dict[item] = request.build_absolute_uri(view_url)
 
+        importer_uri = reverse("v1:document_import", kwargs={"pk": obj.id})
+        resource_dict["document_import_api"] = request.build_absolute_uri(importer_uri)
         return resource_dict
 
 

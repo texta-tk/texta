@@ -11,6 +11,10 @@ from toolkit.elastic.validators import check_for_banned_beginning_chars, check_f
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
 
 
+class AddMappingToIndexSerializer(serializers.Serializer):
+    mappings = serializers.DictField()
+
+
 class IndexSerializer(serializers.ModelSerializer):
     is_open = serializers.BooleanField(default=True)
     url = serializers.SerializerMethodField()

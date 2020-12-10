@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "toolkit.regex_tagger",
     "toolkit.anonymizer",
     "toolkit.docparser",
+    "toolkit.document_importer",
     # TEXTA Extension Apps
     # "docscraper",
     # THIRD PARTY

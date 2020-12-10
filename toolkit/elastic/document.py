@@ -5,6 +5,7 @@ from elasticsearch.helpers import bulk
 from elasticsearch_dsl import Search
 
 from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.decorators import elastic_connection
 
 
 class ElasticDocument:
@@ -37,6 +38,7 @@ class ElasticDocument:
             return False
 
 
+    @elastic_connection
     def add_fact(self, fact: dict, doc_ids: List):
         # Fetch the documents with the bulk function to get the facts,
         # and to validate that those ids also exist.
@@ -60,6 +62,7 @@ class ElasticDocument:
         return True
 
 
+    @elastic_connection
     def get(self, doc_id, fields: List = None):
         """
         Retrieve document by ID.
@@ -76,6 +79,7 @@ class ElasticDocument:
             return None
 
 
+    @elastic_connection
     def get_bulk(self, doc_ids: List[str], fields: List[str] = None, flatten: bool = False) -> List[dict]:
         """
         Retrieve full Elasticsearch documents by their ids that includes id, index,
@@ -93,6 +97,7 @@ class ElasticDocument:
             return []
 
 
+    @elastic_connection
     def update(self, index, doc_type, doc_id, doc):
         """
         Updates document in ES by ID.
@@ -100,6 +105,7 @@ class ElasticDocument:
         return self.core.es.update(index=index, doc_type=doc_type, id=doc_id, body={"doc": doc}, refresh="wait_for")
 
 
+    @elastic_connection
     def bulk_update(self, actions, refresh="wait_for", chunk_size=100):
         """
         Intermediary function to commit bulk updates.
@@ -121,6 +127,7 @@ class ElasticDocument:
         return bulk(client=self.core.es, actions=actions, refresh=refresh, request_timeout=30, chunk_size=chunk_size)
 
 
+    @elastic_connection
     def add(self, doc):
         """
         Adds document to ES.
@@ -128,12 +135,19 @@ class ElasticDocument:
         return self.core.es.index(index=self.index, doc_type=self.index, body=doc, refresh='wait_for')
 
 
+    @elastic_connection
     def bulk_add(self, docs, chunk_size=100, raise_on_error=True, stats_only=True):
         """ _type is deprecated in ES 6"""
         actions = [{"_index": self.index, "_type": self.index, "_source": doc} for doc in docs]
         return bulk(client=self.core.es, actions=actions, chunk_size=chunk_size, stats_only=stats_only, raise_on_error=raise_on_error)
 
 
+    @elastic_connection
+    def bulk_add_raw(self, actions, chunk_size=100, raise_on_error=True, stats_only=True):
+        return bulk(client=self.core.es, actions=actions, chunk_size=chunk_size, stats_only=stats_only, raise_on_error=raise_on_error)
+
+
+    @elastic_connection
     def delete(self, doc_id):
         """
         Removes given document from ES.
@@ -141,6 +155,7 @@ class ElasticDocument:
         return self.core.es.delete(index=self.index, doc_type=self.index, id=doc_id)
 
 
+    @elastic_connection
     def delete_by_query(self, query):
         """
         Removes given document from ES.
@@ -148,6 +163,7 @@ class ElasticDocument:
         return self.core.es.delete_by_query(index=self.index, body=query)
 
 
+    @elastic_connection
     def count(self):
         """
         Returns the document count for given indices.

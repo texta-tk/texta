@@ -4,6 +4,7 @@ import rest_framework.filters as drf_filters
 from django.db import transaction
 from django.http import JsonResponse
 from django_filters import rest_framework as filters
+from elasticsearch_dsl import Mapping
 from rest_auth import views
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
@@ -13,7 +14,7 @@ from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.exceptions import ElasticIndexAlreadyExists
 from toolkit.elastic.models import Index, Reindexer
-from toolkit.elastic.serializers import IndexSerializer, ReindexerCreateSerializer
+from toolkit.elastic.serializers import AddMappingToIndexSerializer, IndexSerializer, ReindexerCreateSerializer
 from toolkit.permissions.project_permissions import IsSuperUser, ProjectResourceAllowed
 from toolkit.view_constants import BulkDelete
 
@@ -174,6 +175,22 @@ class IndexViewSet(mixins.CreateModelMixin,
             return Response({"message": f"Added the Texta Facts mapping for: {index.name}"})
         else:
             return Response({"message": f"Index {index.name} is closed, could not add the mapping!"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+    # TODO Return to this part.
+    @action(detail=True, methods=["post"], serializer_class=AddMappingToIndexSerializer)
+    def add_mapping(self, request, pk=None, project_pk=None):
+        serializer: AddMappingToIndexSerializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        model: Index = self.get_object()
+        mapping = serializer.validated_data["mappings"]
+
+        m = Mapping(model.name)
+        for field_name, elastic_type in mapping.items():
+            m.field(field_name, elastic_type)
+
+        m.save(index=model.name, using=ElasticCore().es)
+        return Response(True)
 
 
 class ReindexerFilter(filters.FilterSet):
