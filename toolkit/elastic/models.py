@@ -39,6 +39,7 @@ class Reindexer(models.Model):
     new_index = models.CharField(max_length=MAX_DESC_LEN, default="")
     random_size = models.IntegerField(default=0)
     field_type = models.TextField(default=json.dumps([]))
+    add_facts_mapping = models.BooleanField(default=False)
 
 
     def __str__(self):
