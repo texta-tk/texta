@@ -8,7 +8,7 @@ channels:
 dependencies:
   - python=3.7
   - pip
-  - pandas
+  - pandas=1.1.5
   - scikit-learn==0.22.*
   - matplotlib
   - graphviz
@@ -38,7 +38,7 @@ dependencies:
       - joblib
       - python-json-logger
       - drf-yasg
-      - xlrd
+      - xlrd==1.2.0
       - dill
       - texta-anonymizer==1.1.*
       - texta-mlp==1.4.*
