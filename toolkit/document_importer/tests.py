@@ -98,13 +98,11 @@ class DocumentImporterAPITestCase(APITestCase):
         response = self.client.post(url, data={"documents": [{"_source": self.source, "_id": sample_id}]}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         ec = ElasticCore()
-        normalized_project_title = DocumentImportView.get_new_index_name(self.project.title)
+        normalized_project_title = DocumentImportView.get_new_index_name(self.project.pk)
         document = ec.es.get(id=sample_id, index=normalized_project_title, doc_type=normalized_project_title)
 
         ec.delete_index(normalized_project_title)  # Cleanup
 
         self.assertTrue(document["_source"])
-        self.assertTrue(response.data["created_indices"][0] == normalized_project_title)
         self.assertTrue(self.project.indices.filter(name=normalized_project_title).exists())
         print_output("test_adding_document_without_specified_index:response.data", response.data)
-

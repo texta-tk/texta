@@ -1,5 +1,4 @@
 # Create your views here.
-import string
 from typing import List
 
 import elasticsearch
@@ -7,12 +6,14 @@ from rest_framework import permissions, status
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework.response import Response
+from texta_tools.text_splitter import TextSplitter
 
 from toolkit.core.project.models import Project
 from toolkit.document_importer.serializers import InsertDocumentsSerializer
 from toolkit.elastic.document import ElasticDocument
 from toolkit.elastic.models import Index
 from toolkit.permissions.project_permissions import ProjectAllowed
+from toolkit.settings import DEPLOY_KEY
 
 
 class DocumentImportView(GenericAPIView):
@@ -21,51 +22,57 @@ class DocumentImportView(GenericAPIView):
 
 
     @staticmethod
-    def normalize_project_title(title: str):
-        for char in string.punctuation:
-            title = title.replace(char, '')
-
-        title = title.lower()
-        title = title.replace(" ", "_")
-        title = title.strip()
-        return title
-
-
-    def _split_actions_per_permissions(self, actions: List[dict], indices: set):
-        valid_actions = []
-        failed_permissions = []
-        for action in actions:
-            if action["_index"] in indices:
-                valid_actions.append(action)
-            else:
-                failed_permissions.append(action)
-        return valid_actions, failed_permissions
-
-
-    @staticmethod
-    def get_new_index_name(title: str):
-        normalized_title = DocumentImportView.normalize_project_title(title)
-        index_name = f"{normalized_title}_imported"
+    def get_new_index_name(project_id: int):
+        index_name = f"texta-import-dataset-{project_id}-{DEPLOY_KEY}"
         return index_name
 
 
-    def _process_actions(self, project: Project, actions: List[dict]):
-        index_name = DocumentImportView.get_new_index_name(title=project.title)
-        index_processed = False
-        new_index_created = False
+    def _normalize_missing_index_values(self, documents: List[dict], project_id: int):
+        index_name = DocumentImportView.get_new_index_name(project_id)
+        new_index = False
+        for document in documents:
+            document["_index"] = index_name
+            document["_type"] = index_name
+            new_index = True
+        return documents, index_name, new_index
 
-        for action in actions:
-            if action["_index"] is None or action["_type"] is None:
-                if index_processed is False:
-                    index, is_created = Index.objects.get_or_create(name=index_name)
-                    project.indices.add(index)
-                    index_processed = True
-                    new_index_created = is_created
 
-                action["_index"] = index_name
-                action["_type"] = index_name
+    def _split_documents_per_index(self, allowed_indices: List[str], documents: List[dict]):
+        correct_permissions_indices = []
+        failed_permissions_indices = []
+        missing_indices = []
 
-        return actions, index_name, new_index_created
+        for document in documents:
+            index = document["_index"]
+            if index is None:
+                missing_indices.append(document)
+            elif index in allowed_indices:
+                correct_permissions_indices.append(document)
+            else:
+                failed_permissions_indices.append(document)
+
+        return correct_permissions_indices, failed_permissions_indices, missing_indices
+
+
+    def _split_text(self, documents: List[dict], fields: List[str]):
+        splitter = TextSplitter()
+        container = []
+        for field in fields:
+            for document in documents:
+                text = document["_source"].get(field, "")
+                if text:
+                    pages = splitter.split(text)
+                    content = document["_source"]
+                    for page in pages:
+                        content = {**content, **{"page": page["page"], field: page["text"]}}
+                        container.append({
+                            "_index": document["_index"],
+                            "_type": document["_index"],
+                            "_source": content
+                        })
+                else:
+                    container.append(document)
+        return container
 
 
     def post(self, request, pk: int):
@@ -80,21 +87,25 @@ class DocumentImportView(GenericAPIView):
         if request.user not in project.users.all():
             raise PermissionDenied("You do not have permissions for this project!")
 
-        # Validate and process index permissions and documents.
-        actions, index_name, new_index_created = self._process_actions(project, serializer.validated_data["documents"])
-        indices = set(project.get_indices())
-        created_indices = [index_name] if new_index_created else []
-        valid_actions, failed_permissions = self._split_actions_per_permissions(actions, indices)
+        # Split indices on whether they have index access or lack any index details at all.
+        documents = serializer.validated_data["documents"]
+        split_fields = serializer.validated_data["split_text_in_fields"]
+        indices = project.get_indices()
+        correct_actions, failed_actions, missing_actions = self._split_documents_per_index(indices, documents)
+        missing_actions, index_name, has_new_index = self._normalize_missing_index_values(missing_actions, project.pk)
+        split_actions = self._split_text(correct_actions + missing_actions, split_fields)
+
+        if has_new_index:
+            index, is_created = Index.objects.get_or_create(name=index_name, is_open=True)
+            project.indices.add(index)
 
         # Send the documents to Elasticsearch.
-        ed = ElasticDocument(index=None)
-        success_count, errors = ed.bulk_add_raw(actions=valid_actions, stats_only=False)
+        success_count, errors = ed.bulk_add_raw(actions=split_actions, stats_only=False)
         return Response(
             {
                 "successfully_indexed": success_count,
-                "created_indices": created_indices,
                 "errors": errors,
-                "failed_index_permissions": failed_permissions
+                "failed_index_permissions": len(failed_actions)
             }
         )
 

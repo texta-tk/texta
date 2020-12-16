@@ -10,3 +10,4 @@ class ElasticDocumentSerializer(serializers.Serializer):
 
 class InsertDocumentsSerializer(serializers.Serializer):
     documents = ElasticDocumentSerializer(many=True)
+    split_text_in_fields = serializers.ListSerializer(child=serializers.CharField(), default=["text"])
