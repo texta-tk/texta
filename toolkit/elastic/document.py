@@ -2,7 +2,7 @@ import json
 from typing import List
 
 from elasticsearch.helpers import bulk
-from elasticsearch_dsl import Search
+from elasticsearch_dsl import Q, Search
 
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.decorators import elastic_connection
@@ -161,6 +161,13 @@ class ElasticDocument:
         Removes given document from ES.
         """
         return self.core.es.delete_by_query(index=self.index, body=query)
+
+
+    @elastic_connection
+    def bulk_delete(self, document_ids: List[str], wait_for_completion=True):
+        query = Search().query(Q("ids", values=document_ids)).to_dict()
+        response = self.core.es.delete_by_query(index=self.index, doc_type=self.index, body=query, wait_for_completion=wait_for_completion)
+        return response
 
 
     @elastic_connection

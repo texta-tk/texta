@@ -2,6 +2,7 @@
 from typing import List
 
 import elasticsearch
+from elasticsearch_dsl import Q, Search
 from rest_framework import permissions, status
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.generics import GenericAPIView, get_object_or_404
@@ -9,11 +10,69 @@ from rest_framework.response import Response
 from texta_tools.text_splitter import TextSplitter
 
 from toolkit.core.project.models import Project
-from toolkit.document_importer.serializers import InsertDocumentsSerializer
+from toolkit.document_importer.serializers import InsertDocumentsSerializer, UpdateSplitDocumentSerializer
 from toolkit.elastic.document import ElasticDocument
 from toolkit.elastic.models import Index
+from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.permissions.project_permissions import ProjectAllowed
+from toolkit.serializer_constants import EmptySerializer
 from toolkit.settings import DEPLOY_KEY
+
+
+class UpdateSplitDocument(GenericAPIView):
+    serializer_class = UpdateSplitDocumentSerializer
+    permission_classes = (ProjectAllowed, permissions.IsAuthenticated)
+
+
+    def _get_split_documents_by_id(self, id_field, id_value, text_field):
+        documents = []
+        query = Search().query(Q("term", **{f"{id_field}.keyword": id_value})).to_dict()
+        es = ElasticSearcher(query=query, field_data=[id_field, text_field], output=ElasticSearcher.OUT_RAW)
+        for hit in es:
+            for document in hit:
+                documents.append(document)
+        return documents
+
+
+    def _create_new_pages(self, content, sample_doc, text_field, index):
+        actions = []
+        splitter = TextSplitter()
+        pages = splitter.split(content)
+        for page in pages:
+            text = page.pop("text")
+            page = {**page, **sample_doc, text_field: text}
+            actions.append({"_index": index, "_type": index, "_source": page})
+        return actions
+
+
+    def patch(self, request, pk: int, index: str, document_id: str):
+        serializer: UpdateSplitDocumentSerializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        project: Project = get_object_or_404(Project, pk=pk)
+        if request.user not in project.users.all():
+            raise PermissionDenied(f"User '{request.user.username}' does not have access to this project!")
+
+        id_field = serializer.validated_data["id_field"]
+        text_field = serializer.validated_data["text_field"]
+        content = serializer.validated_data["content"]
+
+        ed = ElasticDocument(index=index)
+        document = ed.get(document_id)
+        if document:
+            id_value = document["_source"].get(id_field, "")
+            if id_value:
+                documents = self._get_split_documents_by_id(id_field, id_value, text_field)
+                if not documents: return Response("Could not find any documents given the ID field!", status=status.HTTP_400_BAD_REQUEST)
+                sample_doc = documents[0]["_source"]
+                response = ed.bulk_delete([document["_id"] for document in documents])  # Delete existing documents to make room for new ones.
+                actions = self._create_new_pages(content, sample_doc, text_field, index)
+                success_count, errors = ed.bulk_add_raw(actions=actions, stats_only=False)
+                return Response({"successfully_updated": success_count, "errors": errors})
+            else:
+                return Response(f"Could not find the id field withing the document '{document_id}'!", status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(f"Could not find document with id '{document_id}'!", status=status.HTTP_400_BAD_REQUEST)
 
 
 class DocumentImportView(GenericAPIView):
@@ -112,7 +171,7 @@ class DocumentImportView(GenericAPIView):
 
 class DocumentInstanceView(GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = InsertDocumentsSerializer
+    serializer_class = EmptySerializer
 
 
     def get_queryset(self):
