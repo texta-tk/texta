@@ -143,8 +143,8 @@ class ElasticDocument:
 
 
     @elastic_connection
-    def bulk_add_raw(self, actions, chunk_size=100, raise_on_error=True, stats_only=True):
-        return bulk(client=self.core.es, actions=actions, chunk_size=chunk_size, stats_only=stats_only, raise_on_error=raise_on_error)
+    def bulk_add_raw(self, actions, chunk_size=100, raise_on_error=True, stats_only=True, refresh="wait_for"):
+        return bulk(client=self.core.es, actions=actions, chunk_size=chunk_size, stats_only=stats_only, raise_on_error=raise_on_error, refresh=refresh)
 
 
     @elastic_connection

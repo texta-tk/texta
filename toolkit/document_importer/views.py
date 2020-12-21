@@ -19,67 +19,13 @@ from toolkit.serializer_constants import EmptySerializer
 from toolkit.settings import DEPLOY_KEY
 
 
-class UpdateSplitDocument(GenericAPIView):
-    serializer_class = UpdateSplitDocumentSerializer
-    permission_classes = (ProjectAllowed, permissions.IsAuthenticated)
+def validate_index_and_project_perms(request, pk, index):
+    project: Project = get_object_or_404(Project, pk=pk)
+    if request.user not in project.users.all():
+        raise PermissionDenied(f"User '{request.user.username}' does not have access to this project!")
 
-
-    def _get_split_documents_by_id(self, id_field, id_value, text_field):
-        documents = []
-        query = Search().query(Q("term", **{f"{id_field}.keyword": id_value})).to_dict()
-        es = ElasticSearcher(query=query, field_data=[id_field, text_field], output=ElasticSearcher.OUT_RAW)
-        for hit in es:
-            for document in hit:
-                documents.append(document)
-        return documents
-
-
-    def _create_new_pages(self, content, sample_doc, text_field, index):
-        actions = []
-        splitter = TextSplitter()
-        pages = splitter.split(content)
-        for page in pages:
-            text = page.pop("text")
-            page = {**page, **sample_doc, text_field: text}
-            actions.append({"_index": index, "_type": index, "_source": page})
-        return actions
-
-
-    def patch(self, request, pk: int, index: str):
-        serializer: UpdateSplitDocumentSerializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        project: Project = get_object_or_404(Project, pk=pk)
-        if request.user not in project.users.all():
-            raise PermissionDenied(f"User '{request.user.username}' does not have access to this project!")
-
-        if index not in project.get_indices():
-            raise PermissionDenied(f"You do not have access to this index!")
-
-        id_field = serializer.validated_data["id_field"]
-        id_value = serializer.validated_data["id_value"]
-        text_field = serializer.validated_data["text_field"]
-        content = serializer.validated_data["content"]
-
-        query = Search().query(Q("term", **{f"{id_field}.keyword": id_value})).to_dict()
-        es = ElasticSearcher(query=query, output=ElasticSearcher.OUT_RAW)
-        ed = ElasticDocument(index=index)
-        response = es.search()["hits"]["hits"]
-        document = response[0] if response else None
-        if document:
-            id_value = document["_source"].get(id_field, "")
-            if id_value:
-                documents = self._get_split_documents_by_id(id_field, id_value, text_field)
-                if not documents: return Response("Could not find any documents given the ID field!", status=status.HTTP_400_BAD_REQUEST)
-                sample_doc = documents[0]["_source"]
-                response = ed.bulk_delete([document["_id"] for document in documents])  # Delete existing documents to make room for new ones.
-                actions = self._create_new_pages(content, sample_doc, text_field, index)
-                success_count, errors = ed.bulk_add_raw(actions=actions, stats_only=False)
-                return Response({"successfully_updated": success_count, "errors": errors})
-            else:
-                return Response(f"Could not find the id field withing the document!", status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(f"Could not find document with the id!", status=status.HTTP_400_BAD_REQUEST)
+    if index not in project.get_indices():
+        raise PermissionDenied(f"You do not have access to this index!")
 
 
 class DocumentImportView(GenericAPIView):
@@ -121,24 +67,27 @@ class DocumentImportView(GenericAPIView):
 
 
     def _split_text(self, documents: List[dict], fields: List[str]):
-        splitter = TextSplitter()
-        container = []
-        for field in fields:
-            for document in documents:
-                text = document["_source"].get(field, "")
-                if text:
-                    pages = splitter.split(text)
-                    content = document["_source"]
-                    for page in pages:
-                        content = {**content, **{"page": page["page"], field: page["text"]}}
-                        container.append({
-                            "_index": document["_index"],
-                            "_type": document["_index"],
-                            "_source": content
-                        })
-                else:
-                    container.append(document)
-        return container
+        if fields:
+            splitter = TextSplitter()
+            container = []
+            for field in fields:
+                for document in documents:
+                    text = document["_source"].get(field, "")
+                    if text:
+                        pages = splitter.split(text)
+                        content = document["_source"]
+                        for page in pages:
+                            content = {**content, **{"page": page["page"], field: page["text"]}}
+                            container.append({
+                                "_index": document["_index"],
+                                "_type": document["_index"],
+                                "_source": content
+                            })
+                    else:
+                        container.append(document)
+            return container
+        else:
+            return documents
 
 
     def post(self, request, pk: int):
@@ -186,13 +135,7 @@ class DocumentInstanceView(GenericAPIView):
 
 
     def get(self, request, pk: int, index: str, document_id: str):
-        project: Project = get_object_or_404(Project, pk=pk)
-        if request.user not in project.users.all():
-            raise PermissionDenied(f"User '{request.user.username}' does not have access to this project!")
-
-        if index not in project.get_indices():
-            raise PermissionDenied(f"You do not have access to this index!")
-
+        validate_index_and_project_perms(request, pk, index)
         ed = ElasticDocument(index)
         document = ed.get(document_id)
         if not document:
@@ -200,33 +143,83 @@ class DocumentInstanceView(GenericAPIView):
         return Response(document)
 
 
-    # TODO Add exception handling for missing documents.
     def delete(self, request, pk: int, index: str, document_id: str):
-        project: Project = get_object_or_404(Project, pk=pk)
-        if request.user not in project.users.all():
-            raise PermissionDenied(f"User '{request.user.username}' does not have access to this project!")
-
-        if index not in project.get_indices():
-            raise PermissionDenied(f"You do not have access to this index!")
-
+        validate_index_and_project_perms(request, pk, index)
         ed = ElasticDocument(index)
         document = ed.delete(doc_id=document_id)
         return Response(document)
 
 
-    # TODO Add exception handling for missing document.
     def patch(self, request, pk: int, index: str, document_id: str):
-        project: Project = get_object_or_404(Project, pk=pk)
-        if request.user not in project.users.all():
-            raise PermissionDenied(f"User '{request.user.username}' does not have access to this project!")
-
-        if index not in project.get_indices():
-            raise PermissionDenied(f"You do not have access to this index!")
+        validate_index_and_project_perms(request, pk, index)
 
         try:
             ed = ElasticDocument(index)
             document = ed.update(index=index, doc_type=index, doc_id=document_id, doc=request.data)
             return Response(document)
         except elasticsearch.exceptions.RequestError as e:
-            if e.error == "mapper_parsing_exception":
+            if e.error == "mapper_parsing_exception":  # TODO Extend the decorator with different variants of the request error instead.
                 return Response(e.info["error"]["root_cause"], status=status.HTTP_400_BAD_REQUEST)
+
+
+class UpdateSplitDocument(GenericAPIView):
+    serializer_class = UpdateSplitDocumentSerializer
+    permission_classes = (ProjectAllowed, permissions.IsAuthenticated)
+
+
+    def _get_split_documents_by_id(self, id_field, id_value, text_field):
+        documents = []
+        query = Search().query(Q("term", **{f"{id_field}.keyword": id_value})).to_dict()
+        es = ElasticSearcher(query=query, field_data=[id_field, text_field], output=ElasticSearcher.OUT_RAW)
+        for hit in es:
+            for document in hit:
+                documents.append(document)
+        return documents
+
+
+    def _create_new_pages(self, content, sample_doc, text_field, index):
+        actions = []
+        splitter = TextSplitter()
+        pages = splitter.split(content)
+        for page in pages:
+            text = page.pop("text")
+            page = {**page, **sample_doc, text_field: text}
+            actions.append({"_index": index, "_type": index, "_source": page})
+        return actions
+
+
+    def _get_sample_document(self, id_field: str, id_value: str, index: str):
+        query = Search().query(Q("term", **{f"{id_field}.keyword": id_value})).to_dict()
+        es = ElasticSearcher(query=query, output=ElasticSearcher.OUT_RAW)
+        ed = ElasticDocument(index=index)
+        response = es.search()["hits"]["hits"]
+        document = response[0] if response else None
+        return ed, document
+
+
+    def patch(self, request, pk: int, index: str):
+        serializer: UpdateSplitDocumentSerializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        id_field = serializer.validated_data["id_field"]
+        id_value = serializer.validated_data["id_value"]
+        text_field = serializer.validated_data["text_field"]
+        content = serializer.validated_data["content"]
+
+        validate_index_and_project_perms(request, pk, index)
+
+        ed, document = self._get_sample_document(id_field, id_value, index)
+        if document:
+            id_value = document["_source"].get(id_field, "")
+            if id_value:
+                documents = self._get_split_documents_by_id(id_field, id_value, text_field)
+                if not documents: return Response("Could not find any documents given the ID field!", status=status.HTTP_400_BAD_REQUEST)
+                sample_doc = documents[0]["_source"]
+                response = ed.bulk_delete([document["_id"] for document in documents])  # Delete existing documents to make room for new ones.
+                actions = self._create_new_pages(content, sample_doc, text_field, index)
+                success_count, errors = ed.bulk_add_raw(actions=actions, stats_only=False)
+                return Response({"successfully_updated": success_count, "errors": errors})
+            else:
+                return Response(f"Could not find the id field withing the document!", status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(f"Could not find document with the id!", status=status.HTTP_400_BAD_REQUEST)

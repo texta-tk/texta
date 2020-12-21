@@ -1,6 +1,7 @@
 # Create your tests here.
 from django.urls import reverse
 from elasticsearch import NotFoundError
+from elasticsearch_dsl import Q, Search
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -18,8 +19,11 @@ class DocumentImporterAPITestCase(APITestCase):
         self.validation_project = project_creation("validation_project", "random_index_name", self.user)
         self.project.users.add(self.user)
         self.document_id = 41489489465
-        self.source = {"hello": "world"}
+        self.uuid = "adasda-5874856a-das4das98f4"
+        self.source = {"hello": "world", "uuid": self.uuid}
         self.document = {"_index": TEST_INDEX, "_type": TEST_INDEX, "_id": self.document_id, "_source": self.source}
+
+        self.ec = ElasticCore()
 
         self.client.login(username='first_user', password='pw')
         self._check_inserting_documents()
@@ -27,17 +31,17 @@ class DocumentImporterAPITestCase(APITestCase):
 
     def _check_inserting_documents(self):
         url = reverse("v1:document_import", kwargs={"pk": self.project.pk})
-        response = self.client.post(url, data={"documents": [self.document]}, format="json")
+        response = self.client.post(url, data={"documents": [self.document], "split_text_in_fields": []}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
-        ec = ElasticCore()
-        document = ec.es.get(id=self.document_id, index=TEST_INDEX, doc_type=TEST_INDEX)
+        document = self.ec.es.get(id=self.document_id, index=TEST_INDEX, doc_type=TEST_INDEX)
         self.assertTrue(document["_source"])
         print_output("_check_inserting_documents:response.data", response.data)
 
 
     def tearDown(self) -> None:
-        ec = ElasticCore()
-        ec.es.delete(index=TEST_INDEX, id=self.document_id, doc_type=TEST_INDEX, ignore=[400, 404])
+        self.ec.es.delete(index=TEST_INDEX, id=self.document_id, doc_type=TEST_INDEX, ignore=[400, 404])
+        query = Search().query(Q("exists", field="court_case")).to_dict()
+        self.ec.es.delete_by_query(index="*", body=query, wait_for_completion=True)
 
 
     def test_adding_documents_to_false_project(self):
@@ -52,8 +56,7 @@ class DocumentImporterAPITestCase(APITestCase):
         index_name = "wrong_index"
         response = self.client.post(url, data={"documents": [{"_index": index_name, "_type": index_name, "_source": self.document}]}, format="json")
         try:
-            ec = ElasticCore()
-            ec.es.get(id=self.document_id, index=index_name, doc_type=index_name)
+            self.ec.es.get(id=self.document_id, index=index_name, doc_type=index_name)
         except NotFoundError:
             print_output("test_adding_documents_to_false_index:response.data", response.data)
         else:
@@ -64,8 +67,7 @@ class DocumentImporterAPITestCase(APITestCase):
         url = reverse("v1:document_instance", kwargs={"pk": self.project.pk, "index": TEST_INDEX, "document_id": self.document_id})
         response = self.client.patch(url, data={"hello": "night", "goodbye": "world"})
         self.assertTrue(response.status_code == status.HTTP_200_OK)
-        ec = ElasticCore()
-        document = ec.es.get(index=TEST_INDEX, doc_type=TEST_INDEX, id=self.document_id)["_source"]
+        document = self.ec.es.get(index=TEST_INDEX, doc_type=TEST_INDEX, id=self.document_id)["_source"]
         self.assertTrue(document["hello"] == "night" and document["goodbye"] == "world")
         print_output("test_updating_document:response.data", response.data)
 
@@ -75,8 +77,7 @@ class DocumentImporterAPITestCase(APITestCase):
         response = self.client.delete(url)
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         try:
-            ec = ElasticCore()
-            ec.es.get(id=self.document_id, index=TEST_INDEX, doc_type=TEST_INDEX)
+            self.ec.es.get(id=self.document_id, index=TEST_INDEX, doc_type=TEST_INDEX)
         except NotFoundError:
             print_output("test_deleting_document:response.data", response.data)
         else:
@@ -91,18 +92,124 @@ class DocumentImporterAPITestCase(APITestCase):
         self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN or response.status_code == status.HTTP_401_UNAUTHORIZED)
 
 
-    def test_adding_document_without_specified_index(self):
+    def test_adding_document_without_specified_index_and_that_index_is_added_into_project(self):
         from toolkit.document_importer.views import DocumentImportView
         sample_id = 65959645
         url = reverse("v1:document_import", kwargs={"pk": self.project.pk})
         response = self.client.post(url, data={"documents": [{"_source": self.source, "_id": sample_id}]}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
-        ec = ElasticCore()
         normalized_project_title = DocumentImportView.get_new_index_name(self.project.pk)
-        document = ec.es.get(id=sample_id, index=normalized_project_title, doc_type=normalized_project_title)
+        document = self.ec.es.get(id=sample_id, index=normalized_project_title, doc_type=normalized_project_title)
 
-        ec.delete_index(normalized_project_title)  # Cleanup
+        self.ec.delete_index(normalized_project_title)  # Cleanup
 
         self.assertTrue(document["_source"])
         self.assertTrue(self.project.indices.filter(name=normalized_project_title).exists())
-        print_output("test_adding_document_without_specified_index:response.data", response.data)
+        print_output("test_adding_document_without_specified_index_and_that_index_is_added_into_project:response.data", response.data)
+
+
+    def test_updating_non_existing_document(self):
+        sample_id = "random_id"
+        url = reverse("v1:document_instance", kwargs={"pk": self.project.pk, "index": TEST_INDEX, "document_id": sample_id})
+        response = self.client.patch(url, data={"hello": "world"}, format="json")
+        print_output("test_updating_non_existing_document:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_404_NOT_FOUND)
+
+
+    def test_deleting_non_existing_document(self):
+        sample_id = "random_id"
+        url = reverse("v1:document_instance", kwargs={"pk": self.project.pk, "index": TEST_INDEX, "document_id": sample_id})
+        response = self.client.delete(url, data={"hello": "world"}, format="json")
+        print_output("test_deleting_non_existing_document:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_404_NOT_FOUND)
+
+
+    def test_that_specified_field_is_being_split(self):
+        url = reverse("v1:document_import", kwargs={"pk": self.project.pk})
+        uuid = "456694-asdasdad4-54646ad-asd4a5d"
+        response = self.client.post(
+            url,
+            format="json",
+            data={
+                "split_text_in_fields": ["court_case"],
+                "documents": [{
+                    "_index": TEST_INDEX,
+                    "_type": TEST_INDEX,
+                    "_source": {
+                        "court_case": "Paradna on kohtu alla antud kokkuleppe alusel selles, et tema, 25.10.2003 kell 00.30 koos,...",
+                        "uuid": uuid
+                    }
+                }]},
+        )
+        print_output("test_that_specified_field_is_being_split:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        documents = self.ec.es.search(index=TEST_INDEX, doc_type=TEST_INDEX, body={"query": {"term": {"uuid.keyword": uuid}}})
+        document = documents["hits"]["hits"][0]
+        self.assertTrue(document)
+        self.assertTrue(document["_source"])
+        self.assertTrue("page" in document["_source"])
+
+
+    def test_that_wrong_field_value_will_skip_splitting(self):
+        url = reverse("v1:document_import", kwargs={"pk": self.project.pk})
+        uuid = "Adios"
+        response = self.client.post(
+            url,
+            format="json",
+            data={
+                "documents": [{
+                    "_index": TEST_INDEX,
+                    "_type": TEST_INDEX,
+                    "_source": {
+                        "court_case": "Paradna on kohtu alla antud kokkuleppe alusel selles, et tema, 25.10.2003 kell 00.30 koos,...",
+                        "uuid": uuid
+                    }
+                }]},
+        )
+        print_output("test_that_empty_field_value_will_skip_splitting:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        documents = self.ec.es.search(index=TEST_INDEX, doc_type=TEST_INDEX, body={"query": {"term": {"uuid.keyword": uuid}}})
+        document = documents["hits"]["hits"][0]
+        self.assertTrue(document)
+        self.assertTrue(document["_source"])
+        self.assertTrue("page" not in document["_source"])
+
+
+    def test_splitting_behaviour_with_empty_list_as_input(self):
+        url = reverse("v1:document_import", kwargs={"pk": self.project.pk})
+        uuid = "adasdasd-5g465s-fa4s69f4a8s97-a4das9f4"
+        response = self.client.post(
+            url,
+            format="json",
+            data={
+                "split_text_in_fields": [],
+                "documents": [{
+                    "_index": TEST_INDEX,
+                    "_type": TEST_INDEX,
+                    "_source": {
+                        "court_case": "Paradna on kohtu alla antud kokkuleppe alusel selles, et tema, 25.10.2003 kell 00.30 koos,...",
+                        "uuid": uuid
+                    }
+                }]},
+        )
+        print_output("test_splitting_behaviour_with_empty_list_as_input:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        documents = self.ec.es.search(index=TEST_INDEX, doc_type=TEST_INDEX, body={"query": {"term": {"uuid.keyword": uuid}}})
+        document = documents["hits"]["hits"][0]
+        self.assertTrue(document)
+        self.assertTrue(document["_source"])
+        self.assertTrue("page" not in document["_source"])
+
+
+    def test_updating_split_documents(self):
+        url = reverse("v1:update_split_document", kwargs={"pk": self.project.pk, "index": TEST_INDEX})
+        payload = {"id_field": "uuid", "id_value": self.uuid, "text_field": "hello", "content": "hell"}
+        response = self.client.patch(url, data=payload, format="json")
+        print_output("test_updating_split_documents:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+        query = Search().query(Q("term", **{"uuid.keyword": self.uuid})).to_dict()
+        hits = self.ec.es.search(index="*", body=query)
+        hits = hits["hits"]["hits"]
+        document = hits[0]["_source"]
+        self.assertTrue(document["hello"] == "hell")
