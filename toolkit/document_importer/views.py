@@ -45,7 +45,7 @@ class UpdateSplitDocument(GenericAPIView):
         return actions
 
 
-    def patch(self, request, pk: int, index: str, document_id: str):
+    def patch(self, request, pk: int, index: str):
         serializer: UpdateSplitDocumentSerializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -53,12 +53,19 @@ class UpdateSplitDocument(GenericAPIView):
         if request.user not in project.users.all():
             raise PermissionDenied(f"User '{request.user.username}' does not have access to this project!")
 
+        if index not in project.get_indices():
+            raise PermissionDenied(f"You do not have access to this index!")
+
         id_field = serializer.validated_data["id_field"]
+        id_value = serializer.validated_data["id_value"]
         text_field = serializer.validated_data["text_field"]
         content = serializer.validated_data["content"]
 
+        query = Search().query(Q("term", **{f"{id_field}.keyword": id_value})).to_dict()
+        es = ElasticSearcher(query=query, output=ElasticSearcher.OUT_RAW)
         ed = ElasticDocument(index=index)
-        document = ed.get(document_id)
+        response = es.search()["hits"]["hits"]
+        document = response[0] if response else None
         if document:
             id_value = document["_source"].get(id_field, "")
             if id_value:
@@ -70,9 +77,9 @@ class UpdateSplitDocument(GenericAPIView):
                 success_count, errors = ed.bulk_add_raw(actions=actions, stats_only=False)
                 return Response({"successfully_updated": success_count, "errors": errors})
             else:
-                return Response(f"Could not find the id field withing the document '{document_id}'!", status=status.HTTP_400_BAD_REQUEST)
+                return Response(f"Could not find the id field withing the document!", status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(f"Could not find document with id '{document_id}'!", status=status.HTTP_400_BAD_REQUEST)
+        return Response(f"Could not find document with the id!", status=status.HTTP_400_BAD_REQUEST)
 
 
 class DocumentImportView(GenericAPIView):
@@ -82,7 +89,7 @@ class DocumentImportView(GenericAPIView):
 
     @staticmethod
     def get_new_index_name(project_id: int):
-        index_name = f"texta-import-dataset-{project_id}-{DEPLOY_KEY}"
+        index_name = f"texta-{DEPLOY_KEY}-import-project-{project_id}"
         return index_name
 
 

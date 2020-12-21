@@ -72,7 +72,7 @@ urlpatterns = [
 
     path('projects/<int:pk>/document_importer/', DocumentImportView.as_view(), name="document_import"),
     path('projects/<int:pk>/document_importer/<str:index>/<str:document_id>/', DocumentInstanceView.as_view(), name="document_instance"),
-    path('projects/<int:pk>/document_importer/<str:index>/<str:document_id>/update_split', UpdateSplitDocument.as_view(), name="update_split_document"),
+    path('projects/<int:pk>/document_importer/<str:index>/update_split', UpdateSplitDocument.as_view(), name="update_split_document"),
 
     # UAA OAuth 2.0
     url('uaa/callback', UAAView.as_view()),
