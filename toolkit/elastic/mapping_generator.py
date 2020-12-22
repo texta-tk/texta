@@ -20,6 +20,16 @@ class SchemaGenerator:
                           }}
         return long_structure
 
+    def _get_float_structure(self):
+        float_structure = {"type": "float",
+                           "fields": {
+                              "keyword": {
+                                  "type": "keyword",
+                                  "ignore_above": 256
+                              }
+                          }}
+        return float_structure
+
     def _get_date_structure(self):
         date_structure = {"type": "date"}
         return date_structure
@@ -75,13 +85,13 @@ class SchemaGenerator:
         return nested
 
     def init_fields(self, fields):
-        keys = ['text', 'date', 'long', 'nested', 'texta_facts']
+        keys = ['text', 'date', 'long', 'float','nested', 'texta_facts']
         for key in keys:
             if key not in fields:
                 fields.update({key: []})
         return fields
 
-    def generate_schema(self, fields):
+    def generate_schema(self, fields, add_facts_mapping=False):
         '''
         fields: dict
         '''
@@ -89,12 +99,18 @@ class SchemaGenerator:
         schema = {'properties': {}}
         text_structure = self._get_text_structure()
         long_structure = self._get_long_structure()
+        float_structure = self._get_float_structure()
         date_structure = self._get_date_structure()
         fact_structure = self._get_fact_structure()
+
+        if add_facts_mapping:
+            schema['properties']['texta_facts'] = fact_structure
 
         for field in fields['text']:
             schema['properties'][field] = text_structure
         for field in fields['long']:
+            schema['properties'][field] = long_structure
+        for field in fields['float']:
             schema['properties'][field] = long_structure
         for field in fields['date']:
             schema['properties'][field] = date_structure

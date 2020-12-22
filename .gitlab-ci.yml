@@ -18,6 +18,8 @@ variables:
   TEXTA_UAA_CLIENT_SECRET: loginsecret
   # For keeping plots as artifacts
   TEXTA_TEST_KEEP_PLOT_FILES: "True"
+  # Set admin password for tests
+  #TEXTA_ADMIN_PASSWORD: "1234"
 
 services:
   - name: redis:latest

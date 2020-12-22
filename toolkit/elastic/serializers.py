@@ -112,12 +112,14 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
     )
     field_type = serializers.ListField(help_text=f'Used to update the fieldname and the field type of chosen paths.',
                                        required=False)
+    add_facts_mapping = serializers.BooleanField(help_text='Add texta facts mapping. NB! If texta_facts is present in reindexed fields, the mapping is always created.',
+                                       required=False, default=False)
     task = TaskSerializer(read_only=True)
 
 
     class Meta:
         model = Reindexer
-        fields = ('id', 'url', 'author_username', 'description', 'indices', 'fields', 'query', 'new_index', 'random_size', 'field_type', 'task')
+        fields = ('id', 'url', 'author_username', 'description', 'indices', 'fields', 'query', 'new_index', 'random_size', 'field_type', 'add_facts_mapping','task')
         fields_to_parse = ('fields', 'field_type')
 
 

@@ -70,8 +70,8 @@ def update_field_types(indices, fields, field_type, flatten_doc=False):
     return updated_field_types
 
 
-def update_mapping(schema_input, new_index):
-    mod_schema = SchemaGenerator().generate_schema(schema_input)
+def update_mapping(schema_input, new_index, add_facts_mapping):
+    mod_schema = SchemaGenerator().generate_schema(schema_input, add_facts_mapping)
     return {'mappings': {new_index: mod_schema}}
 
 
@@ -144,7 +144,7 @@ def reindex_task(reindexer_task_id):
     ''' the operations that don't require a mapping update have been completed '''
 
     schema_input = update_field_types(indices, fields, field_type, flatten_doc=FLATTEN_DOC)
-    updated_schema = update_mapping(schema_input, reindexer_obj.new_index)
+    updated_schema = update_mapping(schema_input, reindexer_obj.new_index, reindexer_obj.add_facts_mapping)
 
     # create new_index
     create_index_res = ElasticCore().create_index(reindexer_obj.new_index, updated_schema)

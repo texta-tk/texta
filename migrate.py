@@ -10,6 +10,7 @@ import os
 import shutil
 import logging
 import json
+import uuid
 
 from toolkit.settings import INSTALLED_APPS
 
@@ -25,7 +26,7 @@ from toolkit.core.choices import CORE_VARIABLE_CHOICES
 
 
 # retrieve admin password from env if possible
-TEXTA_ADMIN_PASSWORD = os.getenv("TEXTA_ADMIN_PASSWORD", "1234")
+TEXTA_ADMIN_PASSWORD = os.getenv("TEXTA_ADMIN_PASSWORD", uuid.uuid4().hex)
 
 
 def create_admin():
@@ -36,6 +37,8 @@ def create_admin():
     
     try:
         u.save()
+        log_message = f"Toolkit: Admin user password is: {TEXTA_ADMIN_PASSWORD}"
+        print(log_message)
         return True
     except:
         return False
