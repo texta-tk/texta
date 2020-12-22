@@ -11,7 +11,7 @@ from toolkit.core.urls import router as core_router
 from toolkit.core.user_profile import views as profile_views
 from toolkit.dataset_import.urls import router as dataset_import_router
 from toolkit.docparser.views import DocparserView
-from toolkit.document_importer.views import DocumentImportView, DocumentInstanceView
+from toolkit.document_importer.views import DocumentImportView, DocumentInstanceView, UpdateSplitDocument
 from toolkit.elastic.urls import index_router, router as reindexer_router
 from toolkit.elastic.views import ElasticGetIndices
 from toolkit.embedding.urls import embedding_router
@@ -72,7 +72,7 @@ urlpatterns = [
 
     path('projects/<int:pk>/document_importer/', DocumentImportView.as_view(), name="document_import"),
     path('projects/<int:pk>/document_importer/<str:index>/<str:document_id>/', DocumentInstanceView.as_view(), name="document_instance"),
-
+    path('projects/<int:pk>/document_importer/<str:index>/update_split', UpdateSplitDocument.as_view(), name="update_split_document"),
 
     # UAA OAuth 2.0
     url('uaa/callback', UAAView.as_view()),

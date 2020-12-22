@@ -9,7 +9,6 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from toolkit.core.project.models import Project
-from toolkit.helper_functions import hash_file
 from toolkit.test_settings import TEST_INDEX
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
@@ -68,7 +67,6 @@ class TestDocparserAPIView(APITestCase):
         print_output("test_being_rejected_without_login:response.status_code", response_code)
 
         self.assertTrue((response_code == status.HTTP_403_FORBIDDEN) or (response_code == status.HTTP_401_UNAUTHORIZED))
-        self.client.login(username="Owner", password="pw")
 
 
     def test_being_rejected_with_wrong_project_id(self):
@@ -106,7 +104,6 @@ class TestDocparserAPIView(APITestCase):
         response = self.client.get(url)
         print_output("test_that_serving_media_doesnt_work_for_unauthenticated_users", True)
         self.assertTrue(response.status_code == status.HTTP_302_FOUND)
-        self.client.login(username='Owner', password='pw')  # Login again for the sake of other tests.
 
 
     def test_media_access_for_unauthorized_projects(self):
@@ -116,8 +113,6 @@ class TestDocparserAPIView(APITestCase):
         response = self.client.get(url)
         print_output("test_media_access_for_unauthorized_projects", True)
         self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)
-        self.client.logout()
-        self.client.login(username='Owner', password='pw')  # Login again for the sake of other tests.
 
 
     def test_that_saved_file_size_isnt_zero(self):
@@ -125,6 +120,8 @@ class TestDocparserAPIView(APITestCase):
         Necessary because of a prior bug where the wrapper would save a file
         with the right name but not it's contents.
         """
+        import time
+        time.sleep(10)
         file_size = os.path.getsize(self.file_path)
         self.assertTrue(file_size > 1)
         print_output("test_that_saved_file_size_isnt_zero::file_size:int", file_size)

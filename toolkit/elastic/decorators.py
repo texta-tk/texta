@@ -20,8 +20,7 @@ def elastic_connection(func):
 
         except elasticsearch.exceptions.NotFoundError as e:
             logging.getLogger(ERROR_LOGGER).exception(e.info)
-            info = [error["index"] for error in e.info["error"]["root_cause"]]
-            raise ElasticIndexNotFoundException(f"Index lookup failed: {str(info)}")
+            raise ElasticIndexNotFoundException(f"Index lookup failed")
 
         except elasticsearch.exceptions.AuthorizationException as e:
             logging.getLogger(ERROR_LOGGER).exception(e.info)

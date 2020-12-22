@@ -10,6 +10,8 @@ from .helper_functions import download_mlp_requirements, parse_list_env_headers
 from .logging_settings import setup_logging
 
 
+DEPLOY_KEY = os.getenv("TEXTA_DEPLOY_KEY", 1)
+
 ### CORE SETTINGS ###
 # NOTE: THESE ARE INITIAL VARIABLES IMPORTED FROM THE ENVIRONMENT
 # DO NOT IMPORT THESE VARIABLES IN APPS, BECAUSE THEY CAN BE OVERWRITTEN WITH VALUES FROM DB

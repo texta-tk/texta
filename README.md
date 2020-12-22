@@ -58,39 +58,54 @@ Running Docker with GPU support:
 
 `docker run --gpus all -p 8000:8000 texta-rest:gpu-latest`
 
-
 # Environment variables
 
 ## Deploy & Testing variables
+
+* TEXTA_DEPLOY_KEY - Used to separate different Toolkit instances for cases where Elasticsearch or the database are
+  shared amongst multiple instances. Best to give this a simple number (Default: 1).
 * TEXTA_ADMIN_PASSWORD - Password of the admin user created on first run.
 * TEXTA_USE_CSRF - Disable CSRF for integration tests.
-* TEXTA_CELERY_ALWAYS_EAGER - Whether to use Celerys async features or not, useful for testing purposes locally. By default False.
+* TEXTA_CELERY_ALWAYS_EAGER - Whether to use Celerys async features or not, useful for testing purposes locally. By
+  default False.
 * TEXTA_SHORT_TASK_WORKERS - Number of processes available for short term tasks (default=3).
 * TEXTA_LONG_TASK_WORKERS - Number of processes available for long term tasks (default=5)
 * TEXTA_MLP_TASK_WORKERS - Number of processes available for MLP based tasks (default=2)
-* TEXTA_RELATIVE_MODELS_DIR - Relative path of the directory in which all the different types of models are stored in. Defaults to "/data/models".
-* TEXTA_LANGUAGE_CODES - Comma separated string of Stanza supported language codes to use for Multilingual Processing. Defaults to "et,en,ru".
-* TEXTA_MLP_MODEL_DIRECTORY_PATH - Relative path to the directory into which Stanza models will be stored under the "stanza" folder (setting this to ./home/texta will
-create ./home/texta/stanza which contains subfolders for every language like ./home/texta/stanza/et etc). Defaults to "./data/models".
+* TEXTA_RELATIVE_MODELS_DIR - Relative path of the directory in which all the different types of models are stored in.
+  Defaults to "/data/models".
+* TEXTA_LANGUAGE_CODES - Comma separated string of Stanza supported language codes to use for Multilingual Processing.
+  Defaults to "et,en,ru".
+* TEXTA_MLP_MODEL_DIRECTORY_PATH - Relative path to the directory into which Stanza models will be stored under the "
+  stanza" folder (setting this to ./home/texta will create ./home/texta/stanza which contains subfolders for every
+  language like ./home/texta/stanza/et etc). Defaults to "./data/models".
 
 ## External services
+
 * TEXTA_ES_URL - URL of the Elasticsearch instance including the protocol, host and port (ex. http://localhost:9200).
 * TEXTA_REDIS_URL - URL of the Redis instance including the protocol, host and port (ex. redis://localhost:6379).
 
 ## Django specifics
-* TEXTA_ES_PREFIX - String used to limit Elasticsearch index access. Only indices matched will be the ones matching "{TEXTA_ES_PREFIX}*".
-* TEXTA_CORS_ORIGIN_WHITELIST - Comma separated string of urls (**NO WHITESPACE**) for the CORS whitelist. Needs to include the protocol (ex. http://* or http://*,http://localhost:4200).
-* TEXTA_ALLOWED_HOSTS - Comma separated string (**NO WHITESPACE**) representing the host/domain names that this Django site can serve (ex. * or *,http://localhost:4200).
+
+* TEXTA_ES_PREFIX - String used to limit Elasticsearch index access. Only indices matched will be the ones matching "
+  {TEXTA_ES_PREFIX}*".
+* TEXTA_CORS_ORIGIN_WHITELIST - Comma separated string of urls (**NO WHITESPACE**) for the CORS whitelist. Needs to
+  include the protocol (ex. http://* or http://*,http://localhost:4200).
+* TEXTA_ALLOWED_HOSTS - Comma separated string (**NO WHITESPACE**) representing the host/domain names that this Django
+  site can serve (ex. * or *,http://localhost:4200).
 * TEXTA_DEBUG - True/False values on whether to run Django in it's Debug mode or not.
 * TEXTA_SECRET_KEY - String key for cryptographic security purposes. ALWAYS SET IN PRODUCTION.
 
 ## Database credentials
+
 * DJANGO_DATABASE_ENGINE - https://docs.djangoproject.com/en/3.0/ref/settings/#engine
-* DJANGO_DATABASE_NAME - The name of the database to use. For SQLite, it’s the full path to the database file. When specifying the path, always use forward slashes, even on Windows.
+* DJANGO_DATABASE_NAME - The name of the database to use. For SQLite, it’s the full path to the database file. When
+  specifying the path, always use forward slashes, even on Windows.
 * DJANGO_DATABASE_USER - The username to use when connecting to the database. Not used with SQLite.
 * DJANGO_DATABASE_PASSWORD - The password to use when connecting to the database. Not used with SQLite.
-* DJANGO_DATABASE_HOST - Which host to use when connecting to the database. An empty string means localhost. Not used with SQLite.
-* DJANGO_DATABASE_PORT - The port to use when connecting to the database. An empty string means the default port. Not used with SQLite.
+* DJANGO_DATABASE_HOST - Which host to use when connecting to the database. An empty string means localhost. Not used
+  with SQLite.
+* DJANGO_DATABASE_PORT - The port to use when connecting to the database. An empty string means the default port. Not
+  used with SQLite.
 
 ## Extra Elasticsearch connection configurations
 
@@ -100,6 +115,7 @@ Unless you have a specially configured Elasticsearch instance, you can ignore th
 * TEXTA_ES_PASSWORD - Password to authenticate to a secured Elasticsearch instance.
 
 https://elasticsearch-py.readthedocs.io/en/6.3.1/connection.html#elasticsearch.Urllib3HttpConnection:
+
 * TEXTA_ES_USE_SSL
 * TEXTA_ES_VERIFY_CERTS
 * TEXTA_ES_CA_CERT_PATH

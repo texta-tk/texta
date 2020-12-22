@@ -17,7 +17,7 @@ class Project(models.Model):
     indices = models.ManyToManyField(Index, default=None)
 
 
-    def get_indices(self):
+    def get_indices(self) -> List[str]:
         indices = self.indices.filter(is_open=True)
         return [index.name for index in indices]
 

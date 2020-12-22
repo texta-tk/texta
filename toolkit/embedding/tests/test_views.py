@@ -6,14 +6,12 @@ from io import BytesIO
 from django.test import TransactionTestCase, override_settings
 from rest_framework import status
 
-from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.settings import RELATIVE_MODELS_PATH
 from toolkit.test_settings import TEST_FIELD_CHOICE, TEST_INDEX, TEST_VERSION_PREFIX
-from toolkit.tools.utils_for_tests import project_creation
-from toolkit.tools.utils_for_tests import create_test_user, print_output
+from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
 @override_settings(CELERY_ALWAYS_EAGER=True)

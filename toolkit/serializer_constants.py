@@ -7,6 +7,10 @@ from rest_framework import serializers
 from toolkit.core.project.models import Project
 
 
+class EmptySerializer(serializers.Serializer):
+    pass
+
+
 class ProjectResourceUrlSerializer():
     '''For project serializers which need to construct the HyperLinked URL'''
 
