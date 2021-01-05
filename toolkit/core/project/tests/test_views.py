@@ -9,7 +9,8 @@ from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.models import Index
 from toolkit.settings import RELATIVE_PROJECT_DATA_PATH, SEARCHER_FOLDER_KEY
-from toolkit.test_settings import REINDEXER_TEST_INDEX, TEST_FACT_NAME, TEST_INDEX, TEST_QUERY, TEST_VERSION_PREFIX
+from toolkit.test_settings import REINDEXER_TEST_INDEX, TEST_FACT_NAME, TEST_INDEX, TEST_QUERY, TEST_VERSION_PREFIX, \
+    TEST_FIELD, TEST_MATCH_TEXT
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -197,10 +198,25 @@ class ProjectViewTests(APITestCase):
         print_output("search_by_query_project_user", response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # test search with indices
-        payload = {"query": TEST_QUERY, "indices": [TEST_INDEX]}
+        highlight_query = {"query": {"match": {TEST_FIELD: {"query": TEST_MATCH_TEXT}}},
+                          "highlight": {"fields": {TEST_FIELD: {}}, "number_of_fragments": 0, }}
+        payload = {"query": highlight_query, "indices": [TEST_INDEX]}
         response = self.client.post(url, payload, format='json')
         print_output("search_by_query_with_indices_project_user", response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data['results'][0]['highlight'], dict))
+        # test search with output type raw
+        payload = {"query": highlight_query, "indices": [TEST_INDEX], "output_type": 'raw'}
+        response = self.client.post(url, payload, format='json')
+        print_output("search_by_query_with_output_type_raw", response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data['hits']['hits'][0]['_source']['comment_content_clean'], dict))
+        # test search with output type doc_with_id
+        payload = {"query": highlight_query, "indices": [TEST_INDEX], "output_type": 'doc_with_id'}
+        response = self.client.post(url, payload, format='json')
+        print_output("search_by_query_with_output_type_doc_with_id", response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data['hits']['hits'][0]['_source']['comment_content_clean.text'], str))
         # check that non-project users do not have access
         self.client.login(username='user', password='pw')
         response = self.client.post(url, payload, format='json')

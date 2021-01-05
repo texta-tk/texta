@@ -19,11 +19,20 @@ class ExportSearcherResultsSerializer(serializers.Serializer):
 
 class ProjectSearchByQuerySerializer(serializers.Serializer):
     query = serializers.JSONField(help_text='Query to search', default=EMPTY_QUERY)
-    indices = serializers.ListField(
-        default=None,
-        required=False,
-        help_text='Indices in project to apply query on. Default: empty (all indices in project)'
-    )
+    indices = serializers.ListField(default=None,
+                                    required=False,
+                                    help_text='Indices in project to apply query on. Default: empty (all indices in project)')
+    output_type = serializers.ChoiceField(choices=choices.OUTPUT_CHOICES,
+                                          default=None,
+                                          required=False,
+                                          help_text='Document response type')
+
+
+class ProjectDocumentSerializer(serializers.Serializer):
+    indices = serializers.ListField(default=None,
+                                    required=False,
+                                    help_text='Indices to search in')
+    doc_id = serializers.CharField(required=True, help_text='document id to search for')
 
 
 class ProjectSimplifiedSearchSerializer(serializers.Serializer):
@@ -104,7 +113,6 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
 
         return instance
 
-
     def create(self, validated_data):
         from toolkit.elastic.models import Index
         indices: List[str] = validated_data["get_indices"]
@@ -125,12 +133,10 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
         project.save()
         return project
 
-
     class Meta:
         model = Project
         fields = ('url', 'id', 'title', 'author_username', 'users', 'indices', 'resources',)
         read_only_fields = ('author_username', 'resources',)
-
 
     def get_resources(self, obj):
         request = self.context.get('request')
