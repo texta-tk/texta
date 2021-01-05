@@ -183,6 +183,12 @@ class ElasticSearcher:
         if self.output == self.OUT_DOC:
             hits = [self._parse_doc(doc) for doc in response['hits']['hits']]
             return hits
+        if self.output == self.OUT_DOC_WITH_ID:
+            for hit in response['hits']['hits']:
+                parsed_doc, _, highlight = self._flatten_doc(hit)
+                hit['highlight'] = highlight
+                hit['_source'] = parsed_doc
+            return response
         if self.output == self.OUT_DOC_WITH_TOTAL_HL_AGGS:
             return {
                 'count': response['hits']['total'],
