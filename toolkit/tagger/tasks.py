@@ -221,7 +221,7 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
         logging.getLogger(INFO_LOGGER).info(f"Tagging text with content: {text}!")
         tagger_result = tagger.tag_text(text)
     # set bool result
-    result = bool(tagger_result['prediction'])
+    result = True if tagger_object.description == tagger_result["prediction"] else False
     # create output dict
     prediction = {
         'tag': tagger.description,
