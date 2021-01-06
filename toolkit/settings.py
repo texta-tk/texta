@@ -93,7 +93,7 @@ CSRF_COOKIE_NAME = "XSRF-TOKEN"
 # For accessing a live backend server locally.
 CORS_ORIGIN_WHITELIST = parse_list_env_headers("TEXTA_CORS_ORIGIN_WHITELIST", ["http://localhost:4200"])
 CORS_ALLOW_HEADERS = list(default_headers) + ["x-xsrf-token"]
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = False if os.getenv("TEXTA_CORS_ALLOW_CREDENTIALS", "true").lower() == "false" else True
 CORS_ALLOW_ALL_ORIGINS = False if os.getenv("TEXTA_CORS_ALLOW_ALL_ORIGINS", "false").lower() == "false" else True
 
 # CF UAA OAUTH OPTIONS
