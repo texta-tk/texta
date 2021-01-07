@@ -220,8 +220,14 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
     else:
         logging.getLogger(INFO_LOGGER).info(f"Tagging text with content: {text}!")
         tagger_result = tagger.tag_text(text)
-    # set bool result
-    result = True if tagger_object.description == tagger_result["prediction"] else False
+
+    # positive tagger_result["prediction"] can either be "true" (if positive examples were restricted by query)
+    # or tagger.object_description (if positive examples were restricted by specific facts)
+    result = True if (tagger_object.description == tagger_result["prediction"]  or tagger_result["prediction"] == "true") else False
+
+    logging.getLogger(INFO_LOGGER).info(f"Tagger description: {tagger_object.description}")
+    logging.getLogger(INFO_LOGGER).info(f"Tagger result: {tagger_result['prediction']}")
+
     # create output dict
     prediction = {
         'tag': tagger.description,

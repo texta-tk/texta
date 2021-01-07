@@ -49,6 +49,7 @@ class TaggerViewTests(APITransactionTestCase):
         self.run_create_tagger_training_and_task_signal()
         self.run_create_tagger_with_incorrect_fields()
         self.run_tag_text(self.test_tagger_ids)
+        self.run_tag_text_result_check([self.test_tagger_ids[0]])
         self.run_tag_text_with_lemmatization()
         self.run_tag_doc()
         self.run_tag_doc_with_lemmatization()
@@ -192,15 +193,34 @@ class TaggerViewTests(APITransactionTestCase):
     def run_tag_text(self, test_tagger_ids: List[int]):
         """Tests the endpoint for the tag_text action"""
         payload = {"text": "This is some test text for the Tagger Test"}
+
         for test_tagger_id in test_tagger_ids:
             tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
             response = self.client.post(tag_text_url, payload)
             print_output('test_tag_text:response.data', response.data)
+
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
             self.assertTrue('result' in response.data)
             self.assertTrue('probability' in response.data)
+
+
+    def run_tag_text_result_check(self, test_tagger_ids: List[int]):
+        """Tests the endpoint to check if the tagger result corresponds to the input text."""
+        payload_pos = {"text": "This is some test text for the Tagger Test loll"}
+        payload_neg = {"text": "This is some test text for the Tagger Test"}
+
+        payloads = {True: payload_pos, False: payload_neg}
+
+        for label, payload in list(payloads.items()):
+            for test_tagger_id in test_tagger_ids:
+                tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
+                response = self.client.post(tag_text_url, payload)
+                print_output('test_tag_text_result_check:response.data', response.data)
+
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+                self.assertEqual(response.data['result'], label)
 
 
     def run_tag_text_with_lemmatization(self):
