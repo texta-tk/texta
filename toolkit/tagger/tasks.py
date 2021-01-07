@@ -198,7 +198,10 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
     # get tagger object
     tagger_object = Tagger.objects.get(pk=tagger_id)
     # get lemmatizer
-    lemmatizer = CeleryLemmatizer()
+    if lemmatize:
+        lemmatizer = CeleryLemmatizer()
+    else:
+        lemmatizer = None
     # create text processor object for tagger
     stop_words = tagger_object.stop_words.split(' ')
     # load embedding
