@@ -46,6 +46,9 @@ Test:
   script:
     - sh wait-for-uaa.sh
     - python manage.py test
+  only:
+    - master
+    - merge_requests
 
 Build:
   stage: build
