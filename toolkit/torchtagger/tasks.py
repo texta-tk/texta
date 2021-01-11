@@ -2,6 +2,7 @@ import json
 import os
 import secrets
 from celery.decorators import task
+from django.db import connections
 
 from texta_torch_tagger.tagger import TorchTagger
 from texta_tools.text_processor import TextProcessor
@@ -49,6 +50,9 @@ def train_torchtagger(tagger_id, testing=False):
         )
         # train tagger and get result statistics
         report = tagger.train(data_sample.data, num_epochs=int(tagger_object.num_epochs))
+        # close all db connections
+        for conn in connections.all():
+            conn.close_if_unusable_or_obsolete()
         # save tagger to disk
         tagger_path = os.path.join(RELATIVE_MODELS_PATH, model_type, f'{model_type}_{tagger_id}_{secrets.token_hex(10)}')
         tagger.save(tagger_path)
