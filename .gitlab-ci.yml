@@ -49,6 +49,7 @@ Test:
   only:
     - master
     - merge_requests
+    - tags
 
 Build:
   stage: build
