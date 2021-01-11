@@ -1,4 +1,5 @@
 from celery.decorators import task
+from django.db import connections
 import json
 
 from texta_tools.text_processor import TextProcessor
@@ -36,6 +37,11 @@ def train_embedding(embedding_id):
         # create embedding object & train
         embedding = W2VEmbedding()
         embedding.train(sentences, use_phraser=use_phraser)
+
+        # close all db connections
+        for conn in connections.all():
+            conn.close_if_unusable_or_obsolete()
+
         # save model
         show_progress.update_step('saving')
         full_model_path, relative_model_path = embedding_object.generate_name("embedding")
