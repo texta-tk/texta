@@ -1,0 +1,1 @@
+{"fields": {"description": "test", "query": "{\"query\": {\"match_all\": {}}}", "fields": "[\"content\"]", "num_dimensions": 100, "max_documents": 0, "min_freq": 2, "vocab_size": 6286, "use_phraser": true, "embedding_model": "data/models/embedding/embedding_1_6c2f8fef9fa655245447", "indices": [1]}, "embedding_extras": []}
