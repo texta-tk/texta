@@ -90,6 +90,7 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 # For corsheaders/external frontend
 CSRF_HEADER_NAME = "HTTP_X_XSRF_TOKEN"
 CSRF_COOKIE_NAME = "XSRF-TOKEN"
+CSRF_TRUSTED_ORIGINS = ["http://localhost:4200"]
 # For accessing a live backend server locally.
 CORS_ORIGIN_WHITELIST = parse_list_env_headers("TEXTA_CORS_ORIGIN_WHITELIST", ["http://localhost:4200"])
 CORS_ALLOW_HEADERS = list(default_headers) + ["x-xsrf-token"]
