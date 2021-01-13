@@ -91,7 +91,7 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 CSRF_HEADER_NAME = "HTTP_X_XSRF_TOKEN"
 CSRF_COOKIE_NAME = "XSRF-TOKEN"
 # For accessing a live backend server locally.
-CORS_ORIGIN_WHITELIST = ["http://localhost:4200", "http://localhost:4200/"]
+CORS_ORIGIN_WHITELIST = ["http://localhost:4200"]
 CSRF_TRUSTED_ORIGINS = ["localhost"]
 CORS_ALLOW_HEADERS = list(default_headers) + ["x-xsrf-token"]
 CORS_ALLOW_CREDENTIALS = False if os.getenv("TEXTA_CORS_ALLOW_CREDENTIALS", "true").lower() == "false" else True
