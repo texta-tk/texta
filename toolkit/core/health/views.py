@@ -1,6 +1,4 @@
-import os
 import shutil
-
 import psutil
 import torch
 from rest_framework import status, views
@@ -43,7 +41,7 @@ class HealthView(views.APIView):
             "unit": "GB"
         }
 
-        toolkit_status["host"]["cpu"] = {"percent": psutil.cpu_percent(), "count": os.cpu_count()}
+        toolkit_status["host"]["cpu"] = {"percent": psutil.cpu_percent()}
 
         toolkit_status["services"]["redis"] = get_redis_status()
 

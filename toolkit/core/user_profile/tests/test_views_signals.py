@@ -9,16 +9,16 @@ from toolkit.tools.utils_for_tests import create_test_user, print_output
 
 class UserProfileSignalsAndViewsTests(APITestCase):
 
-    def setUp(self):
-        self.client = APIClient()
+    def setUp(cls):
+        cls.client = APIClient()
         # Create admin user with pk 1
-        self.admin = create_test_user(name='admin', password='1234')
-        self.admin.is_superuser = True
-        self.admin.save()
+        cls.admin = create_test_user(name='admin', password='1234')
+        cls.admin.is_superuser = True
+        cls.admin.save()
         # Create a new User
-        self.user = create_test_user(name='user', password='pw')
-        self.user_url = f'{TEST_VERSION_PREFIX}/users/{self.user.profile.id}/'
-        self.admin_url = f'{TEST_VERSION_PREFIX}/users/{self.admin.profile.id}/'
+        cls.user = create_test_user(name='user', password='pw')
+        cls.user_url = f'{TEST_VERSION_PREFIX}/users/{cls.user.profile.id}/'
+        cls.admin_url = f'{TEST_VERSION_PREFIX}/users/{cls.admin.profile.id}/'
 
 
     def test_run(self):

@@ -3,14 +3,21 @@ from time import sleep
 
 from django.test import override_settings
 from rest_framework import status
-from rest_framework.test import APITransactionTestCase
+from rest_framework.test import APITestCase, APITransactionTestCase
 
+from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.models import Reindexer
 from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.test_settings import (REINDEXER_TEST_INDEX, TEST_FIELD, TEST_INDEX, TEST_INDEX_REINDEX, TEST_QUERY, TEST_VERSION_PREFIX)
-from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
+from toolkit.test_settings import (TEST_FIELD,
+                                   TEST_INDEX,
+                                   TEST_INDEX_REINDEX,
+                                   TEST_QUERY,
+                                   TEST_VERSION_PREFIX,
+                                   REINDEXER_TEST_INDEX)
+from toolkit.tools.utils_for_tests import project_creation
+from toolkit.tools.utils_for_tests import create_test_user, print_output
 
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
@@ -30,7 +37,6 @@ class ReindexerViewTests(APITransactionTestCase):
         self.project.users.add(self.user)
 
         self.client.login(username=self.default_username, password=self.default_password)
-
 
     def test_run(self):
         existing_new_index_payload = {
@@ -65,7 +71,6 @@ class ReindexerViewTests(APITransactionTestCase):
         }
         test_query_payload = {
             "description": "TestQueryFiltering",
-            "scroll_size": 100,
             "indices": [TEST_INDEX],
             "new_index": TEST_INDEX_REINDEX,
             "query": json.dumps(TEST_QUERY)
@@ -100,7 +105,6 @@ class ReindexerViewTests(APITransactionTestCase):
             url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
             self.run_create_reindexer_task_signal(self.project, url, payload)
 
-
     def run_create_reindexer_task_signal(self, project, url, payload, overwrite=False):
         """ Tests the endpoint for a new Reindexer task, and if a new Task gets created via the signal
            checks if new_index was removed """
@@ -114,7 +118,6 @@ class ReindexerViewTests(APITransactionTestCase):
         self.is_new_index_created_if_yes_remove(response, payload, project)
         self.is_reindexed_index_added_to_project_if_yes_remove(response, payload['new_index'], project)
         assert TEST_INDEX_REINDEX not in ElasticCore().get_indices()
-
 
     def is_new_index_created_if_yes_remove(self, response, payload, project):
         """ Check if new_index gets created
@@ -131,7 +134,6 @@ class ReindexerViewTests(APITransactionTestCase):
             new_index = response.data['new_index']
             delete_response = ElasticCore().delete_index(new_index)
             print_output("Reindexer Test index remove status", delete_response)
-
 
     def is_reindexed_index_added_to_project_if_yes_remove(self, response, new_index, project):
         # project resource user is not supposed to have indices remove permission, so use admin
@@ -151,7 +153,6 @@ class ReindexerViewTests(APITransactionTestCase):
         # log in with project user again
         self.client.login(username=self.default_username, password=self.default_password)
 
-
     def validate_fields(self, project, payload):
         project_fields = ElasticCore().get_fields(project.get_indices())
         project_field_paths = [field["path"] for field in project_fields]
@@ -160,13 +161,11 @@ class ReindexerViewTests(APITransactionTestCase):
                 return False
         return True
 
-
     def validate_indices(self, project, payload):
         for index in payload['indices']:
             if index not in project.get_indices():
                 return False
         return True
-
 
     def check_positive_doc_count(self):
         # current reindexing tests require approx 2 seconds delay
@@ -175,7 +174,6 @@ class ReindexerViewTests(APITransactionTestCase):
         print_output("Bulk add doc count", count_new_documents)
         assert count_new_documents > 0
 
-
     def check_update_forbidden(self, url, payload):
         put_response = self.client.put(url, payload, format='json')
         patch_response = self.client.patch(url, payload, format='json')
@@ -183,7 +181,6 @@ class ReindexerViewTests(APITransactionTestCase):
         print_output("patch_response.data", patch_response.data)
         self.assertEqual(put_response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
         self.assertEqual(patch_response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
-
 
     def delete_reindexing_task(self, project, response):
         """ test delete reindex task """
