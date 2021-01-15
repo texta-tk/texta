@@ -48,6 +48,11 @@ def create_tagger_plot(statistics: dict):
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
     plt.title('Confusion matrix')
     tick_marks = np.arange(len(classes))
+
+    # reverse the order of the classes for binary taggers so the labels would be correct
+    if classes[0] == "true":
+        classes.reverse()
+
     plt.xticks(tick_marks, classes, rotation=45)
     plt.yticks(tick_marks, classes)
     fmt = 'd'
