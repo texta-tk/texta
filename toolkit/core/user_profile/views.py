@@ -28,3 +28,10 @@ class UserViewSet(mixins.RetrieveModelMixin,
         if not current_user.is_superuser:
             queryset = queryset.filter(id=self.request.user.id)
         return queryset
+
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if request.user == instance:
+            request.data.pop("is_superuser")
+        return super(UserViewSet, self).update(request, *args, **kwargs)
