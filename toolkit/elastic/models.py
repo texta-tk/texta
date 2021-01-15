@@ -32,7 +32,6 @@ class Reindexer(models.Model):
     description = models.CharField(max_length=MAX_DESC_LEN, default="")
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    scroll_size = models.IntegerField(default=500)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     indices = models.TextField(default=json.dumps([]))
     fields = models.TextField(default=json.dumps([]))
@@ -56,6 +55,7 @@ class Reindexer(models.Model):
 
             from toolkit.elastic.tasks import reindex_task
             reindex_task.apply_async(args=(instance.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
+
 
 
 signals.post_save.connect(Reindexer.create_reindexer_model, sender=Reindexer)

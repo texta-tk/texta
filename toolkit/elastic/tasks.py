@@ -124,7 +124,6 @@ def reindex_task(reindexer_task_id):
     fields = json.loads(reindexer_obj.fields)
     random_size = reindexer_obj.random_size
     field_type = json.loads(reindexer_obj.field_type)
-    scroll_size = reindexer_obj.scroll_size
     query = reindexer_obj.query
 
     ''' for empty field post, use all posted indices fields '''
@@ -136,11 +135,11 @@ def reindex_task(reindexer_task_id):
     show_progress.update_step("scrolling data")
     show_progress.update_view(0)
 
-    elastic_search = ElasticSearcher(indices=indices, callback_progress=show_progress, query=query, scroll_size=scroll_size)
+    elastic_search = ElasticSearcher(indices=indices, callback_progress=show_progress, query=query)
     elastic_doc = ElasticDocument(reindexer_obj.new_index)
 
     if random_size > 0:
-        elastic_search = ElasticSearcher(indices=indices, query=query, scroll_size=scroll_size).random_documents(size=random_size)
+        elastic_search = ElasticSearcher(indices=indices, query=query).random_documents(size=random_size)
 
     ''' the operations that don't require a mapping update have been completed '''
 

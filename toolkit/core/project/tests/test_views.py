@@ -166,13 +166,12 @@ class ProjectViewTests(APITestCase):
         payload = {"indices": [TEST_INDEX, REINDEXER_TEST_INDEX]}
         response = self.client.post(self.export_url, data=payload, format="json")
         hosted_url = response.data
-        file_name = hosted_url.split("/")[-1]
         self.assertTrue(response.status_code == status.HTTP_200_OK)
-        path = pathlib.Path(RELATIVE_PROJECT_DATA_PATH) / str(self.project.pk) / SEARCHER_FOLDER_KEY / file_name
+        path = pathlib.Path(RELATIVE_PROJECT_DATA_PATH) / str(self.project.pk) / SEARCHER_FOLDER_KEY
         self.assertTrue(path.exists() is True)
-
-        file_size = os.path.getsize(path)
-        self.assertTrue(file_size > 1)  # Check that file actually has content
+        for path in path.glob("*.jl"):
+            file_size = os.path.getsize(path)
+            self.assertTrue(file_size > 1)  # Check that file actually has content
 
         # Check if file is downloadable.
         response = self.client.get(hosted_url)

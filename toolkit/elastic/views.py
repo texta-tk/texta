@@ -14,7 +14,7 @@ from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.exceptions import ElasticIndexAlreadyExists
 from toolkit.elastic.models import Index, Reindexer
-from toolkit.elastic.serializers import AddMappingToIndexSerializer, AddTextaFactsMapping, IndexSerializer, ReindexerCreateSerializer
+from toolkit.elastic.serializers import AddMappingToIndexSerializer, IndexSerializer, ReindexerCreateSerializer
 from toolkit.permissions.project_permissions import IsSuperUser, ProjectResourceAllowed
 from toolkit.view_constants import BulkDelete
 
@@ -166,7 +166,7 @@ class IndexViewSet(mixins.CreateModelMixin,
         return Response({"message": f"Opened the index {index.name}"})
 
 
-    @action(detail=True, methods=['post'], serializer_class=AddTextaFactsMapping)
+    @action(detail=True, methods=['post'])
     def add_facts_mapping(self, request, pk=None, project_pk=None):
         es_core = ElasticCore()
         index = Index.objects.get(pk=pk)
