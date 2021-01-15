@@ -6,10 +6,12 @@ import warnings
 from corsheaders.defaults import default_headers
 from kombu import Exchange, Queue
 
-from .helper_functions import download_mlp_requirements, parse_list_env_headers
+from .helper_functions import download_mlp_requirements, parse_bool_env, parse_list_env_headers
 from .logging_settings import setup_logging
 
 
+# Used in cases where multiple Toolkit instances share resources like Elasticsearch or DB.
+# Helps differentiate them when creating static index names.
 DEPLOY_KEY = os.getenv("TEXTA_DEPLOY_KEY", 1)
 
 ### CORE SETTINGS ###
@@ -34,7 +36,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("TEXTA_SECRET_KEY", "eqr9sjz-&baah&c%ejkaorp)a1$q63y0%*a^&fv=y$(bbe5+(b")
 # SECURITY WARNING: don"t run with debug turned on in production!
-DEBUG = True if os.getenv("TEXTA_DEBUG", "True") == "True" else False
+DEBUG = parse_bool_env("TEXTA_DEBUG", True)
 # ALLOWED HOSTS
 ALLOWED_HOSTS = parse_list_env_headers("TEXTA_ALLOWED_HOSTS", ["*"])
 
@@ -91,13 +93,14 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 CSRF_HEADER_NAME = "HTTP_X_XSRF_TOKEN"
 CSRF_COOKIE_NAME = "XSRF-TOKEN"
 # For accessing a live backend server locally.
-CORS_ORIGIN_WHITELIST = parse_list_env_headers("TEXTA_CORS_ORIGIN_WHITELIST", ["http://localhost:4200"])
+CORS_ORIGIN_WHITELIST = ["http://localhost:4200", 'https://law-test-8795b.web.app']
+CSRF_TRUSTED_ORIGINS = ["localhost"]
 CORS_ALLOW_HEADERS = list(default_headers) + ["x-xsrf-token"]
-CORS_ALLOW_CREDENTIALS = False if os.getenv("TEXTA_CORS_ALLOW_CREDENTIALS", "true").lower() == "false" else True
-CORS_ALLOW_ALL_ORIGINS = False if os.getenv("TEXTA_CORS_ALLOW_ALL_ORIGINS", "false").lower() == "false" else True
+CORS_ALLOW_CREDENTIALS = parse_bool_env("TEXTA_CORS_ALLOW_CREDENTIALS", False)
+CORS_ALLOW_ALL_ORIGINS = parse_bool_env("TEXTA_CORS_ALLOW_ALL_ORIGINS", False)
 
 # CF UAA OAUTH OPTIONS
-USE_UAA = False if os.getenv("TEXTA_USE_UAA", "false").lower() == "false" else True
+USE_UAA = parse_bool_env("TEXTA_USE_UAA", False)
 # UAA server URL
 UAA_URL = os.getenv("TEXTA_UAA_URL", "http://localhost:8080/uaa")
 # Callback URL defined on the UAA server, to which the user will be redirected after logging in on UAA
@@ -153,7 +156,7 @@ MIDDLEWARE = [
 ]
 
 # we can optionally disable csrf for testing purposes
-USE_CSRF = False if os.getenv("TEXTA_USE_CSRF", "false").lower() == "false" else True
+USE_CSRF = parse_bool_env("TEXTA_USE_CSRF", False)
 if USE_CSRF:
     MIDDLEWARE.append("django.middleware.csrf.CsrfViewMiddleware")
 else:
@@ -225,14 +228,14 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 # OTHER ELASTICSEARCH OPTIONS
 ES_CONNECTION_PARAMETERS = {
-    "use_ssl": False if os.getenv("TEXTA_ES_USE_SSL", "false").lower() == "false" else True,
-    "verify_certs": False if os.getenv("TEXTA_ES_VERIFY_CERTS", "false").lower() == "false" else True,
+    "use_ssl": parse_bool_env("TEXTA_ES_USE_SSL", False),
+    "verify_certs": parse_bool_env("TEXTA_ES_VERIFY_CERTS", False),
     "ca_certs": os.getenv("TEXTA_ES_CA_CERT_PATH", None),
     "client_cert": os.getenv("TEXTA_ES_CLIENT_CERT_PATH", None),
     "client_key": os.getenv("TEXTA_ES_CLIENT_KEY_PATH", None),
     "timeout": int(os.getenv("TEXTA_ES_TIMEOUT")) if os.getenv("TEXTA_ES_TIMEOUT", None) else 60,
-    "sniff_on_start": True if os.getenv("TEXTA_ES_SNIFF_ON_START", "true").lower() == "true" else True,
-    "sniff_on_connection_fail": True if os.getenv("TEXTA_ES_SNIFF_ON_FAIL", "true").lower() == "true" else False
+    "sniff_on_start": parse_bool_env("TEXTA_ES_SNIFF_ON_START", True),
+    "sniff_on_connection_fail": parse_bool_env("TEXTA_ES_SNIFF_ON_FAIL", True)
 }
 
 # CELERY
@@ -243,7 +246,7 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERYD_PREFETCH_MULTIPLIER = 1
-CELERY_ALWAYS_EAGER = False if os.getenv("TEXTA_CELERY_ALWAYS_EAGER", "false").lower() == "false" else True
+CELERY_ALWAYS_EAGER = parse_bool_env("TEXTA_CELERY_ALWAYS_EAGER", False)
 CELERY_LONG_TERM_TASK_QUEUE = "long_term_tasks"
 CELERY_SHORT_TERM_TASK_QUEUE = "short_term_tasks"
 CELERY_MLP_TASK_QUEUE = "mlp_queue"
@@ -311,7 +314,7 @@ SWAGGER_SETTINGS = {
     "DEFAULT_AUTO_SCHEMA_CLASS": "toolkit.tools.swagger.CompoundTagsSchema"
 }
 
-SKIP_MLP_RESOURCES = False if os.getenv("SKIP_MLP_RESOURCES", "false").lower() == "false" else True
+SKIP_MLP_RESOURCES = parse_bool_env("SKIP_MLP_RESOURCES", False)
 if SKIP_MLP_RESOURCES is False:
     download_mlp_requirements(MLP_MODEL_DIRECTORY, DEFAULT_MLP_LANGUAGE_CODES, logging.getLogger(INFO_LOGGER))
 
