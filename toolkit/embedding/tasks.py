@@ -37,7 +37,6 @@ def train_embedding(embedding_id):
                                     text_processor=TextProcessor(sentences=True, remove_stop_words=True, words_as_list=True),
                                     output=ElasticSearcher.OUT_TEXT)
         # create embedding object & train
-        print(sentences)
         embedding = W2VEmbedding()
         embedding.train(sentences, use_phraser=use_phraser)
 
