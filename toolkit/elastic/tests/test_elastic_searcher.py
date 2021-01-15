@@ -2,16 +2,18 @@ from django.test import TestCase
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE
 from toolkit.tools.utils_for_tests import print_output
+from texta_tools.text_processor import TextProcessor
 
 
 class TestElasticSearcher(TestCase):
 
     def test_run(self):
-        self.run_update_field_data()
-        self.run_count()
-        self.run_search()
-        self.run_iterator()
-        self.run_count_with_nonexisting_index()
+       # self.run_update_field_data()
+        #self.run_count()
+        #self.run_search()
+        #self.run_iterator()
+        #self.run_count_with_nonexisting_index()
+        self.different_outputs()
 
     def run_update_field_data(self):
         '''Tests ElasticSearcher field data update.'''
@@ -49,6 +51,19 @@ class TestElasticSearcher(TestCase):
         self.assertTrue(isinstance(last_hit, dict))
         self.assertTrue(TEST_FIELD in last_hit)
 
+    def different_outputs(self):
+    	'''Tests Elasticsearcher outputs in iterator'''
+    	elastic_searcher = ElasticSearcher(indices=[TEST_INDEX], field_data=TEST_FIELD_CHOICE, output=ElasticSearcher.OUT_TEXT)
+    	self.assertTrue(list(elastic_searcher)[0], str)
+    	elastic_searcher = ElasticSearcher(indices=[TEST_INDEX], field_data=TEST_FIELD_CHOICE, output=ElasticSearcher.OUT_TEXT, text_processor=TextProcessor(sentences=True, remove_stop_words=True, words_as_list=True))
+    	self.assertTrue(list(elastic_searcher)[0], str)
+    	elastic_searcher = ElasticSearcher(indices=[TEST_INDEX], field_data=TEST_FIELD_CHOICE, output=ElasticSearcher.OUT_TEXT_WITH_ID)
+    	self.assertTrue(elastic_searcher, dict)
+    	elastic_searcher = ElasticSearcher(indices=[TEST_INDEX], field_data=TEST_FIELD_CHOICE, output=ElasticSearcher.OUT_DOC)
+    	self.assertTrue(elastic_searcher, dict)
+    	elastic_searcher = ElasticSearcher(indices=[TEST_INDEX], field_data=TEST_FIELD_CHOICE, output=ElasticSearcher.OUT_DOC_WITH_ID)
+    	self.assertTrue(elastic_searcher, dict)
+    	
     def run_count_with_nonexisting_index(self):
         '''Tests ElasticSearcher count method with nonexisting index.'''
         elastic_searcher = ElasticSearcher(indices=['asdasdasd'])
