@@ -5,12 +5,10 @@ import pathlib
 import re
 import secrets
 
-from texta_tagger.tagger import Tagger as TextTagger
-from texta_tools.text_processor import TextProcessor
-from texta_tools.mlp_analyzer import get_mlp_analyzer
-from texta_tools.embedding import Phraser, W2VEmbedding
-
 from celery.decorators import task
+from texta_tagger.tagger import Tagger as TextTagger
+from texta_tools.embedding import W2VEmbedding
+
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.data_sample import DataSample
@@ -19,9 +17,9 @@ from toolkit.elastic.models import Index
 from toolkit.helper_functions import get_indices_from_object
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, MEDIA_URL
 from toolkit.tagger.models import Tagger, TaggerGroup
+from toolkit.tools.celery_lemmatizer import CeleryLemmatizer
 from toolkit.tools.plots import create_tagger_plot
 from toolkit.tools.show_progress import ShowProgress
-from toolkit.tools.celery_lemmatizer import CeleryLemmatizer
 
 
 def create_tagger_batch(tagger_group_id, taggers_to_create):
@@ -142,7 +140,7 @@ def train_tagger_task(tagger_id: int):
         image_path = pathlib.Path(MEDIA_URL) / image_name
 
         # get num examples
-        num_examples = {k:len(v) for k,v in data_sample.data.items()}
+        num_examples = {k: len(v) for k, v in data_sample.data.items()}
 
         return {
             "id": tagger_id,
@@ -226,7 +224,7 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
 
     # positive tagger_result["prediction"] can either be "true" (if positive examples were restricted by query)
     # or tagger.object_description (if positive examples were restricted by specific facts)
-    result = True if (tagger_object.description == tagger_result["prediction"]  or tagger_result["prediction"] == "true") else False
+    result = True if (tagger_object.description == tagger_result["prediction"] or tagger_result["prediction"] == "true") else False
 
     logging.getLogger(INFO_LOGGER).info(f"Tagger description: {tagger_object.description}")
     logging.getLogger(INFO_LOGGER).info(f"Tagger result: {tagger_result['prediction']}")
