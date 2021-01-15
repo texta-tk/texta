@@ -48,6 +48,7 @@ class Tagger(models.Model):
     f1_score = models.FloatField(default=None, null=True)
     num_features = models.IntegerField(default=None, null=True)
     num_examples = models.TextField(default="{}", null=True)
+    confusion_matrix = models.TextField(default="[]", null=True, blank=True)
 
     model = models.FileField(null=True, verbose_name='', default=None)
     model_size = models.FloatField(default=None, null=True)
@@ -57,6 +58,12 @@ class Tagger(models.Model):
 
     def get_indices(self):
         return [index.name for index in self.indices.filter(is_open=True)]
+
+    def set_confusion_matrix(self, x):
+        self.confusion_matrix = json.dumps(x)
+
+    def get_confusion_matrix(self):
+        return json.loads(self.confusion_matrix)
 
 
     def __str__(self):

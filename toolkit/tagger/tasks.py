@@ -150,6 +150,7 @@ def train_tagger_task(tagger_id: int):
             "f1_score": float(tagger.report.f1_score),
             "num_features": tagger.report.num_features,
             "num_examples": num_examples,
+            "confusion_matrix": tagger.report.confusion.tolist(),
             "model_size": round(float(os.path.getsize(tagger_full_path)) / 1000000, 1),  # bytes to mb
             "plot": str(image_path)
         }
@@ -180,6 +181,7 @@ def save_tagger_results(result_data: dict):
         tagger_object.num_examples = json.dumps(result_data["num_examples"])
         tagger_object.model_size = result_data["model_size"]
         tagger_object.plot.name = result_data["plot"]
+        tagger_object.confusion_matrix = result_data["confusion_matrix"]
         tagger_object.save()
         task_object.complete()
     except Exception as e:
