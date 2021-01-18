@@ -103,7 +103,7 @@ class ElasticScrollSerializer(serializers.Serializer):
 class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True)
     url = serializers.SerializerMethodField()
-    scroll_size = serializers.IntegerField(min_value=0, max_value=10000)  # Max value stems from Elasticsearch max doc count limitation.
+    scroll_size = serializers.IntegerField(min_value=0, max_value=10000, required=False)  # Max value stems from Elasticsearch max doc count limitation.
     description = serializers.CharField(help_text='Describe your re-indexing task', required=True, allow_blank=False)
     indices = serializers.ListField(child=serializers.CharField(), help_text=f'Add the indices, you wish to reindex into a new index.', write_only=True, required=True)
     query = serializers.JSONField(help_text='Add a query, if you wish to filter the new reindexed index.', required=False)
