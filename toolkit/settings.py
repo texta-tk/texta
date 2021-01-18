@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "toolkit.dataset_import",
     "toolkit.tagger",
     "toolkit.torchtagger",
+    "toolkit.bert_tagger",
     "toolkit.mlp",
     "toolkit.topic_analyzer",
     "toolkit.regex_tagger",

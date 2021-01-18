@@ -275,7 +275,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         """Executes **raw** Elasticsearch query on all project indices."""
         project: Project = self.get_object()
         serializer = ProjectSearchByQuerySerializer(data=request.data)
-        
+
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
 
@@ -376,7 +376,8 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             'num_anonymizers': proj.anonymizer_set.count(),
             'num_mlp_workers': proj.mlpworker_set.count(),
             'num_reindexers': proj.reindexer_set.count(),
-            'num_dataset_importers': proj.reindexer_set.count()
+            'num_dataset_importers': proj.reindexer_set.count(),
+            'num_bert_taggers': proj.berttagger_set.count()
         }
 
         return Response(response, status=status.HTTP_200_OK)

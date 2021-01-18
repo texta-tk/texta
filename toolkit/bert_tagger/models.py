@@ -34,6 +34,8 @@ class BertTagger(models.Model):
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     fact_name = models.CharField(max_length=MAX_DESC_LEN, null=True)
     minimum_sample_size = models.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE)
+    negative_multiplier = models.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER)
+    split_ratio = models.FloatField(default=choices.DEFAULT_VALIDATION_SPLIT)
 
     # BERT PARAMS TO ADD:
     # split_ratio = validation_ratio
@@ -45,12 +47,12 @@ class BertTagger(models.Model):
 
     num_epochs = models.IntegerField(default=choices.DEFAULT_NUM_EPOCHS)
     validation_ratio = models.FloatField(default=choices.DEFAULT_VALIDATION_SPLIT)
-    negative_multiplier = models.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER)
     maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE)
     learning_rate = models.FloatField(default=choices.DEFAULT_LEARNING_RATE)
     eps = models.FloatField(default=choices.DEFAULT_EPS)
     max_length = models.IntegerField(default=choices.DEFAULT_MAX_LENGTH)
-    bert_model = models.CharField()
+    batch_size = models.IntegerField(default=choices.DEFAULT_BATCH_SIZE)
+    bert_model = models.TextField(default=choices.DEFAULT_BERT_MODEL)
 
 
     # RESULTS
@@ -94,7 +96,7 @@ class BertTagger(models.Model):
         # TODO: see torch_tagger
         pass
 
-    def generate_name(self, name: str):
+    def generate_name(self, name: str = "bert_tagger"):
         """
         Do not change this carelessly as import/export functionality depends on this.
         Returns full and relative filepaths for the intended models.
@@ -114,7 +116,7 @@ class BertTagger(models.Model):
 
 
     def train(self):
-        new_task = Task.objects.create(bert_tagger=self, status='created')
+        new_task = Task.objects.create(berttagger=self, status='created')
         self.task = new_task
         self.save()
         from toolkit.bert_tagger.tasks import train_bert_tagger

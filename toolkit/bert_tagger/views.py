@@ -164,12 +164,12 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         tagger.load_django(tagger_object)
         # tag text
         if input_type == 'doc':
-            tagger_result = tagger.tag_doc(tagger_input)
+            tagger_result = "TODO"
+            #tagger_result = tagger.tag_doc(tagger_input)
         else:
             tagger_result = tagger.tag_text(tagger_input)
         # reform output
         prediction = {
-            'probability': tagger_result['probability'],
             'tagger_id': tagger_object.id,
             'result': tagger_result['prediction']
         }
