@@ -8,11 +8,11 @@ from texta_tools.text_processor import TextProcessor
 class TestElasticSearcher(TestCase):
 
     def test_run(self):
-       # self.run_update_field_data()
-        #self.run_count()
-        #self.run_search()
-        #self.run_iterator()
-        #self.run_count_with_nonexisting_index()
+        self.run_update_field_data()
+        self.run_count()
+        self.run_search()
+        self.run_iterator()
+        self.run_count_with_nonexisting_index()
         self.different_outputs()
 
     def run_update_field_data(self):
