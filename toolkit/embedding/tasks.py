@@ -33,7 +33,9 @@ def train_embedding(embedding_id):
                                     indices=indices,
                                     field_data=field_data,
                                     callback_progress=show_progress,
-                                    scroll_limit=max_documents)
+                                    scroll_limit=max_documents,
+                                    text_processor=TextProcessor(sentences=True, remove_stop_words=True, words_as_list=True),
+                                    output=ElasticSearcher.OUT_TEXT)
         # create embedding object & train
         embedding = W2VEmbedding()
         embedding.train(sentences, use_phraser=use_phraser)

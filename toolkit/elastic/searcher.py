@@ -248,10 +248,13 @@ class ElasticSearcher:
                         parsed_doc = self._parse_doc(hit)
                         if self.output == self.OUT_TEXT:
                             for field in parsed_doc.values():
-                                if self.text_processor:
+                            	if self.text_processor:
                                     field = self.text_processor.process(field)
-                                for text in field:
-                                    yield text
+                                    for text in field:
+                                    	yield " ".join(text)
+                            	else:
+                                    yield field
+                              	
 
                         elif self.output == self.OUT_TEXT_WITH_ID:
                             document = {}
@@ -264,7 +267,8 @@ class ElasticSearcher:
 
                         elif self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID):
                             if self.text_processor:
-                                parsed_doc = {k: '\n'.join(self.text_processor.process(v)) for k, v in parsed_doc.items()}
+                                parsed_doc = {k: '\n'.join(self.text_processor.process(v)[0]) for k, v in parsed_doc.items()}
+                                
                             if self.output == self.OUT_DOC_WITH_ID:
                                 parsed_doc['_id'] = hit['_id']
                             yield parsed_doc
