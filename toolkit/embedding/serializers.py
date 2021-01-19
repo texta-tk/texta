@@ -42,7 +42,10 @@ class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSeri
 
 
 class EmbeddingPredictSimilarWordsSerializer(serializers.Serializer):
-    positives = serializers.ListField(child=serializers.CharField(), help_text=f'Positive words for the model.')
-    negatives = serializers.ListField(child=serializers.CharField(), help_text=f'Negative words for the model. Default: EMPTY', required=False, default=[])
+    positives_used = serializers.ListField(child=serializers.CharField(), help_text=f'Positive words for the model.')
+    negatives_used = serializers.ListField(child=serializers.CharField(), help_text=f'Negative words for the model. Default: EMPTY', required=False, default=[])
+    positives_unused = serializers.ListField(child=serializers.CharField(), help_text=f'Positive words in the lexicon, not used in mining. Default: EMPTY', required=False, default=[])
+    negatives_unused = serializers.ListField(child=serializers.CharField(), help_text=f'Negative words left out from the lexicon, not used in mining. Default: EMPTY', required=False, default=[])
+    
     output_size = serializers.IntegerField(default=choices.DEFAULT_OUTPUT_SIZE,
                                            help_text=f'Default: {choices.DEFAULT_OUTPUT_SIZE}')
