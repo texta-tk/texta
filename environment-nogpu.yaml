@@ -50,5 +50,5 @@ dependencies:
       - torchtext==0.6.*
       - torch==1.5.0+cpu
       - -f https://download.pytorch.org/whl/torch_stable.html
-      - pyjwt
+      - pyjwt==2.0.*
       - beautifulsoup4
