@@ -163,9 +163,6 @@ def reindex_task(reindexer_task_id):
     # set new_index name as mapping name, perhaps make it customizable in the future
     bulk_add_documents(elastic_search, elastic_doc, index=new_index, chunk_size=scroll_size, flatten_doc=FLATTEN_DOC)
 
-    # get_map = ElasticCore().get_mapping(index=reindexer_obj.new_index)
-    # print("ourmap", get_map)
-
     # declare the job done
     task_object.complete()
 

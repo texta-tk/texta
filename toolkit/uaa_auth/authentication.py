@@ -1,6 +1,5 @@
 import requests
 import logging
-import jwt
 
 from django.contrib.auth.models import User
 from django.contrib.auth import logout
