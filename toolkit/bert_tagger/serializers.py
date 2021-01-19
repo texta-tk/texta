@@ -9,10 +9,15 @@ from toolkit.bert_tagger.models import BertTagger
 
 class TagRandomDocSerializer(serializers.Serializer):
     indices = IndexSerializer(many=True, default=[])
+    fields = serializers.ListField(child=serializers.CharField(), required=True, allow_empty=False)
 
+class BertTaggerTagTextSerializer(serializers.Serializer):
+    text = serializers.CharField()
+    feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer):
     # TODO: Review
+    # TODO: HELPTEXTS!!
     author_username = serializers.CharField(source='author.username', read_only=True)
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     query = serializers.JSONField(help_text='Query in JSON format', required=False)

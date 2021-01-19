@@ -9,6 +9,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from texta_tools.text_processor import TextProcessor
+from texta_bert_tagger.tagger import BertTagger
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
@@ -20,9 +21,9 @@ from toolkit.helper_functions import add_finite_url_to_feedback
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
-from toolkit.tagger.serializers import TaggerTagTextSerializer
+#from toolkit.tagger.serializers import TaggerTagTextSerializer
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
-from toolkit.bert_tagger.serializers import TagRandomDocSerializer, BertTaggerSerializer
+from toolkit.bert_tagger.serializers import TagRandomDocSerializer, BertTaggerSerializer, BertTaggerTagTextSerializer
 from toolkit.bert_tagger.tasks import train_bert_tagger
 from toolkit.view_constants import BulkDelete, FeedbackModelView
 
@@ -103,7 +104,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         return Response({"id": tagger_id, "message": "Successfully imported model and associated files."}, status=status.HTTP_201_CREATED)
 
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], serializer_class=TagRandomDocSerializer)
     def tag_random_doc(self, request, pk=None, project_pk=None):
         """Returns prediction for a random document in Elasticsearch."""
 
@@ -122,7 +123,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         indices = project_object.get_available_or_all_project_indices(indices)
 
         # retrieve tagger fields
-        tagger_fields = json.loads(tagger_object.fields)
+        tagger_fields = serializer.validated_data["fields"]#json.loads(tagger_object.fields)
         if not ElasticCore().check_if_indices_exist(tagger_object.project.get_indices()):
             raise ProjectValidationFailed(detail=f'One or more index from {list(tagger_object.project.get_indices())} do not exist')
 
@@ -138,9 +139,9 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         return Response(response, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post'], serializer_class=TaggerTagTextSerializer)
+    @action(detail=True, methods=['post'], serializer_class=BertTaggerTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
-        serializer = TaggerTagTextSerializer(data=request.data)
+        serializer = BertTaggerTagTextSerializer(data=request.data)
         # check if valid request
         serializer.is_valid(raise_exception=True)
         # retrieve tagger object
@@ -161,17 +162,16 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         # retrieve model
         # TODO: ALL!!!!!!!!!!!!!!!!!!!
         tagger = BertTagger()
-        tagger.load_django(tagger_object)
+        tagger.load(tagger_object.model.path)
         # tag text
         if input_type == 'doc':
-            tagger_result = "TODO"
-            #tagger_result = tagger.tag_doc(tagger_input)
+            tagger_result = tagger.tag_doc(tagger_input)
         else:
             tagger_result = tagger.tag_text(tagger_input)
         # reform output
         prediction = {
             'tagger_id': tagger_object.id,
-            'result': tagger_result['prediction']
+            'result': tagger_result
         }
         # add optional feedback
         if feedback:

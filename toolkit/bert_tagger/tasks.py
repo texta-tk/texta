@@ -68,9 +68,9 @@ def train_bert_tagger(tagger_id, testing=False):
 
         # TODO: display losses and scores per epoch!
 
-        tagger_object.plot.save(f'{secrets.token_hex(15)}.png', create_tagger_plot(report_dict), save=False)
+        #tagger_object.plot.save(f'{secrets.token_hex(15)}.png', create_tagger_plot(report_dict), save=False)
         # save label index
-        tagger_object.label_index = json.dumps(tagger.label_reverse_index)
+        tagger_object.label_index = json.dumps(tagger.config.label_reverse_index)
         # stats to model object
         tagger_object.f1_score = report.f1_score
         tagger_object.precision = report.precision
