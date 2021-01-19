@@ -46,10 +46,10 @@ Test:
   script:
     - sh wait-for-uaa.sh
     - python manage.py test
-  only:
-    - master
-    - merge_requests
-    - tags
+  #only:
+  #  - master
+  #  - merge_requests
+  #  - tags
 
 Build:
   stage: build
