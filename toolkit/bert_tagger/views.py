@@ -23,7 +23,7 @@ from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 #from toolkit.tagger.serializers import TaggerTagTextSerializer
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
-from toolkit.bert_tagger.serializers import TagRandomDocSerializer, BertTaggerSerializer, BertTaggerTagTextSerializer
+from toolkit.bert_tagger.serializers import TagRandomDocSerializer, BertTaggerSerializer, BertTagTextSerializer, EpochReportSerializer
 from toolkit.bert_tagger.tasks import train_bert_tagger
 from toolkit.view_constants import BulkDelete, FeedbackModelView
 
@@ -139,9 +139,9 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         return Response(response, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post'], serializer_class=BertTaggerTagTextSerializer)
+    @action(detail=True, methods=['post'], serializer_class=BertTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
-        serializer = BertTaggerTagTextSerializer(data=request.data)
+        serializer = BertTagTextSerializer(data=request.data)
         # check if valid request
         serializer.is_valid(raise_exception=True)
         # retrieve tagger object
@@ -155,6 +155,19 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         prediction = self.apply_tagger(tagger_object, text, feedback=feedback)
         prediction = add_finite_url_to_feedback(prediction, request)
         return Response(prediction, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], serializer_class=EpochReportSerializer)
+    def epoch_reports(self, request, pk=None, project_pk=None):
+        """Retrieve epoch reports"""
+        serializer = EpochReportSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        tagger_object: BertTaggerObject = self.get_object()
+        ignore_fields = serializer.validated_data['ignore_fields']
+        reports = json.loads(tagger_object.epoch_reports)
+        filtered_reports = [{field: value for field, value in list(report.items()) if field not in ignore_fields} for report in reports]
+
+        return Response(filtered_reports, status=status.HTTP_200_OK)
 
 
     def apply_tagger(self, tagger_object, tagger_input, input_type='text', feedback=False):

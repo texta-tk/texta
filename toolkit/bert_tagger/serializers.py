@@ -6,14 +6,18 @@ from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUr
 from toolkit.bert_tagger import choices
 from toolkit.bert_tagger.models import BertTagger
 
+class EpochReportSerializer(serializers.Serializer):
+    ignore_fields = serializers.ListField(child=serializers.CharField(), default=choices.DEFAULT_REPORT_IGNORE_FIELDS, required=False)
+    # TODO: add fields validation
+
+class BertTagTextSerializer(serializers.Serializer):
+    text = serializers.CharField()
+    feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 class TagRandomDocSerializer(serializers.Serializer):
     indices = IndexSerializer(many=True, default=[])
     fields = serializers.ListField(child=serializers.CharField(), required=True, allow_empty=False)
 
-class BertTaggerTagTextSerializer(serializers.Serializer):
-    text = serializers.CharField()
-    feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer):
     # TODO: Review
@@ -63,7 +67,7 @@ class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Pr
             'plot',
             'task',
             'fact_name',
-            'epoch_reports',
+            #'epoch_reports',
             'indices',
             'bert_model',
             'learning_rate',
@@ -84,7 +88,8 @@ class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Pr
             'training_loss',
             'plot',
             'task',
+            #'epoch_reports',
             'fact_name',
-            'epoch_reports'
+
         )
         fields_to_parse = ('fields', 'epoch_reports')

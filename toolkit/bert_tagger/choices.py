@@ -9,3 +9,4 @@ DEFAULT_MAX_LENGTH = 32
 DEFAULT_BATCH_SIZE = 32
 DEFAULT_BERT_MODEL = "bert-base-multilingual-cased"
 DEFAULT_NEGATIVE_MULTIPLIER = 1.0
+DEFAULT_REPORT_IGNORE_FIELDS = ["true_positive_rate", "false_positive_rate"]
