@@ -28,7 +28,7 @@ class LexiconViewSet(viewsets.ModelViewSet):
 
 
     def perform_update(self, serializer):
-        serializer.save(positives_used = json.dump(serializer.validated_data.get(['positives_used'], [])),
+        serializer.save(positives_used = json.dump(serializer.validated_data.get('positives_used', [])),
                 negatives_used = json.dumps(serializer.validated_data.get('negatives_used', [])),
                 positives_unused = json.dumps(serializer.validated_data.get('positives_unused', [])),
                 negatives_unused = json.dumps(serializer.validated_data.get('negatives_unused', [])))
