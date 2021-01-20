@@ -21,17 +21,17 @@ class LexiconViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user,
             project=Project.objects.get(id=self.kwargs['project_pk']),
-                positives_used = json.dump(serializer.validated_data.get(['positives_used'], [])),
-                negatives_used = json.dump(serializer.validated_data.get(['negatives_used'], [])),
-                positives_unused = json.dump(serializer.validated_data.get(['positives_unused'], [])),
-                negatives_unused = json.dump(serializer.validated_data.get(['negatives_unused'], [])))
+                positives_used = json.dumps(serializer.validated_data.get('positives_used', [])),
+                negatives_used = json.dumps(serializer.validated_data.get('negatives_used', [])),
+                positives_unused = json.dumps(serializer.validated_data.get('positives_unused', [])),
+                negatives_unused = json.dumps(serializer.validated_data.get('negatives_unused', [])))
 
 
     def perform_update(self, serializer):
         serializer.save(positives_used = json.dump(serializer.validated_data.get(['positives_used'], [])),
-                negatives_used = json.dump(serializer.validated_data.get(['negatives_used'], [])),
-                positives_unused = json.dump(serializer.validated_data.get(['positives_unused'], [])),
-                negatives_unused = json.dump(serializer.validated_data.get(['negatives_unused'], [])))
+                negatives_used = json.dumps(serializer.validated_data.get('negatives_used', [])),
+                positives_unused = json.dumps(serializer.validated_data.get('positives_unused', [])),
+                negatives_unused = json.dumps(serializer.validated_data.get('negatives_unused', [])))
 
 
     def get_queryset(self):
