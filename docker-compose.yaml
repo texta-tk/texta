@@ -53,6 +53,28 @@ services:
       - texta-postgres
       - texta-elasticsearch
 
+  # texta-rest-gpu:
+  #   container_name: texta-rest-gpu
+  #   image: docker.texta.ee/texta/texta-rest:latest-gpu
+  #   build:
+  #     context: .
+  #     dockerfile: ./docker/gpu.Dockerfile
+  #   ports:
+  #     - 80:80
+  #   env_file:
+  #     - ./docker/conf/env
+  #   volumes:
+  #     - toolkit-data:/var/texta-rest/data
+  #   depends_on:
+  #     - texta-postgres
+  #     - texta-elasticsearch
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - capabilities:
+  #             - gpu
+
 volumes:
   elastic-data:
   toolkit-data:
