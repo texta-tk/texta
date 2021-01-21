@@ -48,5 +48,5 @@ dependencies:
       - texta-torch-tagger==1.0.*
       - torch==1.5.*
       - torchtext==0.6.*
-      - pyjwt==2.0.*
+      - pyjwt<2
       - beautifulsoup4
