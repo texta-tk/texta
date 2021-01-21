@@ -54,9 +54,9 @@ Building Docker with GPU support:
 
 `docker build -t texta-rest:gpu-latest -f docker/gpu.Dockerfile .`
 
-Running Docker with GPU support:
+Running Docker with GPU support requires NVIDIA Container Toolkit to be installed on the host machine: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker. When Container Toolkit is installed:
 
-`docker run --gpus all -p 8000:8000 texta-rest:gpu-latest`
+`docker run --gpus all -p 8000:8000 texta-rest:latest-gpu`
 
 # Environment variables
 
