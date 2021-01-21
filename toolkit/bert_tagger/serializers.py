@@ -5,9 +5,10 @@ from toolkit.elastic.serializers import IndexSerializer
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
 from toolkit.bert_tagger import choices
 from toolkit.bert_tagger.models import BertTagger
+import json
 
 class EpochReportSerializer(serializers.Serializer):
-    ignore_fields = serializers.ListField(child=serializers.CharField(), default=choices.DEFAULT_REPORT_IGNORE_FIELDS, required=False)
+    ignore_fields = serializers.ListField(child=serializers.CharField(), default=choices.DEFAULT_REPORT_IGNORE_FIELDS, required=False, help_text=f'Fields to exclude from the output. Default = {choices.DEFAULT_REPORT_IGNORE_FIELDS}')
     # TODO: add fields validation
 
 class BertTagTextSerializer(serializers.Serializer):
@@ -28,17 +29,19 @@ class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Pr
     indices = IndexSerializer(many=True, default=[])
     fact_name = serializers.CharField(default=None, required=False, help_text=f'Fact name used to filter tags (fact values). Default: None')
 
-    maximum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, required=False)
-    minimum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, required=False)
-    negative_multiplier = serializers.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER)
+    maximum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, required=False, help_text=f'Maximum number of positive examples. Default = {choices.DEFAULT_MAX_SAMPLE_SIZE}')
+    minimum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, required=False, help_text=f'Minimum number of negative examples. Default = {choices.DEFAULT_MIN_SAMPLE_SIZE}')
+    negative_multiplier = serializers.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER, required=False, help_text=f'Default={choices.DEFAULT_NEGATIVE_MULTIPLIER}')
+
     # BERT params
-    num_epochs = serializers.IntegerField(default=choices.DEFAULT_NUM_EPOCHS, required=False)
-    bert_model = serializers.CharField(default=choices.DEFAULT_BERT_MODEL, required=False)
-    max_length = serializers.IntegerField(default=choices.DEFAULT_MAX_LENGTH, required=False)
-    batch_size = serializers.IntegerField(default=choices.DEFAULT_BATCH_SIZE, required=False)
-    split_ratio = serializers.FloatField(default=choices.DEFAULT_VALIDATION_SPLIT, required=False)
-    learning_rate = serializers.FloatField(default=choices.DEFAULT_LEARNING_RATE)
-    eps = serializers.FloatField(default=choices.DEFAULT_EPS)
+    num_epochs = serializers.IntegerField(default=choices.DEFAULT_NUM_EPOCHS, required=False, help_text=f'Number of training epochs. Default = {choices.DEFAULT_NUM_EPOCHS}')
+    bert_model = serializers.CharField(default=choices.DEFAULT_BERT_MODEL, required=False, help_text=f'Pretrained BERT model to use. Default = {choices.DEFAULT_BERT_MODEL}')
+    max_length = serializers.IntegerField(default=choices.DEFAULT_MAX_LENGTH, required=False, help_text=f'Maximum sequence length of BERT tokenized input text used for training. Default = {choices.DEFAULT_MAX_LENGTH}')
+    batch_size = serializers.IntegerField(default=choices.DEFAULT_BATCH_SIZE, required=False, help_text=f'Batch size used for training. NB! Autoscaled based on max length if too large. Default = {choices.DEFAULT_BATCH_SIZE}')
+    split_ratio = serializers.FloatField(default=choices.DEFAULT_TRAINING_SPLIT, required=False, help_text=f'Proportion of documents used for training; others are used for validation. Default = {choices.DEFAULT_TRAINING_SPLIT}')
+    learning_rate = serializers.FloatField(default=choices.DEFAULT_LEARNING_RATE, required=False, help_text=f'Learning rate used while training. Default = {choices.DEFAULT_LEARNING_RATE}')
+    eps = serializers.FloatField(default=choices.DEFAULT_EPS, help_text=f'Default = {choices.DEFAULT_EPS}')
+
 
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
@@ -67,7 +70,6 @@ class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Pr
             'plot',
             'task',
             'fact_name',
-            #'epoch_reports',
             'indices',
             'bert_model',
             'learning_rate',
@@ -88,8 +90,6 @@ class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Pr
             'training_loss',
             'plot',
             'task',
-            #'epoch_reports',
-            'fact_name',
-
+            'fact_name'
         )
-        fields_to_parse = ('fields', 'epoch_reports')
+        fields_to_parse = ['fields']

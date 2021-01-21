@@ -27,6 +27,8 @@ class DataSample:
         # combine feedback & data dicts
         self.data = {**self.feedback, **self.data}
 
+        self.is_binary = True if len(self.data) == 2 else False
+
 
     @staticmethod
     def _join_fields(list_of_dicts):

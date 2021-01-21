@@ -3,11 +3,6 @@ import os
 import secrets
 from celery.decorators import task
 
-
-from texta_tools.text_processor import TextProcessor
-
-from texta_tools.mlp_analyzer import get_mlp_analyzer
-
 from toolkit.core.task.models import Task
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
 from toolkit.tools.show_progress import ShowProgress
@@ -16,6 +11,8 @@ from toolkit.elastic.data_sample import DataSample
 from toolkit.tools.plots import create_tagger_plot
 from toolkit.settings import RELATIVE_MODELS_PATH, CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.helper_functions import get_core_setting, get_indices_from_object
+from toolkit.bert_tagger import choices
+
 from texta_bert_tagger.tagger import BertTagger
 
 
@@ -43,9 +40,18 @@ def train_bert_tagger(tagger_id, testing=False):
         show_progress.update_step('training')
         show_progress.update_view(0.0)
 
-        tagger = BertTagger()
-        # train tagger and get result statistics
+        # select sklearn average function based on the number of classes
+        if data_sample.is_binary:
+            sklearn_avg_function = choices.DEFAULT_SKLEARN_AVG_BINARY
+        else:
+            sklearn_avg_function = choices.DEFAULT_SKLEARN_AVG_MULTICLASS
 
+        tagger = BertTagger(
+            autoadjust_batch_size = choices.DEFAULT_AUTOADJUST_BATCH_SIZE,
+            sklearn_avg_function = sklearn_avg_function
+        )
+
+        # train tagger and get result statistics
         report = tagger.train(
             data_sample.data,
             n_epochs = tagger_object.num_epochs,

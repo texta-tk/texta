@@ -35,18 +35,11 @@ class BertTagger(models.Model):
     fact_name = models.CharField(max_length=MAX_DESC_LEN, null=True)
     minimum_sample_size = models.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE)
     negative_multiplier = models.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER)
-    split_ratio = models.FloatField(default=choices.DEFAULT_VALIDATION_SPLIT)
+    split_ratio = models.FloatField(default=choices.DEFAULT_TRAINING_SPLIT)
 
-    # BERT PARAMS TO ADD:
-    # split_ratio = validation_ratio
-    # batch_size NB! autoadjust with max_length
-    # max_length (max 512 or something)
-    # bert model!!! (How to choose?)
-    # learning_rate
-    # eps
-
+    # BERT params
     num_epochs = models.IntegerField(default=choices.DEFAULT_NUM_EPOCHS)
-    validation_ratio = models.FloatField(default=choices.DEFAULT_VALIDATION_SPLIT)
+    split_ratio = models.FloatField(default=choices.DEFAULT_TRAINING_SPLIT)
     maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE)
     learning_rate = models.FloatField(default=choices.DEFAULT_LEARNING_RATE)
     eps = models.FloatField(default=choices.DEFAULT_EPS)
@@ -54,14 +47,9 @@ class BertTagger(models.Model):
     batch_size = models.IntegerField(default=choices.DEFAULT_BATCH_SIZE)
     bert_model = models.TextField(default=choices.DEFAULT_BERT_MODEL)
 
-
-    # RESULTS
-
-    # validation loss
-    # validation time
-    # training time
     label_index = models.TextField(default=json.dumps({}))
     epoch_reports = models.TextField(default=json.dumps([]))
+
     accuracy = models.FloatField(default=None, null=True)
     training_loss = models.FloatField(default=None, null=True)
     validation_loss = models.FloatField(default=None, null=True)
