@@ -7,6 +7,11 @@ from toolkit.elastic.query import Query
 import json
 
 
+class InvalidDataSampleError(Exception):
+    """Raised on invalid Data Sample""" 
+    pass
+
+
 class DataSample:
     """Re-usable object for handling positive and negative data samples for Taggers and TorchTaggers."""
     def __init__(self, model_object, indices: List[str], field_data: List[str], show_progress=None, join_fields=False, text_processor=None, add_negative_sample=False):
@@ -26,6 +31,9 @@ class DataSample:
         self.data = self._get_samples_for_classes()
         # combine feedback & data dicts
         self.data = {**self.feedback, **self.data}
+
+        # validate resulting data sample
+        self._validate()
 
 
     @staticmethod
@@ -178,3 +186,15 @@ class DataSample:
         if self.join_fields:
             negative_sample = self._join_fields(negative_sample)
         return negative_sample
+
+
+    def _validate(self):
+        """Validates self.data after creation."""
+        # check if enough classes
+        if len(self.data.keys()) < 2:
+            raise InvalidDataSampleError("Data sample has less than 2 classes! Check your data!")
+        # check if each class has data
+        for k, v in self.data.items():
+            if not v:
+                raise InvalidDataSampleError(f"Class '{k}' in data sample has no examples! Check your data!")
+        return True
