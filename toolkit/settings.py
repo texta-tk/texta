@@ -272,7 +272,7 @@ RELATIVE_MODELS_PATH = os.getenv("TEXTA_RELATIVE_MODELS_DIR", MODELS_DIR_DEFAULT
 DEFAULT_MLP_LANGUAGE_CODES = parse_list_env_headers("TEXTA_LANGUAGE_CODES", ["et", "en", "ru"])
 MLP_MODEL_DIRECTORY = os.getenv("TEXTA_MLP_MODEL_DIRECTORY_PATH", MODELS_DIR_DEFAULT)
 
-MODEL_TYPES = ["embedding", "tagger", "torchtagger"]
+MODEL_TYPES = ["embedding", "tagger", "torchtagger", "bert_tagger"]
 for model_type in MODEL_TYPES:
     model_dir = os.path.join(RELATIVE_MODELS_PATH, model_type)
     if not os.path.exists(model_dir):

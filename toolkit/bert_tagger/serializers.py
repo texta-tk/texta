@@ -77,7 +77,8 @@ class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Pr
             'max_length',
             'batch_size',
             'split_ratio',
-            'negative_multiplier'
+            'negative_multiplier',
+            'num_examples'
         )
         read_only_fields = (
             'project',
@@ -90,6 +91,7 @@ class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Pr
             'training_loss',
             'plot',
             'task',
-            'fact_name'
+            'fact_name',
+            'num_examples'
         )
         fields_to_parse = ['fields']

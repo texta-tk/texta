@@ -26,7 +26,7 @@ from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
 from toolkit.bert_tagger.serializers import TagRandomDocSerializer, BertTaggerSerializer, BertTagTextSerializer, EpochReportSerializer
 from toolkit.bert_tagger.tasks import train_bert_tagger
 from toolkit.view_constants import BulkDelete, FeedbackModelView
-
+from toolkit.bert_tagger import choices
 
 class BertTaggerFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
@@ -156,14 +156,19 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         prediction = add_finite_url_to_feedback(prediction, request)
         return Response(prediction, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'], serializer_class=EpochReportSerializer)
+    @action(detail=True, methods=['post','get'], serializer_class=EpochReportSerializer)
     def epoch_reports(self, request, pk=None, project_pk=None):
         """Retrieve epoch reports"""
-        serializer = EpochReportSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
         tagger_object: BertTaggerObject = self.get_object()
-        ignore_fields = serializer.validated_data['ignore_fields']
+
+        if request.method == "GET":
+            ignore_fields = choices.DEFAULT_REPORT_IGNORE_FIELDS
+        else:
+            serializer = EpochReportSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            ignore_fields = serializer.validated_data['ignore_fields']
+
         reports = json.loads(tagger_object.epoch_reports)
         filtered_reports = [{field: value for field, value in list(report.items()) if field not in ignore_fields} for report in reports]
 
@@ -174,7 +179,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
         # retrieve model
         # TODO: ALL!!!!!!!!!!!!!!!!!!!
-        tagger = BertTagger()
+        tagger = BertTagger(use_gpu = choices.DEFAULT_USE_GPU)
         tagger.load(tagger_object.model.path)
         # tag text
         if input_type == 'doc':
@@ -183,8 +188,9 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             tagger_result = tagger.tag_text(tagger_input)
         # reform output
         prediction = {
+            'probability': tagger_result['probability'],
             'tagger_id': tagger_object.id,
-            'result': tagger_result
+            'result': tagger_result['prediction']
         }
         # add optional feedback
         if feedback:

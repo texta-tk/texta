@@ -33,3 +33,5 @@ TEST_LIVE_SERVER_PORT = int(os.getenv("TEXTA_TEST_LIVE_SERVER_PORT", 8000))
 
 # Keep plot files created during tests
 TEST_KEEP_PLOT_FILES = True if os.getenv("TEXTA_TEST_KEEP_PLOT_FILES", "false").lower() == "true" else False
+
+TEST_BERT_MODEL = "prajjwal1/bert-tiny"

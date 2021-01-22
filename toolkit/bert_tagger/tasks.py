@@ -48,7 +48,8 @@ def train_bert_tagger(tagger_id, testing=False):
 
         tagger = BertTagger(
             autoadjust_batch_size = choices.DEFAULT_AUTOADJUST_BATCH_SIZE,
-            sklearn_avg_function = sklearn_avg_function
+            sklearn_avg_function = sklearn_avg_function,
+            use_gpu = choices.DEFAULT_USE_GPU
         )
 
         # train tagger and get result statistics
@@ -65,7 +66,7 @@ def train_bert_tagger(tagger_id, testing=False):
         )
         model_type = tagger_object.bert_model
         # save tagger to disk
-        tagger_path = os.path.join(RELATIVE_MODELS_PATH, model_type, f'{model_type}_{tagger_id}_{secrets.token_hex(10)}')
+        tagger_path = os.path.join(RELATIVE_MODELS_PATH, tagger_object.MODEL_TYPE, f'{tagger_object.MODEL_TYPE}_{tagger_id}_{secrets.token_hex(10)}')
         tagger.save(tagger_path)
         # set tagger location
         tagger_object.model.name = tagger_path
@@ -85,6 +86,7 @@ def train_bert_tagger(tagger_id, testing=False):
         tagger_object.training_loss = report.training_loss
         tagger_object.validation_loss = report.validation_loss
         tagger_object.epoch_reports = json.dumps([a.to_dict() for a in tagger.epoch_reports])
+        tagger_object.num_examples = json.dumps({k: len(v) for k, v in list(data_sample.data.items())})
         # save tagger object
         tagger_object.save()
         # declare the job done

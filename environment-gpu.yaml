@@ -46,7 +46,7 @@ dependencies:
       - texta-tools==1.2.*
       - texta-tagger==1.1.*
       - texta-torch-tagger==1.0.*
-      - texta-bert-tagger==1.0.*
+      - texta-bert-tagger==1.1.9
       - torch==1.5.*
       - torchtext==0.6.*
       - pyjwt==2.0.*
