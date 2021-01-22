@@ -34,6 +34,19 @@ def get_elastic_status(ES_URL=get_core_setting("TEXTA_ES_URL")):
         if es_core.connection:
             es_info["alive"] = True
             es_info["status"] = es_core.es.info()
+            es_info["disk"] = []
+            for node in es_core.es.cat.allocation(format="json"):
+                # ignore unassigned nodes
+                if node["host"]:
+                    node_info = {
+                        "free": float(node["disk.avail"].replace("gb", "")),
+                        "used": float(node["disk.used"].replace("gb", "")),
+                        "total": float(node["disk.total"].replace("gb", "")),
+                        "percent": float(node["disk.percent"]),
+                        "unit": "GB"
+                        }
+                    es_info["disk"].append(node_info)
+
         return es_info
     except exceptions.ValidationError:
         return es_info
