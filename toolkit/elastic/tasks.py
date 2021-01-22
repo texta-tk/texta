@@ -1,4 +1,5 @@
 import json
+import logging
 from collections import defaultdict
 
 from celery.decorators import task
@@ -10,6 +11,7 @@ from toolkit.elastic.mapping_generator import SchemaGenerator
 from toolkit.elastic.models import Reindexer
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.tools.show_progress import ShowProgress
+from toolkit.settings import ERROR_LOGGER, INFO_LOGGER
 
 
 """ TODOs:
@@ -137,33 +139,45 @@ def reindex_task(reindexer_task_id):
     new_index = reindexer_obj.new_index
     query = reindexer_obj.query
 
-    ''' for empty field post, use all posted indices fields '''
-    if not fields:
-        fields = ElasticCore().get_fields(indices)
-        fields = [field["path"] for field in fields]
+    logging.getLogger(INFO_LOGGER).info("Starting task 'reindex'.")
 
-    show_progress = ShowProgress(task_object, multiplier=1)
-    show_progress.update_step("scrolling data")
-    show_progress.update_view(0)
+    try:
+        ''' for empty field post, use all posted indices fields '''
+        if not fields:
+            fields = ElasticCore().get_fields(indices)
+            fields = [field["path"] for field in fields]
 
-    elastic_search = ElasticSearcher(indices=indices, field_data=fields, callback_progress=show_progress, query=query, scroll_size=scroll_size)
-    elastic_doc = ElasticDocument(new_index)
+        show_progress = ShowProgress(task_object, multiplier=1)
+        show_progress.update_step("scrolling data")
+        show_progress.update_view(0)
 
-    if random_size > 0:
-        elastic_search = ElasticSearcher(indices=indices, field_data=fields, query=query, scroll_size=scroll_size).random_documents(size=random_size)
+        elastic_search = ElasticSearcher(indices=indices, field_data=fields, callback_progress=show_progress, query=query, scroll_size=scroll_size)
+        elastic_doc = ElasticDocument(new_index)
 
-    ''' the operations that don't require a mapping update have been completed '''
+        if random_size > 0:
+            elastic_search = ElasticSearcher(indices=indices, field_data=fields, query=query, scroll_size=scroll_size).random_documents(size=random_size)
 
-    schema_input = update_field_types(indices, fields, field_type, flatten_doc=FLATTEN_DOC)
-    updated_schema = update_mapping(schema_input, new_index, reindexer_obj.add_facts_mapping)
+        logging.getLogger(INFO_LOGGER).info("Updating index schema.")
+        ''' the operations that don't require a mapping update have been completed '''
+        schema_input = update_field_types(indices, fields, field_type, flatten_doc=FLATTEN_DOC)
+        updated_schema = update_mapping(schema_input, new_index, reindexer_obj.add_facts_mapping)
 
-    # create new_index
-    create_index_res = ElasticCore().create_index(new_index, updated_schema)
+        logging.getLogger(INFO_LOGGER).info("Creating new index.")
+        # create new_index
+        create_index_res = ElasticCore().create_index(new_index, updated_schema)
 
-    # set new_index name as mapping name, perhaps make it customizable in the future
-    bulk_add_documents(elastic_search, elastic_doc, index=new_index, chunk_size=scroll_size, flatten_doc=FLATTEN_DOC)
+        logging.getLogger(INFO_LOGGER).info("Indexing documents.")
+        # set new_index name as mapping name, perhaps make it customizable in the future
+        bulk_add_documents(elastic_search, elastic_doc, index=new_index, chunk_size=scroll_size, flatten_doc=FLATTEN_DOC)
 
-    # declare the job done
-    task_object.complete()
+        # declare the job done
+        task_object.complete()
 
+    except Exception as e:
+        logging.getLogger(ERROR_LOGGER).exception(e)
+        task_object.add_error(str(e))
+        task_object.update_status(Task.STATUS_FAILED)
+        raise e
+
+    logging.getLogger(INFO_LOGGER).info("Reindexing succesfully completed.")
     return True
