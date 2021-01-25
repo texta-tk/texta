@@ -10,7 +10,7 @@ class Dataset:
     TYPE_CSV = '.csv'
     TYPE_XLS = '.xls'
     TYPE_XLSX = '.xlsx'
-    TYPE_JSON = '.json'
+    TYPE_JSON = ['.jsonl', '.jl', '.jsonline']
 
 
     def __init__(self, file_path, index, separator=',', show_progress=None):
@@ -34,7 +34,7 @@ class Dataset:
             # EXCEL
             return True, pd.read_excel(self.file_path, header=0)
 
-        elif file_extension == Dataset.TYPE_JSON:
+        elif file_extension in Dataset.TYPE_JSON:
             # JSON-LINES
             with open(self.file_path) as fh:
                 json_content = fh.read()
