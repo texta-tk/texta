@@ -39,6 +39,7 @@ def get_elastic_status(ES_URL=get_core_setting("TEXTA_ES_URL")):
                 # ignore unassigned nodes
                 if node["host"]:
                     node_info = {
+                        "name": node["name"],
                         "free": float(node["disk.avail"].replace("gb", "")),
                         "used": float(node["disk.used"].replace("gb", "")),
                         "total": float(node["disk.total"].replace("gb", "")),
