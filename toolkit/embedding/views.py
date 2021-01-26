@@ -114,8 +114,10 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
             embedding.load_django(embedding_object)
 
             predictions = embedding.get_similar(
-                serializer.validated_data['positives'],
-                negatives=serializer.validated_data['negatives'],
+                serializer.validated_data['positives_used'],
+                negatives_used = serializer.validated_data['negatives_used'],
+                positives_unused = serializer.validated_data['positives_unused'],
+                negatives_unused = serializer.validated_data['negatives_unused'],
                 n=serializer.validated_data['output_size']
             )
             return Response(predictions, status=status.HTTP_200_OK)

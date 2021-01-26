@@ -11,8 +11,10 @@ class Lexicon(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     description = models.CharField(max_length=MAX_DESC_LEN)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    phrases = models.TextField(default=json.dumps([]))
-    discarded_phrases = models.TextField(default=json.dumps([]))
+    positives_used = models.TextField(default=json.dumps([]))
+    negatives_used = models.TextField(default=json.dumps([]))
+    positives_unused = models.TextField(default=json.dumps([]))
+    negatives_unused = models.TextField(default=json.dumps([]))
 
     def __str__(self):
         return self.description
