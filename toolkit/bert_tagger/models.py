@@ -44,7 +44,7 @@ class BertTagger(models.Model):
     maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE)
     learning_rate = models.FloatField(default=choices.DEFAULT_LEARNING_RATE)
     eps = models.FloatField(default=choices.DEFAULT_EPS)
-    max_length = models.IntegerField(default=choices.DEFAULT_MAX_LENGTH)
+    max_length = models.IntegerField(default=choices.DEFAULT_MAX_LENGTH, min_value=1, max_value=512)
     batch_size = models.IntegerField(default=choices.DEFAULT_BATCH_SIZE)
     bert_model = models.TextField(default=choices.DEFAULT_BERT_MODEL)
 
