@@ -117,7 +117,7 @@ class EmbeddingViewTests(TransactionTestCase):
     def run_predict(self, test_embedding_id):
         """Tests the endpoint for the predict action"""
         # Send only "text" in payload, because "output_size" should be 10 by default
-        payload = {"positives": ["eesti", "läti"]}
+        payload = {"positives_used": ["eesti", "läti"]}
         predict_url = f'{self.url}{test_embedding_id}/predict_similar/'
         response = self.client.post(predict_url, json.dumps(payload), content_type='application/json')
         print_output('predict:response.data', response.data)
@@ -129,7 +129,7 @@ class EmbeddingViewTests(TransactionTestCase):
     def run_predict_with_negatives(self):
         """Tests the endpoint for the predict action"""
         # Send only "text" in payload, because "output_size" should be 10 by default
-        payload = {"positives": ["eesti", "läti"], "negatives": ["juhtuma"]}
+        payload = {"positives_used": ["eesti", "läti"], "negatives_used": ["juhtuma"]}
         predict_url = f'{self.url}{self.test_embedding_id}/predict_similar/'
         response = self.client.post(predict_url, json.dumps(payload), content_type='application/json')
         print_output('predict_with_negatives:response.data', response.data)
