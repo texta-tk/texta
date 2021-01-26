@@ -97,7 +97,7 @@ CSRF_COOKIE_NAME = "XSRF-TOKEN"
 CORS_ORIGIN_WHITELIST = ["http://localhost:4200", 'https://law-test-8795b.web.app']
 CSRF_TRUSTED_ORIGINS = ["localhost"]
 CORS_ALLOW_HEADERS = list(default_headers) + ["x-xsrf-token"]
-CORS_ALLOW_CREDENTIALS = parse_bool_env("TEXTA_CORS_ALLOW_CREDENTIALS", False)
+CORS_ALLOW_CREDENTIALS = parse_bool_env("TEXTA_CORS_ALLOW_CREDENTIALS", True)
 CORS_ALLOW_ALL_ORIGINS = parse_bool_env("TEXTA_CORS_ALLOW_ALL_ORIGINS", False)
 
 # CF UAA OAUTH OPTIONS

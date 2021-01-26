@@ -10,12 +10,14 @@ class StringListField(serializers.ListField):
 
 
 class LexiconSerializer(FieldParseSerializer, serializers.ModelSerializer):
-    phrases = StringListField(help_text=f'Phrases as list of strings.', required=False)
-    discarded_phrases = StringListField(help_text=f'Discarded phrases as list of strings.', required=False)
-
+    positives_used = StringListField(help_text=f'Positive phrases for the model as list of strings. Default: EMPTY', required=False)
+    negatives_used = StringListField(help_text=f'Negative phrases for the model as list of strings. Default: EMPTY', required=False)
+    positives_unused = StringListField(help_text=f'Positive phrases in the lexicon, not used in mining as list of strings. Default: EMPTY', required=False,)
+    negatives_unused = StringListField(help_text=f'Negative phrases left out from the lexicon, not used in mining as list of strings. Default: EMPTY', required=False)
+    
 
     class Meta:
         model = Lexicon
-        fields = ('id', 'author', 'description', 'phrases', 'discarded_phrases')
+        fields = ('id', 'author', 'description', 'positives_used', 'negatives_used', 'positives_unused', 'negatives_unused')
         read_only_fields = ('project', 'author')
-        fields_to_parse = ('phrases', 'discarded_phrases')
+        fields_to_parse = ('positives_used', 'negatives_used', 'positives_unused', 'negatives_unused')
