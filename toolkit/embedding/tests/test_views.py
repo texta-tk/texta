@@ -31,11 +31,12 @@ class EmbeddingViewTests(TransactionTestCase):
     def test_run(self):
         self.run_create_embedding_training_and_task_signal()
         self.run_predict(self.test_embedding_id)
-        self.run_predict_with_negatives()
+        self.run_predict_with_all_lists_and_check_none_are_in_the_response()
         self.run_phrase()
         self.run_model_export_import()
         self.create_embedding_with_empty_fields()
         self.create_embedding_then_delete_embedding_and_created_model()
+        
 
 
     def tearDown(self):
@@ -125,25 +126,29 @@ class EmbeddingViewTests(TransactionTestCase):
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
 
-
-    def run_predict_with_negatives(self):
+    def run_predict_with_all_lists_and_check_none_are_in_the_response(self):
         """Tests the endpoint for the predict action"""
         # Send only "text" in payload, because "output_size" should be 10 by default
-        payload = {"positives_used": ["eesti", "läti"], "negatives_used": ["juhtuma"]}
+        payload = {"positives_used": ["jooksma", "hüppama"], "positives_unused": ["medal", "ujuma", "võistlus"], "negatives_used": ["tennis", "ujula"], "negatives_unused":  ["ronima"]}
         predict_url = f'{self.url}{self.test_embedding_id}/predict_similar/'
         response = self.client.post(predict_url, json.dumps(payload), content_type='application/json')
-        print_output('predict_with_negatives:response.data', response.data)
+        print_output('predict_with_all_lists_and_check_none_are_in_the_response:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
-
-
+        # Check if the response data does not overlap with input lists
+        suggestions = [elem["phrase"] for elem in response.data]
+        for list_name in payload.keys():
+            for elem in payload[list_name]:
+                self.assertTrue(elem not in suggestions)
+        
+       
     def run_phrase(self):
         """Tests the endpoint for the predict action"""
         payload = {"text": "See on mingi eesti keelne tekst testimiseks"}
         predict_url = f'{self.url}{self.test_embedding_id}/phrase_text/'
         response = self.client.post(predict_url, json.dumps(payload), content_type='application/json')
-        print_output('predict:response.data', response.data)
+        print_output('predict_phrase:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
