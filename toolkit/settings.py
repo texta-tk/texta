@@ -274,8 +274,10 @@ MLP_MODEL_DIRECTORY = os.getenv("TEXTA_MLP_MODEL_DIRECTORY_PATH", MODELS_DIR_DEF
 
 DEFAULT_BERT_MODELS = parse_list_env_headers("TEXTA_BERT_MODELS", ["bert-base-multilingual-cased", "EMBEDDIA/finest-bert", "bert-base-uncased"])
 
-BERT_PRETRAINED_MODEL_DIRECTORY = os.getenv("TEXTA_PRETRAINED_BERT_MODEL_DIRECTORY_PATH", os.path.join(RELATIVE_MODELS_PATH, "bert_tagger", "pretrained"))
-BERT_FINETUNED_MODEL_DIRECTORY = os.getenv("TEXTA_FINETUNED_BERT_MODEL_DIRECTORY_PATH", os.path.join(RELATIVE_MODELS_PATH, "bert_tagger", "fine_tuned"))
+BERT_MODEL_DIRECTORY = os.getenv("TEXTA_BERT_MODEL_DIRECTORY_PATH", MODELS_DIR_DEFAULT)
+
+BERT_PRETRAINED_MODEL_DIRECTORY =  os.path.join(BERT_MODEL_DIRECTORY, "bert_tagger", "pretrained")
+BERT_FINETUNED_MODEL_DIRECTORY =  os.path.join(BERT_MODEL_DIRECTORY, "bert_tagger", "fine_tuned")
 
 MODEL_TYPES = ["embedding", "tagger", "torchtagger"]
 for model_type in MODEL_TYPES:

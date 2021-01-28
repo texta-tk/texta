@@ -10,7 +10,7 @@ from toolkit.tools.show_progress import ShowProgress
 from toolkit.base_tasks import TransactionAwareTask
 from toolkit.elastic.data_sample import DataSample
 from toolkit.tools.plots import create_tagger_plot
-from toolkit.settings import RELATIVE_MODELS_PATH, CELERY_LONG_TERM_TASK_QUEUE, BERT_PRETRAINED_MODEL_DIRECTORY, BERT_FINETUNED_MODEL_DIRECTORY, INFO_LOGGER
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, BERT_PRETRAINED_MODEL_DIRECTORY, BERT_FINETUNED_MODEL_DIRECTORY, INFO_LOGGER
 from toolkit.helper_functions import get_core_setting, get_indices_from_object
 from toolkit.bert_tagger import choices
 
