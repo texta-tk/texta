@@ -50,7 +50,7 @@ class ElasticCore:
 
     def _check_connection(self):
         try:
-            response = requests.get(self.ES_URL)
+            response = requests.get(self.ES_URL, timeout=3)
             if response.status_code == 200:
                 return True
             else:
