@@ -17,7 +17,7 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
-from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
+from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH, BERT_PRETRAINED_MODEL_DIRECTORY, BERT_FINETUNED_MODEL_DIRECTORY
 from toolkit.bert_tagger import choices
 
 
@@ -44,9 +44,10 @@ class BertTagger(models.Model):
     maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE)
     learning_rate = models.FloatField(default=choices.DEFAULT_LEARNING_RATE)
     eps = models.FloatField(default=choices.DEFAULT_EPS)
-    max_length = models.IntegerField(default=choices.DEFAULT_MAX_LENGTH, min_value=1, max_value=512)
+    max_length = models.IntegerField(default=choices.DEFAULT_MAX_LENGTH)
     batch_size = models.IntegerField(default=choices.DEFAULT_BATCH_SIZE)
     bert_model = models.TextField(default=choices.DEFAULT_BERT_MODEL)
+    adjusted_batch_size = models.IntegerField(default=choices.DEFAULT_BATCH_SIZE)
 
     label_index = models.TextField(default=json.dumps({}))
     epoch_reports = models.TextField(default=json.dumps([]))
@@ -137,8 +138,8 @@ class BertTagger(models.Model):
         Returns: Full and relative file paths, full for saving the model object and relative for actual DB storage.
         """
         model_file_name = f'{name}_{str(self.pk)}_{secrets.token_hex(10)}'
-        full_path = pathlib.Path(BASE_DIR) / RELATIVE_MODELS_PATH / self.MODEL_TYPE/ model_file_name
-        relative_path = pathlib.Path(RELATIVE_MODELS_PATH) / self.MODEL_TYPE / model_file_name
+        full_path = pathlib.Path(BASE_DIR) / BERT_FINETUNED_MODEL_DIRECTORY/ model_file_name
+        relative_path = pathlib.Path(BERT_FINETUNED_MODEL_DIRECTORY) / model_file_name
         return str(full_path), str(relative_path)
 
 

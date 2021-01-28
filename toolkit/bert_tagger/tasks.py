@@ -1,6 +1,7 @@
 import json
 import os
 import secrets
+import logging
 from celery.decorators import task
 
 from toolkit.core.task.models import Task
@@ -9,7 +10,7 @@ from toolkit.tools.show_progress import ShowProgress
 from toolkit.base_tasks import TransactionAwareTask
 from toolkit.elastic.data_sample import DataSample
 from toolkit.tools.plots import create_tagger_plot
-from toolkit.settings import RELATIVE_MODELS_PATH, CELERY_LONG_TERM_TASK_QUEUE
+from toolkit.settings import RELATIVE_MODELS_PATH, CELERY_LONG_TERM_TASK_QUEUE, BERT_PRETRAINED_MODEL_DIRECTORY, BERT_FINETUNED_MODEL_DIRECTORY, INFO_LOGGER
 from toolkit.helper_functions import get_core_setting, get_indices_from_object
 from toolkit.bert_tagger import choices
 
@@ -28,6 +29,7 @@ def train_bert_tagger(tagger_id, testing=False):
         fields = json.loads(tagger_object.fields)
         indices = get_indices_from_object(tagger_object)
 
+        bert_model = tagger_object.bert_model
 
         # create Datasample object for retrieving positive and negative sample
         data_sample = DataSample(
@@ -46,10 +48,16 @@ def train_bert_tagger(tagger_id, testing=False):
         else:
             sklearn_avg_function = choices.DEFAULT_SKLEARN_AVG_MULTICLASS
 
+
+        # NB! saving pretrained models must be disabled!
         tagger = BertTagger(
+            allow_standard_output = choices.DEFAULT_ALLOW_STANDARD_OUTPUT,
             autoadjust_batch_size = choices.DEFAULT_AUTOADJUST_BATCH_SIZE,
             sklearn_avg_function = sklearn_avg_function,
-            use_gpu = choices.DEFAULT_USE_GPU
+            use_gpu = choices.DEFAULT_USE_GPU,
+            save_pretrained = False,
+            pretrained_models_dir = "",
+            logger = logging.getLogger(INFO_LOGGER)
         )
 
         # train tagger and get result statistics
@@ -61,12 +69,10 @@ def train_bert_tagger(tagger_id, testing=False):
             lr = tagger_object.learning_rate,
             eps = tagger_object.eps,
             split_ratio = tagger_object.split_ratio,
-            bert_model = tagger_object.bert_model
-
+            bert_model = bert_model
         )
-        model_type = tagger_object.bert_model
-        # save tagger to disk
-        tagger_path = os.path.join(RELATIVE_MODELS_PATH, tagger_object.MODEL_TYPE, f'{tagger_object.MODEL_TYPE}_{tagger_id}_{secrets.token_hex(10)}')
+        # save tagger to disc
+        tagger_path = os.path.join(BERT_FINETUNED_MODEL_DIRECTORY, f'{tagger_object.MODEL_TYPE}_{tagger_id}_{secrets.token_hex(10)}')
         tagger.save(tagger_path)
         # set tagger location
         tagger_object.model.name = tagger_path
@@ -87,6 +93,7 @@ def train_bert_tagger(tagger_id, testing=False):
         tagger_object.validation_loss = report.validation_loss
         tagger_object.epoch_reports = json.dumps([a.to_dict() for a in tagger.epoch_reports])
         tagger_object.num_examples = json.dumps({k: len(v) for k, v in list(data_sample.data.items())})
+        tagger_object.adjusted_batch_size = tagger.config.batch_size
         # save tagger object
         tagger_object.save()
         # declare the job done

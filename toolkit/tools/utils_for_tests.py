@@ -1,4 +1,5 @@
 import os
+import shutil
 from typing import Optional
 
 from django.contrib.auth.models import User
@@ -30,7 +31,11 @@ def remove_file(path):
         print_output('Cleanup: REMOVING FILE', path, main_color='blue')
         os.remove(path)
 
-
+def remove_folder(path):
+    if os.path.exists(path):
+        print_output('Cleanup: REMOVING DIRECTORY', path, main_color='blue')
+        shutil.rmtree(path)
+        
 def project_creation(project_title: str, index_title: Optional["str"], author: User) -> Project:
     """
     Creates Project.

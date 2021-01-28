@@ -1,5 +1,6 @@
 import json
 import os
+import logging
 
 import rest_framework.filters as drf_filters
 from django.http import HttpResponse
@@ -16,14 +17,14 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed
-from toolkit.helper_functions import add_finite_url_to_feedback
+from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, DownloadingModelsNotAllowedError, InvalidModelIdentifierError
+from toolkit.helper_functions import add_finite_url_to_feedback, download_bert_requirements, get_downloaded_bert_models
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
-#from toolkit.tagger.serializers import TaggerTagTextSerializer
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ALLOW_BERT_MODEL_DOWNLOADS, BERT_PRETRAINED_MODEL_DIRECTORY, INFO_LOGGER
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
-from toolkit.bert_tagger.serializers import TagRandomDocSerializer, BertTaggerSerializer, BertTagTextSerializer, EpochReportSerializer
+from toolkit.bert_tagger.serializers import TagRandomDocSerializer, BertTaggerSerializer, BertTagTextSerializer, EpochReportSerializer, BertDownloaderSerializer
+
 from toolkit.bert_tagger.tasks import train_bert_tagger
 from toolkit.view_constants import BulkDelete, FeedbackModelView
 from toolkit.bert_tagger import choices
@@ -71,7 +72,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
 
     def get_queryset(self):
-        return BertTaggerObject.objects.filter(project=self.kwargs['project_pk'])
+        return BertTaggerObject.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
 
     @action(detail=True, methods=['post'])
@@ -156,6 +157,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         prediction = add_finite_url_to_feedback(prediction, request)
         return Response(prediction, status=status.HTTP_200_OK)
 
+
     @action(detail=True, methods=['post','get'], serializer_class=EpochReportSerializer)
     def epoch_reports(self, request, pk=None, project_pk=None):
         """Retrieve epoch reports"""
@@ -175,11 +177,40 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         return Response(filtered_reports, status=status.HTTP_200_OK)
 
 
+    @action(detail=False, methods=['post'], serializer_class=BertDownloaderSerializer)
+    def download_pretrained_model(self, request, pk=None, project_pk=None):
+        """Download pretrained BERT models."""
+
+        serializer = BertDownloaderSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        bert_model = serializer.validated_data['bert_model']
+        if ALLOW_BERT_MODEL_DOWNLOADS:
+            errors, failed_models = download_bert_requirements(BERT_PRETRAINED_MODEL_DIRECTORY, [bert_model], logger = logging.getLogger(INFO_LOGGER))
+            if failed_models:
+                error_msg = f"Failed downloading model: {failed_models[0]}. Make sure to use the correct model identifier listed in https://huggingface.co/models."
+                raise InvalidModelIdentifierError(error_msg)
+        else:
+            raise DownloadingModelsNotAllowedError()
+        return Response("Download finished.", status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'])
+    def available_models(self, request, pk=None, project_pk=None):
+        """Retrieve downloaded BERT models."""
+        available_models = get_downloaded_bert_models(BERT_PRETRAINED_MODEL_DIRECTORY)
+
+        return Response(available_models, status=status.HTTP_200_OK)
+
+
     def apply_tagger(self, tagger_object, tagger_input, input_type='text', feedback=False):
 
-        # retrieve model
-        # TODO: ALL!!!!!!!!!!!!!!!!!!!
-        tagger = BertTagger(use_gpu = choices.DEFAULT_USE_GPU)
+        # NB! Saving pretrained models must be disabled!
+        tagger = BertTagger(
+            allow_standard_output = choices.DEFAULT_ALLOW_STANDARD_OUTPUT,
+            save_pretrained = False,
+            use_gpu = choices.DEFAULT_USE_GPU,
+            logger = logging.getLogger(INFO_LOGGER)
+        )
         tagger.load(tagger_object.model.path)
         # tag text
         if input_type == 'doc':
