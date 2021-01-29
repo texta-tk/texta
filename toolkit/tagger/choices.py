@@ -49,6 +49,14 @@ def get_tokenizer_choices():
    return [(a, a) for a in pipeline.get_analyzer_options()]
 
 
+def get_scoring_choices():
+    """
+    Retrieves scoring choices.
+    :return: list
+    """
+    scoring_choices = ["default", "precision", "recall", "f1_score", "accuracy", "jaccard"]
+    return [(a, a) for a in scoring_choices]
+
 DEFAULT_MAX_SAMPLE_SIZE = 10000
 DEFAULT_NEGATIVE_MULTIPLIER = 1.0
 DEFAULT_MIN_SAMPLE_SIZE = 50
@@ -59,3 +67,5 @@ DEFAULT_VECTORIZER = get_vectorizer_choices()[0][0]
 DEFAULT_CLASSIFIER = get_classifier_choices()[0][0]
 DEFAULT_FEATURE_SELECTOR = get_feature_selector_choices()[0][0]
 DEFAULT_SCORE_THRESHOLD = 0.0
+DEFAULT_SCORING_OPTIONS = get_scoring_choices()
+DEFAULT_SCORING_FUNCTION = get_scoring_choices()[0][0]

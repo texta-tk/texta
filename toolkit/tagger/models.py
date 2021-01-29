@@ -21,7 +21,10 @@ from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, RELATIVE_MODELS_PATH
-from toolkit.tagger.choices import (DEFAULT_CLASSIFIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE, DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_VECTORIZER)
+from toolkit.tagger.choices import (
+    DEFAULT_CLASSIFIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE,
+    DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_VECTORIZER, DEFAULT_SCORING_OPTIONS, DEFAULT_SCORING_FUNCTION
+)
 
 
 class Tagger(models.Model):
@@ -50,6 +53,7 @@ class Tagger(models.Model):
     num_features = models.IntegerField(default=None, null=True)
     num_examples = models.TextField(default="{}", null=True)
     confusion_matrix = models.TextField(default="[]", null=True, blank=True)
+    scoring_function = models.CharField(default=DEFAULT_SCORING_FUNCTION, max_length=MAX_DESC_LEN, null=True, blank=True)
 
     model = models.FileField(null=True, verbose_name='', default=None)
     model_size = models.FloatField(default=None, null=True)

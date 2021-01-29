@@ -14,6 +14,8 @@ from toolkit.tagger.choices import (
     DEFAULT_NUM_DOCUMENTS,
     DEFAULT_SCORE_THRESHOLD,
     DEFAULT_TAGGER_GROUP_FACT_NAME,
+    DEFAULT_SCORING_OPTIONS,
+    DEFAULT_SCORING_FUNCTION,
     get_classifier_choices,
     get_vectorizer_choices,
     )
@@ -82,6 +84,7 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     maximum_sample_size = serializers.IntegerField(default=DEFAULT_MAX_SAMPLE_SIZE, help_text=f'Maximum number of documents used to build a model. Default: {DEFAULT_MAX_SAMPLE_SIZE}')
     score_threshold = serializers.FloatField(default=DEFAULT_SCORE_THRESHOLD, help_text=f'Elasticsearch score threshold for filtering out irrelevant examples. All examples below first document\'s score * score threshold are ignored. Float between 0 and 1. Default: {DEFAULT_SCORE_THRESHOLD}')
     snowball_language = serializers.ChoiceField(choices=get_snowball_choices(), default=get_snowball_choices()[0][0], help_text='Uses Snowball stemmer with specified language to normalize the texts. Default: None')
+    scoring_function = serializers.ChoiceField(choices=DEFAULT_SCORING_OPTIONS, default=DEFAULT_SCORING_FUNCTION, required=False, help_text=f'Scoring function used while evaluating the results on dev set.')
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
@@ -93,9 +96,9 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     class Meta:
         model = Tagger
         fields = ('id', 'url', 'author_username', 'description', 'query', 'fact_name', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
-                  'maximum_sample_size', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score', 'snowball_language',
+                  'maximum_sample_size', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score', 'snowball_language', 'scoring_function',
                   'num_features', 'num_examples', 'confusion_matrix', 'plot', 'task', 'indices', 'tagger_groups')
-        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'stop_words', 'num_examples', "tagger_groups")
+        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'stop_words', 'num_examples', 'tagger_groups', 'confusion_matrix')
         fields_to_parse = ('fields',)
 
 
