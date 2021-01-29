@@ -99,7 +99,7 @@ class DataSample:
 
     def _get_tags(self, fact_name, min_count=50, max_count=None):
         """Finds possible tags for training by aggregating active project's indices."""
-        active_indices = self.tagger_object.project.get_indices()
+        active_indices = self.tagger_object.get_indices()
         es_a = ElasticAggregator(indices=active_indices)
         # limit size to 10000 unique tags
         tag_values = es_a.facts(filter_by_fact_name=fact_name, min_count=min_count, max_count=max_count, size=10000)

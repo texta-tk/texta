@@ -102,6 +102,15 @@ def train_tagger_task(tagger_id: int):
         # split stop words by space or newline and remove empties
         stop_words = re.split(" |\n|\r\n", tagger_object.stop_words)
         stop_words = [stop_word for stop_word in stop_words if stop_word]
+
+        # get scoring function
+        if tagger_object.scoring_function != "default":
+            scoring_function = tagger_object.scoring_function
+        else:
+            scoring_function = None
+
+        logging.getLogger(INFO_LOGGER).info(f"Using scoring function: {scoring_function}.")
+
         # load embedding if any
         if tagger_object.embedding:
             embedding = W2VEmbedding()
@@ -127,7 +136,8 @@ def train_tagger_task(tagger_id: int):
             vectorizer=tagger_object.vectorizer)
         tagger.train(
             data_sample.data,
-            field_list=field_data
+            field_list=field_data,
+            scoring = scoring_function
         )
 
         # save tagger to disk

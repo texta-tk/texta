@@ -64,7 +64,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
 
     def get_queryset(self):
-        return Tagger.objects.filter(project=self.kwargs['project_pk'])
+        return Tagger.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
 
     def perform_create(self, serializer):
