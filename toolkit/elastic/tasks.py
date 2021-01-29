@@ -5,6 +5,7 @@ from collections import defaultdict
 from celery.decorators import task
 
 from toolkit.base_tasks import BaseTask
+from toolkit.core.task.models import Task
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.document import ElasticDocument
 from toolkit.elastic.mapping_generator import SchemaGenerator
@@ -72,9 +73,9 @@ def update_field_types(indices, fields, field_type, flatten_doc=False):
     return updated_field_types
 
 
-def update_mapping(schema_input, new_index, add_facts_mapping):
+def update_mapping(schema_input, doc_type: str, add_facts_mapping):
     mod_schema = SchemaGenerator().generate_schema(schema_input, add_facts_mapping)
-    return {'mappings': {new_index: mod_schema}}
+    return {'mappings': {"_doc": mod_schema}}
 
 
 def unflatten_doc(doc):
@@ -111,20 +112,20 @@ def apply_elastic_search(elastic_search, flatten_doc=False):
         yield new_doc
 
 
-def elastic_bulk_generator(generator, index: str):
+def reindexer_bulk_generator(generator, index: str):
     for document in generator:
         yield {
             "_index": index,
-            "_type": index,
+            "_type": "_doc",
             "_source": document
         }
 
 
 def bulk_add_documents(elastic_search: ElasticSearcher, elastic_doc: ElasticDocument, index: str, chunk_size: int, flatten_doc=False):
     new_docs = apply_elastic_search(elastic_search, flatten_doc)
-    actions = elastic_bulk_generator(new_docs, index)
+    actions = reindexer_bulk_generator(new_docs, index)
     # No need to wait for indexing to actualize, hence refresh is False.
-    elastic_doc.bulk_add_raw(actions=actions, chunk_size=chunk_size, refresh=False)
+    elastic_doc.bulk_add_generator(actions=actions, chunk_size=chunk_size, refresh=False)
 
 
 @task(name="reindex_task", base=BaseTask)

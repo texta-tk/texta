@@ -30,7 +30,7 @@ class ElasticDocument:
 
 
     def __does_fact_exist(self, fact: dict, existing_facts: List[dict]):
-        existing = set_of_jsons = {json.dumps(d, sort_keys=True) for d in existing_facts}
+        existing = {json.dumps(d, sort_keys=True) for d in existing_facts}
         checking = json.dumps(fact, sort_keys=True)
         if checking in existing:
             return True
@@ -47,9 +47,10 @@ class ElasticDocument:
         for document in documents:
             # If there is no texta_facts field in the index, add it.
             if "texta_facts" not in document["_source"]:
-                self.core.add_texta_facts_mapping(document["_index"], [document["_type"]])
+                self.core.add_texta_facts_mapping(document["_index"])
                 document["_source"]["texta_facts"] = [fact]
-                self.update(index=document["_index"], doc_type=document["_type"], doc_id=document["_id"], doc=document["_source"])
+                doc_type = document.get("_type", "_doc")
+                self.update(index=document["_index"], doc_type=doc_type, doc_id=document["_id"], doc=document["_source"])
 
             else:
                 # Avoid sending duplicates.
@@ -57,7 +58,8 @@ class ElasticDocument:
                     pass
                 else:
                     document["_source"]["texta_facts"].append(fact)
-                    self.update(index=document["_index"], doc_type=document["_type"], doc_id=document["_id"], doc=document["_source"])
+                    doc_type = document.get("_type", "_doc")
+                    self.update(index=document["_index"], doc_type=doc_type, doc_id=document["_id"], doc=document["_source"])
 
         return True
 
@@ -74,7 +76,8 @@ class ElasticDocument:
         response = s.execute()
         if response:
             document = response[0]
-            return {"_index": document.meta.index, "_id": document.meta.id, "_type": document.meta.doc_type, "_source": document.to_dict()}
+            doc_type = getattr(document.meta, "doc_type", "_doc")
+            return {"_index": document.meta.index, "_type": doc_type, "_id": document.meta.id, "_source": document.to_dict()}
         else:
             return None
 
@@ -92,13 +95,22 @@ class ElasticDocument:
         s = s[:10000]
         response = s.execute()
         if response:
-            return [{"_index": document.meta.index, "_id": document.meta.id, "_type": document.meta.doc_type, "_source": self.core.flatten(document.to_dict()) if flatten else document.to_dict()} for document in response]
+            container = []
+            for document in response:
+                document = {
+                    "_index": document.meta.index,
+                    "_type": getattr(document.meta, "doc_type", "_doc"),
+                    "_id": document.meta.id,
+                    "_source": self.core.flatten(document.to_dict()) if flatten else document.to_dict()
+                }
+                container.append(document)
+            return container
         else:
             return []
 
 
     @elastic_connection
-    def update(self, index, doc_type, doc_id, doc):
+    def update(self, index, doc_id, doc, doc_type="_doc"):
         """
         Updates document in ES by ID.
         """
@@ -120,10 +132,11 @@ class ElasticDocument:
             refresh: Which behaviour to use for updating the index contents on a shard level.
             actions: List of dictionaries or its generator containing raw Elasticsearch documents along with
             a "doc" and "op_type" field that contains the fields that need updating. For ex:
-            {"_id": 1234, "_index": "reddit", "_type": "reddit", "op_type": "update", "doc": {"texta_facts": []}}
+            {"_id": 1234, "_index": "reddit", "op_type": "update", "doc": {"texta_facts": []}}
 
         Returns: Elasticsearch response to the request.
         """
+        actions = [{"_type": action.get("_type", "_doc"), **action} for action in actions]
         return bulk(client=self.core.es, actions=actions, refresh=refresh, request_timeout=30, chunk_size=chunk_size)
 
 
@@ -132,18 +145,25 @@ class ElasticDocument:
         """
         Adds document to ES.
         """
-        return self.core.es.index(index=self.index, doc_type=self.index, body=doc, refresh='wait_for')
+        return self.core.es.index(index=self.index, body=doc, refresh='wait_for')
 
 
     @elastic_connection
     def bulk_add(self, docs, chunk_size=100, raise_on_error=True, stats_only=True):
-        """ _type is deprecated in ES 6"""
-        actions = [{"_index": self.index, "_type": self.index, "_source": doc} for doc in docs]
+        actions = [{"_index": self.index, "_source": doc, "_type": doc.get("_type", "_doc")} for doc in docs]
         return bulk(client=self.core.es, actions=actions, chunk_size=chunk_size, stats_only=stats_only, raise_on_error=raise_on_error)
 
 
+    def add_type_to_docs(self, actions):
+        for action in actions:
+            doc_type = action.get("_type", "_doc")
+            action["_type"] = doc_type
+            yield action
+
+
     @elastic_connection
-    def bulk_add_raw(self, actions, chunk_size=100, raise_on_error=True, stats_only=True, refresh="wait_for"):
+    def bulk_add_generator(self, actions, chunk_size=100, raise_on_error=True, stats_only=True, refresh="wait_for"):
+        actions = self.add_type_to_docs(actions)
         return bulk(client=self.core.es, actions=actions, chunk_size=chunk_size, stats_only=stats_only, raise_on_error=raise_on_error, refresh=refresh)
 
 
@@ -152,7 +172,7 @@ class ElasticDocument:
         """
         Removes given document from ES.
         """
-        return self.core.es.delete(index=self.index, doc_type=self.index, id=doc_id)
+        return self.core.es.delete(index=self.index, id=doc_id)
 
 
     @elastic_connection
@@ -166,7 +186,7 @@ class ElasticDocument:
     @elastic_connection
     def bulk_delete(self, document_ids: List[str], wait_for_completion=True):
         query = Search().query(Q("ids", values=document_ids)).to_dict()
-        response = self.core.es.delete_by_query(index=self.index, doc_type=self.index, body=query, wait_for_completion=wait_for_completion)
+        response = self.core.es.delete_by_query(index=self.index, body=query, wait_for_completion=wait_for_completion)
         return response
 
 

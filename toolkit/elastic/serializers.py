@@ -9,6 +9,12 @@ from toolkit.elastic.models import Index, Reindexer
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.validators import check_for_banned_beginning_chars, check_for_colons, check_for_special_symbols, check_for_upper_case, check_for_wildcards
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
+from toolkit.elastic.choices import get_snowball_choices
+
+
+class SnowballSerializer(serializers.Serializer):
+    text = serializers.CharField()
+    language = serializers.ChoiceField(choices=get_snowball_choices(), default=get_snowball_choices()[0][0])
 
 
 class AddMappingToIndexSerializer(serializers.Serializer):

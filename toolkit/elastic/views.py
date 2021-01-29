@@ -9,14 +9,40 @@ from rest_auth import views
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.renderers import BrowsableAPIRenderer, HTMLFormRenderer, JSONRenderer
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.exceptions import ElasticIndexAlreadyExists
 from toolkit.elastic.models import Index, Reindexer
-from toolkit.elastic.serializers import AddMappingToIndexSerializer, AddTextaFactsMapping, IndexSerializer, ReindexerCreateSerializer
+from toolkit.elastic.serializers import (
+    AddMappingToIndexSerializer,
+    AddTextaFactsMapping,
+    IndexSerializer,
+    ReindexerCreateSerializer,
+    SnowballSerializer
+)
 from toolkit.permissions.project_permissions import IsSuperUser, ProjectResourceAllowed
 from toolkit.view_constants import BulkDelete
+from toolkit.tools.lemmatizer import ElasticLemmatizer
+
+
+class SnowballProcessor(views.APIView):
+    serializer_class = SnowballSerializer
+    renderer_classes = (BrowsableAPIRenderer, JSONRenderer, HTMLFormRenderer)
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        serializer = SnowballSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        text = serializer.validated_data["text"]
+        language = serializer.validated_data["language"]
+
+        lemmatizer = ElasticLemmatizer(language=language)
+        lemmatized = lemmatizer.lemmatize(text)
+
+        return Response({"text": lemmatized})
 
 
 class IndicesFilter(filters.FilterSet):
@@ -32,7 +58,6 @@ class IndicesFilter(filters.FilterSet):
 
 class ElasticGetIndices(views.APIView):
     permission_classes = (IsSuperUser,)
-
 
     def get(self, request):
         """

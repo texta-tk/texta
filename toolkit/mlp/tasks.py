@@ -80,8 +80,7 @@ def apply_mlp_on_index(self, mlp_id: int):
     )
 
     for index in indices:
-        doc_types = searcher.core.get_index_doc_types(index)
-        searcher.core.add_texta_facts_mapping(index=index, doc_types=doc_types)
+        searcher.core.add_texta_facts_mapping(index=index)
 
     actions = process_actions(searcher, analyzers, field_data, mlp=mlp)
 
