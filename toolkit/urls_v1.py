@@ -13,7 +13,7 @@ from toolkit.dataset_import.urls import router as dataset_import_router
 from toolkit.docparser.views import DocparserView
 from toolkit.document_importer.views import DocumentImportView, DocumentInstanceView, UpdateSplitDocument
 from toolkit.elastic.urls import index_router, router as reindexer_router
-from toolkit.elastic.views import ElasticGetIndices
+from toolkit.elastic.views import ElasticGetIndices, SnowballProcessor
 from toolkit.embedding.urls import embedding_router
 from toolkit.mlp.urls import mlp_router
 from toolkit.mlp.views import MLPListProcessor, MlpDocsProcessor
@@ -61,7 +61,11 @@ urlpatterns = [
     # auth
     path('rest-auth/', include('rest_auth.urls')),
     path('rest-auth/registration/', include('rest_auth.registration.urls')),
+    # tasks
     path("task/", TaskAPIView.as_view(), name="task_api"),
+    # elastic stemmer
+    path("snowball/", SnowballProcessor.as_view(), name="snowball"),
+    # mlp
     path("mlp/texts/", MLPListProcessor.as_view(), name="mlp_texts"),
     path("mlp/docs/", MlpDocsProcessor.as_view(), name="mlp_docs"),
     url(r'^get_indices', ElasticGetIndices.as_view(), name="get_indices_for_project_creation"),

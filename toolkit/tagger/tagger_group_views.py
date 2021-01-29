@@ -1,7 +1,7 @@
 import json
+import logging
 import os
 import re
-import logging
 
 import rest_framework.filters as drf_filters
 from celery import group
@@ -13,7 +13,6 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from toolkit.settings import ERROR_LOGGER, INFO_LOGGER
 from toolkit.core.health.utils import get_redis_status
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
@@ -25,7 +24,7 @@ from toolkit.helper_functions import add_finite_url_to_feedback
 from toolkit.mlp.tasks import apply_mlp_on_list
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE, INFO_LOGGER
 from toolkit.tagger.models import TaggerGroup
 from toolkit.tagger.serializers import TagRandomDocSerializer, TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer
 from toolkit.tagger.tasks import apply_tagger, create_tagger_objects, save_tagger_results, start_tagger_task, train_tagger_task

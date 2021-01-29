@@ -56,6 +56,7 @@ def train_embedding(embedding_id):
         # declare the job done
         task_object.complete()
         return True
+
     except Exception as e:
         # declare the job failed
         task_object.add_error(str(e))

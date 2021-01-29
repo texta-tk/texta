@@ -2,7 +2,7 @@ image: continuumio/miniconda3:latest
 
 variables:
   # Elastic
-  TEXTA_ES_URL: http://172.17.0.1:9200
+  TEXTA_ES_URL: http://172.18.0.2:9200
   # Redis
   TEXTA_REDIS_URL: redis://redis:6379
   # UAA

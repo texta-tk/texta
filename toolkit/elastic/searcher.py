@@ -105,7 +105,15 @@ class ElasticSearcher:
         s = s.query(mlt).exclude("ids", values=exclude)
         s = s.extra(size=size)
         if include_meta:
-            response = [{"_id": hit.meta.id, "_type": hit.meta.doc_type, "_index": hit.meta.index, "_source": self.core.flatten(hit.to_dict()) if flatten else hit.to_dict()} for hit in s.execute()]
+            response = []
+            for hit in s.execute():
+                item = {
+                    "_id": hit.meta.id,
+                    "_index": hit.meta.index,
+                    "_type": getattr(hit.meta, "doc_type", "_doc"),
+                    "_source": self.core.flatten(hit.to_dict()) if flatten else hit.to_dict()
+                }
+                response.append(item)
             return response
         else:
             response = [self.core.flatten(hit.to_dict()) if flatten else hit.to_dict() for hit in s.execute()]
@@ -248,13 +256,13 @@ class ElasticSearcher:
                         parsed_doc = self._parse_doc(hit)
                         if self.output == self.OUT_TEXT:
                             for field in parsed_doc.values():
-                            	if self.text_processor:
+                                if self.text_processor:
                                     field = self.text_processor.process(field)
                                     for text in field:
-                                    	yield " ".join(text)
-                            	else:
+                                        yield " ".join(text)
+                                else:
                                     yield field
-                              	
+
 
                         elif self.output == self.OUT_TEXT_WITH_ID:
                             document = {}
@@ -268,7 +276,7 @@ class ElasticSearcher:
                         elif self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID):
                             if self.text_processor:
                                 parsed_doc = {k: '\n'.join(self.text_processor.process(v)[0]) for k, v in parsed_doc.items()}
-                                
+
                             if self.output == self.OUT_DOC_WITH_ID:
                                 parsed_doc['_id'] = hit['_id']
                             yield parsed_doc
