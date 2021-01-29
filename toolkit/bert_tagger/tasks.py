@@ -3,6 +3,7 @@ import os
 import secrets
 import logging
 from celery.decorators import task
+from django.db import connections
 
 from toolkit.core.task.models import Task
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
@@ -71,6 +72,10 @@ def train_bert_tagger(tagger_id, testing=False):
             split_ratio = tagger_object.split_ratio,
             bert_model = bert_model
         )
+        # close all db connections
+        for conn in connections.all():
+            conn.close_if_unusable_or_obsolete()
+
         # save tagger to disc
         tagger_path = os.path.join(BERT_FINETUNED_MODEL_DIRECTORY, f'{tagger_object.MODEL_TYPE}_{tagger_id}_{secrets.token_hex(10)}')
         tagger.save(tagger_path)
