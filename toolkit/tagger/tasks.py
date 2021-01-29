@@ -17,7 +17,7 @@ from toolkit.elastic.models import Index
 from toolkit.helper_functions import get_indices_from_object
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, MEDIA_URL
 from toolkit.tagger.models import Tagger, TaggerGroup
-from toolkit.tools.celery_lemmatizer import CeleryLemmatizer
+from toolkit.tools.lemmatizer import CeleryLemmatizer, ElasticLemmatizer
 from toolkit.tools.plots import create_tagger_plot
 from toolkit.tools.show_progress import ShowProgress
 
@@ -113,7 +113,8 @@ def train_tagger_task(tagger_id: int):
             tagger_object,
             indices=indices,
             field_data=field_data,
-            show_progress=show_progress
+            show_progress=show_progress,
+            snowball_language=tagger_object.snowball_language
         )
         # update status to training
         show_progress.update_step("training")
@@ -197,8 +198,10 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
     logging.getLogger(INFO_LOGGER).info(f"Starting task 'apply_tagger' for tagger with ID: {tagger_id} with params (input_type : {input_type}, lemmatize: {lemmatize}, feedback: {feedback})!")
     # get tagger object
     tagger_object = Tagger.objects.get(pk=tagger_id)
-    # get lemmatizer
-    if lemmatize:
+    # get lemmatizer/stemmer
+    if tagger_object.snowball_language:
+        lemmatizer = ElasticLemmatizer(language=tagger_object.snowball_language)
+    elif lemmatize:
         lemmatizer = CeleryLemmatizer()
     else:
         lemmatizer = None

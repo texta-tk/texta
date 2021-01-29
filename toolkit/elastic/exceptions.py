@@ -48,3 +48,8 @@ class ElasticAuthenticationException(APIException):
     status_code = status.HTTP_401_UNAUTHORIZED
     default_detail = "Authentification to Elasticsearch has failed!"
     default_code = "auth_failed"
+
+
+class InvalidDataSampleError(Exception):
+    """Raised on invalid Data Sample""" 
+    pass

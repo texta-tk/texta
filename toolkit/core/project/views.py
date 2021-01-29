@@ -14,16 +14,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
-from toolkit.core.project.serializers import (
-    ExportSearcherResultsSerializer, ProjectGetFactsSerializer,
-    ProjectGetSpamSerializer,
-    ProjectSearchByQuerySerializer,
-    ProjectSerializer,
-    ProjectSimplifiedSearchSerializer,
-    ProjectSuggestFactNamesSerializer,
-    ProjectSuggestFactValuesSerializer, ProjectDocumentSerializer
-)
-from toolkit.core.task.models import Task
+from toolkit.core.project.serializers import (ExportSearcherResultsSerializer, ProjectDocumentSerializer, ProjectGetFactsSerializer, ProjectGetSpamSerializer, ProjectSearchByQuerySerializer, ProjectSerializer, ProjectSimplifiedSearchSerializer, ProjectSuggestFactNamesSerializer,
+                                              ProjectSuggestFactValuesSerializer)
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.document import ElasticDocument
@@ -31,12 +23,10 @@ from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.serializers import ElasticScrollSerializer
 from toolkit.elastic.spam_detector import SpamDetector
-from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, RedisNotAvailable, SerializerNotValid, InvalidInputDocument
-from toolkit.helper_functions import add_finite_url_to_feedback, hash_string
+from toolkit.exceptions import InvalidInputDocument, ProjectValidationFailed, SerializerNotValid
+from toolkit.helper_functions import hash_string
 from toolkit.permissions.project_permissions import (ExtraActionResource, IsSuperUser, ProjectAllowed)
 from toolkit.settings import RELATIVE_PROJECT_DATA_PATH, SEARCHER_FOLDER_KEY
-from toolkit.tagger.models import Tagger
-from toolkit.tagger.tasks import apply_tagger
 from toolkit.tools.autocomplete import Autocomplete
 from toolkit.view_constants import FeedbackIndexView
 
@@ -275,7 +265,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         """Executes **raw** Elasticsearch query on all project indices."""
         project: Project = self.get_object()
         serializer = ProjectSearchByQuerySerializer(data=request.data)
-        
+
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
 
@@ -293,6 +283,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         es.update_query(serializer.validated_data["query"])
         results = es.search()
         return Response(results, status=status.HTTP_200_OK)
+
 
     @action(detail=True, methods=['post'], serializer_class=ProjectDocumentSerializer, permission_classes=[ExtraActionResource])
     def document(self, request, pk=None, project_pk=None):
@@ -314,6 +305,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         es = ElasticDocument(index=indices)
         results = es.get(doc_id)
         return Response(results, status=status.HTTP_200_OK)
+
 
     @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactValuesSerializer, permission_classes=[ExtraActionResource])
     def autocomplete_fact_values(self, request, pk=None, project_pk=None):

@@ -1,20 +1,17 @@
 from typing import List
+import json
 
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.query import Query
-import json
-
-
-class InvalidDataSampleError(Exception):
-    """Raised on invalid Data Sample""" 
-    pass
+from toolkit.tools.lemmatizer import ElasticLemmatizer
+from .exceptions import InvalidDataSampleError
 
 
 class DataSample:
     """Re-usable object for handling positive and negative data samples for Taggers and TorchTaggers."""
-    def __init__(self, model_object, indices: List[str], field_data: List[str], show_progress=None, join_fields=False, text_processor=None, add_negative_sample=False):
+    def __init__(self, model_object, indices: List[str], field_data: List[str], show_progress=None, join_fields=False, text_processor=None, add_negative_sample=False, snowball_language=None):
         self.tagger_object = model_object
         self.show_progress = show_progress
         self.indices = indices
@@ -32,8 +29,25 @@ class DataSample:
         # combine feedback & data dicts
         self.data = {**self.feedback, **self.data}
 
+        # use Snowball stemmer
+        self._snowball(snowball_language)
+
         # validate resulting data sample
         self._validate()
+
+
+    def _snowball(self, snowball_language):
+        """
+        Stems the texts in data sample using Snowball.
+        """
+        if snowball_language:
+            lemmatizer = ElasticLemmatizer(language=snowball_language)
+            for cl, examples in self.data.items():
+                processed_examples = []
+                for example_doc in examples:
+                    new_example_doc = {k: lemmatizer.lemmatize(v) for k, v in example_doc.items()}
+                    processed_examples.append(new_example_doc)
+                self.data[cl] = processed_examples
 
 
     @staticmethod

@@ -4,7 +4,6 @@ from rest_framework import serializers
 class ElasticDocumentSerializer(serializers.Serializer):
     _id = serializers.CharField(required=False, help_text="Under which id should Elasticsearch insert the document, without this Elasticsearch will generate one itself.")
     _index = serializers.CharField(default=None, help_text="Under which index should Elasticsearch insert the document, lacking one Toolkit will generate one automatically.")
-    _type = serializers.CharField(default=None, help_text="Should be the same value as index, specifies the Elasticsearch doc_type.")
     _source = serializers.DictField(required=True, help_text="Actual content of the document.")
 
 

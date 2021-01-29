@@ -58,8 +58,8 @@ def update_generator(generator: ElasticSearcher, fields: List[str], group_tagger
 
             yield {
                 "_index": raw_doc["_index"],
-                "_type": raw_doc["_type"],
                 "_id": raw_doc["_id"],
+                "_type": raw_doc.get("_type", "_doc"),
                 "_op_type": "update",
                 "_source": {'doc': hit},
             }

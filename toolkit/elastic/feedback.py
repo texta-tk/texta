@@ -11,13 +11,14 @@ import json
 
 class Feedback:
 
-    def __init__(self, project_pk, model_object=None, text_processor=None,callback_progress=None, 
+    def __init__(self, project_pk, model_object=None, text_processor=None, callback_progress=None,
                  prediction_to_match=None, es_prefix=get_core_setting("TEXTA_ES_PREFIX")):
         self.es_core = ElasticCore()
         self.project_pk = project_pk
         self.feedback_index = f"{es_prefix}texta-feedback-project-{project_pk}"
         self.model_object = model_object
         self.es_doc, self.es_search, self.query = self._initialize_es(project_pk, text_processor, callback_progress, prediction_to_match)
+
 
     def __iter__(self):
         """
@@ -27,9 +28,11 @@ class Feedback:
             return self.es_search.scroll()
         else:
             return iter(())
-    
+
+
     def check_index_exists(self):
         return self.es_core.check_if_indices_exist([self.feedback_index])
+
 
     def _initialize_es(self, project_pk, text_processor, callback_progress, prediction_to_match):
         # create es doc
@@ -49,14 +52,15 @@ class Feedback:
             return es_doc, None, query.query
         # create es search
         es_search = ElasticSearcher(
-                indices=self.feedback_index,
-                query = query.query,
-                text_processor=text_processor, 
-                output=ElasticSearcher.OUT_DOC_WITH_ID,
-                callback_progress=callback_progress
-            )
+            indices=self.feedback_index,
+            query=query.query,
+            text_processor=text_processor,
+            output=ElasticSearcher.OUT_DOC_WITH_ID,
+            callback_progress=callback_progress
+        )
         # return objects
         return es_doc, es_search, query.query
+
 
     def list(self):
         """
@@ -68,7 +72,7 @@ class Feedback:
             return []
         else:
             return self.es_search.search()['hits']['hits']
-        
+
 
     def _text_to_doc(self, text):
         """
@@ -77,6 +81,7 @@ class Feedback:
         # retrieve list of fields model was trained on
         model_fields = json.loads(self.model_object.fields)
         return {field_path: text for field_path in model_fields}
+
 
     def store(self, content, prediction):
         """
@@ -101,6 +106,7 @@ class Feedback:
             Logger().error("Failed indexing model feedback", exc_info=e)
             return None
 
+
     def add(self, feedback_id, correct_result):
         """
         Adds correct prediction to indexed doc.
@@ -109,13 +115,15 @@ class Feedback:
             document = self.es_doc.get(feedback_id)
             document["_source"]["correct_result"] = json.dumps(correct_result)
             document["_source"]["feedback_time"] = datetime.now()
-            self.es_doc.update(index=document["_index"], doc_type=document["_type"], doc_id=feedback_id, doc=document["_source"])
+            doc_type = document.get("_type", "_doc")
+            self.es_doc.update(index=document["_index"], doc_id=feedback_id, doc=document["_source"], doc_type=doc_type)
             return {"success": "Tagger feedback updated."}
 
         except Exception as e:
             error_msg = "Failed changing model feedback."
             Logger().error(error_msg, exc_info=e)
-            return {"error": f"{error_msg}: e"}       
+            return {"error": f"{error_msg}: e"}
+
 
     def delete(self):
         """
@@ -127,7 +135,8 @@ class Feedback:
         except Exception as e:
             error_msg = "Feedback document delete failed."
             Logger().error(error_msg, exc_info=e)
-            return {"error": f"{error_msg}: e"} 
+            return {"error": f"{error_msg}: e"}
+
 
     def delete_index(self):
         """
@@ -139,4 +148,4 @@ class Feedback:
         except Exception as e:
             error_msg = "Feedback index delete failed."
             Logger().error(error_msg, exc_info=e)
-            return {"error": f"{error_msg}: e"} 
+            return {"error": f"{error_msg}: e"}
