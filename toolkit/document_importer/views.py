@@ -44,7 +44,6 @@ class DocumentImportView(GenericAPIView):
         new_index = False
         for document in documents:
             document["_index"] = index_name
-            document["_type"] = index_name
             new_index = True
         return documents, index_name, new_index
 
@@ -80,8 +79,8 @@ class DocumentImportView(GenericAPIView):
                             content = {**content, **{"page": page["page"], field: page["text"]}}
                             container.append({
                                 "_index": document["_index"],
-                                "_type": document["_index"],
-                                "_source": content
+                                "_source": content,
+                                "_type": document.get("_type", "_doc")
                             })
                     else:
                         container.append(document)
@@ -115,7 +114,7 @@ class DocumentImportView(GenericAPIView):
             project.indices.add(index)
 
         # Send the documents to Elasticsearch.
-        success_count, errors = ed.bulk_add_raw(actions=split_actions, stats_only=False)
+        success_count, errors = ed.bulk_add_generator(actions=split_actions, stats_only=False)
         return Response(
             {
                 "successfully_indexed": success_count,
@@ -155,7 +154,7 @@ class DocumentInstanceView(GenericAPIView):
 
         try:
             ed = ElasticDocument(index)
-            document = ed.update(index=index, doc_type=index, doc_id=document_id, doc=request.data)
+            document = ed.update(index=index, doc_id=document_id, doc=request.data)
             return Response(document)
         except elasticsearch.exceptions.RequestError as e:
             if e.error == "mapper_parsing_exception":  # TODO Extend the decorator with different variants of the request error instead.
@@ -184,7 +183,7 @@ class UpdateSplitDocument(GenericAPIView):
         for page in pages:
             text = page.pop("text")
             page = {**page, **sample_doc, text_field: text}
-            actions.append({"_index": index, "_type": index, "_source": page})
+            actions.append({"_index": index, "_source": page})
         return actions
 
 
@@ -217,7 +216,7 @@ class UpdateSplitDocument(GenericAPIView):
                 sample_doc = documents[0]["_source"]
                 response = ed.bulk_delete([document["_id"] for document in documents])  # Delete existing documents to make room for new ones.
                 actions = self._create_new_pages(content, sample_doc, text_field, index)
-                success_count, errors = ed.bulk_add_raw(actions=actions, stats_only=False)
+                success_count, errors = ed.bulk_add_generator(actions=actions, stats_only=False)
                 return Response({"successfully_updated": success_count, "errors": errors})
             else:
                 return Response(f"Could not find the id field withing the document!", status=status.HTTP_400_BAD_REQUEST)

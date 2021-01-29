@@ -9,24 +9,24 @@ from toolkit.tools.utils_for_tests import create_test_user, print_output, projec
 
 class ScrollApiTests(APITestCase):
 
-    def setUp(cls):
+    def setUp(self):
         # Create a new project_user, all project extra actions need to be permissible for this project_user.
-        cls.user = create_test_user(name='user', password='pw')
-        cls.unowned_user = create_test_user(name='unowned_user', password='pw')
+        self.user = create_test_user(name='user', password='pw')
+        self.unowned_user = create_test_user(name='unowned_user', password='pw')
 
-        cls.admin = create_test_user(name='admin', password='pw')
-        cls.admin.is_superuser = True
-        cls.admin.save()
+        self.admin = create_test_user(name='admin', password='pw')
+        self.admin.is_superuser = True
+        self.admin.save()
 
-        cls.project_user = create_test_user(name='project_user', password='pw')
-        cls.project = project_creation("testproj", TEST_INDEX, cls.user)
-        cls.project.users.add(cls.project_user)
-        cls.project.users.add(cls.user)
+        self.project_user = create_test_user(name='project_user', password='pw')
+        self.project = project_creation("testproj", TEST_INDEX, self.user)
+        self.project.users.add(self.project_user)
+        self.project.users.add(self.user)
 
-        cls.client = APIClient()
-        cls.client.login(username='project_user', password='pw')
+        self.client = APIClient()
+        self.client.login(username='project_user', password='pw')
 
-        cls.scroll_url = reverse("v1:project-scroll", kwargs={"pk": cls.project.id})
+        self.scroll_url = reverse("v1:project-scroll", kwargs={"pk": self.project.id})
 
 
     def test_that_only_owner_can_access_project(self):

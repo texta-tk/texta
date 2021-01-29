@@ -183,7 +183,7 @@ class MLPIndexProcessing(APITransactionTestCase):
 
     def test_applying_mlp_on_index_with_different_index_and_doctype_names(self):
 
-        self.ec.es.index(index=DOCTYPE_INDEX_NAME, doc_type="doc", body={DOCTYPE_FIELD_NAME: "hello there, kenobi!"})
+        self.ec.es.index(index=DOCTYPE_INDEX_NAME, body={DOCTYPE_FIELD_NAME: "hello there, kenobi!"})
         index, is_created = Index.objects.get_or_create(name=DOCTYPE_INDEX_NAME)
         self.project.indices.add(index)
 
