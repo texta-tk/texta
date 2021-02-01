@@ -99,6 +99,7 @@ def train_bert_tagger(tagger_id, testing=False):
         tagger_object.epoch_reports = json.dumps([a.to_dict() for a in tagger.epoch_reports])
         tagger_object.num_examples = json.dumps({k: len(v) for k, v in list(data_sample.data.items())})
         tagger_object.adjusted_batch_size = tagger.config.batch_size
+        tagger_object.confusion_matrix = json.dumps(report.confusion.tolist())
         # save tagger object
         tagger_object.save()
         # declare the job done

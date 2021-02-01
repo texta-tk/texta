@@ -6,6 +6,9 @@ from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUr
 from toolkit.torchtagger import choices
 from toolkit.torchtagger.models import TorchTagger
 
+class EpochReportSerializer(serializers.Serializer):
+    ignore_fields = serializers.ListField(child=serializers.CharField(), default=choices.DEFAULT_REPORT_IGNORE_FIELDS, required=False, help_text=f'Fields to exclude from the output. Default = {choices.DEFAULT_REPORT_IGNORE_FIELDS}')
+
 
 class TagRandomDocSerializer(serializers.Serializer):
     indices = IndexSerializer(many=True, default=[])
@@ -31,7 +34,7 @@ class TorchTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, P
         model = TorchTagger
         fields = (
             'url', 'author_username', 'id', 'description', 'query', 'fields', 'embedding', 'f1_score', 'precision', 'recall', 'accuracy',
-            'model_architecture', 'maximum_sample_size', 'minimum_sample_size', 'num_epochs', 'plot', 'task', 'fact_name', 'epoch_reports', 'indices'
+            'model_architecture', 'maximum_sample_size', 'minimum_sample_size', 'num_epochs', 'plot', 'task', 'fact_name', 'indices'
         )
-        read_only_fields = ('project', 'fields', 'f1_score', 'precision', 'recall', 'accuracy', 'plot', 'task', 'fact_name', 'epoch_reports')
-        fields_to_parse = ('fields', 'epoch_reports')
+        read_only_fields = ('project', 'fields', 'f1_score', 'precision', 'recall', 'accuracy', 'plot', 'task', 'fact_name')
+        fields_to_parse = ['fields']

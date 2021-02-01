@@ -24,9 +24,10 @@ from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.tagger.serializers import TaggerTagTextSerializer
 from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
-from toolkit.torchtagger.serializers import TagRandomDocSerializer, TorchTaggerSerializer
+from toolkit.torchtagger.serializers import TagRandomDocSerializer, TorchTaggerSerializer, EpochReportSerializer
 from toolkit.torchtagger.tasks import train_torchtagger
 from toolkit.view_constants import BulkDelete, FeedbackModelView
+from toolkit.torchtagger import choices
 
 
 class TorchTaggerFilter(filters.FilterSet):
@@ -72,7 +73,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
 
     def get_queryset(self):
-        return TorchTaggerObject.objects.filter(project=self.kwargs['project_pk'])
+        return TorchTaggerObject.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
 
     @action(detail=True, methods=['post'])
@@ -103,6 +104,25 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         uploaded_file = serializer.validated_data['file']
         tagger_id = TorchTaggerObject.import_resources(uploaded_file, request, project_pk)
         return Response({"id": tagger_id, "message": "Successfully imported model and associated files."}, status=status.HTTP_201_CREATED)
+
+
+    @action(detail=True, methods=['post','get'], serializer_class=EpochReportSerializer)
+    def epoch_reports(self, request, pk=None, project_pk=None):
+        """Retrieve epoch reports"""
+        tagger_object: BertTaggerObject = self.get_object()
+
+        if request.method == "GET":
+            ignore_fields = choices.DEFAULT_REPORT_IGNORE_FIELDS
+        else:
+            serializer = EpochReportSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            ignore_fields = serializer.validated_data['ignore_fields']
+
+        reports = json.loads(tagger_object.epoch_reports)
+        filtered_reports = [{field: value for field, value in list(report.items()) if field not in ignore_fields} for report in reports]
+
+        return Response(filtered_reports, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['post'])

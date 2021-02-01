@@ -6,4 +6,6 @@ DEFAULT_NEGATIVE_MULTIPLIER = 1
 DEFAULT_NUM_EPOCHS = 5
 DEFAULT_VALIDATION_SPLIT = 0.8
 
+DEFAULT_REPORT_IGNORE_FIELDS = ["true_positive_rate", "false_positive_rate"]
+
 MODEL_CHOICES = [(a, a) for a in TORCH_MODELS.keys()]

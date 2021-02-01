@@ -66,9 +66,9 @@ class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Pr
         fields = ('url', 'author_username', 'id', 'description', 'query', 'fields', 'f1_score', 'precision', 'recall', 'accuracy',
                   'validation_loss', 'training_loss', 'maximum_sample_size', 'minimum_sample_size', 'num_epochs', 'plot', 'task', 'fact_name',
                   'indices', 'bert_model', 'learning_rate', 'eps', 'max_length', 'batch_size', 'adjusted_batch_size',
-                  'split_ratio','negative_multiplier', 'num_examples')
+                  'split_ratio','negative_multiplier', 'num_examples', 'confusion_matrix')
 
         read_only_fields = ('project', 'fields', 'f1_score', 'precision', 'recall', 'accuracy', 'validation_loss', 'training_loss', 'plot',
-                            'task', 'fact_name', 'num_examples', 'adjusted_batch_size')
+                            'task', 'fact_name', 'num_examples', 'adjusted_batch_size', 'confusion_matrix')
 
         fields_to_parse = ['fields']

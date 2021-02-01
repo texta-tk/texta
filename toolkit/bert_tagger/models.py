@@ -48,6 +48,7 @@ class BertTagger(models.Model):
     batch_size = models.IntegerField(default=choices.DEFAULT_BATCH_SIZE)
     bert_model = models.TextField(default=choices.DEFAULT_BERT_MODEL)
     adjusted_batch_size = models.IntegerField(default=choices.DEFAULT_BATCH_SIZE)
+    confusion_matrix = models.TextField(default="[]", null=True, blank=True)
 
     label_index = models.TextField(default=json.dumps({}))
     epoch_reports = models.TextField(default=json.dumps([]))
