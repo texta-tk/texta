@@ -78,6 +78,15 @@ Running Docker with GPU support requires NVIDIA Container Toolkit to be installe
 * TEXTA_MLP_MODEL_DIRECTORY_PATH - Relative path to the directory into which Stanza models will be stored under the "
   stanza" folder (setting this to ./home/texta will create ./home/texta/stanza which contains subfolders for every
   language like ./home/texta/stanza/et etc). Defaults to "./data/models".
+* TEXTA_ALLOW_BERT_MODEL_DOWNLOADS - Boolean flag indicating if the users can download additional BERT models.
+  Default to False.
+* TEXTA_BERT_MODEL_DIRECTORY_PATH - Relative path to the directory into which pretrained and fine-tuned BERT models will
+  be stored under the "bert_tagger" folder. (setting this to ./home/texta will create ./home/texta/bert_tagger/pretrained/
+  which contains subfolders for every downloaded bert more like ./home/texta/bert_model/pretrained/bert-base-multilingual-cased
+  etc and ./home/texta/bert_model/fine_tuned/ which will store fine-tuned BERT models. Defaults to "./data/models".
+* TEXTA_BERT_MODELS - Comma seprated string of pretrained BERT models to download.
+  Default to "bert-base-multilingual-cased,bert-base-uncased,EMBEDDIA/finest-bert"
+* SKIP_BERT_RESOURCES - If set "True", skips downloading pretrained BERT models. Defaults to False.
 
 ## External services
 

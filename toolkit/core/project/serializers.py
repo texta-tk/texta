@@ -155,6 +155,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
             'taggers',
             'tagger_groups',
             'torchtaggers',
+            "bert_taggers",
             'regex_taggers',
             'anonymizers',
             'regex_tagger_groups',

@@ -1,5 +1,6 @@
 import json
 import os
+import logging
 
 import rest_framework.filters as drf_filters
 from django.http import HttpResponse
@@ -8,47 +9,45 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from texta_torch_tagger.tagger import TorchTagger
 from texta_tools.text_processor import TextProcessor
-from texta_tools.embedding import W2VEmbedding
+from texta_bert_tagger.tagger import BertTagger
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed
-from toolkit.helper_functions import add_finite_url_to_feedback
+from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, DownloadingModelsNotAllowedError, InvalidModelIdentifierError
+from toolkit.helper_functions import add_finite_url_to_feedback, download_bert_requirements, get_downloaded_bert_models
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
-from toolkit.tagger.serializers import TaggerTagTextSerializer
-from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
-from toolkit.torchtagger.serializers import TagRandomDocSerializer, TorchTaggerSerializer, EpochReportSerializer
-from toolkit.torchtagger.tasks import train_torchtagger
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ALLOW_BERT_MODEL_DOWNLOADS, BERT_PRETRAINED_MODEL_DIRECTORY, INFO_LOGGER
+from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
+from toolkit.bert_tagger.serializers import TagRandomDocSerializer, BertTaggerSerializer, BertTagTextSerializer, EpochReportSerializer, BertDownloaderSerializer
+
+from toolkit.bert_tagger.tasks import train_bert_tagger
 from toolkit.view_constants import BulkDelete, FeedbackModelView
-from toolkit.torchtagger import choices
+from toolkit.bert_tagger import choices
 
-
-class TorchTaggerFilter(filters.FilterSet):
+class BertTaggerFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
     task_status = filters.CharFilter('task__status', lookup_expr='icontains')
 
 
     class Meta:
-        model = TorchTaggerObject
+        model = BertTaggerObject
         fields = []
 
 
-class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
-    serializer_class = TorchTaggerSerializer
+class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
+    serializer_class = BertTaggerSerializer
     permission_classes = (
         permissions.IsAuthenticated,
         ProjectResourceAllowed,
     )
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
-    filterset_class = TorchTaggerFilter
+    filterset_class = BertTaggerFilter
     ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'f1_score', 'precision', 'recall', 'task__status')
 
 
@@ -59,7 +58,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
         serializer.validated_data.pop("indices")
 
-        tagger: TorchTaggerObject = serializer.save(
+        tagger: BertTaggerObject = serializer.save(
             author=self.request.user,
             project=project,
             fields=json.dumps(serializer.validated_data['fields']),
@@ -73,23 +72,23 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
 
     def get_queryset(self):
-        return TorchTaggerObject.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
+        return BertTaggerObject.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
 
     @action(detail=True, methods=['post'])
     def retrain_tagger(self, request, pk=None, project_pk=None):
-        """Starts retraining task for the TorchTagger model."""
+        """Starts retraining task for the BertTagger model."""
         instance = self.get_object()
-        train_torchtagger.apply_async(args=(instance.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
+        train_bert_tagger.apply_async(args=(instance.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
         return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['get'])
     def export_model(self, request, pk=None, project_pk=None):
         """Returns list of tags for input text."""
-        zip_name = f'torchtagger_model_{pk}.zip'
+        zip_name = f'berttagger_model_{pk}.zip'
 
-        tagger_object: TorchTaggerObject = self.get_object()
+        tagger_object: BertTaggerObject = self.get_object()
         data = tagger_object.export_resources()
         response = HttpResponse(data)
         response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(zip_name)
@@ -102,27 +101,8 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         serializer.is_valid(raise_exception=True)
 
         uploaded_file = serializer.validated_data['file']
-        tagger_id = TorchTaggerObject.import_resources(uploaded_file, request, project_pk)
+        tagger_id = BertTaggerObject.import_resources(uploaded_file, request, project_pk)
         return Response({"id": tagger_id, "message": "Successfully imported model and associated files."}, status=status.HTTP_201_CREATED)
-
-
-    @action(detail=True, methods=['post','get'], serializer_class=EpochReportSerializer)
-    def epoch_reports(self, request, pk=None, project_pk=None):
-        """Retrieve epoch reports"""
-        tagger_object: BertTaggerObject = self.get_object()
-
-        if request.method == "GET":
-            ignore_fields = choices.DEFAULT_REPORT_IGNORE_FIELDS
-        else:
-            serializer = EpochReportSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-
-            ignore_fields = serializer.validated_data['ignore_fields']
-
-        reports = json.loads(tagger_object.epoch_reports)
-        filtered_reports = [{field: value for field, value in list(report.items()) if field not in ignore_fields} for report in reports]
-
-        return Response(filtered_reports, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['post'], serializer_class=TagRandomDocSerializer)
@@ -144,7 +124,11 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         indices = project_object.get_available_or_all_project_indices(indices)
 
         # retrieve tagger fields
-        tagger_fields = json.loads(tagger_object.fields)
+        # if user specified fields, use them
+        if serializer.validated_data["fields"]:
+            tagger_fields = serializer.validated_data["fields"]
+        else:
+            tagger_fields = json.loads(tagger_object.fields)
         if not ElasticCore().check_if_indices_exist(tagger_object.project.get_indices()):
             raise ProjectValidationFailed(detail=f'One or more index from {list(tagger_object.project.get_indices())} do not exist')
 
@@ -160,9 +144,9 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         return Response(response, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post'], serializer_class=TaggerTagTextSerializer)
+    @action(detail=True, methods=['post'], serializer_class=BertTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
-        serializer = TaggerTagTextSerializer(data=request.data)
+        serializer = BertTagTextSerializer(data=request.data)
         # check if valid request
         serializer.is_valid(raise_exception=True)
         # retrieve tagger object
@@ -178,13 +162,61 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         return Response(prediction, status=status.HTTP_200_OK)
 
 
+    @action(detail=True, methods=['post','get'], serializer_class=EpochReportSerializer)
+    def epoch_reports(self, request, pk=None, project_pk=None):
+        """Retrieve epoch reports"""
+        tagger_object: BertTaggerObject = self.get_object()
+
+        if request.method == "GET":
+            ignore_fields = choices.DEFAULT_REPORT_IGNORE_FIELDS
+        else:
+            serializer = EpochReportSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            ignore_fields = serializer.validated_data['ignore_fields']
+
+        reports = json.loads(tagger_object.epoch_reports)
+        filtered_reports = [{field: value for field, value in list(report.items()) if field not in ignore_fields} for report in reports]
+
+        return Response(filtered_reports, status=status.HTTP_200_OK)
+
+
+    @action(detail=False, methods=['post'], serializer_class=BertDownloaderSerializer)
+    def download_pretrained_model(self, request, pk=None, project_pk=None):
+        """Download pretrained BERT models."""
+
+        serializer = BertDownloaderSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        bert_model = serializer.validated_data['bert_model']
+        if ALLOW_BERT_MODEL_DOWNLOADS:
+            errors, failed_models = download_bert_requirements(BERT_PRETRAINED_MODEL_DIRECTORY, [bert_model], logger = logging.getLogger(INFO_LOGGER))
+            if failed_models:
+                error_msg = f"Failed downloading model: {failed_models[0]}. Make sure to use the correct model identifier listed in https://huggingface.co/models."
+                raise InvalidModelIdentifierError(error_msg)
+        else:
+            raise DownloadingModelsNotAllowedError()
+        return Response("Download finished.", status=status.HTTP_200_OK)
+
+
+    @action(detail=False, methods=['get'])
+    def available_models(self, request, pk=None, project_pk=None):
+        """Retrieve downloaded BERT models."""
+        available_models = get_downloaded_bert_models(BERT_PRETRAINED_MODEL_DIRECTORY)
+
+        return Response(available_models, status=status.HTTP_200_OK)
+
+
     def apply_tagger(self, tagger_object, tagger_input, input_type='text', feedback=False):
-        # load embedding & phraser
-        embedding = W2VEmbedding()
-        embedding.load_django(tagger_object.embedding)
-        # retrieve model
-        tagger = TorchTagger(embedding)
-        tagger.load_django(tagger_object)
+
+        # NB! Saving pretrained models must be disabled!
+        tagger = BertTagger(
+            allow_standard_output = choices.DEFAULT_ALLOW_STANDARD_OUTPUT,
+            save_pretrained = False,
+            use_gpu = choices.DEFAULT_USE_GPU,
+            logger = logging.getLogger(INFO_LOGGER)
+        )
+        tagger.load(tagger_object.model.path)
         # tag text
         if input_type == 'doc':
             tagger_result = tagger.tag_doc(tagger_input)
@@ -201,6 +233,6 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             project_pk = tagger_object.project.pk
             feedback_object = Feedback(project_pk, model_object=tagger_object)
             feedback_id = feedback_object.store(tagger_input, prediction['result'])
-            feedback_url = f'/projects/{project_pk}/torchtaggers/{tagger_object.pk}/feedback/'
+            feedback_url = f'/projects/{project_pk}/bert_taggers/{tagger_object.pk}/feedback/'
             prediction['feedback'] = {'id': feedback_id, 'url': feedback_url}
         return prediction

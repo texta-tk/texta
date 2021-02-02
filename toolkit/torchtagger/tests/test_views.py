@@ -40,6 +40,8 @@ class TorchTaggerViewTests(APITransactionTestCase):
         self.run_train_multiclass_tagger_using_fact_name()
         self.run_tag_text()
         self.run_tag_random_doc()
+        self.run_epoch_reports_get()
+        self.run_epoch_reports_post()
         self.run_tag_and_feedback_and_retrain()
         self.run_model_export_import()
 
@@ -130,6 +132,11 @@ class TorchTaggerViewTests(APITransactionTestCase):
         }
         response = self.client.post(f'{self.url}{self.test_tagger_id}/tag_text/', payload)
         print_output('test_torchtagger_tag_text:response.data', response.data)
+        self.assertTrue(isinstance(response.data, dict))
+        self.assertTrue('result' in response.data)
+        self.assertTrue('probability' in response.data)
+        self.assertTrue('tagger_id' in response.data)
+
 
 
     def run_tag_random_doc(self):
@@ -144,6 +151,44 @@ class TorchTaggerViewTests(APITransactionTestCase):
         # Check if response is list
         self.assertTrue(isinstance(response.data, dict))
         self.assertTrue('prediction' in response.data)
+        self.assertTrue('result' in response.data['prediction'])
+        self.assertTrue('probability' in response.data['prediction'])
+        self.assertTrue('tagger_id' in response.data['prediction'])
+
+    def run_epoch_reports_get(self):
+        """Tests endpoint for retrieving epoch reports via GET"""
+        url = f'{self.url}{self.test_tagger_id}/epoch_reports/'
+        response = self.client.get(url, format="json")
+        print_output('test_torchagger_epoch_reports_get:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check if response is a list
+        self.assertTrue(isinstance(response.data, list))
+        # Check if first report is not empty
+        self.assertTrue(len(response.data[0])>0)
+
+
+    def run_epoch_reports_post(self):
+        """Tests endpoint for retrieving epoch reports via GET"""
+        url = f'{self.url}{self.test_tagger_id}/epoch_reports/'
+        payload_1 = {}
+        payload_2 = {"ignore_fields": ["true_positive_rate", "false_positive_rate", "recall"]}
+
+        response = self.client.post(url, format="json", data=payload_1)
+        print_output('test_torchagger_epoch_reports_post_ignore_default:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Check if response is a list
+        self.assertTrue(isinstance(response.data, list))
+        # Check if first report contains recall
+        self.assertTrue("recall" in response.data[0])
+
+        response = self.client.post(url, format="json", data=payload_2)
+        print_output('test_torchtagger_epoch_reports_post_ignore_custom:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check if response is a list
+        self.assertTrue(isinstance(response.data, list))
+        # Check if first report does NOT contains recall
+        self.assertTrue("recall" not in response.data[0])
 
 
     def run_model_export_import(self):
@@ -157,6 +202,7 @@ class TorchTaggerViewTests(APITransactionTestCase):
         # Post model zip
         import_url = f'{self.url}import_model/'
         response = self.client.post(import_url, data={'file': BytesIO(response.content)})
+        tagger_id = response.data['id']
         print_output('test_import_model:response.data', import_url)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -171,12 +217,19 @@ class TorchTaggerViewTests(APITransactionTestCase):
 
         # Tests the endpoint for the tag_random_doc action"""
         url = f'{self.url}{torchtagger.pk}/tag_random_doc/'
-        response = self.client.post(url)
-        print_output('test_tag_random_doc_group:response.data', response.data)
+        payload = {
+            "indices": [{"name": TEST_INDEX}]
+        }
+        response = self.client.post(url, format='json', data=payload)
+        print_output('test_torchtagger_tag_random_doc_after_import:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, dict))
 
         self.assertTrue('prediction' in response.data)
+        self.assertTrue('result' in response.data['prediction'])
+        self.assertTrue('probability' in response.data['prediction'])
+        self.assertTrue('tagger_id' in response.data['prediction'])
+        self.add_cleanup_files(tagger_id)
 
 
     def run_tag_and_feedback_and_retrain(self):

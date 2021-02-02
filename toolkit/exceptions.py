@@ -40,3 +40,16 @@ class InvalidInputDocument(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
     default_detail = ("Invalid input document")
     default_code = "invalid_document"
+
+
+class DownloadingModelsNotAllowedError(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = ("Downloading models via API is not enabled. Please contact your system administrator to retrieve the model.")
+    default_code = "downloading_disabled"
+
+
+class InvalidModelIdentifierError(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_code = "invalid_model_identifier"
+    def __init__(self, message):
+        self.detail = (message)

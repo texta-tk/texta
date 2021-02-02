@@ -98,6 +98,23 @@ def download_mlp_requirements(model_directory: str, supported_langs: List[str], 
     MLP.download_stanza_resources(model_directory, supported_langs=supported_langs, logger=logger)
 
 
+def download_bert_requirements(model_directory: str, supported_models: List[str], logger=None):
+    """ Download pretrained BERT models & tokenizers.
+    """
+    from texta_bert_tagger.tagger import BertTagger
+    errors, failed_models = BertTagger.download_pretrained_models(bert_models=supported_models, save_dir=model_directory, logger=logger)
+    return (errors, failed_models)
+
+
+def get_downloaded_bert_models(model_directory: str) -> List[str]:
+    """ Retrieve list of downloaded pretrained BERT models.
+    """
+    from texta_bert_tagger.tagger import BertTagger
+    normalized_model_names = os.listdir(model_directory)
+    bert_models = [BertTagger.restore_name(normalized_name) for normalized_name in normalized_model_names]
+    return bert_models
+
+
 def chunks(lst: list, n: int):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
