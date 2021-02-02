@@ -79,13 +79,13 @@ def train_bert_tagger(tagger_id, testing=False):
         # save tagger to disc
         tagger_path = os.path.join(BERT_FINETUNED_MODEL_DIRECTORY, f'{tagger_object.MODEL_TYPE}_{tagger_id}_{secrets.token_hex(10)}')
         tagger.save(tagger_path)
+
         # set tagger location
         tagger_object.model.name = tagger_path
-        # save tagger plot
+
         report_dict = report.to_dict()
 
-        # TODO: display losses and scores per epoch!
-
+        # save tagger plot
         tagger_object.plot.save(f'{secrets.token_hex(15)}.png', create_tagger_plot(report_dict), save=False)
         # save label index
         tagger_object.label_index = json.dumps(tagger.config.label_reverse_index)

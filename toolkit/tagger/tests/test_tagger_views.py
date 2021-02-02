@@ -66,6 +66,15 @@ class TaggerViewTests(APITransactionTestCase):
         self.create_tagger_then_delete_tagger_and_created_model()
 
 
+    def add_cleanup_files(self, tagger_id):
+        tagger_object = Tagger.objects.get(pk=tagger_id)
+        self.addCleanup(remove_file, tagger_object.model.path)
+        if not TEST_KEEP_PLOT_FILES:
+            self.addCleanup(remove_file, tagger_object.plot.path)
+        if tagger_object.embedding:
+            self.addCleanup(remove_file, tagger_object.embedding.embedding_model.path)
+
+
     def tearDown(self) -> None:
         Tagger.objects.all().delete()
 
@@ -100,9 +109,7 @@ class TaggerViewTests(APITransactionTestCase):
                 # Check if not errors
                 self.assertEqual(created_tagger.task.errors, '[]')
                 # Remove tagger files after test is done
-                self.addCleanup(remove_file, created_tagger.model.path)
-                if not TEST_KEEP_PLOT_FILES:
-                    self.addCleanup(remove_file, created_tagger.plot.path)
+                self.add_cleanup_files(created_tagger.id)
                 # Check if Task gets created via a signal
                 self.assertTrue(created_tagger.task is not None)
                 # Check if Tagger gets trained and completed
@@ -188,7 +195,6 @@ class TaggerViewTests(APITransactionTestCase):
             put_response = self.client.put(tagger_url, payload, format='json')
             print_output("put_response", put_response.data)
             self.assertEqual(put_response.status_code, status.HTTP_200_OK)
-
 
     def run_tag_text(self, test_tagger_ids: List[int]):
         """Tests the endpoint for the tag_text action"""
@@ -382,6 +388,7 @@ class TaggerViewTests(APITransactionTestCase):
         response = self.client.get(url)
         feature_dict = {a['feature']: True for a in response.data['features']}
         self.assertTrue(TEST_MATCH_TEXT not in feature_dict)
+        self.add_cleanup_files(test_tagger_id)
 
 
     def run_model_export_import(self):
@@ -414,6 +421,8 @@ class TaggerViewTests(APITransactionTestCase):
         self.assertTrue(str(tagger_model_dir) in str(tagger.model.path))
 
         self.run_tag_text([imported_tagger_id])
+        self.add_cleanup_files(test_tagger_id)
+        self.add_cleanup_files(imported_tagger_id)
 
 
     def run_tag_and_feedback_and_retrain(self):
@@ -482,3 +491,4 @@ class TaggerViewTests(APITransactionTestCase):
         print_output('test_delete_feedback_index:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue('success' in response.data)
+        self.add_cleanup_files(tagger_id)

@@ -54,6 +54,7 @@ class TorchTagger(models.Model):
     precision = models.FloatField(default=None, null=True)
     recall = models.FloatField(default=None, null=True)
     f1_score = models.FloatField(default=None, null=True)
+    confusion_matrix = models.TextField(default="[]", null=True, blank=True)
     model = models.FileField(null=True, verbose_name='', default=None)
     plot = models.FileField(upload_to='data/media', null=True, verbose_name='')
 

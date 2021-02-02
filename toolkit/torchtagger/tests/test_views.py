@@ -40,6 +40,8 @@ class TorchTaggerViewTests(APITransactionTestCase):
         self.run_train_multiclass_tagger_using_fact_name()
         self.run_tag_text()
         self.run_tag_random_doc()
+        self.run_epoch_reports_get()
+        self.run_epoch_reports_post()
         self.run_tag_and_feedback_and_retrain()
         self.run_model_export_import()
 
@@ -130,6 +132,11 @@ class TorchTaggerViewTests(APITransactionTestCase):
         }
         response = self.client.post(f'{self.url}{self.test_tagger_id}/tag_text/', payload)
         print_output('test_torchtagger_tag_text:response.data', response.data)
+        self.assertTrue(isinstance(response.data, dict))
+        self.assertTrue('result' in response.data)
+        self.assertTrue('probability' in response.data)
+        self.assertTrue('tagger_id' in response.data)
+
 
 
     def run_tag_random_doc(self):
@@ -144,6 +151,9 @@ class TorchTaggerViewTests(APITransactionTestCase):
         # Check if response is list
         self.assertTrue(isinstance(response.data, dict))
         self.assertTrue('prediction' in response.data)
+        self.assertTrue('result' in response.data['prediction'])
+        self.assertTrue('probability' in response.data['prediction'])
+        self.assertTrue('tagger_id' in response.data['prediction'])
 
     def run_epoch_reports_get(self):
         """Tests endpoint for retrieving epoch reports via GET"""
@@ -207,12 +217,18 @@ class TorchTaggerViewTests(APITransactionTestCase):
 
         # Tests the endpoint for the tag_random_doc action"""
         url = f'{self.url}{torchtagger.pk}/tag_random_doc/'
-        response = self.client.post(url)
-        print_output('test_tag_random_doc_group:response.data', response.data)
+        payload = {
+            "indices": [{"name": TEST_INDEX}]
+        }
+        response = self.client.post(url, format='json', data=payload)
+        print_output('test_torchtagger_tag_random_doc_after_import:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, dict))
 
         self.assertTrue('prediction' in response.data)
+        self.assertTrue('result' in response.data['prediction'])
+        self.assertTrue('probability' in response.data['prediction'])
+        self.assertTrue('tagger_id' in response.data['prediction'])
         self.add_cleanup_files(tagger_id)
 
 

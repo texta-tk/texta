@@ -70,6 +70,7 @@ def train_torchtagger(tagger_id, testing=False):
         tagger_object.accuracy = report.accuracy
         tagger_object.training_loss = report.training_loss
         tagger_object.epoch_reports = json.dumps([a.to_dict() for a in tagger.epoch_reports])
+        tagger_object.confusion_matrix = json.dumps(report.confusion.tolist())
         # save tagger object
         tagger_object.save()
         # declare the job done

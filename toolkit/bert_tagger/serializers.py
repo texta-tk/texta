@@ -25,7 +25,7 @@ class BertTagTextSerializer(serializers.Serializer):
 
 class TagRandomDocSerializer(serializers.Serializer):
     indices = IndexSerializer(many=True, default=[])
-    fields = serializers.ListField(child=serializers.CharField(), required=True, allow_empty=False)
+    fields = serializers.ListField(child=serializers.CharField(), default=[], required=False, allow_empty=True, help_text = 'Fields to apply the tagger. By default, the tagger is applied to the same fields it was trained on.')
 
 
 class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer):
@@ -42,7 +42,7 @@ class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Pr
 
     bert_model = serializers.CharField(default=choices.DEFAULT_BERT_MODEL, required=False, help_text=f'Pretrained BERT model to use. Default = {choices.DEFAULT_BERT_MODEL}')
     num_epochs = serializers.IntegerField(default=choices.DEFAULT_NUM_EPOCHS, required=False, help_text=f'Number of training epochs. Default = {choices.DEFAULT_NUM_EPOCHS}')
-    max_length = serializers.IntegerField(default=choices.DEFAULT_MAX_LENGTH, required=False, help_text=f'Maximum sequence length of BERT tokenized input text used for training. Default = {choices.DEFAULT_MAX_LENGTH}')
+    max_length = serializers.IntegerField(default=choices.DEFAULT_MAX_LENGTH, required=False, min_value = 1, max_value = 512, help_text=f'Maximum sequence length of BERT tokenized input text used for training. Default = {choices.DEFAULT_MAX_LENGTH}')
     batch_size = serializers.IntegerField(default=choices.DEFAULT_BATCH_SIZE, required=False, help_text=f'Batch size used for training. NB! Autoscaled based on max length if too large. Default = {choices.DEFAULT_BATCH_SIZE}')
     split_ratio = serializers.FloatField(default=choices.DEFAULT_TRAINING_SPLIT, required=False, help_text=f'Proportion of documents used for training; others are used for validation. Default = {choices.DEFAULT_TRAINING_SPLIT}')
     learning_rate = serializers.FloatField(default=choices.DEFAULT_LEARNING_RATE, required=False, help_text=f'Learning rate used while training. Default = {choices.DEFAULT_LEARNING_RATE}')

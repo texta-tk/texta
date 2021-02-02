@@ -125,7 +125,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         return Response(filtered_reports, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], serializer_class=TagRandomDocSerializer)
     def tag_random_doc(self, request, pk=None, project_pk=None):
         """Returns prediction for a random document in Elasticsearch."""
 

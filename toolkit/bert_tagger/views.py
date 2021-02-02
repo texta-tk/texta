@@ -124,7 +124,11 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         indices = project_object.get_available_or_all_project_indices(indices)
 
         # retrieve tagger fields
-        tagger_fields = serializer.validated_data["fields"]#json.loads(tagger_object.fields)
+        # if user specified fields, use them
+        if serializer.validated_data["fields"]:
+            tagger_fields = serializer.validated_data["fields"]
+        else:
+            tagger_fields = json.loads(tagger_object.fields)
         if not ElasticCore().check_if_indices_exist(tagger_object.project.get_indices()):
             raise ProjectValidationFailed(detail=f'One or more index from {list(tagger_object.project.get_indices())} do not exist')
 
@@ -193,6 +197,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         else:
             raise DownloadingModelsNotAllowedError()
         return Response("Download finished.", status=status.HTTP_200_OK)
+
 
     @action(detail=False, methods=['get'])
     def available_models(self, request, pk=None, project_pk=None):

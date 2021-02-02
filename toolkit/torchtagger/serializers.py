@@ -34,7 +34,7 @@ class TorchTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, P
         model = TorchTagger
         fields = (
             'url', 'author_username', 'id', 'description', 'query', 'fields', 'embedding', 'f1_score', 'precision', 'recall', 'accuracy',
-            'model_architecture', 'maximum_sample_size', 'minimum_sample_size', 'num_epochs', 'plot', 'task', 'fact_name', 'indices'
+            'model_architecture', 'maximum_sample_size', 'minimum_sample_size', 'num_epochs', 'plot', 'task', 'fact_name', 'indices', 'confusion_matrix'
         )
-        read_only_fields = ('project', 'fields', 'f1_score', 'precision', 'recall', 'accuracy', 'plot', 'task', 'fact_name')
+        read_only_fields = ('project', 'fields', 'f1_score', 'precision', 'recall', 'accuracy', 'plot', 'task', 'fact_name', 'confusion_matrix')
         fields_to_parse = ['fields']

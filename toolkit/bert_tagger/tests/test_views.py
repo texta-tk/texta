@@ -93,7 +93,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         response = self.client.get(f'{self.url}{tagger_id}/')
         print_output('test_bert_tagger_has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
-            self.assertTrue(isinstance(response.data[score], float))
+            self.assertTrue(isinstance(response.data[score], float) or isinstance(response.data[score], int))
         #cleanup
         self.add_cleanup_files(tagger_id)
 
@@ -122,7 +122,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         response = self.client.get(f'{self.url}{tagger_id}/')
         print_output('test_bert_tagger_has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
-            self.assertTrue(isinstance(response.data[score], float))
+            self.assertTrue(isinstance(response.data[score], float), isinstance(response.data[score], int))
 
         # set trained tagger as active tagger
         self.test_tagger_id = tagger_id
@@ -146,6 +146,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
     def run_bert_tag_random_doc(self):
         """Tests the endpoint for the tag_random_doc action"""
+        # Tag with specified fields
         payload = {
             "indices": [{"name": TEST_INDEX}],
             "fields": TEST_FIELD_CHOICE
@@ -158,6 +159,25 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertTrue(isinstance(response.data, dict))
         self.assertTrue("prediction" in response.data)
         self.assertTrue("document" in response.data)
+        self.assertTrue("probability" in response.data["prediction"])
+        self.assertTrue("result" in response.data["prediction"])
+        self.assertTrue("tagger_id" in response.data["prediction"])
+
+        # Tag with unspecified fields
+        payload = {
+            "indices": [{"name": TEST_INDEX}]
+        }
+        url = f'{self.url}{self.test_tagger_id}/tag_random_doc/'
+        response = self.client.post(url, format="json", data=payload)
+        print_output('test_bert_tagger_tag_random_doc:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check if response is a dict
+        self.assertTrue(isinstance(response.data, dict))
+        self.assertTrue("prediction" in response.data)
+        self.assertTrue("document" in response.data)
+        self.assertTrue("probability" in response.data["prediction"])
+        self.assertTrue("result" in response.data["prediction"])
+        self.assertTrue("tagger_id" in response.data["prediction"])
 
 
     def run_bert_epoch_reports_get(self):
