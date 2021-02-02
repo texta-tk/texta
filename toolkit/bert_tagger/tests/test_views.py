@@ -82,6 +82,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
             "indices": [{"name": TEST_INDEX}],
             "maximum_sample_size": 500,
             "num_epochs": 2,
+            "max_length": 15,
             "bert_model": TEST_BERT_MODEL
         }
         response = self.client.post(self.url, payload, format='json')
@@ -108,6 +109,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
             "maximum_sample_size": 500,
             "indices": [{"name": TEST_INDEX}],
             "num_epochs": 2,
+            "max_length": 15,
             "bert_model": TEST_BERT_MODEL
         }
 
