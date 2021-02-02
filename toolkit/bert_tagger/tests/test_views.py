@@ -85,16 +85,17 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
             "bert_model": TEST_BERT_MODEL
         }
         response = self.client.post(self.url, payload, format='json')
+
         print_output('test_create_multiclass_bert_tagger_training_and_task_signal:response.data', response.data)
         # Check if BertTagger gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        # Check if f1 not NULL (train and validation success)
+        # Give the tagger some time to finish training
+        sleep(5)
         tagger_id = response.data['id']
         response = self.client.get(f'{self.url}{tagger_id}/')
-        print_output('test_bert_tagger_has_stats:response.data', response.data)
+        print_output('test_multiclass_bert_tagger_has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
-            self.assertTrue(isinstance(response.data[score], float) or isinstance(response.data[score], int))
-        #cleanup
+            self.assertTrue(isinstance(response.data[score], float))
         self.add_cleanup_files(tagger_id)
 
 
@@ -116,13 +117,13 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         # Check if BertTagger gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        # Check if f1 not NULL (train and validation success)
+        # Give the tagger some time to finish training
+        sleep(5)
         tagger_id = response.data['id']
         response = self.client.get(f'{self.url}{tagger_id}/')
-        print_output('test_bert_tagger_has_stats:response.data', response.data)
+        print_output('test_binary_bert_tagger_has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
-            self.assertTrue(isinstance(response.data[score], float), isinstance(response.data[score], int))
+            self.assertTrue(isinstance(response.data[score], float))
 
         # set trained tagger as active tagger
         self.test_tagger_id = tagger_id
