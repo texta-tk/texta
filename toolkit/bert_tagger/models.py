@@ -17,13 +17,12 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
-from toolkit.embedding.models import Embedding
-from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
-from toolkit.torchtagger import choices
+from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH, BERT_PRETRAINED_MODEL_DIRECTORY, BERT_FINETUNED_MODEL_DIRECTORY
+from toolkit.bert_tagger import choices
 
 
-class TorchTagger(models.Model):
-    MODEL_TYPE = 'torchtagger'
+class BertTagger(models.Model):
+    MODEL_TYPE = 'bert_tagger'
     MODEL_JSON_NAME = "model.json"
 
     description = models.CharField(max_length=MAX_DESC_LEN)
@@ -32,29 +31,34 @@ class TorchTagger(models.Model):
     fields = models.TextField(default=json.dumps([]))
     indices = models.ManyToManyField(Index, default=None)
 
-    embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE, default=None)
-
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     fact_name = models.CharField(max_length=MAX_DESC_LEN, null=True)
     minimum_sample_size = models.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE)
-
-    model_architecture = models.CharField(default=choices.MODEL_CHOICES[0][0], max_length=10)
-    # seq_len = models.IntegerField(default=choices.DEFAULT_SEQ_LEN)
-    # vocab_size = models.IntegerField(default=choices.DEFAULT_VOCAB_SIZE)
-    num_epochs = models.IntegerField(default=choices.DEFAULT_NUM_EPOCHS)
-    validation_ratio = models.FloatField(default=choices.DEFAULT_VALIDATION_SPLIT)
     negative_multiplier = models.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER)
-    maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE)
+    split_ratio = models.FloatField(default=choices.DEFAULT_TRAINING_SPLIT)
+    num_examples = models.TextField(default=json.dumps({}), null=True)
 
-    # RESULTS
+    # BERT params
+    num_epochs = models.IntegerField(default=choices.DEFAULT_NUM_EPOCHS)
+    split_ratio = models.FloatField(default=choices.DEFAULT_TRAINING_SPLIT)
+    maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE)
+    learning_rate = models.FloatField(default=choices.DEFAULT_LEARNING_RATE)
+    eps = models.FloatField(default=choices.DEFAULT_EPS)
+    max_length = models.IntegerField(default=choices.DEFAULT_MAX_LENGTH)
+    batch_size = models.IntegerField(default=choices.DEFAULT_BATCH_SIZE)
+    bert_model = models.TextField(default=choices.DEFAULT_BERT_MODEL)
+    adjusted_batch_size = models.IntegerField(default=choices.DEFAULT_BATCH_SIZE)
+    confusion_matrix = models.TextField(default="[]", null=True, blank=True)
+
     label_index = models.TextField(default=json.dumps({}))
     epoch_reports = models.TextField(default=json.dumps([]))
+
     accuracy = models.FloatField(default=None, null=True)
     training_loss = models.FloatField(default=None, null=True)
+    validation_loss = models.FloatField(default=None, null=True)
     precision = models.FloatField(default=None, null=True)
     recall = models.FloatField(default=None, null=True)
     f1_score = models.FloatField(default=None, null=True)
-    confusion_matrix = models.TextField(default="[]", null=True, blank=True)
     model = models.FileField(null=True, verbose_name='', default=None)
     plot = models.FileField(upload_to='data/media', null=True, verbose_name='')
 
@@ -68,7 +72,6 @@ class TorchTagger(models.Model):
     def to_json(self) -> dict:
         serialized = serializers.serialize('json', [self])
         json_obj = json.loads(serialized)[0]["fields"]
-        json_obj.pop("embedding")
         json_obj.pop("project")
         json_obj.pop("author")
         json_obj.pop("task")
@@ -79,55 +82,42 @@ class TorchTagger(models.Model):
     def import_resources(zip_file, request, pk) -> int:
         with transaction.atomic():
             with zipfile.ZipFile(zip_file, 'r') as archive:
-                json_string = archive.read(TorchTagger.MODEL_JSON_NAME).decode()
-                torch_and_embedding = json.loads(json_string)
+                json_string = archive.read(BertTagger.MODEL_JSON_NAME).decode()
+                bert_tagger_json = json.loads(json_string)
 
-                torchtagger_json = torch_and_embedding["torchtagger"]
-                embedding_json = torch_and_embedding["embedding"]
+                indices = bert_tagger_json.pop("indices")
 
-                embedding_fields = embedding_json["fields"]
-                extra_embeddings = embedding_json["embedding_extras"]
+                bert_tagger_model = BertTagger(**bert_tagger_json)
 
-                indices = torchtagger_json.pop("indices")
-                torchtagger_json.pop("embedding", None)
+                bert_tagger_model.task = Task.objects.create(berttagger=bert_tagger_model, status=Task.STATUS_COMPLETED)
+                bert_tagger_model.author = User.objects.get(id=request.user.id)
+                bert_tagger_model.project = Project.objects.get(id=pk)
 
-                torchtagger_model = TorchTagger(**torchtagger_json)
-
-                torchtagger_model.task = Task.objects.create(torchtagger=torchtagger_model, status=Task.STATUS_COMPLETED)
-                torchtagger_model.author = User.objects.get(id=request.user.id)
-                torchtagger_model.project = Project.objects.get(id=pk)
-
-                embedding_model = Embedding.create_embedding_object(embedding_fields, user_id=request.user.id, project_id=pk)
-                embedding_model = Embedding.add_file_to_embedding_object(archive, embedding_model, embedding_fields, "embedding", "embedding_model")
-                Embedding.save_embedding_extra_files(archive, embedding_model, embedding_fields, extra_paths=extra_embeddings)
-                embedding_model.save()
-
-                torchtagger_model.embedding = embedding_model
-                torchtagger_model.save()
+                bert_tagger_model.save()
 
                 for index in indices:
                     index_model, is_created = Index.objects.get_or_create(name=index)
-                    torchtagger_model.indices.add(index_model)
+                    bert_tagger_model.indices.add(index_model)
 
-                full_model_path, relative_model_path = torchtagger_model.generate_name("torchtagger")
+                full_model_path, relative_model_path = bert_tagger_model.generate_name(BertTagger.MODEL_TYPE)
                 with open(full_model_path, "wb") as fp:
-                    path = pathlib.Path(torchtagger_json["model"]).name
+                    path = pathlib.Path(bert_tagger_json["model"]).name
                     fp.write(archive.read(path))
-                    torchtagger_model.model.name = relative_model_path
+                    bert_tagger_model.model.name = relative_model_path
 
-                plot_name = pathlib.Path(torchtagger_json["plot"])
+                plot_name = pathlib.Path(bert_tagger_json["plot"])
                 path = plot_name.name
-                torchtagger_model.plot.save(f'{secrets.token_hex(15)}.png', io.BytesIO(archive.read(path)))
+                bert_tagger_model.plot.save(f'{secrets.token_hex(15)}.png', io.BytesIO(archive.read(path)))
 
-                torchtagger_model.save()
-                return torchtagger_model.id
+                bert_tagger_model.save()
+                return bert_tagger_model.id
 
 
     def export_resources(self) -> HttpResponse:
         with tempfile.SpooledTemporaryFile(encoding="utf8") as tmp:
             with zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as archive:
                 # Write model object to zip as json
-                model_json = {"torchtagger": self.to_json(), "embedding": self.embedding.to_json()}
+                model_json = self.to_json()
                 model_json = json.dumps(model_json).encode("utf8")
                 archive.writestr(self.MODEL_JSON_NAME, model_json)
 
@@ -135,19 +125,11 @@ class TorchTagger(models.Model):
                     path = pathlib.Path(file_path)
                     archive.write(file_path, arcname=str(path.name))
 
-                embedding = self.embedding.to_json()
-
-                embedding_path = pathlib.Path(embedding["fields"]["embedding_model"])
-                archive.write(str(embedding_path), arcname=str(embedding_path.name))
-
-                for file in embedding["embedding_extras"]:
-                    archive.write(str(file), arcname=str(pathlib.Path(file).name))
-
             tmp.seek(0)
             return tmp.read()
 
 
-    def generate_name(self, name: str):
+    def generate_name(self, name: str = "bert_tagger"):
         """
         Do not change this carelessly as import/export functionality depends on this.
         Returns full and relative filepaths for the intended models.
@@ -157,8 +139,8 @@ class TorchTagger(models.Model):
         Returns: Full and relative file paths, full for saving the model object and relative for actual DB storage.
         """
         model_file_name = f'{name}_{str(self.pk)}_{secrets.token_hex(10)}'
-        full_path = pathlib.Path(BASE_DIR) / RELATIVE_MODELS_PATH / "torchtagger" / model_file_name
-        relative_path = pathlib.Path(RELATIVE_MODELS_PATH) / "torchtagger" / model_file_name
+        full_path = pathlib.Path(BASE_DIR) / BERT_FINETUNED_MODEL_DIRECTORY/ model_file_name
+        relative_path = pathlib.Path(BERT_FINETUNED_MODEL_DIRECTORY) / model_file_name
         return str(full_path), str(relative_path)
 
 
@@ -167,22 +149,22 @@ class TorchTagger(models.Model):
 
 
     def train(self):
-        new_task = Task.objects.create(torchtagger=self, status='created')
+        new_task = Task.objects.create(berttagger=self, status='created')
         self.task = new_task
         self.save()
-        from toolkit.torchtagger.tasks import train_torchtagger
-        train_torchtagger.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
+        from toolkit.bert_tagger.tasks import train_bert_tagger
+        train_bert_tagger.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
 
     def get_resource_paths(self):
         return {"plot": self.plot.path, "model": self.model.path}
 
 
-@receiver(models.signals.post_delete, sender=TorchTagger)
-def auto_delete_torchtagger_on_delete(sender, instance: TorchTagger, **kwargs):
+@receiver(models.signals.post_delete, sender = BertTagger)
+def auto_delete_bert_tagger_on_delete(sender, instance: BertTagger, **kwargs):
     """
-    Delete resources on the file-system upon TorchTagger deletion.
-    Triggered on individual model object and queryset TorchTagger deletion.
+    Delete resources on the file-system upon BertTagger deletion.
+    Triggered on individual model object and queryset BertTagger deletion.
     """
     if instance.model:
         if os.path.isfile(instance.model.path):

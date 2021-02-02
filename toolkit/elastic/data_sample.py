@@ -9,6 +9,11 @@ from toolkit.tools.lemmatizer import ElasticLemmatizer
 from .exceptions import InvalidDataSampleError
 
 
+class InvalidDataSampleError(Exception):
+    """Raised on invalid Data Sample"""
+    pass
+
+
 class DataSample:
     """Re-usable object for handling positive and negative data samples for Taggers and TorchTaggers."""
     def __init__(self, model_object, indices: List[str], field_data: List[str], show_progress=None, join_fields=False, text_processor=None, add_negative_sample=False, snowball_language=None):
@@ -35,6 +40,7 @@ class DataSample:
         # validate resulting data sample
         self._validate()
 
+        self.is_binary = True if len(self.data) == 2 else False
 
     def _snowball(self, snowball_language):
         """

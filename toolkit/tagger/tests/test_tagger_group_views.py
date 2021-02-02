@@ -13,7 +13,8 @@ from toolkit.test_settings import (TEST_FACT_NAME,
                                    TEST_FIELD,
                                    TEST_FIELD_CHOICE,
                                    TEST_INDEX,
-                                   TEST_VERSION_PREFIX)
+                                   TEST_VERSION_PREFIX,
+                                   TEST_KEEP_PLOT_FILES)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
@@ -41,6 +42,15 @@ class TaggerGroupViewTests(APITransactionTestCase):
         self.create_taggers_with_empty_fields()
         self.run_model_export_import()
         self.run_tagger_instances_have_mention_to_tagger_group()
+
+
+    def add_cleanup_files(self, tagger_id):
+        tagger_object = Tagger.objects.get(pk=tagger_id)
+        self.addCleanup(remove_file, tagger_object.model.path)
+        if not TEST_KEEP_PLOT_FILES:
+            self.addCleanup(remove_file, tagger_object.plot.path)
+        if tagger_object.embedding:
+            self.addCleanup(remove_file, tagger_object.embedding.embedding_model.path)
 
 
     def run_create_tagger_group_training_and_task_signal(self):
@@ -77,6 +87,8 @@ class TaggerGroupViewTests(APITransactionTestCase):
             self.assertTrue(tagger.task is not None)
             # Check if Tagger gets trained and completed
             self.assertEqual(tagger.task.status, Task.STATUS_COMPLETED)
+
+            self.add_cleanup_files(tagger.id)
 
 
     def create_taggers_with_empty_fields(self):
@@ -149,9 +161,6 @@ class TaggerGroupViewTests(APITransactionTestCase):
         self.assertTrue('success' in response.data)
         # remove retrained tagger models
         retrained_tagger_group = TaggerGroup.objects.get(id=response.data['tagger_group_id'])
-        for tagger in retrained_tagger_group.taggers.all():
-            self.addCleanup(remove_file, tagger.model.path)
-            self.addCleanup(remove_file, tagger.plot.path)
 
 
     def run_create_and_delete_tagger_group_removes_related_children_models_plots(self):
@@ -238,6 +247,9 @@ class TaggerGroupViewTests(APITransactionTestCase):
         self.assertTrue(isinstance(response.data, dict))
         self.assertTrue('tags' in response.data)
 
+        for tagger in tg.taggers.all():
+            self.add_cleanup_files(tagger.id)
+
 
     def run_tagger_instances_have_mention_to_tagger_group(self):
         tg = TaggerGroup.objects.get(pk=self.test_tagger_group_id)
@@ -248,3 +260,4 @@ class TaggerGroupViewTests(APITransactionTestCase):
             response = self.client.get(tagger_url)
             self.assertTrue(response.status_code == status.HTTP_200_OK)
             self.assertTrue(tg.description in response.data["tagger_groups"])
+            self.add_cleanup_files(tagger.id)

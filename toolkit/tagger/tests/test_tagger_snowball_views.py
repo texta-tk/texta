@@ -57,6 +57,15 @@ class TaggerViewTests(APITransactionTestCase):
         self.run_snowball_list_features(self.test_tagger_ids)
 
 
+    def add_cleanup_files(self, tagger_id):
+        tagger_object = Tagger.objects.get(pk=tagger_id)
+        self.addCleanup(remove_file, tagger_object.model.path)
+        if not TEST_KEEP_PLOT_FILES:
+            self.addCleanup(remove_file, tagger_object.plot.path)
+        if tagger_object.embedding:
+            self.addCleanup(remove_file, tagger_object.embedding.embedding_model.path)
+
+
     def tearDown(self) -> None:
         Tagger.objects.all().delete()
 
@@ -87,9 +96,7 @@ class TaggerViewTests(APITransactionTestCase):
                     # Check if not errors
                     self.assertEqual(created_tagger.task.errors, '[]')
                     # Remove tagger files after test is done
-                    self.addCleanup(remove_file, created_tagger.model.path)
-                    if not TEST_KEEP_PLOT_FILES:
-                        self.addCleanup(remove_file, created_tagger.plot.path)
+                    self.add_cleanup_files(created_tagger.id)
                     # Check if Task gets created via a signal
                     self.assertTrue(created_tagger.task is not None)
                     # Check if Tagger gets trained and completed
@@ -111,6 +118,7 @@ class TaggerViewTests(APITransactionTestCase):
                 self.assertTrue('features' in response.data)
                 # Check if any features listed
                 self.assertTrue(len(response.data['features']) > 0)
+
 
 
     def run_snowball_tag_text(self, test_tagger_ids: List[int]):

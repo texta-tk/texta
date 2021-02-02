@@ -6,7 +6,7 @@ import warnings
 from corsheaders.defaults import default_headers
 from kombu import Exchange, Queue
 
-from .helper_functions import download_mlp_requirements, parse_bool_env, parse_list_env_headers
+from .helper_functions import download_mlp_requirements, download_bert_requirements, parse_bool_env, parse_list_env_headers
 from .logging_settings import setup_logging
 
 
@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "toolkit.dataset_import",
     "toolkit.tagger",
     "toolkit.torchtagger",
+    "toolkit.bert_tagger",
     "toolkit.mlp",
     "toolkit.topic_analyzer",
     "toolkit.regex_tagger",
@@ -271,11 +272,25 @@ RELATIVE_MODELS_PATH = os.getenv("TEXTA_RELATIVE_MODELS_DIR", MODELS_DIR_DEFAULT
 DEFAULT_MLP_LANGUAGE_CODES = parse_list_env_headers("TEXTA_LANGUAGE_CODES", ["et", "en", "ru"])
 MLP_MODEL_DIRECTORY = os.getenv("TEXTA_MLP_MODEL_DIRECTORY_PATH", MODELS_DIR_DEFAULT)
 
+DEFAULT_BERT_MODELS = parse_list_env_headers("TEXTA_BERT_MODELS", ["bert-base-multilingual-cased", "EMBEDDIA/finest-bert", "bert-base-uncased"])
+
+BERT_MODEL_DIRECTORY = os.getenv("TEXTA_BERT_MODEL_DIRECTORY_PATH", MODELS_DIR_DEFAULT)
+
+BERT_PRETRAINED_MODEL_DIRECTORY =  os.path.join(BERT_MODEL_DIRECTORY, "bert_tagger", "pretrained")
+BERT_FINETUNED_MODEL_DIRECTORY =  os.path.join(BERT_MODEL_DIRECTORY, "bert_tagger", "fine_tuned")
+
 MODEL_TYPES = ["embedding", "tagger", "torchtagger"]
 for model_type in MODEL_TYPES:
     model_dir = os.path.join(RELATIVE_MODELS_PATH, model_type)
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
+
+# create directories for BERT
+if not os.path.exists(BERT_PRETRAINED_MODEL_DIRECTORY):
+    os.makedirs(BERT_PRETRAINED_MODEL_DIRECTORY)
+
+if not os.path.exists(BERT_FINETUNED_MODEL_DIRECTORY):
+    os.makedirs(BERT_FINETUNED_MODEL_DIRECTORY)
 
 # create protected media dirs
 MEDIA_DIR = os.path.join(BASE_DIR, "data", "media")
@@ -317,6 +332,12 @@ SWAGGER_SETTINGS = {
 SKIP_MLP_RESOURCES = parse_bool_env("SKIP_MLP_RESOURCES", False)
 if SKIP_MLP_RESOURCES is False:
     download_mlp_requirements(MLP_MODEL_DIRECTORY, DEFAULT_MLP_LANGUAGE_CODES, logging.getLogger(INFO_LOGGER))
+
+SKIP_BERT_RESOURCES = parse_bool_env("SKIP_BERT_RESOURCES", False)
+if SKIP_BERT_RESOURCES is False:
+    download_bert_requirements(BERT_PRETRAINED_MODEL_DIRECTORY, DEFAULT_BERT_MODELS, logging.getLogger(INFO_LOGGER))
+
+ALLOW_BERT_MODEL_DOWNLOADS = parse_bool_env("TEXTA_ALLOW_BERT_MODEL_DOWNLOADS", False)
 
 RELATIVE_PROJECT_DATA_PATH = os.getenv("TOOLKIT_PROJECT_DATA_PATH", "data/projects/")
 pathlib.Path(RELATIVE_PROJECT_DATA_PATH).mkdir(parents=True, exist_ok=True)

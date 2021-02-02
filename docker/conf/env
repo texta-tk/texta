@@ -35,3 +35,6 @@ TEXTA_UAA_PWD=test1
 # Only usable with the X-Pack security
 #TEXTA_ES_USER=elastic
 #TEXTA_ES_PASSWORD=changeme
+
+# Allow users to download BERT models
+TEXTA_ALLOW_BERT_MODEL_DOWNLOADS=True
