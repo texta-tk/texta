@@ -59,10 +59,10 @@ def start_mlp_worker(self, mlp_id: int):
 
 @task(name="apply_mlp_on_index", base=TransactionAwareTask, queue=CELERY_MLP_TASK_QUEUE, bind=True)
 def apply_mlp_on_index(self, mlp_id: int):
+    mlp_object = MLPWorker.objects.get(pk=mlp_id)
+    task_object = mlp_object.task
     try:
         load_mlp()
-        mlp_object = MLPWorker.objects.get(pk=mlp_id)
-        task_object = mlp_object.task
         show_progress = ShowProgress(task_object, multiplier=1)
         show_progress.update_step('scrolling mlp')
 
