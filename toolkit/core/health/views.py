@@ -12,7 +12,8 @@ from toolkit.core.health.utils import (
     get_active_tasks,
     get_elastic_status,
     get_redis_status,
-    get_version
+    get_version,
+    get_gpu_devices
 )
 
 
@@ -48,7 +49,7 @@ class HealthView(views.APIView):
         toolkit_status["services"]["redis"] = get_redis_status()
 
         gpu_count = torch.cuda.device_count()
-        gpu_devices = [torch.cuda.get_device_name(i) for i in range(0, gpu_count)]
+        gpu_devices = get_gpu_devices()
 
         toolkit_status["host"]["gpu"] = {"count": gpu_count, "devices": gpu_devices}
         toolkit_status["toolkit"]["active_tasks"] = get_active_tasks(toolkit_status["services"]["redis"]["alive"])

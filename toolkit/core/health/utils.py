@@ -1,10 +1,13 @@
 import logging
 import os
+import redis
+import torch
+
 from urllib.parse import urlparse
 
-import redis
 from celery.task.control import inspect
 from rest_framework import exceptions
+from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetMemoryInfo
 
 from toolkit.elastic.core import ElasticCore
 from toolkit.helper_functions import get_core_setting
@@ -93,3 +96,45 @@ def get_active_tasks(is_redis_online):
         return active_and_scheduled_tasks
     else:
         return active_and_scheduled_tasks
+
+
+def get_gpu_memory(device_id: int):
+    """
+    Get GPU memory usage information.
+
+    :param device_id: GPU's device id.
+    """
+    nvmlInit()
+    h = nvmlDeviceGetHandleByIndex(device_id)
+    info = nvmlDeviceGetMemoryInfo(h)
+
+    total = info.total / (2 ** 30)
+    free = info.free / (2 ** 30)
+    used = info.used / (2 ** 30)
+
+    unit = "GB"
+    return {"total": total, "free": free, "used": used, "unit": unit}
+
+
+def get_gpu_devices():
+    """
+    Get GPU devices with corresponding memory usage information.
+    """
+    gpu_count = torch.cuda.device_count()
+    device_ids = [i for i in range(0, gpu_count)]
+
+    devices = []
+    for device_id in device_ids:
+        memory = get_gpu_memory(device_id)
+        new_device = {
+            "id": device_id,
+            "name": torch.cuda.get_device_name(),
+            "memory": {
+                "free": memory["free"],
+                "total": memory["total"],
+                "used": memory["used"],
+                "unit": memory["unit"]
+            }
+        }
+        devices.append(new_device)
+    return devices

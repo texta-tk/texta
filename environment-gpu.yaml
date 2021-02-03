@@ -15,6 +15,7 @@ dependencies:
   - gensim==3.*
   - pydot
   - psutil
+  - pynvml
   - uwsgi
   - nginx
   - supervisor
