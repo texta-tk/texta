@@ -10,7 +10,6 @@ from toolkit.embedding.choices import (
     DEFAULT_OUTPUT_SIZE
 )
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
-from toolkit.settings import FASTTEXT_EMBEDDING, W2V_EMBEDDING
 
 
 class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
@@ -33,7 +32,7 @@ class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSeri
     )
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
     url = serializers.SerializerMethodField()
-    embedding_type = serializers.ChoiceField(choices = [FASTTEXT_EMBEDDING, W2V_EMBEDDING], default=W2V_EMBEDDING)
+    embedding_type = serializers.ChoiceField(choices=choices.EMBEDDING_CHOICES, default=choices.EMBEDDING_CHOICES[0])
 
 
     class Meta:

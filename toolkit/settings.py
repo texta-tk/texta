@@ -343,5 +343,3 @@ RELATIVE_PROJECT_DATA_PATH = os.getenv("TOOLKIT_PROJECT_DATA_PATH", "data/projec
 pathlib.Path(RELATIVE_PROJECT_DATA_PATH).mkdir(parents=True, exist_ok=True)
 
 SEARCHER_FOLDER_KEY = "searcher"
-W2V_EMBEDDING = "W2VEmbedding"
-FASTTEXT_EMBEDDING = "FastTextEmbedding"

@@ -9,7 +9,11 @@ from toolkit.base_tasks import BaseTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.models import Embedding
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH, NUM_WORKERS, W2V_EMBEDDING, FASTTEXT_EMBEDDING
+from toolkit.settings import (
+    CELERY_LONG_TERM_TASK_QUEUE,
+    RELATIVE_MODELS_PATH, NUM_WORKERS
+)
+from toolkit.embedding.choices import W2V_EMBEDDING, FASTTEXT_EMBEDDING
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.helper_functions import get_indices_from_object
 
