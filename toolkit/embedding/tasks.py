@@ -3,13 +3,13 @@ from django.db import connections
 import json
 
 from texta_tools.text_processor import TextProcessor
-from texta_tools.embedding import W2VEmbedding
+from texta_tools.embedding import W2VEmbedding, FastTextEmbedding
 
 from toolkit.base_tasks import BaseTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.models import Embedding
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH, NUM_WORKERS
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH, NUM_WORKERS, W2V_EMBEDDING, FASTTEXT_EMBEDDING
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.helper_functions import get_indices_from_object
 
@@ -37,7 +37,12 @@ def train_embedding(embedding_id):
                                     text_processor=TextProcessor(sentences=True, remove_stop_words=True, words_as_list=True),
                                     output=ElasticSearcher.OUT_TEXT)
         # create embedding object & train
-        embedding = W2VEmbedding()
+        if embedding_object.embedding_type == W2V_EMBEDDING:
+        	embedding = W2VEmbedding()
+        elif embedding_object.embedding_type == FASTTEXT_EMBEDDING:
+        	embedding = FastTextEmbedding()
+        else:
+        	embedding = W2VEmbedding()
         embedding.train(sentences, use_phraser=use_phraser)
 
         # close all db connections
@@ -51,12 +56,11 @@ def train_embedding(embedding_id):
 
         # save model path
         embedding_object.embedding_model.name = relative_model_path
-        embedding_object.vocab_size = len(embedding.model.wv.vocab)
+        embedding_object.vocab_size = embedding.model.wv.vectors.shape[0]
         embedding_object.save()
         # declare the job done
         task_object.complete()
         return True
-
     except Exception as e:
         # declare the job failed
         task_object.add_error(str(e))

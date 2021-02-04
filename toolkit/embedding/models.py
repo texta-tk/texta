@@ -16,7 +16,7 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
-from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
+from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH, W2V_EMBEDDING
 
 
 class Embedding(models.Model):
@@ -33,7 +33,7 @@ class Embedding(models.Model):
     min_freq = models.IntegerField(default=10)
     vocab_size = models.IntegerField(default=0)
     use_phraser = models.BooleanField(default=True)
-
+    embedding_type = models.TextField(default=W2V_EMBEDDING)
     embedding_model = models.FileField(null=True, verbose_name='', default=None)
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 

@@ -29,7 +29,9 @@ class EmbeddingViewTests(TransactionTestCase):
 
 
     def test_run(self):
-        self.run_create_embedding_training_and_task_signal()
+        self.run_create_default_embedding_training_and_task_signal()
+        self.run_create_W2V_embedding_training_and_task_signal()
+        self.run_create_fasttext_embedding_training_and_task_signal()
         self.run_predict(self.test_embedding_id)
         self.run_predict_with_all_lists_and_check_none_are_in_the_response()
         self.run_phrase()
@@ -43,8 +45,8 @@ class EmbeddingViewTests(TransactionTestCase):
         Embedding.objects.all().delete()
 
 
-    def run_create_embedding_training_and_task_signal(self):
-        """Tests the endpoint for a new Embedding, and if a new Task gets created via the signal"""
+    def run_create_default_embedding_training_and_task_signal(self):
+        """Tests the endpoint for a new Embedding by default (embedding_type == "W2VEmbedding"), and if a new Task gets created via the signal"""
         payload = {
             "description": "TestEmbedding",
             "query": json.dumps(EMPTY_QUERY),
@@ -55,18 +57,69 @@ class EmbeddingViewTests(TransactionTestCase):
         }
 
         response = self.client.post(self.url, json.dumps(payload), content_type='application/json')
-        print_output('test_create_embedding_training_and_task_signal:response.data', response.data)
+        print_output('test_create_default_embedding_training_and_task_signal:response.data', response.data)
         # Check if Embedding gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         created_embedding = Embedding.objects.get(id=response.data['id'])
         self.test_embedding_id = created_embedding.id
         # Remove Embedding files after test is done
-        print_output("created embedding task status", created_embedding.task.status)
+        print_output("created default embedding task status", created_embedding.task.status)
         # Check if Task gets created via a signal
         self.assertTrue(created_embedding.task is not None)
         # Check if Embedding gets trained and completed
         self.assertEqual(created_embedding.task.status, Task.STATUS_COMPLETED)
 
+    def run_create_W2V_embedding_training_and_task_signal(self):
+        """Tests the endpoint for a new W2V Embedding, and if a new Task gets created via the signal"""
+        payload = {
+            "description": "TestEmbedding",
+            "query": json.dumps(EMPTY_QUERY),
+            "fields": TEST_FIELD_CHOICE,
+            "max_vocab": 10000,
+            "min_freq": 5,
+            "num_dimensions": 100,
+            "embedding_type": "W2VEmbedding"
+        }
+
+        response = self.client.post(self.url, json.dumps(payload), content_type='application/json')
+        print_output('test_create_W2V_embedding_training_and_task_signal:response.data', response.data)
+        # Check if Embedding gets created
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        created_embedding = Embedding.objects.get(id=response.data['id'])
+        print_output("W2V Embedding response data", response.data)
+        self.test_embedding_id = created_embedding.id
+        # Remove Embedding files after test is done
+        print_output("created W2V embedding task status", created_embedding.task.status)
+        # Check if Task gets created via a signal
+        self.assertTrue(created_embedding.task is not None)
+        # Check if Embedding gets trained and completed
+        self.assertEqual(created_embedding.task.status, Task.STATUS_COMPLETED)
+
+    def run_create_fasttext_embedding_training_and_task_signal(self):
+        """Tests the endpoint for a new FastText Embedding, and if a new Task gets created via the signal"""
+        payload = {
+            "description": "TestEmbedding",
+            "query": json.dumps(EMPTY_QUERY),
+            "fields": TEST_FIELD_CHOICE,
+            "max_vocab": 100,
+            "min_freq": 5,
+            "num_dimensions": 10,
+            "embedding_type": "FastTextEmbedding"
+        }
+        print_output("Staring fasttext embedding", "doing post")
+
+        response = self.client.post(self.url, json.dumps(payload), content_type='application/json')
+        print_output('test_create_fasttext_embedding_training_and_task_signal:response.data', response.data)
+        # Check if Embedding gets created
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        created_embedding = Embedding.objects.get(id=response.data['id'])
+        self.test_embedding_id = created_embedding.id
+        # Remove Embedding files after test is done
+        print_output("created fasttext embedding task status", created_embedding.task.status)
+        # Check if Task gets created via a signal
+        self.assertTrue(created_embedding.task is not None)
+        # Check if Embedding gets trained and completed
+        self.assertEqual(created_embedding.task.status, Task.STATUS_COMPLETED)
 
     def create_embedding_then_delete_embedding_and_created_model(self):
         payload = {
