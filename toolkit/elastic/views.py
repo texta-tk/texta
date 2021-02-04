@@ -29,7 +29,6 @@ from toolkit.tools.lemmatizer import ElasticLemmatizer
 
 class SnowballProcessor(views.APIView):
     serializer_class = SnowballSerializer
-    renderer_classes = (BrowsableAPIRenderer, JSONRenderer, HTMLFormRenderer)
     permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request):
