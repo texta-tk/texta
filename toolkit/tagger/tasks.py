@@ -5,6 +5,7 @@ import pathlib
 import re
 import secrets
 
+from elasticsearch.helpers import streaming_bulk
 from celery.decorators import task
 from texta_tagger.tagger import Tagger as TextTagger
 from texta_tools.embedding import W2VEmbedding
@@ -13,6 +14,9 @@ from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.data_sample import DataSample
 from toolkit.elastic.feedback import Feedback
+from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.document import ElasticDocument
 from toolkit.elastic.models import Index
 from toolkit.helper_functions import get_indices_from_object
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, MEDIA_URL
@@ -21,6 +25,7 @@ from toolkit.tools.lemmatizer import CeleryLemmatizer, ElasticLemmatizer
 from toolkit.tools.plots import create_tagger_plot
 from toolkit.tools.show_progress import ShowProgress
 
+from typing import List
 
 def create_tagger_batch(tagger_group_id, taggers_to_create):
     """Creates Tagger objects from list of tagger data and saves into tagger group object."""
@@ -263,3 +268,75 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
 
     logging.getLogger(INFO_LOGGER).info(f"Completed task 'apply_tagger' for tagger with ID: {tagger_id}!")
     return prediction
+
+
+def to_texta_fact(tagger_result: json, field: str, fact_name: str):
+    new_fact = None
+    if tagger_result["result"]:
+        new_fact = {
+            "fact": fact_name,
+            "str_val": tagger_result["tag"],
+            "doc_path": field,
+            "spans": json.dumps([[0,0]])
+        }
+    return new_fact
+
+
+def update_generator(generator: ElasticSearcher, fields: List[str], fact_name: str, tagger_id: int):
+
+    for scroll_batch in generator:
+        for raw_doc in scroll_batch:
+            hit = raw_doc["_source"]
+            existing_facts = hit.get("texta_facts", [])
+
+            for field in fields:
+                text = hit.get(field, None)
+                if text and isinstance(text, str):
+                    result = apply_tagger(tagger_id, text, input_type="text")
+                    new_fact = to_texta_fact(result, field, fact_name)
+                    if new_fact:
+                        existing_facts.append(new_fact)
+
+            if existing_facts:
+                # Remove duplicates to avoid adding the same facts with repetitive use.
+                hit["texta_facts"] = ElasticDocument.remove_duplicate_facts(existing_facts)
+
+            print("HITTTTTTT", hit)
+
+            yield {
+                "_index": raw_doc["_index"],
+                "_id": raw_doc["_id"],
+                #"_type": raw_doc.get("_type", "_doc"),
+                "_op_type": "update",
+                "_source": {'doc': hit},
+            }
+
+@task(name="apply_tagger_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
+def apply_tagger_to_index(tagger_id: int, indices: List[str], fields: List[str], fact_name: str, query: dict, bulk_size: int, max_chunk_bytes: int):
+    try:
+        tagger_object = Tagger.objects.get(pk=tagger_id)
+        progress = ShowProgress(tagger_object.task)
+
+        ec = ElasticCore()
+        [ec.add_texta_facts_mapping(index) for index in indices]
+
+        searcher = ElasticSearcher(
+            indices=indices,
+            field_data=fields + ["texta_facts"],  # Get facts to add upon existing ones.
+            query=query,
+            output=ElasticSearcher.OUT_RAW,
+            callback_progress=progress,
+        )
+
+        actions = update_generator(generator=searcher, fields=fields, fact_name=fact_name, tagger_id=tagger_id)
+        for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes):
+            if not success:
+                logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
+
+        tagger_object.task.complete()
+        return True
+
+    except Exception as e:
+        logging.getLogger(ERROR_LOGGER).exception(e)
+        error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
+        tagger_object.task.add_error(error_message)
