@@ -113,7 +113,14 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
     description = serializers.CharField(help_text='Describe your re-indexing task', required=True, allow_blank=False)
     indices = serializers.ListField(child=serializers.CharField(), help_text=f'Add the indices, you wish to reindex into a new index.', write_only=True, required=True)
     query = serializers.JSONField(help_text='Add a query, if you wish to filter the new reindexed index.', required=False)
-    new_index = serializers.CharField(help_text='Your new re-indexed index name', allow_blank=False, required=True)
+    new_index = serializers.CharField(help_text='Your new re-indexed index name', allow_blank=False, required=True,
+        validators=[
+            check_for_wildcards,
+            check_for_colons,
+            check_for_special_symbols,
+            check_for_banned_beginning_chars,
+            check_for_upper_case
+        ])
     field_type = serializers.ListField(help_text=f'Used to update the fieldname and the field type of chosen paths.', required=False)
     add_facts_mapping = serializers.BooleanField(help_text='Add texta facts mapping. NB! If texta_facts is present in reindexed fields, the mapping is always created.', required=False, default=False)
     task = TaskSerializer(read_only=True)
