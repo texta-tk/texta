@@ -4,6 +4,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.query import Query
 from toolkit.tools.logger import Logger
 from toolkit.helper_functions import get_core_setting
+from django.conf import settings
 
 from datetime import datetime
 import json
@@ -12,10 +13,11 @@ import json
 class Feedback:
 
     def __init__(self, project_pk, model_object=None, text_processor=None, callback_progress=None,
-                 prediction_to_match=None, es_prefix=get_core_setting("TEXTA_ES_PREFIX")):
+                 prediction_to_match=None, es_prefix=get_core_setting("TEXTA_ES_PREFIX"),
+                 deploy_key=getattr(settings, "DEPLOY_KEY")):
         self.es_core = ElasticCore()
         self.project_pk = project_pk
-        self.feedback_index = f"{es_prefix}texta-feedback-project-{project_pk}"
+        self.feedback_index = f"{es_prefix}texta-{deploy_key}-feedback-project-{project_pk}"
         self.model_object = model_object
         self.es_doc, self.es_search, self.query = self._initialize_es(project_pk, text_processor, callback_progress, prediction_to_match)
 
