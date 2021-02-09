@@ -92,6 +92,20 @@ class RegexGroupTaggerTests(APITransactionTestCase):
         self.assertTrue("politsei" in matches)
         self.assertTrue("tuletõrje" in matches)
 
+    def test_regex_tagger_group_tag_text_empty(self):
+        url = reverse("v1:regex_tagger_group-tag-text",
+                      kwargs={"project_pk": self.project.pk, "pk": self.emergency_tagger_group_id})
+        response = self.client.post(url, {
+            "text": ""})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        print_output('test_regex_tagger_group_tag_text_empty:response.data', response.data)
+
+        self.assertEqual(response.data["result"], False)
+        self.assertTrue("tagger_group_id" in response.data)
+        self.assertTrue("tagger_group_tag" in response.data)
+        self.assertTrue("text" in response.data)
+        self.assertTrue(len(response.data["matches"]) == 0)
+
 
     def test_regex_tagger_group_multitag_text(self):
         url = reverse("v1:regex_tagger_group-multitag-text", kwargs={"project_pk": self.project.pk})
