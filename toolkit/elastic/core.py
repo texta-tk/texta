@@ -78,7 +78,7 @@ class ElasticCore:
 
     @elastic_connection
     def create_index(self, index, body=None):
-        return self.es.indices.create(index=index, body=body, ignore=[400, 404])
+        return self.es.indices.create(index=index, body=body, include_type_name=True, ignore=[400, 404])
 
 
     @elastic_connection
