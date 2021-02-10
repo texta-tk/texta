@@ -21,7 +21,7 @@ variables:
   # Set admin password for tests
   #TEXTA_ADMIN_PASSWORD: "1234"
   # MLP lang codes
-  TEXTA_LANGUAGE_CODES: et
+  TEXTA_LANGUAGE_CODES: et,en
 
 services:
   - name: redis:latest
