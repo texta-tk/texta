@@ -20,6 +20,8 @@ variables:
   TEXTA_TEST_KEEP_PLOT_FILES: "True"
   # Set admin password for tests
   #TEXTA_ADMIN_PASSWORD: "1234"
+  # MLP lang codes
+  TEXTA_LANGUAGE_CODES: et
 
 services:
   - name: redis:latest
