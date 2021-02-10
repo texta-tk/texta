@@ -7,10 +7,11 @@ def get_default_bert_model(default_model: str = "bert-base-multilingual-cased") 
     """ If defaulted model is downloaded, allow it; otherwise use the first model
         in downloaded models list as default.
     """
-    if default_model in DOWNLOADED_BERT_MODELS:
+    if default_model in DOWNLOADED_BERT_MODELS or not DOWNLOADED_BERT_MODELS:
         return default_model
     else:
         return DOWNLOADED_BERT_MODELS[0]
+
 
 DEFAULT_MAX_SAMPLE_SIZE = 100000
 DEFAULT_MIN_SAMPLE_SIZE = 50
