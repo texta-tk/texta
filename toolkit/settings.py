@@ -269,7 +269,7 @@ NUM_WORKERS = 1
 MODELS_DIR_DEFAULT = str(pathlib.Path("data") / "models")
 RELATIVE_MODELS_PATH = os.getenv("TEXTA_RELATIVE_MODELS_DIR", MODELS_DIR_DEFAULT)
 
-DEFAULT_MLP_LANGUAGE_CODES = parse_list_env_headers("TEXTA_LANGUAGE_CODES", ["et", "en", "ru"])
+DEFAULT_MLP_LANGUAGE_CODES = parse_list_env_headers("TEXTA_LANGUAGE_CODES", ["et", "en", "ru", "ar"])
 MLP_MODEL_DIRECTORY = os.getenv("TEXTA_MLP_MODEL_DIRECTORY_PATH", MODELS_DIR_DEFAULT)
 
 DEFAULT_BERT_MODELS = parse_list_env_headers("TEXTA_BERT_MODELS", ["bert-base-multilingual-cased", "EMBEDDIA/finest-bert", "bert-base-uncased"])
