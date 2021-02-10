@@ -3,6 +3,7 @@ import os
 import pathlib
 import warnings
 
+from dotenv import load_dotenv
 from corsheaders.defaults import default_headers
 from kombu import Exchange, Queue
 
@@ -32,7 +33,7 @@ TEXTA_TAGS_KEY = "texta_facts"
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("TEXTA_SECRET_KEY", "eqr9sjz-&baah&c%ejkaorp)a1$q63y0%*a^&fv=y$(bbe5+(b")
 # SECURITY WARNING: don"t run with debug turned on in production!

@@ -52,3 +52,4 @@ dependencies:
       - torchtext==0.6.*
       - pyjwt<2
       - beautifulsoup4
+      - python-dotenv
