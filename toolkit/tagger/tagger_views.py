@@ -337,7 +337,9 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
             project = Project.objects.get(pk=project_pk)
             indices = [index["name"] for index in serializer.validated_data["indices"]]
-            indices = project.get_available_or_all_project_indices(indices)
+            print("indices 1", indices)
+            #indices = project.get_available_or_all_project_indices(indices)
+            print("indices 2", indices)
 
             fields = serializer.validated_data["fields"]
             fact_name = serializer.validated_data["new_fact_name"]

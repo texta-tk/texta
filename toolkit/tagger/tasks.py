@@ -306,7 +306,7 @@ def update_generator(generator: ElasticSearcher, fields: List[str], fact_name: s
             yield {
                 "_index": raw_doc["_index"],
                 "_id": raw_doc["_id"],
-                #"_type": raw_doc.get("_type", "_doc"),
+                "_type": raw_doc.get("_type", "_doc"),
                 "_op_type": "update",
                 "_source": {'doc': hit},
             }
@@ -316,6 +316,7 @@ def apply_tagger_to_index(tagger_id: int, indices: List[str], fields: List[str],
     try:
         tagger_object = Tagger.objects.get(pk=tagger_id)
         progress = ShowProgress(tagger_object.task)
+        print("INDICES", indices)
 
         ec = ElasticCore()
         [ec.add_texta_facts_mapping(index) for index in indices]
