@@ -204,7 +204,7 @@ def bulk_add_documents(elastic_search: ElasticSearcher, elastic_doc: ElasticDocu
     new_docs = apply_elastic_search(elastic_search, flatten_doc)
     actions = reindexer_bulk_generator(new_docs, index)
     # No need to wait for indexing to actualize, hence refresh is False.
-    elastic_doc.bulk_add_generator(actions=actions, chunk_size=chunk_size, refresh=False)
+    elastic_doc.bulk_add_generator(actions=actions, chunk_size=chunk_size, refresh="wait_for")
 
 
 @task(name="reindex_task", base=BaseTask)
@@ -308,7 +308,7 @@ def index_splitting_task(index_splitting_task_id):
             actions = elastic_random_split_generator(elastic_search, test_size, train_index, test_index)
 
             # Since the index name is specified in the generator already, we can use either one of the ElasticDocument object.
-            elastic_doc.bulk_add_generator(actions=actions, chunk_size=scroll_size, refresh=False)
+            elastic_doc.bulk_add_generator(actions=actions, chunk_size=scroll_size, refresh="wait_for")
 
         else:
             # TODO: Must ensure that there is only a single fact with given fact name associated with each document
@@ -337,14 +337,14 @@ def index_splitting_task(index_splitting_task_id):
                 logging.getLogger(INFO_LOGGER).info("Splitting documents while preserving original label distribution.")
 
                 actions = elastic_original_split_generator(elastic_search, test_size, fact_name, fact_value, labels_distribution, train_index, test_index)
-                elastic_doc.bulk_add_generator(actions=actions, chunk_size=scroll_size, refresh=False)
+                elastic_doc.bulk_add_generator(actions=actions, chunk_size=scroll_size, refresh="wait_for")
 
             elif(distribution == LABEL_DISTRIBUTION[2][0]): #equal
 
                 logging.getLogger(INFO_LOGGER).info("Splitting documents while preserving equal label distribution.")
             
                 actions = elastic_equal_split_generator(elastic_search, test_size, fact_name, fact_value, labels_distribution, train_index, test_index)
-                elastic_doc.bulk_add_generator(actions=actions, chunk_size=scroll_size, refresh=False)
+                elastic_doc.bulk_add_generator(actions=actions, chunk_size=scroll_size, refresh="wait_for")
         
             elif(distribution == LABEL_DISTRIBUTION[3][0]): #custom
 
@@ -355,7 +355,7 @@ def index_splitting_task(index_splitting_task_id):
                 #use original split generator but with ratio == 100
                 #we don't use fact value here even if it's given because we have a custom distribution
                 actions = elastic_original_split_generator(elastic_search, 100, fact_name, "", custom_distributon, train_index, test_index)
-                elastic_doc.bulk_add_generator(actions=actions, chunk_size=scroll_size, refresh=False)
+                elastic_doc.bulk_add_generator(actions=actions, chunk_size=scroll_size, refresh="wait_for")
 
         task_object.complete()
 
