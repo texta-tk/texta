@@ -5,6 +5,7 @@ from django.db import models
 from django.utils.timezone import now
 
 from toolkit.constants import MAX_DESC_LEN
+from toolkit.helper_functions import avoid_db_timeout
 
 
 class Task(models.Model):
@@ -27,7 +28,7 @@ class Task(models.Model):
     time_completed = models.DateTimeField(null=True, blank=True, default=None)
     authtoken_hash = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
-
+    @avoid_db_timeout
     def update_status(self, status, set_time_completed=False):
         self.status = status
         self.last_update = now()
@@ -35,14 +36,14 @@ class Task(models.Model):
             self.time_completed = now()
         self.save()
 
-
+    @avoid_db_timeout
     def add_error(self, error: str):
         errors = json.loads(self.errors)
         errors = errors + [error]
         self.errors = json.dumps(errors)
         self.save()
 
-
+    @avoid_db_timeout
     def complete(self):
         self.status = Task.STATUS_COMPLETED
         self.time_completed = now()
@@ -50,14 +51,14 @@ class Task(models.Model):
         self.progress = 100
         self.save()
 
-
+    @avoid_db_timeout
     def update_progress(self, progress, step):
         self.progress = progress
         self.step = step
         self.last_update = now()
         self.save()
 
-
+    @avoid_db_timeout
     def update_process_iteration(self, total, step_prefix, num_processed=False):
         """Step based process reporting"""
         # # Optionally override current num_processed
