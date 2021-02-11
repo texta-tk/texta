@@ -146,6 +146,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
         resources = (
             'lexicons',
             'reindexer',
+            'index_splitter',
             'dataset_imports',
             'searches',
             'scroll',
