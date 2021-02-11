@@ -1,4 +1,5 @@
 from toolkit.core.task.models import Task
+from toolkit.helper_functions import avoid_db_timeout
 
 
 class ShowProgress(object):
@@ -33,14 +34,14 @@ class ShowProgress(object):
 
         self.update_view(percentage)
 
-
+    @avoid_db_timeout
     def update_view(self, percentage):
         task = Task.objects.get(pk=self.task_id)
         if task.status != task.STATUS_RUNNING:
             task.update_status(task.STATUS_RUNNING)
         task.update_progress(percentage, self.step)
 
-
+    @avoid_db_timeout
     def update_errors(self, error: str):
         task = Task.objects.get(pk=self.task_id)
         task.add_error(error)
