@@ -1,3 +1,9 @@
+LABEL_DISTRIBUTION = (
+    ("random", "random"),
+    ("original", "original"),
+    ("equal", "equal"),
+    ("custom", "custom")
+)
 def get_snowball_choices():
    elastic_langs = [
       'estonian', 'english', 'arabic', 'armenian', 'basque', 'bengali', 'brazilian',
