@@ -178,8 +178,22 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
     description = serializers.CharField(help_text='Description of the task.', required=True, allow_blank=False)
     indices = IndexSerializer(many=True, write_only=True, default=[], help_text=f'Indices that are used to create train and test indices.')
     query = serializers.JSONField(help_text='Query used to filter the indices. Defaults to an empty query.', required=False)
-    train_index = serializers.CharField(help_text='Name of the train index.', allow_blank=False, required=True)
-    test_index = serializers.CharField(help_text='Name of the test index.', allow_blank=False, required=True)
+    train_index = serializers.CharField(help_text='Name of the train index.', allow_blank=False, required=True,
+    validators=[
+            check_for_wildcards,
+            check_for_colons,
+            check_for_special_symbols,
+            check_for_banned_beginning_chars,
+            check_for_upper_case
+        ])
+    test_index = serializers.CharField(help_text='Name of the test index.', allow_blank=False, required=True,
+    validators=[
+            check_for_wildcards,
+            check_for_colons,
+            check_for_special_symbols,
+            check_for_banned_beginning_chars,
+            check_for_upper_case
+        ])
     fields = serializers.ListField(
         child=serializers.CharField(),
         help_text=f'Empty fields chooses all posted indices fields.',
