@@ -206,22 +206,24 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
 
     def validate_train_index(self, value):
         """ Check that new_index does not exist """
-        if value in ElasticCore().get_indices():
-            raise serializers.ValidationError("train_index already exists, choose a different name for your reindexed index")
+        open_indices, closed_indices = ElasticCore().get_indices()
+        if value in open_indices or value in closed_indices:
+            raise serializers.ValidationError(f"{value} already exists, choose a different name for your train index")
         return value
 
     def validate_test_index(self, value):
         """ Check that new_index does not exist """
-        if value in ElasticCore().get_indices():
-            raise serializers.ValidationError("test_index already exists, choose a different name for your reindexed index")
+        open_indices, closed_indices = ElasticCore().get_indices()
+        if value in open_indices or value in closed_indices:
+            raise serializers.ValidationError(f"{value} already exists, choose a different name for your test index")
         return value
 
     def validate_indices(self, value):
-        """ check if re-indexed index is in the relevant project indices field """
+        """ check if index is in the relevant project indices field """
         project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
         for index in value:
-            if index["name"] not in project_obj.get_indices():
-                raise serializers.ValidationError(f'Index "{index}" is not contained in your project indices "{repr(project_obj.indices)}"')
+            if index.get("name") not in project_obj.get_indices():
+                raise serializers.ValidationError(f'Index "{index.get("name")}" is not contained in your project indices "{project_obj.get_indices()}"')
         return value
 
     def validate_fields(self, value):
@@ -231,7 +233,7 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
         field_data = [field["path"] for field in project_fields]
         for field in value:
             if field not in field_data:
-                raise serializers.ValidationError(f'The fields you are attempting to re-index are not in current project fields: {project_fields}')
+                raise serializers.ValidationError(f'The fields you are attempting to add to new indices are not in current project fields: {project_fields}')
         return value
 
     def validate(self, data):
