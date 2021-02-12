@@ -287,7 +287,8 @@ class IndexSplitterViewSet(mixins.CreateModelMixin,
                            mixins.ListModelMixin,
                            mixins.RetrieveModelMixin,
                            mixins.DestroyModelMixin,
-                           viewsets.GenericViewSet):
+                           viewsets.GenericViewSet,
+                           BulkDelete):
     """
     create:
     Creates index_splitter task object.
