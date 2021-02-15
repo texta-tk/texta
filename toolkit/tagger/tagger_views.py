@@ -337,17 +337,16 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
             project = Project.objects.get(pk=project_pk)
             indices = [index["name"] for index in serializer.validated_data["indices"]]
-            print("indices 1", indices)
             #indices = project.get_available_or_all_project_indices(indices)
-            print("indices 2", indices)
 
             fields = serializer.validated_data["fields"]
             fact_name = serializer.validated_data["new_fact_name"]
+            fact_value = serializer.validated_data["new_fact_value"]
             query = serializer.validated_data["query"]
             bulk_size = serializer.validated_data["bulk_size"]
             max_chunk_bytes = serializer.validated_data["max_chunk_bytes"]
 
-            args = (pk, indices, fields, fact_name, query, bulk_size, max_chunk_bytes)
+            args = (pk, indices, fields, fact_name, fact_value, query, bulk_size, max_chunk_bytes)
             transaction.on_commit(lambda: apply_tagger_to_index.apply_async(args=args, queue=CELERY_LONG_TERM_TASK_QUEUE))
 
             message = "Started process of applying Tagger with id: {}".format(tagger_object.id)

@@ -208,9 +208,10 @@ def save_tagger_results(result_data: dict):
 
 
 @task(name="apply_tagger", base=BaseTask)
-def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=None):
+def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=None, use_logger=True):
     """Task for applying tagger to text."""
-    logging.getLogger(INFO_LOGGER).info(f"Starting task 'apply_tagger' for tagger with ID: {tagger_id} with params (input_type : {input_type}, lemmatize: {lemmatize}, feedback: {feedback})!")
+    if use_logger:
+        logging.getLogger(INFO_LOGGER).info(f"Starting task 'apply_tagger' for tagger with ID: {tagger_id} with params (input_type : {input_type}, lemmatize: {lemmatize}, feedback: {feedback})!")
     # get tagger object
     tagger_object = Tagger.objects.get(pk=tagger_id)
     # get lemmatizer/stemmer
@@ -236,18 +237,21 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
         return None
     # check input type
     if input_type == 'doc':
-        logging.getLogger(INFO_LOGGER).info(f"Tagging document with content: {text}!")
+        if use_logger:
+            logging.getLogger(INFO_LOGGER).info(f"Tagging document with content: {text}!")
         tagger_result = tagger.tag_doc(text)
     else:
-        logging.getLogger(INFO_LOGGER).info(f"Tagging text with content: {text}!")
+        if use_logger:
+            logging.getLogger(INFO_LOGGER).info(f"Tagging text with content: {text}!")
         tagger_result = tagger.tag_text(text)
 
     # positive tagger_result["prediction"] can either be "true" (if positive examples were restricted by query)
     # or tagger.object_description (if positive examples were restricted by specific facts)
     result = True if (tagger_object.description == tagger_result["prediction"] or tagger_result["prediction"] == "true") else False
 
-    logging.getLogger(INFO_LOGGER).info(f"Tagger description: {tagger_object.description}")
-    logging.getLogger(INFO_LOGGER).info(f"Tagger result: {tagger_result['prediction']}")
+    if use_logger:
+        logging.getLogger(INFO_LOGGER).info(f"Tagger description: {tagger_object.description}")
+        logging.getLogger(INFO_LOGGER).info(f"Tagger result: {tagger_result['prediction']}")
 
     # create output dict
     prediction = {
@@ -266,25 +270,29 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
         feedback_url = f'/projects/{project_pk}/taggers/{tagger_object.pk}/feedback/'
         prediction['feedback'] = {'id': feedback_id, 'url': feedback_url}
 
-    logging.getLogger(INFO_LOGGER).info(f"Completed task 'apply_tagger' for tagger with ID: {tagger_id}!")
+    if use_logger:
+        logging.getLogger(INFO_LOGGER).info(f"Completed task 'apply_tagger' for tagger with ID: {tagger_id}!")
     return prediction
 
 
-def to_texta_fact(tagger_result: json, field: str, fact_name: str):
+def to_texta_fact(tagger_result: json, field: str, fact_name: str, fact_value: str):
     new_fact = None
+
     if tagger_result["result"]:
+        str_val = fact_value if fact_value else tagger_result["tag"]
         new_fact = {
             "fact": fact_name,
-            "str_val": tagger_result["tag"],
+            "str_val": str_val,
             "doc_path": field,
             "spans": json.dumps([[0,0]])
         }
     return new_fact
 
 
-def update_generator(generator: ElasticSearcher, fields: List[str], fact_name: str, tagger_id: int):
-
-    for scroll_batch in generator:
+def update_generator(generator: ElasticSearcher, fields: List[str], fact_name: str, fact_value: str, tagger_id: int):
+    n_batches = len(generator)
+    for i, scroll_batch in enumerate(generator):
+        logging.getLogger(INFO_LOGGER).info(f"Appyling tagger {tagger_id} to batch {i+1}/{n_batches}...")
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
             existing_facts = hit.get("texta_facts", [])
@@ -292,8 +300,8 @@ def update_generator(generator: ElasticSearcher, fields: List[str], fact_name: s
             for field in fields:
                 text = hit.get(field, None)
                 if text and isinstance(text, str):
-                    result = apply_tagger(tagger_id, text, input_type="text")
-                    new_fact = to_texta_fact(result, field, fact_name)
+                    result = apply_tagger(tagger_id, text, input_type="text", use_logger = False)
+                    new_fact = to_texta_fact(result, field, fact_name, fact_value)
                     if new_fact:
                         existing_facts.append(new_fact)
 
@@ -301,7 +309,6 @@ def update_generator(generator: ElasticSearcher, fields: List[str], fact_name: s
                 # Remove duplicates to avoid adding the same facts with repetitive use.
                 hit["texta_facts"] = ElasticDocument.remove_duplicate_facts(existing_facts)
 
-            print("HITTTTTTT", hit)
 
             yield {
                 "_index": raw_doc["_index"],
@@ -312,11 +319,10 @@ def update_generator(generator: ElasticSearcher, fields: List[str], fact_name: s
             }
 
 @task(name="apply_tagger_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
-def apply_tagger_to_index(tagger_id: int, indices: List[str], fields: List[str], fact_name: str, query: dict, bulk_size: int, max_chunk_bytes: int):
+def apply_tagger_to_index(tagger_id: int, indices: List[str], fields: List[str], fact_name: str, fact_value: str, query: dict, bulk_size: int, max_chunk_bytes: int):
     try:
         tagger_object = Tagger.objects.get(pk=tagger_id)
         progress = ShowProgress(tagger_object.task)
-        print("INDICES", indices)
 
         ec = ElasticCore()
         [ec.add_texta_facts_mapping(index) for index in indices]
@@ -329,7 +335,7 @@ def apply_tagger_to_index(tagger_id: int, indices: List[str], fields: List[str],
             callback_progress=progress,
         )
 
-        actions = update_generator(generator=searcher, fields=fields, fact_name=fact_name, tagger_id=tagger_id)
+        actions = update_generator(generator=searcher, fields=fields, fact_name=fact_name, fact_value=fact_value, tagger_id=tagger_id)
         for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes):
             if not success:
                 logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
