@@ -10,11 +10,11 @@ from toolkit.core.project.views import ExportSearchView, GetFactsView, GetFields
 from toolkit.core.task.views import TaskAPIView
 from toolkit.core.urls import router as core_router
 from toolkit.core.user_profile import views as profile_views
-from toolkit.dataset_import.urls import router as dataset_import_router
+from toolkit.dataset_import.views import DatasetImportViewSet
 from toolkit.docparser.views import DocparserView
 from toolkit.document_importer.views import DocumentImportView, DocumentInstanceView, UpdateSplitDocument
-from toolkit.elastic.urls import index_router, router as reindexer_router
-from toolkit.elastic.views import ElasticGetIndices, SnowballProcessor
+from toolkit.elastic.urls import index_router
+from toolkit.elastic.views import ElasticGetIndices, ReindexerViewSet, SnowballProcessor
 from toolkit.embedding.urls import embedding_router
 from toolkit.mlp.urls import mlp_router
 from toolkit.mlp.views import MLPListProcessor, MlpDocsProcessor
@@ -34,8 +34,7 @@ router.register('core_variables', CoreVariableViewSet, basename='corevariable')
 # add resources to projects
 project_router = routers.NestedDefaultRouter(router, r'projects', lookup='project')
 project_router.registry.extend(embedding_router.registry)
-project_router.registry.extend(reindexer_router.registry)
-project_router.registry.extend(dataset_import_router.registry)
+project_router.registry.extend(embedding_router.registry)
 project_router.registry.extend(tagger_router.registry)
 project_router.registry.extend(core_router.registry)
 project_router.registry.extend(torchtagger_router.registry)
@@ -44,12 +43,15 @@ project_router.registry.extend(regex_tagger_router.registry)
 project_router.registry.extend(anonymizer_router.registry)
 project_router.registry.extend(bert_tagger_router.registry)
 
+project_router.register('elastic/reindexer', ReindexerViewSet, basename='reindexer')
+project_router.register('elastic/dataset_imports', DatasetImportViewSet, basename='dataset_import')
+
 # TODO Look for putting this into a better place.
 project_router.register(r'clustering', ClusteringViewSet, basename='clustering')
 clustering_router = routers.NestedSimpleRouter(project_router, r'clustering', lookup='clustering')
 clustering_router.register("clusters", ClusterViewSet, basename="cluster")
 
-app_name = 'toolkit_v1'
+app_name = 'toolkit_v2'
 
 urlpatterns = [
     # documentation
@@ -63,32 +65,32 @@ urlpatterns = [
     path('rest-auth/registration/', include('rest_auth.registration.urls')),
     # tasks
     path("task/", TaskAPIView.as_view(), name="task_api"),
-    # elastic stemmer
-    path("snowball/", SnowballProcessor.as_view(), name="snowball"),
     # mlp
     path("mlp/texts/", MLPListProcessor.as_view(), name="mlp_texts"),
     path("mlp/docs/", MlpDocsProcessor.as_view(), name="mlp_docs"),
-    url(r'^get_indices', ElasticGetIndices.as_view(), name="get_indices_for_project_creation"),
     # routers
     url(r'^', include(router.urls)),
-    path("", include(index_router.urls), name="index"),
+    path("elastic/", include(index_router.urls), name="elastic_index"),
     url(r'^', include(project_router.urls)),
     url(r'^', include(clustering_router.urls)),
-    path('docparser/', DocparserView.as_view(), name="docparser"),
 
-    path('projects/<int:pk>/document_importer/', DocumentImportView.as_view(), name="document_import"),
-    path('projects/<int:pk>/document_importer/<str:index>/<str:document_id>/', DocumentInstanceView.as_view(), name="document_instance"),
-    path('projects/<int:pk>/document_importer/<str:index>/update_split', UpdateSplitDocument.as_view(), name="update_split_document"),
+    # Elasticsearch related content.
+    path("elastic/snowball/", SnowballProcessor.as_view(), name="snowball"),
+    path('elastic/docparser/', DocparserView.as_view(), name="docparser"),
+    path('projects/<int:pk>/elastic/documents/', DocumentImportView.as_view(), name="document_import"),
+    path('projects/<int:pk>/elastic/documents/<str:index>/<str:document_id>/', DocumentInstanceView.as_view(), name="document_instance"),
+    path('projects/<int:pk>/elastic/documents/<str:index>/update_split', UpdateSplitDocument.as_view(), name="update_split_document"),
 
     # Previous projects extra actions.
-    path('projects/<int:project_pk>/export_search/', ExportSearchView.as_view(), name="project-export-search"),
-    path('projects/<int:project_pk>/get_spam/', GetSpamView.as_view(), name="project-get-spam"),
-    path('projects/<int:project_pk>/get_facts/', GetFactsView.as_view(), name="get_facts"),
-    path('projects/<int:project_pk>/get_fields/', GetFieldsView.as_view(), name="get_fields"),
-    path('projects/<int:project_pk>/get_indices/', GetIndicesView.as_view(), name="get_project_indices"),
-    path('projects/<int:project_pk>/scroll/', ScrollView.as_view(), name="project-scroll"),
-    path('projects/<int:project_pk>/search/', SearchView.as_view(), name="search"),
-    path('projects/<int:project_pk>/search_by_query/', SearchByQueryView.as_view(), name="search_by_query"),
+    path('projects/<int:project_pk>/elastic/export_search/', ExportSearchView.as_view(), name="project-export-search"),
+    path('projects/<int:project_pk>/elastic/get_spam/', GetSpamView.as_view(), name="project-get-spam"),
+    path('projects/<int:project_pk>/elastic/get_facts/', GetFactsView.as_view(), name="get_facts"),
+    path('projects/<int:project_pk>/elastic/get_fields/', GetFieldsView.as_view(), name="get_fields"),
+    path('projects/<int:project_pk>/elastic/get_indices/', GetIndicesView.as_view(), name="get_project_indices"),
+    path('elastic/get_indices/', ElasticGetIndices.as_view(), name="get_indices_for_project_creation"),
+    path('projects/<int:project_pk>/elastic/scroll/', ScrollView.as_view(), name="project-scroll"),
+    path('projects/<int:project_pk>/elastic/search/', SearchView.as_view(), name="search"),
+    path('projects/<int:project_pk>/elastic/search_by_query/', SearchByQueryView.as_view(), name="search_by_query"),
 
     # UAA OAuth 2.0
     url('uaa/callback', UAAView.as_view()),

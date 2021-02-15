@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from toolkit.elastic.searcher import EMPTY_QUERY
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX
+from toolkit.test_settings import TEST_FIELD, TEST_INDEX, VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -26,7 +26,7 @@ class ScrollApiTests(APITestCase):
         self.client = APIClient()
         self.client.login(username='project_user', password='pw')
 
-        self.scroll_url = reverse("v1:project-scroll", kwargs={"pk": self.project.id})
+        self.scroll_url = reverse(f"{VERSION_NAMESPACE}:project-scroll", kwargs={"project_pk": self.project.id})
 
 
     def test_that_only_owner_can_access_project(self):

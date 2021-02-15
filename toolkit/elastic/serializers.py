@@ -10,6 +10,7 @@ from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.validators import check_for_banned_beginning_chars, check_for_colons, check_for_special_symbols, check_for_upper_case, check_for_wildcards
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
 from toolkit.elastic.choices import get_snowball_choices
+from toolkit.settings import REST_FRAMEWORK
 
 
 class SnowballSerializer(serializers.Serializer):
@@ -37,7 +38,9 @@ class IndexSerializer(serializers.ModelSerializer):
 
 
     def get_url(self, obj):
-        index = reverse("v1:index-detail", kwargs={"pk": obj.pk})
+        default_version = REST_FRAMEWORK.get("DEFAULT_VERSION")
+
+        index = reverse(f"{default_version}:index-detail", kwargs={"pk": obj.pk})
         if "request" in self.context:
             request = self.context["request"]
             url = request.build_absolute_uri(index)

@@ -10,7 +10,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.models import Index
 from toolkit.settings import RELATIVE_PROJECT_DATA_PATH, SEARCHER_FOLDER_KEY
 from toolkit.test_settings import REINDEXER_TEST_INDEX, TEST_FACT_NAME, TEST_INDEX, TEST_QUERY, TEST_VERSION_PREFIX, \
-    TEST_FIELD, TEST_MATCH_TEXT
+    TEST_FIELD, TEST_MATCH_TEXT, VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -43,7 +43,7 @@ class ProjectViewTests(APITestCase):
         self.client = APIClient()
         self.client.login(username='project_user', password='pw')
         self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
-        self.export_url = reverse("v1:project-export-search", kwargs={"pk": self.project.pk})
+        self.export_url = reverse(f"{VERSION_NAMESPACE}:project-export-search", kwargs={"project_pk": self.project.pk})
 
 
     def __add_indices_to_project(self, index_names: []):
@@ -193,14 +193,14 @@ class ProjectViewTests(APITestCase):
     def test_search_by_query(self):
         url = f'{self.project_url}/search_by_query/'
         # check that project user has access and response is success
-        self.client.login(username='project_usser', password='pw')
+        self.client.login(username='project_user', password='pw')
         payload = {"query": TEST_QUERY}
         response = self.client.post(url, payload, format='json')
         print_output("search_by_query_project_user", response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # test search with indices
         highlight_query = {"query": {"match": {TEST_FIELD: {"query": TEST_MATCH_TEXT}}},
-                          "highlight": {"fields": {TEST_FIELD: {}}, "number_of_fragments": 0, }}
+                           "highlight": {"fields": {TEST_FIELD: {}}, "number_of_fragments": 0, }}
         payload = {"query": highlight_query, "indices": [TEST_INDEX]}
         response = self.client.post(url, payload, format='json')
         print_output("search_by_query_with_indices_project_user", response.data)
@@ -227,20 +227,21 @@ class ProjectViewTests(APITestCase):
 
     def test_project_creation_with_admin_user(self):
         self.client.login(username="admin", password="pw")
-        response = self.client.post(reverse("v1:project-list"), format="json", data={
+        response = self.client.post(reverse(f"{VERSION_NAMESPACE}:project-list"), format="json", data={
             "title": "faulty_project",
             "indices": [TEST_INDEX],
-            "users": [reverse("v1:user-detail", args=[self.admin.pk])]
+            "users": [reverse(f"{VERSION_NAMESPACE}:user-detail", args=[self.admin.pk])]
         })
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
 
 
     def test_project_creation_with_normal_user(self):
         self.client.login(username="admin", password="pw")
-        response = self.client.post(reverse("v1:project-list"), format="json", data={
+        url = reverse(f"{VERSION_NAMESPACE}:project-list")
+        response = self.client.post(url, format="json", data={
             "title": "faulty_project",
             "indices": [TEST_INDEX],
-            "users": [reverse("v1:user-detail", args=[self.user.pk])]
+            "users": [reverse(f"{VERSION_NAMESPACE}:user-detail", args=[self.user.pk])]
         })
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
         p = Project.objects.get(pk=response.data["id"])
@@ -255,7 +256,7 @@ class ProjectViewTests(APITestCase):
         ec.create_index("test_project_update")
 
         pk = Project.objects.last().pk
-        url = reverse("v1:project-detail", args=[pk])
+        url = reverse(f"{VERSION_NAMESPACE}:project-detail", args=[pk])
         payload = {
             "indices": [TEST_INDEX, "test_project_update"]
         }
@@ -270,20 +271,20 @@ class ProjectViewTests(APITestCase):
 
     def test_project_creation_as_a_plebian_user(self):
         self.client.login(username="user", password="pw")
-        response = self.client.post(reverse("v1:project-list"), format="json", data={
+        response = self.client.post(reverse(f"{VERSION_NAMESPACE}:project-list"), format="json", data={
             "title": "faulty_project",
             "indices": [TEST_INDEX],
-            "users": [reverse("v1:user-detail", args=[self.user.pk])]
+            "users": [reverse(f"{VERSION_NAMESPACE}:user-detail", args=[self.user.pk])]
         })
         self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)
 
 
     def test_project_creation_with_unexisting_indices(self):
         self.client.login(username="admin", password="pw")
-        response = self.client.post(reverse("v1:project-list"), format="json", data={
+        response = self.client.post(reverse(f"{VERSION_NAMESPACE}:project-list"), format="json", data={
             "title": "faulty_project",
             "indices": ["the_holy_hand_granade"],
-            "users": [reverse("v1:user-detail", args=[self.admin.pk])]
+            "users": [reverse(f"{VERSION_NAMESPACE}:user-detail", args=[self.admin.pk])]
         })
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
 
@@ -291,7 +292,7 @@ class ProjectViewTests(APITestCase):
     def test_project_update_with_unexisting_indices(self):
         self.client.login(username="admin", password="pw")
         pk = Project.objects.last().pk
-        url = reverse("v1:project-detail", args=[pk])
+        url = reverse(f"{VERSION_NAMESPACE}:project-detail", args=[pk])
         payload = {
             "indices": ["an_european_or_african_swallow"]
         }
