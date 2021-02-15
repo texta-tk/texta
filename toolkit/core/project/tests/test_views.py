@@ -298,3 +298,24 @@ class ProjectViewTests(APITestCase):
         }
         response = self.client.patch(url, data=payload, format="json")
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+
+
+    def test_document_count(self):
+        url = reverse("v1:project-count-indices", kwargs={"pk": self.project.pk})
+        response = self.client.post(url, data={"indices": [{"name": TEST_INDEX}]}, format="json")
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, int))
+        self.assertTrue(response.data > 100)
+
+
+    def test_document_count_with_false_indies(self):
+        url = reverse("v1:project-count-indices", kwargs={"pk": self.project.pk})
+        response = self.client.post(url, data={"indices": [{"name": TEST_INDEX + "_potato"}]}, format="json")
+        self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+
+
+    def test_document_count_with_zero_input(self):
+        url = reverse("v1:project-count-indices", kwargs={"pk": self.project.pk})
+        response = self.client.post(url, data={"indices": []}, format="json")
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        self.assertTrue(response.data == 0)

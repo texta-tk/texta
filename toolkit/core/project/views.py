@@ -16,7 +16,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from toolkit.core.project.models import Project
-from toolkit.core.project.serializers import (ExportSearcherResultsSerializer, ProjectDocumentSerializer, ProjectGetFactsSerializer, ProjectGetSpamSerializer, ProjectSearchByQuerySerializer, ProjectSerializer, ProjectSimplifiedSearchSerializer, ProjectSuggestFactNamesSerializer,
+from toolkit.core.project.serializers import (CountIndicesSerializer, ExportSearcherResultsSerializer, ProjectDocumentSerializer, ProjectGetFactsSerializer, ProjectGetSpamSerializer, ProjectSearchByQuerySerializer, ProjectSerializer, ProjectSimplifiedSearchSerializer,
+                                              ProjectSuggestFactNamesSerializer,
                                               ProjectSuggestFactValuesSerializer)
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.core import ElasticCore
@@ -345,6 +346,24 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         if not current_user.is_superuser:
             return queryset.filter(users=current_user)
         return queryset
+
+
+    @action(detail=True, methods=['post'], serializer_class=CountIndicesSerializer, permission_classes=[ExtraActionResource])
+    def count_indices(self, request, pk=None, project_pk=None):
+        serializer: CountIndicesSerializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        project: Project = self.get_object()
+        ed = ElasticDocument(None)
+
+        indices = serializer.validated_data.get("indices", [])
+        indices = [index["name"] for index in indices]
+        if indices:
+            # We check for indices before to prevent the default behaviour of picking all the indices in project.
+            indices = project.get_available_or_all_project_indices(indices)
+            count = ed.count(indices=indices)
+            return Response(count)
+        else:
+            return Response(0)
 
 
     @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactValuesSerializer, permission_classes=[ExtraActionResource])

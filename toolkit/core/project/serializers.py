@@ -188,6 +188,10 @@ class ProjectSuggestFactValuesSerializer(serializers.Serializer):
     indices = IndexSerializer(many=True, default=[], help_text="Which indices to use for the fact search.")
 
 
+class CountIndicesSerializer(serializers.Serializer):
+    indices = IndexSerializer(many=True, default=[], help_text="Which indices to use for the count.")
+
+
 class ProjectSuggestFactNamesSerializer(serializers.Serializer):
     limit = serializers.IntegerField(default=choices.DEFAULT_VALUES_PER_NAME,
                                      help_text=f'Number of suggestions. Default: {choices.DEFAULT_SUGGESTION_LIMIT}.')
