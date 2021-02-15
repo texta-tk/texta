@@ -8,6 +8,15 @@ from typing import List
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.views.static import serve
+from django.db import connections
+
+
+def avoid_db_timeout(func):
+    def inner_wrapper(*args, **kwargs):
+        for conn in connections.all():
+            conn.close_if_unusable_or_obsolete()
+        func(*args, **kwargs)
+    return inner_wrapper
 
 
 def get_indices_from_object(model_object):

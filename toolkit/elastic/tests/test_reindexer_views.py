@@ -9,7 +9,7 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.models import Reindexer
 from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.test_settings import (REINDEXER_TEST_INDEX, TEST_FIELD, TEST_INDEX, TEST_INDEX_REINDEX, TEST_QUERY, TEST_VERSION_PREFIX)
+from toolkit.test_settings import *
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -87,6 +87,22 @@ class ReindexerViewTests(APITransactionTestCase):
                             "new_path_name": "CHANGED_AS_WELL"},
                            ],
         }
+        for REINDEXER_VALIDATION_TEST_INDEX in (
+            REINDEXER_VALIDATION_TEST_INDEX_1,
+            REINDEXER_VALIDATION_TEST_INDEX_2,
+            REINDEXER_VALIDATION_TEST_INDEX_3,
+            REINDEXER_VALIDATION_TEST_INDEX_4,
+            REINDEXER_VALIDATION_TEST_INDEX_5,
+            REINDEXER_VALIDATION_TEST_INDEX_6
+        ):
+            new_index_validation_payload = {
+                "description": "TestNewIndexValidation",
+                "indices": [TEST_INDEX],
+                "new_index": REINDEXER_VALIDATION_TEST_INDEX
+            }
+            url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
+            self.check_new_index_validation(url, new_index_validation_payload)
+
         for payload in (
                 existing_new_index_payload,
                 wrong_indices_payload,
@@ -95,11 +111,10 @@ class ReindexerViewTests(APITransactionTestCase):
                 join_indices_fields_payload,
                 test_query_payload,
                 random_docs_payload,
-                update_field_type_payload,
+                update_field_type_payload
         ):
             url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
             self.run_create_reindexer_task_signal(self.project, url, payload)
-
 
     def run_create_reindexer_task_signal(self, project, url, payload, overwrite=False):
         """ Tests the endpoint for a new Reindexer task, and if a new Task gets created via the signal
@@ -114,6 +129,12 @@ class ReindexerViewTests(APITransactionTestCase):
         self.is_new_index_created_if_yes_remove(response, payload, project)
         self.is_reindexed_index_added_to_project_if_yes_remove(response, payload['new_index'], project)
         assert TEST_INDEX_REINDEX not in ElasticCore().get_indices()
+
+    def check_new_index_validation(self, url, new_index_validation_payload):
+        response = self.client.post(url, new_index_validation_payload, format='json')
+        print_output('new_index_validation:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"].code, "invalid_index_name")
 
 
     def is_new_index_created_if_yes_remove(self, response, payload, project):

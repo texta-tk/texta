@@ -32,11 +32,12 @@ class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSeri
     )
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
     url = serializers.SerializerMethodField()
+    embedding_type = serializers.ChoiceField(choices=choices.EMBEDDING_CHOICES, default=choices.EMBEDDING_CHOICES[0])
 
 
     class Meta:
         model = Embedding
-        fields = ('id', 'url', 'author_username', 'description', 'indices', 'fields', 'use_phraser', 'query', 'num_dimensions', 'max_documents', 'min_freq', 'vocab_size', 'task')
+        fields = ('id', 'url', 'author_username', 'description', 'indices', 'fields', 'use_phraser', 'embedding_type', 'query', 'num_dimensions', 'max_documents', 'min_freq', 'vocab_size', 'task')
         read_only_fields = ('vocab_size',)
         fields_to_parse = ('fields',)
 

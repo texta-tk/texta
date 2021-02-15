@@ -135,3 +135,26 @@ class ElasticAggregator:
         sw = self.filter_aggregation_maker(agg_type="significant_text", field=field, filter_query=query, stop_words=stop_words, exclude=exclude)
         sw = [{"key": hit["key"], "count": hit["doc_count"]} for hit in sw]
         return sw
+
+
+    def get_fact_values_distribution(self, fact_name: str):
+        """
+        Returns a dictionary with fact values (labels) as keys and labels' quantities as values.
+        """
+        self.query["size"] = 0
+        
+        agg_query = {'nested_aggre': {'nested': {'path': 'texta_facts'},
+                    'aggregations': {'terms_aggre': {'terms': {'field': 'texta_facts.str_val'}}}}}
+
+        dist_dict = {}
+        response = self._aggregate(agg_query)
+
+        for hit in response["aggregations"]["nested_aggre"]["terms_aggre"]["buckets"]:
+            dist_dict[hit["key"]] = hit["doc_count"]
+
+        return dist_dict
+
+
+
+
+

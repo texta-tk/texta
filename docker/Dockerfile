@@ -49,11 +49,13 @@ EXPOSE 8080
 # change dir & run collectstatic
 WORKDIR /var/texta-rest
 
-# Do not add MLP resources do the image.
+# Do not add resources do the image.
 ENV SKIP_MLP_RESOURCES True
+ENV SKIP_BERT_RESOURCES True
 RUN /opt/conda/envs/texta-rest/bin/python manage.py collectstatic --no-input --clear
 # set back to False
 ENV SKIP_MLP_RESOURCES False
+ENV SKIP_BERT_RESOURCES False
 
 # Ignition!
 ENTRYPOINT ["/var/texta-rest/docker/conf/entrypoint.sh"]

@@ -12,7 +12,7 @@ from toolkit.core.user_profile import views as profile_views
 from toolkit.dataset_import.urls import router as dataset_import_router
 from toolkit.docparser.views import DocparserView
 from toolkit.document_importer.views import DocumentImportView, DocumentInstanceView, UpdateSplitDocument
-from toolkit.elastic.urls import index_router, router as reindexer_router
+from toolkit.elastic.urls import splitter_router, index_router, router as reindexer_router
 from toolkit.elastic.views import ElasticGetIndices, SnowballProcessor
 from toolkit.embedding.urls import embedding_router
 from toolkit.mlp.urls import mlp_router
@@ -35,6 +35,7 @@ router.register('core_variables', CoreVariableViewSet, basename='corevariable')
 project_router = routers.NestedDefaultRouter(router, r'projects', lookup='project')
 project_router.registry.extend(embedding_router.registry)
 project_router.registry.extend(reindexer_router.registry)
+project_router.registry.extend(splitter_router.registry)
 project_router.registry.extend(dataset_import_router.registry)
 project_router.registry.extend(tagger_router.registry)
 project_router.registry.extend(core_router.registry)

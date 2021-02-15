@@ -72,7 +72,7 @@ class RegexTaggerGroupTagDocumentSerializer(serializers.Serializer):
 
 
 class RegexGroupTaggerTagTextSerializer(serializers.Serializer):
-    text = serializers.CharField(required=True)
+    text = serializers.CharField(allow_blank=True, required=True)
 
 
 class RegexMultitagTextSerializer(serializers.Serializer):
