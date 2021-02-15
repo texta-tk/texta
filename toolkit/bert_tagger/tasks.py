@@ -11,7 +11,7 @@ from toolkit.tools.show_progress import ShowProgress
 from toolkit.base_tasks import TransactionAwareTask
 from toolkit.elastic.data_sample import DataSample
 from toolkit.tools.plots import create_tagger_plot
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, BERT_PRETRAINED_MODEL_DIRECTORY, BERT_FINETUNED_MODEL_DIRECTORY, INFO_LOGGER
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, BERT_PRETRAINED_MODEL_DIRECTORY, BERT_FINETUNED_MODEL_DIRECTORY, BERT_CACHE_DIR, INFO_LOGGER
 from toolkit.helper_functions import get_core_setting, get_indices_from_object
 from toolkit.bert_tagger import choices
 
@@ -58,7 +58,8 @@ def train_bert_tagger(tagger_id, testing=False):
             use_gpu = choices.DEFAULT_USE_GPU,
             save_pretrained = False,
             pretrained_models_dir = "",
-            logger = logging.getLogger(INFO_LOGGER)
+            logger = logging.getLogger(INFO_LOGGER),
+            cache_dir = BERT_CACHE_DIR
         )
 
         # train tagger and get result statistics

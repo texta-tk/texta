@@ -266,6 +266,13 @@ CELERY_DEFAULT_ROUTING_KEY = 'short_term_tasks'
 # we set num workers to 1 because celery tasks are not allowed to have deamon processes
 NUM_WORKERS = 1
 
+DATA_DIR = str(pathlib.Path("data"))
+
+CACHE_DIR_DEFAULT = os.path.join(DATA_DIR, ".cache")
+CACHE_DIR = os.getenv("TEXTA_CACHE_DIR", CACHE_DIR_DEFAULT)
+
+BERT_CACHE_DIR = os.path.join(CACHE_DIR, "bert")
+
 MODELS_DIR_DEFAULT = str(pathlib.Path("data") / "models")
 RELATIVE_MODELS_PATH = os.getenv("TEXTA_RELATIVE_MODELS_DIR", MODELS_DIR_DEFAULT)
 

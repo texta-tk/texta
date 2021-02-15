@@ -21,7 +21,7 @@ from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, D
 from toolkit.helper_functions import add_finite_url_to_feedback, download_bert_requirements, get_downloaded_bert_models
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ALLOW_BERT_MODEL_DOWNLOADS, BERT_PRETRAINED_MODEL_DIRECTORY, INFO_LOGGER
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ALLOW_BERT_MODEL_DOWNLOADS, BERT_PRETRAINED_MODEL_DIRECTORY, INFO_LOGGER, BERT_CACHE_DIR
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
 from toolkit.bert_tagger.serializers import TagRandomDocSerializer, BertTaggerSerializer, BertTagTextSerializer, EpochReportSerializer, BertDownloaderSerializer
 
@@ -214,7 +214,8 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             allow_standard_output = choices.DEFAULT_ALLOW_STANDARD_OUTPUT,
             save_pretrained = False,
             use_gpu = choices.DEFAULT_USE_GPU,
-            logger = logging.getLogger(INFO_LOGGER)
+            logger = logging.getLogger(INFO_LOGGER),
+            cache_dir = BERT_CACHE_DIR
         )
         tagger.load(tagger_object.model.path)
         # tag text
