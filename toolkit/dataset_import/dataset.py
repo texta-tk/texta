@@ -10,7 +10,7 @@ class Dataset:
     TYPE_CSV = '.csv'
     TYPE_XLS = '.xls'
     TYPE_XLSX = '.xlsx'
-    TYPE_JSON = ['.jsonl', '.jl', '.jsonline']
+    TYPE_JSON = ['.jsonl', '.jl', '.jsonlines']
 
 
     def __init__(self, file_path, index, separator=',', show_progress=None):
