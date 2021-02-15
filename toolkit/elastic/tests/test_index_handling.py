@@ -7,7 +7,7 @@ from rest_framework.test import APITestCase
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.models import Index
 from toolkit.settings import CORE_SETTINGS
-from toolkit.test_settings import TEST_INDEX
+from toolkit.test_settings import TEST_INDEX, VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, project_creation
 
 
@@ -44,7 +44,7 @@ class ElasticIndexViewTests(APITestCase):
 
     def setUp(self):
         self.client.login(username=self.admin, password="1234")
-        self.index_url = reverse("v1:index-list")
+        self.index_url = reverse(f"{VERSION_NAMESPACE}:index-list")
 
 
     def tearDown(self):
@@ -170,10 +170,10 @@ class ElasticIndexViewTests(APITestCase):
         for index in index_names:
             self.__create_locked_index(index)
 
-        response = self.client.post(reverse("v1:project-list"), format="json", data={
+        response = self.client.post(reverse(f"{VERSION_NAMESPACE}:project-list"), format="json", data={
             "title": "faulty_project",
             "indices": index_names,
-            "users": [reverse("v1:user-detail", args=[self.admin.pk])]
+            "users": [reverse(f"{VERSION_NAMESPACE}:user-detail", args=[self.admin.pk])]
         })
 
         ec = ElasticCore()
@@ -207,7 +207,7 @@ class ElasticIndexViewTests(APITestCase):
 
     def test_that_index_count_matches_reality(self):
         ec = ElasticCore()
-        list_url = reverse("v1:index-list")
+        list_url = reverse(f"{VERSION_NAMESPACE}:index-list")
         response = self.client.get(list_url)
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         test_index = [index for index in response.data if index["name"] == TEST_INDEX][0]

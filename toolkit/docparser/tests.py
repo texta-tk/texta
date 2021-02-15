@@ -9,7 +9,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from toolkit.core.project.models import Project
-from toolkit.test_settings import TEST_INDEX
+from toolkit.test_settings import TEST_INDEX, VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -36,7 +36,7 @@ class TestDocparserAPIView(APITestCase):
 
 
     def _basic_pipeline_functionality(self):
-        url = reverse("v1:docparser")
+        url = reverse(f"{VERSION_NAMESPACE}:docparser")
         payload = {
             "file": self.file,
             "project_id": self.project.pk,
@@ -54,7 +54,7 @@ class TestDocparserAPIView(APITestCase):
 
 
     def test_being_rejected_without_login(self):
-        url = reverse("v1:docparser")
+        url = reverse(f"{VERSION_NAMESPACE}:docparser")
         self.client.logout()
         payload = {
             "file": self.file,
@@ -70,7 +70,7 @@ class TestDocparserAPIView(APITestCase):
 
 
     def test_being_rejected_with_wrong_project_id(self):
-        url = reverse("v1:docparser")
+        url = reverse(f"{VERSION_NAMESPACE}:docparser")
         payload = {
             "file": self.file,
             "project_id": self.unauth_project.pk,
@@ -128,7 +128,7 @@ class TestDocparserAPIView(APITestCase):
 
 
     def test_payload_with_empty_indices(self):
-        url = reverse("v1:docparser")
+        url = reverse(f"{VERSION_NAMESPACE}:docparser")
         payload = {
             "file": SimpleUploadedFile("text.txt", b"file_content", content_type="text/html"),
             "project_id": self.project.pk,

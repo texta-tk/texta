@@ -14,7 +14,7 @@ from toolkit.test_settings import (TEST_FACT_NAME,
                                    TEST_FIELD_CHOICE,
                                    TEST_INDEX,
                                    TEST_VERSION_PREFIX,
-                                   TEST_KEEP_PLOT_FILES)
+                                   TEST_KEEP_PLOT_FILES, VERSION_NAMESPACE)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
@@ -256,7 +256,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
         description = tg.description
 
         for tagger in tg.taggers.all():
-            tagger_url = reverse("v1:tagger-detail", kwargs={"project_pk": self.project.pk, "pk": tagger.pk})
+            tagger_url = reverse(f"{VERSION_NAMESPACE}:tagger-detail", kwargs={"project_pk": self.project.pk, "pk": tagger.pk})
             response = self.client.get(tagger_url)
             self.assertTrue(response.status_code == status.HTTP_200_OK)
             self.assertTrue(tg.description in response.data["tagger_groups"])

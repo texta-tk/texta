@@ -31,7 +31,7 @@ class TestSpamDetection(TestCase):
             "min_doc_count": 1,
             "common_feature_fields": common_fields
         }
-        response = self.client.post(self.url, payload, format="json").json()
+        response = self.client.post(self.url, data=payload, format="json").json()
         self.assertEqual(len(response) > 1, True)
 
         for item in response:
