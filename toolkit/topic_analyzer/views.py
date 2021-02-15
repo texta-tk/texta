@@ -25,6 +25,7 @@ from ..elastic.searcher import ElasticSearcher
 from ..elastic.serializers import ElasticFactSerializer, ElasticMoreLikeThisSerializer
 from ..pagination import PageNumberPaginationDataOnly
 from ..permissions.project_permissions import ProjectResourceAllowed
+from ..settings import REST_FRAMEWORK
 from ..view_constants import BulkDelete
 
 
@@ -514,9 +515,11 @@ class ClusteringViewSet(viewsets.ModelViewSet, BulkDelete):
         container = []
         clustering_model = ClusteringResult.objects.get(pk=kwargs["pk"])
         clusters = clustering_model.cluster_result.all()
+        default_version = REST_FRAMEWORK.get("DEFAULT_VERSION")
 
         for cluster in clusters:
-            url = request.build_absolute_uri(reverse("v1:cluster-detail", kwargs={"pk": cluster.pk, "project_pk": kwargs["project_pk"], "clustering_pk": clustering_model.id}))
+            relative_url = reverse(f"{default_version}:cluster-detail", kwargs={"pk": cluster.pk, "project_pk": kwargs["project_pk"], "clustering_pk": clustering_model.id})
+            url = request.build_absolute_uri(relative_url)
             container.append(
                 {
                     "id": cluster.pk,

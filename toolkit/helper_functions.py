@@ -50,9 +50,12 @@ def add_finite_url_to_feedback(decision_dict, request):
     """
     Adds finite url to feedback.
     """
+    from toolkit.settings import REST_FRAMEWORK
+
     if "feedback" in decision_dict:
         feedback = decision_dict["feedback"]
-        url = "/api/v1/" + feedback["url"]
+        default_version = REST_FRAMEWORK.get("DEFAULT_VERSION")
+        url = f"/api/{default_version}/" + feedback["url"]
         url = re.sub('/+', '/', url)
         decision_dict["feedback"]["url"] = request.build_absolute_uri(url)
     return decision_dict

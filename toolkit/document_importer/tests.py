@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from toolkit.elastic.core import ElasticCore
-from toolkit.test_settings import TEST_INDEX
+from toolkit.test_settings import TEST_INDEX, VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -30,7 +30,7 @@ class DocumentImporterAPITestCase(APITestCase):
 
 
     def _check_inserting_documents(self):
-        url = reverse("v1:document_import", kwargs={"pk": self.project.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:document_import", kwargs={"pk": self.project.pk})
         response = self.client.post(url, data={"documents": [self.document], "split_text_in_fields": []}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         document = self.ec.es.get(id=self.document_id, index=TEST_INDEX)
@@ -45,14 +45,14 @@ class DocumentImporterAPITestCase(APITestCase):
 
 
     def test_adding_documents_to_false_project(self):
-        url = reverse("v1:document_import", kwargs={"pk": self.validation_project.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:document_import", kwargs={"pk": self.validation_project.pk})
         response = self.client.post(url, data={"documents": [self.document]}, format="json")
         self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)
         print_output("test_adding_documents_to_false_project:response.data", response.data)
 
 
     def test_adding_documents_to_false_index(self):
-        url = reverse("v1:document_import", kwargs={"pk": self.project.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:document_import", kwargs={"pk": self.project.pk})
         index_name = "wrong_index"
         response = self.client.post(url, data={"documents": [{"_index": index_name, "_source": self.document}]}, format="json")
         try:
@@ -64,7 +64,7 @@ class DocumentImporterAPITestCase(APITestCase):
 
 
     def test_updating_document(self):
-        url = reverse("v1:document_instance", kwargs={"pk": self.project.pk, "index": TEST_INDEX, "document_id": self.document_id})
+        url = reverse(f"{VERSION_NAMESPACE}:document_instance", kwargs={"pk": self.project.pk, "index": TEST_INDEX, "document_id": self.document_id})
         response = self.client.patch(url, data={"hello": "night", "goodbye": "world"})
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         document = self.ec.es.get(index=TEST_INDEX, id=self.document_id)["_source"]
@@ -73,7 +73,7 @@ class DocumentImporterAPITestCase(APITestCase):
 
 
     def test_deleting_document(self):
-        url = reverse("v1:document_instance", kwargs={"pk": self.project.pk, "index": TEST_INDEX, "document_id": self.document_id})
+        url = reverse(f"{VERSION_NAMESPACE}:document_instance", kwargs={"pk": self.project.pk, "index": TEST_INDEX, "document_id": self.document_id})
         response = self.client.delete(url)
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         try:
@@ -86,7 +86,7 @@ class DocumentImporterAPITestCase(APITestCase):
 
     def test_unauthenticated_access(self):
         self.client.logout()
-        url = reverse("v1:document_import", kwargs={"pk": self.project.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:document_import", kwargs={"pk": self.project.pk})
         response = self.client.post(url, data={"documents": [self.document]}, format="json")
         print_output("test_unauthenticated_access:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN or response.status_code == status.HTTP_401_UNAUTHORIZED)
@@ -95,7 +95,7 @@ class DocumentImporterAPITestCase(APITestCase):
     def test_adding_document_without_specified_index_and_that_index_is_added_into_project(self):
         from toolkit.document_importer.views import DocumentImportView
         sample_id = 65959645
-        url = reverse("v1:document_import", kwargs={"pk": self.project.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:document_import", kwargs={"pk": self.project.pk})
         response = self.client.post(url, data={"documents": [{"_source": self.source, "_id": sample_id}]}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         normalized_project_title = DocumentImportView.get_new_index_name(self.project.pk)
@@ -110,7 +110,7 @@ class DocumentImporterAPITestCase(APITestCase):
 
     def test_updating_non_existing_document(self):
         sample_id = "random_id"
-        url = reverse("v1:document_instance", kwargs={"pk": self.project.pk, "index": TEST_INDEX, "document_id": sample_id})
+        url = reverse(f"{VERSION_NAMESPACE}:document_instance", kwargs={"pk": self.project.pk, "index": TEST_INDEX, "document_id": sample_id})
         response = self.client.patch(url, data={"hello": "world"}, format="json")
         print_output("test_updating_non_existing_document:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_404_NOT_FOUND)
@@ -118,14 +118,14 @@ class DocumentImporterAPITestCase(APITestCase):
 
     def test_deleting_non_existing_document(self):
         sample_id = "random_id"
-        url = reverse("v1:document_instance", kwargs={"pk": self.project.pk, "index": TEST_INDEX, "document_id": sample_id})
+        url = reverse(f"{VERSION_NAMESPACE}:document_instance", kwargs={"pk": self.project.pk, "index": TEST_INDEX, "document_id": sample_id})
         response = self.client.delete(url, data={"hello": "world"}, format="json")
         print_output("test_deleting_non_existing_document:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_404_NOT_FOUND)
 
 
     def test_that_specified_field_is_being_split(self):
-        url = reverse("v1:document_import", kwargs={"pk": self.project.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:document_import", kwargs={"pk": self.project.pk})
         uuid = "456694-asdasdad4-54646ad-asd4a5d"
         response = self.client.post(
             url,
@@ -150,7 +150,7 @@ class DocumentImporterAPITestCase(APITestCase):
 
 
     def test_that_wrong_field_value_will_skip_splitting(self):
-        url = reverse("v1:document_import", kwargs={"pk": self.project.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:document_import", kwargs={"pk": self.project.pk})
         uuid = "Adios"
         response = self.client.post(
             url,
@@ -174,7 +174,7 @@ class DocumentImporterAPITestCase(APITestCase):
 
 
     def test_splitting_behaviour_with_empty_list_as_input(self):
-        url = reverse("v1:document_import", kwargs={"pk": self.project.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:document_import", kwargs={"pk": self.project.pk})
         uuid = "adasdasd-5g465s-fa4s69f4a8s97-a4das9f4"
         response = self.client.post(
             url,
@@ -199,7 +199,7 @@ class DocumentImporterAPITestCase(APITestCase):
 
 
     def test_updating_split_documents(self):
-        url = reverse("v1:update_split_document", kwargs={"pk": self.project.pk, "index": TEST_INDEX})
+        url = reverse(f"{VERSION_NAMESPACE}:update_split_document", kwargs={"pk": self.project.pk, "index": TEST_INDEX})
         payload = {"id_field": "uuid", "id_value": self.uuid, "text_field": "hello", "content": "hell"}
         response = self.client.patch(url, data=payload, format="json")
         print_output("test_updating_split_documents:response.data", response.data)

@@ -7,6 +7,7 @@ from toolkit.core.task.serializers import TaskSerializer
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.serializers import IndexSerializer
+from toolkit.settings import REST_FRAMEWORK
 from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 from toolkit.topic_analyzer.validators import check_cluster_existence
@@ -74,7 +75,8 @@ class ClusteringSerializer(serializers.ModelSerializer):
 
 
     def get_url(self, obj):
-        index = reverse("v1:clustering-detail", kwargs={"project_pk": obj.project.pk, "pk": obj.pk})
+        default_version = REST_FRAMEWORK.get("DEFAULT_VERSION")
+        index = reverse(f"{default_version}:clustering-detail", kwargs={"project_pk": obj.project.pk, "pk": obj.pk})
         if "request" in self.context:
             request = self.context["request"]
             url = request.build_absolute_uri(index)
