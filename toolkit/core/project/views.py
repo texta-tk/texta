@@ -14,7 +14,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
-from toolkit.core.project.serializers import (ExportSearcherResultsSerializer, ProjectDocumentSerializer, ProjectGetFactsSerializer, ProjectGetSpamSerializer, ProjectSearchByQuerySerializer, ProjectSerializer, ProjectSimplifiedSearchSerializer, ProjectSuggestFactNamesSerializer,
+from toolkit.core.project.serializers import (CountIndicesSerializer, ExportSearcherResultsSerializer, ProjectDocumentSerializer, ProjectGetFactsSerializer, ProjectGetSpamSerializer, ProjectSearchByQuerySerializer, ProjectSerializer, ProjectSimplifiedSearchSerializer,
+                                              ProjectSuggestFactNamesSerializer,
                                               ProjectSuggestFactValuesSerializer)
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.core import ElasticCore
@@ -307,6 +308,24 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         return Response(results, status=status.HTTP_200_OK)
 
 
+    @action(detail=True, methods=['post'], serializer_class=CountIndicesSerializer, permission_classes=[ExtraActionResource])
+    def count_indices(self, request, pk=None, project_pk=None):
+        serializer: CountIndicesSerializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        project: Project = self.get_object()
+        ed = ElasticDocument(None)
+
+        indices = serializer.validated_data.get("indices", [])
+        indices = [index["name"] for index in indices]
+        if indices:
+            # We check for indices before to prevent the default behaviour of picking all the indices in project.
+            indices = project.get_available_or_all_project_indices(indices)
+            count = ed.count(indices=indices)
+            return Response(count)
+        else:
+            return Response(0)
+
+
     @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactValuesSerializer, permission_classes=[ExtraActionResource])
     def autocomplete_fact_values(self, request, pk=None, project_pk=None):
 
@@ -355,7 +374,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
 
     @action(detail=True, methods=['get'])
     def get_resource_counts(self, request, pk=None, project_pk=None):
-        proj = self.get_object()
+        proj: Project = self.get_object()
         response = {
             'num_lexicons': proj.lexicon_set.count(),
             'num_torchtaggers': proj.torchtagger_set.count(),

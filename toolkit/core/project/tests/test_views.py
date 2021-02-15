@@ -9,8 +9,7 @@ from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.models import Index
 from toolkit.settings import RELATIVE_PROJECT_DATA_PATH, SEARCHER_FOLDER_KEY
-from toolkit.test_settings import REINDEXER_TEST_INDEX, TEST_FACT_NAME, TEST_INDEX, TEST_QUERY, TEST_VERSION_PREFIX, \
-    TEST_FIELD, TEST_MATCH_TEXT
+from toolkit.test_settings import REINDEXER_TEST_INDEX, TEST_FACT_NAME, TEST_FIELD, TEST_INDEX, TEST_MATCH_TEXT, TEST_QUERY, TEST_VERSION_PREFIX
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -200,7 +199,7 @@ class ProjectViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # test search with indices
         highlight_query = {"query": {"match": {TEST_FIELD: {"query": TEST_MATCH_TEXT}}},
-                          "highlight": {"fields": {TEST_FIELD: {}}, "number_of_fragments": 0, }}
+                           "highlight": {"fields": {TEST_FIELD: {}}, "number_of_fragments": 0, }}
         payload = {"query": highlight_query, "indices": [TEST_INDEX]}
         response = self.client.post(url, payload, format='json')
         print_output("search_by_query_with_indices_project_user", response.data)
@@ -297,3 +296,24 @@ class ProjectViewTests(APITestCase):
         }
         response = self.client.patch(url, data=payload, format="json")
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+
+
+    def test_document_count(self):
+        url = reverse("v1:project-count-indices", kwargs={"pk": self.project.pk})
+        response = self.client.post(url, data={"indices": [{"name": TEST_INDEX}]}, format="json")
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, int))
+        self.assertTrue(response.data > 100)
+
+
+    def test_document_count_with_false_indies(self):
+        url = reverse("v1:project-count-indices", kwargs={"pk": self.project.pk})
+        response = self.client.post(url, data={"indices": [{"name": TEST_INDEX + "_potato"}]}, format="json")
+        self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+
+
+    def test_document_count_with_zero_input(self):
+        url = reverse("v1:project-count-indices", kwargs={"pk": self.project.pk})
+        response = self.client.post(url, data={"indices": []}, format="json")
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        self.assertTrue(response.data == 0)

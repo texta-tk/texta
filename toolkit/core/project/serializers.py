@@ -113,6 +113,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
 
         return instance
 
+
     def create(self, validated_data):
         from toolkit.elastic.models import Index
         indices: List[str] = validated_data["get_indices"]
@@ -133,10 +134,12 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
         project.save()
         return project
 
+
     class Meta:
         model = Project
         fields = ('url', 'id', 'title', 'author_username', 'users', 'indices', 'resources',)
         read_only_fields = ('author_username', 'resources',)
+
 
     def get_resources(self, obj):
         request = self.context.get('request')
@@ -182,6 +185,10 @@ class ProjectSuggestFactValuesSerializer(serializers.Serializer):
     startswith = serializers.CharField(help_text=f'The string to autocomplete fact values with.', allow_blank=True)
     fact_name = serializers.CharField(help_text='Fact name from which to suggest values.')
     indices = IndexSerializer(many=True, default=[], help_text="Which indices to use for the fact search.")
+
+
+class CountIndicesSerializer(serializers.Serializer):
+    indices = IndexSerializer(many=True, default=[], help_text="Which indices to use for the count.")
 
 
 class ProjectSuggestFactNamesSerializer(serializers.Serializer):
