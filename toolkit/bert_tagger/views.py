@@ -190,7 +190,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
         bert_model = serializer.validated_data['bert_model']
         if ALLOW_BERT_MODEL_DOWNLOADS:
-            errors, failed_models = download_bert_requirements(BERT_PRETRAINED_MODEL_DIRECTORY, [bert_model], logger = logging.getLogger(INFO_LOGGER))
+            errors, failed_models = download_bert_requirements(BERT_PRETRAINED_MODEL_DIRECTORY, [bert_model], cache_directory = BERT_CACHE_DIR, logger = logging.getLogger(INFO_LOGGER))
             if failed_models:
                 error_msg = f"Failed downloading model: {failed_models[0]}. Make sure to use the correct model identifier listed in https://huggingface.co/models."
                 raise InvalidModelIdentifierError(error_msg)

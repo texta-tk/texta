@@ -22,7 +22,7 @@ from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
 from texta_bert_tagger.tagger import BertTagger
 
 from toolkit.helper_functions import get_downloaded_bert_models, download_bert_requirements
-from toolkit.settings import BERT_PRETRAINED_MODEL_DIRECTORY, ALLOW_BERT_MODEL_DOWNLOADS
+from toolkit.settings import BERT_PRETRAINED_MODEL_DIRECTORY, ALLOW_BERT_MODEL_DOWNLOADS, BERT_CACHE_DIR
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
 class BertTaggerObjectViewTests(APITransactionTestCase):
@@ -41,7 +41,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         # Check if TEST_BERT_MODEL is already downloaded
         available_models = get_downloaded_bert_models(BERT_PRETRAINED_MODEL_DIRECTORY)
         self.test_model_existed = True if TEST_BERT_MODEL in available_models else False
-        download_bert_requirements(BERT_PRETRAINED_MODEL_DIRECTORY, [TEST_BERT_MODEL])
+        download_bert_requirements(BERT_PRETRAINED_MODEL_DIRECTORY, [TEST_BERT_MODEL], cache_directory=BERT_CACHE_DIR)
 
 
     def test(self):
