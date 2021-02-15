@@ -7,7 +7,7 @@ from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
 from toolkit.elastic.document import ElasticDocument
-from toolkit.test_settings import (TEST_FIELD, TEST_INDEX)
+from toolkit.test_settings import (TEST_FIELD, TEST_INDEX, VERSION_NAMESPACE)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 
@@ -46,7 +46,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
         self.project = project_creation("projectAnalyzerProject", TEST_INDEX, self.user)
         self.project.users.add(self.user)
         self.project.users.add(self.admin_user)
-        self.clustering_url = reverse("v1:clustering-list", kwargs={"project_pk": self.project.pk})
+        self.clustering_url = reverse(f"{VERSION_NAMESPACE}:clustering-list", kwargs={"project_pk": self.project.pk})
 
 
     def setUp(self):
@@ -60,7 +60,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
 
 
     def test_access_to_detail_page(self):
-        url = reverse("v1:clustering-detail", kwargs={"project_pk": self.project.pk, "pk": self.clustering_id})
+        url = reverse(f"{VERSION_NAMESPACE}:clustering-detail", kwargs={"project_pk": self.project.pk, "pk": self.clustering_id})
         response = self.client.get(url)
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         print_output("test_access_to_detail_page", 200)
@@ -82,7 +82,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
 
 
     def test_access_to_cluster_page_and_content_of_clusters(self):
-        url = reverse("v1:clustering-view-clusters", kwargs={"project_pk": self.project.pk, "pk": self.clustering_id})
+        url = reverse(f"{VERSION_NAMESPACE}:clustering-view-clusters", kwargs={"project_pk": self.project.pk, "pk": self.clustering_id})
         response = self.client.get(url)
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         self.assertTrue(response.data["cluster_count"] == len(response.data["clusters"]))
@@ -109,7 +109,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
         clustering = ClusteringResult.objects.get(pk=self.clustering_id)
         singular_cluster = clustering.cluster_result.first()
 
-        cluster_detail_url = reverse("v1:cluster-detail", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
+        cluster_detail_url = reverse(f"{VERSION_NAMESPACE}:cluster-detail", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
         cluster_details = self.client.get(cluster_detail_url)
         self.assertTrue(cluster_details.status_code == status.HTTP_200_OK)
 
@@ -132,7 +132,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
     def test_more_like_cluster_functionality(self):
         clustering = ClusteringResult.objects.get(pk=self.clustering_id)
         singular_cluster = clustering.cluster_result.first()
-        url = reverse("v1:cluster-more-like-cluster", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:cluster-more-like-cluster", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
         response = self.client.post(url, data={}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
 
@@ -146,7 +146,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
     def test_more_like_cluster_with_size_parameter(self):
         clustering = ClusteringResult.objects.get(pk=self.clustering_id)
         singular_cluster = clustering.cluster_result.first()
-        url = reverse("v1:cluster-more-like-cluster", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:cluster-more-like-cluster", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
         response = self.client.post(url, data={"size": 1}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         self.assertTrue(len(response.data) == 1)
@@ -156,7 +156,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
     def test_more_like_cluster_with_meta_information(self):
         clustering = ClusteringResult.objects.get(pk=self.clustering_id)
         singular_cluster = clustering.cluster_result.first()
-        url = reverse("v1:cluster-more-like-cluster", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:cluster-more-like-cluster", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
         response = self.client.post(url, data={"include_meta": True}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
 
@@ -174,7 +174,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
         singular_cluster = clustering.cluster_result.first()
         document_ids = json.loads(singular_cluster.document_ids)
 
-        url = reverse("v1:cluster-ignore-and-delete", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:cluster-ignore-and-delete", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
         response = self.client.post(url, data={}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         self.assertTrue(Cluster.objects.filter(pk=singular_cluster.pk).count() == 0)  # Check that the cluster doesn't exist anymore.
@@ -190,7 +190,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
         singular_cluster = clustering.cluster_result.first()
         document_ids = json.loads(singular_cluster.document_ids)
 
-        url = reverse("v1:cluster-tag-cluster", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:cluster-tag-cluster", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
         payload = {
             "fact": "TEST_FACT",
             "str_val": "TEST_CONTENT",
@@ -220,7 +220,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
         document_ids = json.loads(singular_cluster.document_ids)
         document_to_keep = document_ids[-1]
 
-        url = reverse("v1:cluster-detail", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:cluster-detail", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
         response = self.client.patch(url, format="json", data={
             "document_ids": [document_to_keep]
         })
@@ -244,12 +244,12 @@ class TopicAnalyzerTests(APITransactionTestCase):
             self.assertTrue(response.status_code == status.HTTP_200_OK)
 
             # Clustering DETAIL View
-            url = reverse("v1:clustering-detail", kwargs={"project_pk": self.project.pk, "pk": clustering.pk})
+            url = reverse(f"{VERSION_NAMESPACE}:clustering-detail", kwargs={"project_pk": self.project.pk, "pk": clustering.pk})
             response = self.client.get(url)
             self.assertTrue(response.status_code == status.HTTP_200_OK)
 
             # Cluster DETAIL View
-            url = reverse("v1:cluster-detail", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
+            url = reverse(f"{VERSION_NAMESPACE}:cluster-detail", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
             response = self.client.get(url)
             self.assertTrue(response.status_code == status.HTTP_200_OK)
 
@@ -263,7 +263,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
         helper_cluster = clustering.cluster_result.last()
         legit_ids_to_add = json.loads(helper_cluster.document_ids)
 
-        url = reverse("v1:cluster-add-documents", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:cluster-add-documents", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
         response = self.client.post(url, format="json", data={"ids": legit_ids_to_add})
 
         updated_cluster = clustering.cluster_result.first()
@@ -276,7 +276,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
         singular_cluster = clustering.cluster_result.first()
 
         ids_to_remove = json.loads(singular_cluster.document_ids)[-3:]
-        url = reverse("v1:cluster-remove-documents", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:cluster-remove-documents", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
         response = self.client.post(url, format="json", data={"ids": ids_to_remove})
         self.assertTrue(response.status_code == status.HTTP_200_OK)
 
@@ -294,7 +294,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
         self.assertTrue(from_cluster.pk != to_cluster.pk)
 
         ids = json.loads(from_cluster.document_ids)
-        url = reverse("v1:cluster-transfer-documents", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": from_cluster.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:cluster-transfer-documents", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": from_cluster.pk})
         response = self.client.post(url, format="json", data={"ids": ids, "receiving_cluster_id": to_cluster.pk})
         self.assertTrue(response.status_code == status.HTTP_200_OK)
 
@@ -312,7 +312,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
     def test_cluster_exist_validation_for_transferring_endpoint(self):
         clustering = ClusteringResult.objects.get(pk=self.clustering_id)
         singular_cluster = clustering.cluster_result.first()
-        url = reverse("v1:cluster-transfer-documents", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:cluster-transfer-documents", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
 
         response = self.client.post(url, format="json", data={"ids": ["wrong, sample id"], "receiving_cluster_id": 1000})
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
@@ -323,7 +323,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
         clustering = ClusteringResult.objects.get(pk=clustering_id)
         cluster_ids = [cluster.id for cluster in clustering.cluster_result.all()]
 
-        url = reverse("v1:clustering-detail", kwargs={"project_pk": self.project.pk, "pk": clustering_id})
+        url = reverse(f"{VERSION_NAMESPACE}:clustering-detail", kwargs={"project_pk": self.project.pk, "pk": clustering_id})
         response = self.client.delete(url)
         self.assertTrue(response.status_code == status.HTTP_204_NO_CONTENT)
 
@@ -334,7 +334,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
 
     def test_updating_clustering_instances_stop_words(self):
         stop_words = ["ja", "siis", "kui", "ka"]
-        url = reverse("v1:clustering-detail", kwargs={"project_pk": self.project.pk, "pk": self.clustering_id})
+        url = reverse(f"{VERSION_NAMESPACE}:clustering-detail", kwargs={"project_pk": self.project.pk, "pk": self.clustering_id})
         response = self.client.patch(url, data={"stop_words": stop_words}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
 
@@ -345,7 +345,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
 
 
     def test_that_clusters_dont_contain_duplicate_document_ids(self):
-        url = reverse("v1:clustering-list", kwargs={"project_pk": self.project.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:clustering-list", kwargs={"project_pk": self.project.pk})
         payload = {
             "description": "TopicCluster",
             "fields": ["comment_subject", "comment_content"],

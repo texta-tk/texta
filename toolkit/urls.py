@@ -18,5 +18,7 @@ urlpatterns = [
     # reroute root to version prefix
     path('', RedirectView.as_view(url='api/v1/', permanent=False), name='index'),
     path('api/v1/', include(('toolkit.urls_v1', 'toolkit_v1'), namespace='v1')),
+    path('api/v2/', include(('toolkit.urls_v2', 'toolkit_v2'), namespace='v2')),
+
     # add new versions here
 ]

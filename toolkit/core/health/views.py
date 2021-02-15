@@ -8,13 +8,8 @@ from rest_framework.decorators import permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from toolkit.core.health.utils import (
-    get_active_tasks,
-    get_elastic_status,
-    get_redis_status,
-    get_version,
-    get_gpu_devices
-)
+from toolkit.core.health.utils import (get_active_tasks, get_elastic_status, get_gpu_devices, get_redis_status, get_version)
+from toolkit.settings import DEFAULT_MLP_LANGUAGE_CODES
 
 
 @permission_classes((AllowAny,))
@@ -27,6 +22,7 @@ class HealthView(views.APIView):
         toolkit_status["services"]["elastic"] = get_elastic_status()
 
         toolkit_status["toolkit"]["version"] = get_version()
+        toolkit_status["toolkit"]["available_langs"] = DEFAULT_MLP_LANGUAGE_CODES
 
         disk_total, disk_used, disk_free = shutil.disk_usage("/")
         toolkit_status["host"]["disk"] = {

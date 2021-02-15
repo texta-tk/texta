@@ -113,6 +113,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
 
         return instance
 
+
     def create(self, validated_data):
         from toolkit.elastic.models import Index
         indices: List[str] = validated_data["get_indices"]
@@ -133,14 +134,17 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
         project.save()
         return project
 
+
     class Meta:
         model = Project
         fields = ('url', 'id', 'title', 'author_username', 'users', 'indices', 'resources',)
         read_only_fields = ('author_username', 'resources',)
 
+
     def get_resources(self, obj):
         request = self.context.get('request')
-        version_prefix = f'/api/{self.context["request"].version}'
+        api_version = self.context["request"].version
+        version_prefix = f'/api/{api_version}'
         base_url = request.build_absolute_uri(f'{version_prefix}/projects/{obj.id}/')
         resource_dict = {}
         resources = (
@@ -168,10 +172,10 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
 
         additional_urls = ['mlp_texts', 'mlp_docs']
         for item in additional_urls:
-            view_url = reverse(f"v1:{item}")
+            view_url = reverse(f"{api_version}:{item}")
             resource_dict[item] = request.build_absolute_uri(view_url)
 
-        importer_uri = reverse("v1:document_import", kwargs={"pk": obj.id})
+        importer_uri = reverse(f"{api_version}:document_import", kwargs={"pk": obj.id})
         resource_dict["document_import_api"] = request.build_absolute_uri(importer_uri)
         return resource_dict
 
@@ -182,6 +186,10 @@ class ProjectSuggestFactValuesSerializer(serializers.Serializer):
     startswith = serializers.CharField(help_text=f'The string to autocomplete fact values with.', allow_blank=True)
     fact_name = serializers.CharField(help_text='Fact name from which to suggest values.')
     indices = IndexSerializer(many=True, default=[], help_text="Which indices to use for the fact search.")
+
+
+class CountIndicesSerializer(serializers.Serializer):
+    indices = IndexSerializer(many=True, default=[], help_text="Which indices to use for the count.")
 
 
 class ProjectSuggestFactNamesSerializer(serializers.Serializer):

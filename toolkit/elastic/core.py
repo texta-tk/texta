@@ -167,7 +167,7 @@ class ElasticCore:
 
 
     @elastic_connection
-    def get_fields(self, indices=[]):
+    def get_fields(self, indices: List[str] = []):
         out = []
         indices = indices if indices else ["*"]
         if self.connection:

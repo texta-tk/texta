@@ -1,16 +1,19 @@
+from typing import List
+
 from django.urls import reverse
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.elastic.choices import LABEL_DISTRIBUTION, get_snowball_choices
 from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.models import Index, Reindexer, IndexSplitter
+from toolkit.elastic.models import Index, IndexSplitter, Reindexer
 from toolkit.elastic.searcher import EMPTY_QUERY
-from toolkit.elastic.choices import LABEL_DISTRIBUTION
 from toolkit.elastic.validators import check_for_banned_beginning_chars, check_for_colons, check_for_special_symbols, check_for_upper_case, check_for_wildcards
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
 from toolkit.elastic.choices import get_snowball_choices
+from toolkit.settings import REST_FRAMEWORK
 
 
 class SnowballSerializer(serializers.Serializer):
@@ -38,7 +41,9 @@ class IndexSerializer(serializers.ModelSerializer):
 
 
     def get_url(self, obj):
-        index = reverse("v1:index-detail", kwargs={"pk": obj.pk})
+        default_version = REST_FRAMEWORK.get("DEFAULT_VERSION")
+
+        index = reverse(f"{default_version}:index-detail", kwargs={"pk": obj.pk})
         if "request" in self.context:
             request = self.context["request"]
             url = request.build_absolute_uri(index)
@@ -115,13 +120,13 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
     indices = serializers.ListField(child=serializers.CharField(), help_text=f'Add the indices, you wish to reindex into a new index.', write_only=True, required=True)
     query = serializers.JSONField(help_text='Add a query, if you wish to filter the new reindexed index.', required=False)
     new_index = serializers.CharField(help_text='Your new re-indexed index name', allow_blank=False, required=True,
-        validators=[
-            check_for_wildcards,
-            check_for_colons,
-            check_for_special_symbols,
-            check_for_banned_beginning_chars,
-            check_for_upper_case
-        ])
+                                      validators=[
+                                          check_for_wildcards,
+                                          check_for_colons,
+                                          check_for_special_symbols,
+                                          check_for_banned_beginning_chars,
+                                          check_for_upper_case
+                                      ])
     field_type = serializers.ListField(help_text=f'Used to update the fieldname and the field type of chosen paths.', required=False)
     add_facts_mapping = serializers.BooleanField(help_text='Add texta facts mapping. NB! If texta_facts is present in reindexed fields, the mapping is always created.', required=False, default=False)
     task = TaskSerializer(read_only=True)
@@ -160,10 +165,12 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
         return value
 
 
-    def validate_fields(self, value):
-        ''' check if changed fields included in the request are in the relevant project fields '''
-        project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
-        project_fields = ElasticCore().get_fields(indices=project_obj.get_indices())
+    def validate_fields(self, value: List[str]):
+        """ check if changed fields included in the request are in the relevant project fields """
+        project_obj: Project = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
+        indices = self.context["request"].data.get("indices", [])
+        indices = project_obj.get_available_or_all_project_indices(indices)
+        project_fields = ElasticCore().get_fields(indices=indices)
         field_data = [field["path"] for field in project_fields]
         for field in value:
             if field not in field_data:
@@ -179,21 +186,21 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
     indices = IndexSerializer(many=True, write_only=True, default=[], help_text=f'Indices that are used to create train and test indices.')
     query = serializers.JSONField(help_text='Query used to filter the indices. Defaults to an empty query.', required=False)
     train_index = serializers.CharField(help_text='Name of the train index.', allow_blank=False, required=True,
-    validators=[
-            check_for_wildcards,
-            check_for_colons,
-            check_for_special_symbols,
-            check_for_banned_beginning_chars,
-            check_for_upper_case
-        ])
+                                        validators=[
+                                            check_for_wildcards,
+                                            check_for_colons,
+                                            check_for_special_symbols,
+                                            check_for_banned_beginning_chars,
+                                            check_for_upper_case
+                                        ])
     test_index = serializers.CharField(help_text='Name of the test index.', allow_blank=False, required=True,
-    validators=[
-            check_for_wildcards,
-            check_for_colons,
-            check_for_special_symbols,
-            check_for_banned_beginning_chars,
-            check_for_upper_case
-        ])
+                                       validators=[
+                                           check_for_wildcards,
+                                           check_for_colons,
+                                           check_for_special_symbols,
+                                           check_for_banned_beginning_chars,
+                                           check_for_upper_case
+                                       ])
     fields = serializers.ListField(
         child=serializers.CharField(),
         help_text=f'Empty fields chooses all posted indices fields.',
@@ -206,7 +213,7 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
         min_value=1,
         max_value=10000
     )
-    
+
     fact = serializers.CharField(required=False, help_text="Name of the fact on which the test index distribution will base.")
     str_val = serializers.CharField(required=False, help_text="Name of the fact value on which the test index distribution will base.")
     distribution = serializers.ChoiceField(choices=LABEL_DISTRIBUTION, default=LABEL_DISTRIBUTION[0][0], required=False, help_text='Distribution of the test set. Either "random", "original", "equal" or "custom".')
@@ -218,12 +225,14 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
         fields = ('id', 'url', 'author_username', 'description', 'indices', 'scroll_size', 'fields', 'query', 'train_index', 'test_index', "test_size", 'fact', 'str_val', 'distribution', 'custom_distribution', 'task')
         fields_to_parse = ('fields', 'custom_distribution')
 
+
     def validate_train_index(self, value):
         """ Check that new_index does not exist """
         open_indices, closed_indices = ElasticCore().get_indices()
         if value in open_indices or value in closed_indices:
             raise serializers.ValidationError(f"{value} already exists, choose a different name for your train index")
         return value
+
 
     def validate_test_index(self, value):
         """ Check that new_index does not exist """
@@ -232,6 +241,7 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
             raise serializers.ValidationError(f"{value} already exists, choose a different name for your test index")
         return value
 
+
     def validate_indices(self, value):
         """ check if index is in the relevant project indices field """
         project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
@@ -239,6 +249,7 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
             if index.get("name") not in project_obj.get_indices():
                 raise serializers.ValidationError(f'Index "{index.get("name")}" is not contained in your project indices "{project_obj.get_indices()}"')
         return value
+
 
     def validate_fields(self, value):
         ''' check if changed fields included in the request are in the relevant project fields '''
@@ -249,6 +260,7 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
             if field not in field_data:
                 raise serializers.ValidationError(f'The fields you are attempting to add to new indices are not in current project fields: {project_fields}')
         return value
+
 
     def validate(self, data):
         fact = data.get("fact")

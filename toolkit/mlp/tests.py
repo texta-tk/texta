@@ -8,7 +8,7 @@ from rest_framework.test import APITestCase, APITransactionTestCase
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.test_settings import (TEST_FIELD, TEST_INDEX)
+from toolkit.test_settings import (TEST_FIELD, TEST_INDEX, VERSION_NAMESPACE)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -25,7 +25,7 @@ class MLPListsTests(APITestCase):
         self.project = project_creation("mlpTestProject", TEST_INDEX, self.user)
         self.project.users.add(self.user)
         self.client.login(username='mlpUser', password='pw')
-        self.url = reverse("v1:mlp_texts")
+        self.url = reverse(f"{VERSION_NAMESPACE}:mlp_texts")
         self.payload = {
             "texts": [
                 "Õnnetus leidis aset eile kella 17.25 ajal Raplamaal Märjamaa alevis Koluvere maantee 2 juures, kus alkoholijoobes 66-aastane mees sõitis mopeedautoga Bellier 503 ringristmikul teelt välja vastu liiklusmärki.",
@@ -74,7 +74,7 @@ class MLPDocsTests(APITestCase):
         self.project = project_creation("mlpTestProject", TEST_INDEX, self.user)
         self.project.users.add(self.user)
         self.client.login(username='mlpUser', password='pw')
-        self.url = reverse("v1:mlp_docs")
+        self.url = reverse(f"{VERSION_NAMESPACE}:mlp_docs")
         self.payload = {
             "docs": [
                 {"text": "Õnnetus leidis aset eile kella 17.25 ajal Raplamaal Märjamaa alevis Koluvere maantee 2 juures, kus alkoholijoobes 66-aastane mees sõitis mopeedautoga Bellier 503 ringristmikul teelt välja vastu liiklusmärki."},
@@ -146,7 +146,7 @@ class MLPIndexProcessing(APITransactionTestCase):
         self.project = project_creation("mlpTestProject", self.TEST_INDEX, self.user)
         self.project.users.add(self.user)
         self.client.login(username='mlpUser', password='pw')
-        self.url = reverse("v1:mlp_index-list", kwargs={"project_pk": self.project.pk})
+        self.url = reverse(f"{VERSION_NAMESPACE}:mlp_index-list", kwargs={"project_pk": self.project.pk})
 
 
     def tearDown(self) -> None:
