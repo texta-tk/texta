@@ -1,5 +1,6 @@
 import json
 import logging
+import copy
 from collections import defaultdict
 
 from celery.decorators import task
@@ -329,7 +330,7 @@ def index_splitting_task(index_splitting_task_id):
 
             elastic_search = ElasticSearcher(indices=indices, field_data=fields, callback_progress=show_progress, query=filtered_query, scroll_size=scroll_size)
 
-            aggregator = ElasticAggregator(indices=indices, query=filtered_query)
+            aggregator = ElasticAggregator(indices=indices, query=copy.deepcopy(filtered_query))
             labels_distribution = aggregator.get_fact_values_distribution(fact_name)
         
             if(distribution == LABEL_DISTRIBUTION[1][0]): #original

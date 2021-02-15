@@ -5,7 +5,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_INTEGER_FIELD, TEST_VERSION_PREFIX
+from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_INTEGER_FIELD, TEST_VERSION_PREFIX, VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -29,7 +29,7 @@ class RegexTaggerViewTests(APITestCase):
             {"description": "tuletõrje", "lexicon": ["põleng", "õnnetus"]}
         ]
 
-        tagger_url = reverse("v1:regex_tagger-list", kwargs={"project_pk": self.project.pk})
+        tagger_url = reverse(f"{VERSION_NAMESPACE}:regex_tagger-list", kwargs={"project_pk": self.project.pk})
         for payload in payloads:
             response = self.client.post(tagger_url, payload)
             self.assertTrue(response.status_code == status.HTTP_201_CREATED)
@@ -104,7 +104,7 @@ class RegexTaggerViewTests(APITestCase):
 
 
     def test_regex_tagger_tag_nested_doc(self):
-        url = reverse("v1:regex_tagger-tag-doc", kwargs={"project_pk": self.project.pk, "pk": self.police})
+        url = reverse(f"{VERSION_NAMESPACE}:regex_tagger-tag-doc", kwargs={"project_pk": self.project.pk, "pk": self.police})
         payload = {
             "doc": {
                 "text": {"police": "Varas peeti kinni!"},
@@ -124,7 +124,7 @@ class RegexTaggerViewTests(APITestCase):
 
 
     def test_regex_tagger_tag_random_doc(self):
-        url = reverse("v1:regex_tagger-tag-random-doc", kwargs={"project_pk": self.project.pk, "pk": self.police})
+        url = reverse(f"{VERSION_NAMESPACE}:regex_tagger-tag-random-doc", kwargs={"project_pk": self.project.pk, "pk": self.police})
         response = self.client.post(url, {"fields": [TEST_FIELD]}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         self.assertTrue("tagger_id" in response.data)
@@ -239,7 +239,7 @@ class RegexTaggerViewTests(APITestCase):
 
     def test_regex_tagger_multitag_text(self):
         """Tests multitag endpoint."""
-        url = reverse("v1:regex_tagger-multitag-text", kwargs={"project_pk": self.project.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:regex_tagger-multitag-text", kwargs={"project_pk": self.project.pk})
         # tagger_url = f'{self.url}multitag_text/'
         ### test matching text
         payload = {
@@ -268,12 +268,12 @@ class RegexTaggerViewTests(APITestCase):
             "lexicon": ["jossif stalin", "adolf hitler"],
             "counter_lexicon": ["benito mussolini"]
         }
-        url = reverse("v1:regex_tagger-list", kwargs={"project_pk": self.project.pk})
+        url = reverse(f"{VERSION_NAMESPACE}:regex_tagger-list", kwargs={"project_pk": self.project.pk})
         response = self.client.post(url, payload, format="json")
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
 
         tagger_id = response.data["id"]
-        detail_url = reverse("v1:regex_tagger-detail", kwargs={"project_pk": self.project.pk, "pk": int(tagger_id)})
+        detail_url = reverse(f"{VERSION_NAMESPACE}:regex_tagger-detail", kwargs={"project_pk": self.project.pk, "pk": int(tagger_id)})
         update_response = self.client.patch(detail_url, {"lexicon": ["jossif stalin"]}, format="json")
         self.assertTrue(update_response.status_code == status.HTTP_200_OK)
         self.assertTrue(update_response.data["lexicon"] == ["jossif stalin"])
@@ -281,7 +281,7 @@ class RegexTaggerViewTests(APITestCase):
 
 
     def test_that_non_text_fields_are_handled_properly(self):
-        url = reverse("v1:regex_tagger-tag-random-doc", kwargs={"project_pk": self.project.pk, "pk": self.police})
+        url = reverse(f"{VERSION_NAMESPACE}:regex_tagger-tag-random-doc", kwargs={"project_pk": self.project.pk, "pk": self.police})
         response = self.client.post(url, {"fields": [TEST_INTEGER_FIELD]}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         self.assertTrue(response.data["matches"] == [] and response.data["result"] is False)

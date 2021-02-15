@@ -8,6 +8,7 @@ from toolkit.core.task.serializers import TaskSerializer
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.serializers import IndexSerializer
 from toolkit.mlp.models import MLPWorker
+from toolkit.settings import REST_FRAMEWORK
 
 
 class MLPListSerializer(serializers.Serializer):
@@ -47,7 +48,8 @@ class MLPWorkerSerializer(serializers.ModelSerializer):
 
 
     def get_url(self, obj):
-        index = reverse("v1:mlp_index-detail", kwargs={"project_pk": obj.project.pk, "pk": obj.pk})
+        default_version = REST_FRAMEWORK.get("DEFAULT_VERSION")
+        index = reverse(f"{default_version}:mlp_index-detail", kwargs={"project_pk": obj.project.pk, "pk": obj.pk})
         if "request" in self.context:
             request = self.context["request"]
             url = request.build_absolute_uri(index)

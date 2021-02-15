@@ -191,9 +191,10 @@ class ElasticDocument:
 
 
     @elastic_connection
-    def count(self):
+    def count(self, indices=None) -> int:
         """
         Returns the document count for given indices.
-        :return: integer
+        :indices: Either a coma separated string of indices or a list of index strings.
         """
-        return self.core.es.count(index=self.index)["count"]
+        index = indices if indices else self.index
+        return self.core.es.count(index=index)["count"]

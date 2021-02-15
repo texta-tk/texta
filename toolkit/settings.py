@@ -6,7 +6,7 @@ import warnings
 from corsheaders.defaults import default_headers
 from kombu import Exchange, Queue
 
-from .helper_functions import download_mlp_requirements, download_bert_requirements, parse_bool_env, parse_list_env_headers
+from .helper_functions import download_bert_requirements, download_mlp_requirements, parse_bool_env, parse_list_env_headers
 from .logging_settings import setup_logging
 
 
@@ -105,7 +105,7 @@ USE_UAA = parse_bool_env("TEXTA_USE_UAA", False)
 # UAA server URL
 UAA_URL = os.getenv("TEXTA_UAA_URL", "http://localhost:8080/uaa")
 # Callback URL defined on the UAA server, to which the user will be redirected after logging in on UAA
-UAA_REDIRECT_URI = os.getenv("TEXTA_UAA_REDIRECT_URI", "http://localhost:8000/api/v1/uaa/callback")
+UAA_REDIRECT_URI = os.getenv("TEXTA_UAA_REDIRECT_URI", "http://localhost:8000/api/v2/uaa/callback")
 # TEXTA front URL where the user will be redirected after the redirect_uri
 UAA_FRONT_REDIRECT_URL = os.getenv("TEXTA_UAA_FRONT_REDIRECT_URL", "http://localhost:4200/oauth")
 # OAuth client application (eg texta_toolkit) id and secret.
@@ -126,8 +126,8 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ),
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.NamespaceVersioning",
-    "DEFAULT_VERSION": "v1",
-    "ALLOWED_VERSIONS": ["v1"],
+    "DEFAULT_VERSION": "v2",
+    "ALLOWED_VERSIONS": ["v1", "v2"],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         # For DRF API browser pages
         "rest_framework.authentication.SessionAuthentication",
@@ -266,6 +266,13 @@ CELERY_DEFAULT_ROUTING_KEY = 'short_term_tasks'
 # we set num workers to 1 because celery tasks are not allowed to have deamon processes
 NUM_WORKERS = 1
 
+DATA_DIR = str(pathlib.Path("data"))
+
+CACHE_DIR_DEFAULT = os.path.join(DATA_DIR, ".cache")
+CACHE_DIR = os.getenv("TEXTA_CACHE_DIR", CACHE_DIR_DEFAULT)
+
+BERT_CACHE_DIR = os.path.join(CACHE_DIR, "bert")
+
 MODELS_DIR_DEFAULT = str(pathlib.Path("data") / "models")
 RELATIVE_MODELS_PATH = os.getenv("TEXTA_RELATIVE_MODELS_DIR", MODELS_DIR_DEFAULT)
 
@@ -276,8 +283,8 @@ DEFAULT_BERT_MODELS = parse_list_env_headers("TEXTA_BERT_MODELS", ["bert-base-mu
 
 BERT_MODEL_DIRECTORY = os.getenv("TEXTA_BERT_MODEL_DIRECTORY_PATH", MODELS_DIR_DEFAULT)
 
-BERT_PRETRAINED_MODEL_DIRECTORY =  os.path.join(BERT_MODEL_DIRECTORY, "bert_tagger", "pretrained")
-BERT_FINETUNED_MODEL_DIRECTORY =  os.path.join(BERT_MODEL_DIRECTORY, "bert_tagger", "fine_tuned")
+BERT_PRETRAINED_MODEL_DIRECTORY = os.path.join(BERT_MODEL_DIRECTORY, "bert_tagger", "pretrained")
+BERT_FINETUNED_MODEL_DIRECTORY = os.path.join(BERT_MODEL_DIRECTORY, "bert_tagger", "fine_tuned")
 
 MODEL_TYPES = ["embedding", "tagger", "torchtagger"]
 for model_type in MODEL_TYPES:

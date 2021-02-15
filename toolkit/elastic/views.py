@@ -319,6 +319,7 @@ class IndexSplitterViewSet(mixins.CreateModelMixin,
             author=self.request.user,
             project=project_obj,
             fields=json.dumps(serializer.validated_data.get('fields', [])),
+            query=json.dumps(serializer.validated_data.get('query')),
             custom_distribution = json.dumps(serializer.validated_data.get("custom_distribution", {}))
         )
 
