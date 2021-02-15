@@ -290,9 +290,9 @@ def to_texta_fact(tagger_result: json, field: str, fact_name: str, fact_value: s
 
 
 def update_generator(generator: ElasticSearcher, fields: List[str], fact_name: str, fact_value: str, tagger_id: int):
-    n_batches = len(generator)
+    #n_batches = len(generator)
     for i, scroll_batch in enumerate(generator):
-        logging.getLogger(INFO_LOGGER).info(f"Appyling tagger {tagger_id} to batch {i+1}/{n_batches}...")
+        logging.getLogger(INFO_LOGGER).info(f"Appyling tagger with ID {tagger_id} to batch {i+1}...")
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
             existing_facts = hit.get("texta_facts", [])
