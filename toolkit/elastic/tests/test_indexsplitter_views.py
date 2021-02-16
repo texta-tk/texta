@@ -10,7 +10,7 @@ from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.models import IndexSplitter
 from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.test_settings import (INDEX_SPLITTING_TEST_INDEX, INDEX_SPLITTING_TRAIN_INDEX, TEST_INDEX, TEST_VERSION_PREFIX)
+from toolkit.test_settings import (INDEX_SPLITTING_TEST_INDEX, INDEX_SPLITTING_TRAIN_INDEX, TEST_INDEX, TEST_VERSION_PREFIX, TEST_QUERY)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -237,6 +237,32 @@ class IndexSplitterViewTests(APITransactionTestCase):
                 self.assertTrue(self.is_between_limits(test_distribution[label], quant, 0.2))
                 self.assertTrue(self.is_between_limits(train_distribution[label], quant, 0.8))
 
+    def test_query_given(self):
+        payload = {
+            "description": "Original index splitting",
+            "indices": [{"name": TEST_INDEX}],
+            "train_index": INDEX_SPLITTING_TRAIN_INDEX,
+            "test_index": INDEX_SPLITTING_TEST_INDEX,
+            "distribution": "original",
+            "test_size": 20,
+            "fact": self.FACT,
+            "str_val": "bar",
+            "query": json.dumps(TEST_QUERY)
+        }
+
+        response = self.client.post(self.url, data=payload, format="json")
+        print_output('test_query_given:response.data', response.data)
+
+        original_distribution = ElasticAggregator(indices=TEST_INDEX).get_fact_values_distribution(self.FACT)
+        test_distribution = ElasticAggregator(indices=INDEX_SPLITTING_TEST_INDEX).get_fact_values_distribution(self.FACT)
+        train_distribution = ElasticAggregator(indices=INDEX_SPLITTING_TRAIN_INDEX).get_fact_values_distribution(self.FACT)
+
+        print_output('original_dist, test_dist, train_dist', [original_distribution, test_distribution, train_distribution])
+
+        self.assertTrue("bar" in test_distribution)
+        self.assertTrue("bar" in train_distribution)
+        self.assertTrue("foo" not in train_distribution and "foo" not in test_distribution)
+        self.assertTrue("FUBAR" not in train_distribution and "FUBAR" not in test_distribution)
 
     def tearDown(self):
         res = ElasticCore().delete_index(INDEX_SPLITTING_TEST_INDEX)
