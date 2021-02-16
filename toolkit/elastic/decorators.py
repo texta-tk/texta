@@ -13,7 +13,6 @@ def elastic_connection(func):
     instead of the typical HTTP 500 one.
     """
 
-
     def func_wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
@@ -38,6 +37,5 @@ def elastic_connection(func):
         except elasticsearch.exceptions.ConnectionTimeout as e:
             logging.getLogger(ERROR_LOGGER).exception(e.info)
             raise ElasticTimeoutException(f"Connection to Elasticsearch timed out!")
-
 
     return func_wrapper

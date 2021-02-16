@@ -1,4 +1,6 @@
 import json
+import logging
+import elasticsearch
 from typing import List
 
 from elasticsearch.helpers import bulk
@@ -6,6 +8,7 @@ from elasticsearch_dsl import Q, Search
 
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.decorators import elastic_connection
+from toolkit.settings import ERROR_LOGGER
 
 
 class ElasticDocument:
@@ -164,7 +167,11 @@ class ElasticDocument:
     @elastic_connection
     def bulk_add_generator(self, actions, chunk_size=100, raise_on_error=True, stats_only=True, refresh="wait_for"):
         actions = self.add_type_to_docs(actions)
-        return bulk(client=self.core.es, actions=actions, chunk_size=chunk_size, stats_only=stats_only, raise_on_error=raise_on_error, refresh=refresh)
+        try:
+            return bulk(client=self.core.es, actions=actions, chunk_size=chunk_size, stats_only=stats_only, raise_on_error=raise_on_error, refresh=refresh)
+        except elasticsearch.helpers.errors.BulkIndexError as e:
+            logging.getLogger(ERROR_LOGGER).exception(e.args[1][0]['index']['error']['reason'], exc_info=False)
+            return None
 
 
     @elastic_connection
