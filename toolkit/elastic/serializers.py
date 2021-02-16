@@ -1,4 +1,5 @@
 from typing import List
+import json
 
 from django.urls import reverse
 from rest_framework import serializers
@@ -184,7 +185,7 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
     scroll_size = serializers.IntegerField(min_value=0, max_value=10000, required=False)
     description = serializers.CharField(help_text='Description of the task.', required=True, allow_blank=False)
     indices = IndexSerializer(many=True, write_only=True, default=[], help_text=f'Indices that are used to create train and test indices.')
-    query = serializers.JSONField(help_text='Query used to filter the indices. Defaults to an empty query.', required=False, default=EMPTY_QUERY)
+    query = serializers.JSONField(help_text='Query used to filter the indices. Defaults to an empty query.', required=False)
     train_index = serializers.CharField(help_text='Name of the train index.', allow_blank=False, required=True,
                                         validators=[
                                             check_for_wildcards,
@@ -263,7 +264,8 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
 
 
     def validate_query(self, value):
-        if "query" not in value:
+        val  = json.loads(value)
+        if "query" not in json.loads(value):
             raise serializers.ValidationError("Incorrect elastic query. Must contain field 'query'.")
         return value
 
