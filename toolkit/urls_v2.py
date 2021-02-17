@@ -6,7 +6,7 @@ from toolkit.anonymizer.urls import router as anonymizer_router
 from toolkit.bert_tagger.urls import router as bert_tagger_router
 from toolkit.core.core_variable.views import CoreVariableViewSet
 from toolkit.core.health.views import HealthView
-from toolkit.core.project.views import ExportSearchView, GetFactsView, GetFieldsView, GetIndicesView, GetSpamView, ProjectViewSet, ScrollView, SearchByQueryView, SearchView
+from toolkit.core.project.views import DocumentView, ExportSearchView, GetFactsView, GetFieldsView, GetIndicesView, GetSpamView, ProjectViewSet, ScrollView, SearchByQueryView, SearchView
 from toolkit.core.task.views import TaskAPIView
 from toolkit.core.urls import router as core_router
 from toolkit.core.user_profile import views as profile_views
@@ -83,6 +83,7 @@ urlpatterns = [
 
     # Previous projects extra actions.
     path('projects/<int:project_pk>/elastic/export_search/', ExportSearchView.as_view(), name="project-export-search"),
+    path('projects/<int:project_pk>/elastic/document/', DocumentView.as_view(), name="project-document"),
     path('projects/<int:project_pk>/elastic/get_spam/', GetSpamView.as_view(), name="project-get-spam"),
     path('projects/<int:project_pk>/elastic/get_facts/', GetFactsView.as_view(), name="get_facts"),
     path('projects/<int:project_pk>/elastic/get_fields/', GetFieldsView.as_view(), name="get_fields"),
