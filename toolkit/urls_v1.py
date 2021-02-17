@@ -6,14 +6,14 @@ from toolkit.anonymizer.urls import router as anonymizer_router
 from toolkit.bert_tagger.urls import router as bert_tagger_router
 from toolkit.core.core_variable.views import CoreVariableViewSet
 from toolkit.core.health.views import HealthView
-from toolkit.core.project.views import ExportSearchView, GetFactsView, GetFieldsView, GetIndicesView, GetSpamView, ProjectViewSet, ScrollView, SearchByQueryView, SearchView
+from toolkit.core.project.views import DocumentView, ExportSearchView, GetFactsView, GetFieldsView, GetIndicesView, GetSpamView, ProjectViewSet, ScrollView, SearchByQueryView, SearchView
 from toolkit.core.task.views import TaskAPIView
 from toolkit.core.urls import router as core_router
 from toolkit.core.user_profile import views as profile_views
 from toolkit.dataset_import.urls import router as dataset_import_router
 from toolkit.docparser.views import DocparserView
 from toolkit.document_importer.views import DocumentImportView, DocumentInstanceView, UpdateSplitDocument
-from toolkit.elastic.urls import splitter_router, index_router, router as reindexer_router
+from toolkit.elastic.urls import index_router, router as reindexer_router, splitter_router
 from toolkit.elastic.views import ElasticGetIndices, SnowballProcessor
 from toolkit.embedding.urls import embedding_router
 from toolkit.mlp.urls import mlp_router
@@ -83,6 +83,7 @@ urlpatterns = [
 
     # Previous projects extra actions.
     path('projects/<int:project_pk>/export_search/', ExportSearchView.as_view(), name="project-export-search"),
+    path('projects/<int:project_pk>/document/', DocumentView.as_view(), name="project-document"),
     path('projects/<int:project_pk>/get_spam/', GetSpamView.as_view(), name="project-get-spam"),
     path('projects/<int:project_pk>/get_facts/', GetFactsView.as_view(), name="get_facts"),
     path('projects/<int:project_pk>/get_fields/', GetFieldsView.as_view(), name="get_fields"),
