@@ -189,7 +189,7 @@ class ProjectSuggestFactValuesSerializer(serializers.Serializer):
 
 
 class CountIndicesSerializer(serializers.Serializer):
-    indices = IndexSerializer(many=True, default=[], help_text="Which indices to use for the count.")
+    indices = serializers.ListField(child=serializers.CharField(), default=[], help_text="Which indices to use for the count.")
 
 
 class ProjectSuggestFactNamesSerializer(serializers.Serializer):

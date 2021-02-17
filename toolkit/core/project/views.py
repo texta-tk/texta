@@ -24,7 +24,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.document import ElasticDocument
 from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.elastic.serializers import ElasticScrollSerializer
+from toolkit.elastic.serializers import ElasticScrollSerializer, IndexSerializer
 from toolkit.elastic.spam_detector import SpamDetector
 from toolkit.exceptions import InvalidInputDocument, ProjectValidationFailed, SerializerNotValid
 from toolkit.helper_functions import hash_string
@@ -350,12 +350,16 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
 
     @action(detail=True, methods=['post'], serializer_class=CountIndicesSerializer, permission_classes=[ExtraActionResource])
     def count_indices(self, request, pk=None, project_pk=None):
-        serializer: CountIndicesSerializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid()
+
+        indices = [{"name": name} for name in serializer.validated_data.get("indices", [])]
+        serializer = IndexSerializer(data=indices, many=True)
         serializer.is_valid(raise_exception=True)
+
         project: Project = self.get_object()
         ed = ElasticDocument(None)
 
-        indices = serializer.validated_data.get("indices", [])
         indices = [index["name"] for index in indices]
         if indices:
             # We check for indices before to prevent the default behaviour of picking all the indices in project.
@@ -368,7 +372,6 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
 
     @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactValuesSerializer, permission_classes=[ExtraActionResource])
     def autocomplete_fact_values(self, request, pk=None, project_pk=None):
-
         serializer = ProjectSuggestFactValuesSerializer(data=request.data)
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
@@ -391,7 +394,6 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
 
     @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactNamesSerializer, permission_classes=[ExtraActionResource])
     def autocomplete_fact_names(self, request, pk=None, project_pk=None):
-
         serializer = ProjectSuggestFactNamesSerializer(data=request.data)
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
