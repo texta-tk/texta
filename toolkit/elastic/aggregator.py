@@ -143,16 +143,18 @@ class ElasticAggregator:
         """
         self.query["size"] = 0
         
-        agg_query = {'nested_aggre': {'nested': {'path': 'texta_facts'},
-                    'aggregations': {'terms_aggre': {'terms': {'field': 'texta_facts.str_val'}}}}}
+        agg_query = {'fact_values': {'nested': {'path': 'texta_facts'},
+                    'aggs': {'fact_bucket': {'terms': {'field': 'texta_facts.fact'},
+                    'aggs': {'value_bucket': {'terms': {'field': 'texta_facts.str_val'}}}}}}}
 
-        dist_dict = {}
+        fact_dist_dict = {}
         response = self._aggregate(agg_query)
 
-        for hit in response["aggregations"]["nested_aggre"]["terms_aggre"]["buckets"]:
-            dist_dict[hit["key"]] = hit["doc_count"]
-
-        return dist_dict
+        for fact in response["aggregations"]["fact_values"]["fact_bucket"]["buckets"]:
+            if fact["key"] == fact_name:
+                for fact_value in fact["value_bucket"]["buckets"]:
+                    fact_dist_dict[fact_value["key"]] = fact_value["doc_count"]
+        return fact_dist_dict
 
 
 
