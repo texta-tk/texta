@@ -3,7 +3,6 @@ import logging
 from celery.decorators import task
 from django.db import transaction
 
-from texta_tools.embedding import Phraser
 from texta_tools.text_processor import TextProcessor
 
 from toolkit.base_tasks import BaseTask
@@ -14,6 +13,7 @@ from toolkit.tools.show_progress import ShowProgress
 from toolkit.topic_analyzer.clustering import ClusterContent, Clustering
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 from toolkit.topic_analyzer.serializers import ClusteringSerializer
+from toolkit.embedding.choices import W2V_EMBEDDING, FASTTEXT_EMBEDDING
 
 
 @task(name="start_clustering_task", base=BaseTask)
@@ -54,9 +54,11 @@ def perform_data_clustering(clustering_id):
         show_progress.update_step("scrolling data")
         show_progress.update_view(0)
 
+        # load phraser from embedding
         if clustering_model.embedding:
-            phraser = Phraser(embedding_id=clustering_model.embedding.pk)
-            phraser.load()
+            embedding = clustering_model.embedding.get_embedding()
+            embedding.load_django(embedding)
+            phraser = embedding.phraser
         else:
             phraser = None
 

@@ -1,4 +1,5 @@
 from typing import List
+import json
 
 from django.urls import reverse
 from rest_framework import serializers
@@ -117,7 +118,7 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
     url = serializers.SerializerMethodField()
     scroll_size = serializers.IntegerField(min_value=0, max_value=10000, required=False)  # Max value stems from Elasticsearch max doc count limitation.
     description = serializers.CharField(help_text='Describe your re-indexing task', required=True, allow_blank=False)
-    indices = serializers.ListField(child=serializers.CharField(), help_text=f'Add the indices, you wish to reindex into a new index.', write_only=True, required=True)
+    indices = serializers.ListField(child=serializers.CharField(), help_text=f'Add the indices, you wish to reindex into a new index.', required=True)
     query = serializers.JSONField(help_text='Add a query, if you wish to filter the new reindexed index.', required=False)
     new_index = serializers.CharField(help_text='Your new re-indexed index name', allow_blank=False, required=True,
                                       validators=[
@@ -146,7 +147,7 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
     class Meta:
         model = Reindexer
         fields = ('id', 'url', 'author_username', 'description', 'indices', 'scroll_size', 'fields', 'query', 'new_index', 'random_size', 'field_type', 'add_facts_mapping', 'task')
-        fields_to_parse = ('fields', 'field_type')
+        fields_to_parse = ('fields', 'field_type', 'indices')
 
 
     def validate_new_index(self, value):
@@ -160,8 +161,9 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
         """ check if re-indexed index is in the relevant project indices field """
         project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
         for index in value:
-            if index not in project_obj.get_indices():
-                raise serializers.ValidationError(f'Index "{index}" is not contained in your project indices "{repr(project_obj.indices)}"')
+            indices = project_obj.get_indices()
+            if index not in indices:
+                raise serializers.ValidationError(f'Index "{index}" is not contained in your project indices "{indices}"')
         return value
 
 
@@ -183,8 +185,8 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
     url = serializers.SerializerMethodField()
     scroll_size = serializers.IntegerField(min_value=0, max_value=10000, required=False)
     description = serializers.CharField(help_text='Description of the task.', required=True, allow_blank=False)
-    indices = IndexSerializer(many=True, write_only=True, default=[], help_text=f'Indices that are used to create train and test indices.')
-    query = serializers.JSONField(help_text='Query used to filter the indices. Defaults to an empty query.', required=False, default=EMPTY_QUERY)
+    indices = IndexSerializer(many=True, default=[], help_text=f'Indices that are used to create train and test indices.')
+    query = serializers.JSONField(help_text='Query used to filter the indices. Defaults to an empty query.', required=False)
     train_index = serializers.CharField(help_text='Name of the train index.', allow_blank=False, required=True,
                                         validators=[
                                             check_for_wildcards,
@@ -263,7 +265,8 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
 
 
     def validate_query(self, value):
-        if "query" not in value:
+        val = json.loads(value)
+        if "query" not in json.loads(value):
             raise serializers.ValidationError("Incorrect elastic query. Must contain field 'query'.")
         return value
 
