@@ -5,6 +5,8 @@ import secrets
 import tempfile
 import zipfile
 
+from texta_tools.embedding import W2VEmbedding, FastTextEmbedding
+
 from django.contrib.auth.models import User
 from django.core import serializers
 from django.db import models
@@ -15,7 +17,7 @@ from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.models import Index
-from toolkit.embedding.choices import W2V_EMBEDDING
+from toolkit.embedding.choices import W2V_EMBEDDING, FASTTEXT_EMBEDDING
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
 
@@ -101,6 +103,18 @@ class Embedding(models.Model):
 
         new_model.save()
         return new_model
+
+
+    def get_embedding(self):
+        """
+        Returns embedding object based on embedding type.
+        """
+        if self.embedding_type == FASTTEXT_EMBEDDING:
+        	return FastTextEmbedding()
+        elif self.embedding_type == W2V_EMBEDDING:
+            return W2VEmbedding()
+        else:
+            return W2VEmbedding()
 
 
     def get_indices(self):

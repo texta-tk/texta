@@ -2,7 +2,6 @@ import json
 import os
 
 from texta_tools.text_processor import TextProcessor
-from texta_tools.embedding import W2VEmbedding
 
 import rest_framework.filters as drf_filters
 from django.http import HttpResponse
@@ -110,7 +109,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
             if not embedding_object.embedding_model.path:
                 raise NonExistantModelError()
 
-            embedding = W2VEmbedding()
+            embedding = embedding_object.get_embedding()
             embedding.load_django(embedding_object)
 
             predictions = embedding.get_similar(
@@ -136,7 +135,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
             if not embedding_object.embedding_model.name:
                 raise NonExistantModelError()
 
-            embedding = W2VEmbedding()
+            embedding = embedding_object.get_embedding()
             embedding.load_django(embedding_object)
             phraser = embedding.phraser
 
