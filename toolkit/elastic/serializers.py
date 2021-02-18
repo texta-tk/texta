@@ -225,7 +225,7 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
     class Meta:
         model = IndexSplitter
         fields = ('id', 'url', 'author_username', 'description', 'indices', 'scroll_size', 'fields', 'query', 'train_index', 'test_index', "test_size", 'fact', 'str_val', 'distribution', 'custom_distribution', 'task')
-        fields_to_parse = ('fields', 'custom_distribution', 'indices')
+        fields_to_parse = ('fields', 'custom_distribution')
 
 
     def validate_train_index(self, value):
