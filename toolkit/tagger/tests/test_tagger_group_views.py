@@ -1,12 +1,15 @@
 import json
 import pathlib
+import uuid
 from io import BytesIO
 
 from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
-
+from toolkit.elastic.aggregator import ElasticAggregator
+from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.models import Reindexer
 from toolkit.core.task.models import Task
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.test_settings import (TEST_FACT_NAME,
@@ -30,6 +33,24 @@ class TaggerGroupViewTests(APITransactionTestCase):
         self.test_tagger_group_id = None
 
         self.client.login(username='taggerOwner', password='pw')
+        # new fact name and value used when applying tagger to index
+        self.new_fact_name = "TEST_TAGGER_NAME"
+        self.new_fact_value = "TEST_TAGGER_VALUE"
+
+        # Create copy of test index
+        self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
+        # Generate name for new index containing random id to make sure it doesn't already exist
+        self.test_index_copy = f"test_apply_tagger_group_{uuid.uuid4().hex}"
+
+        self.reindex_payload = {
+            "description": "test index for applying tagger group",
+            "indices": [TEST_INDEX],
+            "new_index": self.test_index_copy,
+            "fields": [TEST_FIELD]
+        }
+        resp = self.client.post(self.reindex_url, self.reindex_payload, format='json')
+        print_output("reindex test index for applying tagger group:response.data:", resp.json())
+        self.reindexer_object = Reindexer.objects.get(pk=resp.json()["id"])
 
 
     def test_run(self):
@@ -40,6 +61,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
         self.run_tag_random_doc()
         self.run_models_retrain()
         self.create_taggers_with_empty_fields()
+        self.run_apply_tagger_group_to_index()
         self.run_model_export_import()
         self.run_tagger_instances_have_mention_to_tagger_group()
 
@@ -51,6 +73,11 @@ class TaggerGroupViewTests(APITransactionTestCase):
             self.addCleanup(remove_file, tagger_object.plot.path)
         if tagger_object.embedding:
             self.addCleanup(remove_file, tagger_object.embedding.embedding_model.path)
+
+
+    def tearDown(self) -> None:
+        res = ElasticCore().delete_index(self.test_index_copy)
+        print_output(f"Delete apply_taggers test index {self.test_index_copy}", res)
 
 
     def run_create_tagger_group_training_and_task_signal(self):
@@ -161,6 +188,44 @@ class TaggerGroupViewTests(APITransactionTestCase):
         self.assertTrue('success' in response.data)
         # remove retrained tagger models
         retrained_tagger_group = TaggerGroup.objects.get(id=response.data['tagger_group_id'])
+
+
+    def run_apply_tagger_group_to_index(self):
+        """Tests applying tagger group to index using apply_to_index endpoint."""
+        # Make sure reindexer task has finished
+        while self.reindexer_object.task.status != Task.STATUS_COMPLETED:
+            print_output('test_apply_tagger_group_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
+            sleep(2)
+
+        url = f'{self.url}{self.test_tagger_group_id}/apply_to_index/'
+
+        payload = {
+            "description": "apply tagger test task",
+            "new_fact_name": self.new_fact_name,
+            "indices": [{"name": self.test_index_copy}],
+            "fields": [TEST_FIELD],
+            "lemmatize": False,
+            "bulk_size": 50,
+            "n_similar_docs": 10,
+            "n_candidate_tags": 10
+        }
+        response = self.client.post(url, payload, format='json')
+        print_output('test_apply_tagger_group_to_index:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        tagger_group_object = TaggerGroup.objects.get(pk=self.test_tagger_group_id)
+
+        # Wait til the task has finished
+        while tagger_group_object.task.status != Task.STATUS_COMPLETED:
+            print_output('test_apply_tagger_group_to_index: waiting for applying tagger task to finish, current status:', tagger_group_object.task.status)
+            sleep(2)
+
+        results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution(self.new_fact_name)
+        print_output("test_apply_tagger_group_to_index:elastic aggerator results:", results)
+
+        # Check if applying tagger group results in expected number of new fact values
+        self.assertEqual(results["foo"], 382)
+        self.assertEqual(results["bar"], 318)
+        self.assertEqual(results["FUBAR"], 77)
 
 
     def run_create_and_delete_tagger_group_removes_related_children_models_plots(self):

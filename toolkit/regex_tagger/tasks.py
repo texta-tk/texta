@@ -54,7 +54,9 @@ def update_generator(generator: ElasticSearcher, fields: List[str], group_tagger
 
             if existing_facts:
                 # Remove duplicates to avoid adding the same facts with repetitive use.
-                hit["texta_facts"] = ElasticDocument.remove_duplicate_facts(existing_facts)
+                existing_facts = ElasticDocument.remove_duplicate_facts(existing_facts)
+
+            hit["texta_facts"] = existing_facts
 
             yield {
                 "_index": raw_doc["_index"],

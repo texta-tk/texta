@@ -110,11 +110,11 @@ class ElasticDocument:
 
 
     @elastic_connection
-    def update(self, index, doc_id, doc, doc_type="_doc"):
+    def update(self, index, doc_id, doc, doc_type="_doc", retry_on_conflict=1):
         """
         Updates document in ES by ID.
         """
-        return self.core.es.update(index=index, doc_type=doc_type, id=doc_id, body={"doc": doc}, refresh="wait_for")
+        return self.core.es.update(index=index, doc_type=doc_type, id=doc_id, body={"doc": doc}, refresh="wait_for", retry_on_conflict=retry_on_conflict)
 
 
     @elastic_connection
