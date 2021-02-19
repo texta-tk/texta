@@ -71,26 +71,27 @@ def apply_mlp_on_index(self, mlp_id: int):
         field_data: List[str] = json.loads(mlp_object.fields)
         analyzers: List[str] = json.loads(mlp_object.analyzers)
 
+        scroll_size = 100
         searcher = ElasticSearcher(
             query=mlp_object.query,
             indices=indices,
             field_data=field_data,
             output=ElasticSearcher.OUT_RAW,
             callback_progress=show_progress,
-            scroll_size=100,
+            scroll_size=scroll_size,
             scroll_timeout="30m"
         )
 
         for index in indices:
             searcher.core.add_texta_facts_mapping(index=index)
 
-        actions = process_actions(searcher, analyzers, field_data, mlp=mlp)
+        actions = process_actions(searcher, analyzers, field_data, mlp_class=mlp, mlp_id=mlp_id)
 
         # Send the data towards Elasticsearch
         ed = ElasticDocument("_all")
         elastic_response = ed.bulk_update(actions=actions)
         return mlp_id
-    
+
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(e)
         task_object.add_error(str(e))
