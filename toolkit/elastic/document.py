@@ -1,8 +1,8 @@
 import json
 import logging
-import elasticsearch
 from typing import List
 
+import elasticsearch
 from elasticsearch.helpers import bulk
 from elasticsearch_dsl import Q, Search
 
@@ -139,7 +139,7 @@ class ElasticDocument:
 
         Returns: Elasticsearch response to the request.
         """
-        actions = [{"_type": action.get("_type", "_doc"), **action} for action in actions]
+        actions = self.add_type_to_docs(actions)
         return bulk(client=self.core.es, actions=actions, refresh=refresh, request_timeout=30, chunk_size=chunk_size)
 
 
