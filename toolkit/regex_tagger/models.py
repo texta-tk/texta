@@ -57,12 +57,28 @@ class RegexTagger(models.Model):
     ignore_case = models.BooleanField(default=True)
     ignore_punctuation = models.BooleanField(default=True)
 
+    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
+
 
     def __str__(self):
         return self.description
 
+    def to_json(self) -> dict:
+        serialized = serializers.serialize('json', [self])
+        json_obj = json.loads(serialized)[0]["fields"]
+        del json_obj["project"]
+        del json_obj["author"]
+        del json_obj["task"]
+        return json_obj
 
-    def match_texts(self, texts: List[str], as_texta_facts: bool = False, field="", matcher: Optional[LexiconMatcher] = None):
+
+    def apply(self, texts: List[str], field_path: str, fact_name: str = "", fact_value: str = "", add_spans: bool = True):
+        """Apply Regex Tagger on texts and return results as texta_facts."""
+        results = self.match_texts(texts, as_texta_facts=True, field=field_path, add_source=False, fact_name=fact_name, fact_value=fact_value, add_spans=add_spans)
+        return results
+
+
+    def match_texts(self, texts: List[str], as_texta_facts: bool = False, field: str = "", matcher: Optional[LexiconMatcher] = None, add_source: bool = True, fact_name: str = "", fact_value: str = "", add_spans: bool = True):
         results = []
         matcher = matcher or load_matcher(self)  # Optionally, you can insert another matcher of your choice.
         for text in texts:
@@ -73,12 +89,14 @@ class RegexTagger(models.Model):
                     for match in matches:
                         source_string = json.dumps({"regextagger_id": self.pk})
                         new_fact = {
-                            "fact": self.description,
-                            "str_val": match["str_val"],
-                            "spans": json.dumps([match["span"]]),
-                            "doc_path": field,
-                            "source": source_string
+                            "fact": self.description if not fact_name else fact_name,
+                            "str_val": match["str_val"] if not fact_value else fact_value,
+                            "spans": json.dumps([match["span"]]) if add_spans else json.dumps([[0,0]]),
+                            "doc_path": field
                         }
+                        if add_source:
+                            new_fact.update({"source": source_string})
+
                         new_facts.append(new_fact)
                     results.extend(new_facts)
                 else:
@@ -108,6 +126,7 @@ class RegexTagger(models.Model):
                 model_json = json.loads(json_string)[0]["fields"]
                 del model_json["project"]
                 del model_json["author"]
+                del model_json["task"]
                 # create new object
                 new_model = RegexTagger(**model_json)
                 # update user & project
@@ -129,7 +148,7 @@ class RegexTaggerGroup(models.Model):
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
 
-    def apply(self, texts: List[str] = [], field_path: Optional[str] = None):
+    def apply(self, texts: List[str] = [], field_path: Optional[str] = None, fact_name: str = "", fact_value: str = "", add_spans: bool= True):
         results = []
         for text in texts:
             if isinstance(text, str) and text:

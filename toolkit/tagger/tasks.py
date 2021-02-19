@@ -368,7 +368,7 @@ def apply_loaded_tagger(tagger_object: Tagger, tagger: TextTagger, content: Unio
 
 @task(name="apply_tagger", base=BaseTask)
 def apply_tagger(tagger_id: int, content: Union[str, Dict[str, str]], input_type='text', lemmatize=False, feedback=None, use_logger=True):
-    """Task for applying tagger to text."""
+    """Task for applying tagger to text. Wraps functions load_tagger and apply_loaded_tagger."""
     if use_logger:
         logging.getLogger(INFO_LOGGER).info(f"Starting task 'apply_tagger' for tagger with ID: {tagger_id} with params (input_type : {input_type}, lemmatize: {lemmatize}, feedback: {feedback})!")
 
@@ -441,16 +441,17 @@ def to_texta_fact(tagger_result: List[Dict[str, Union[str, int, bool]]], field: 
     return new_facts
 
 
-def update_generator(generator: ElasticSearcher, fields: List[str], fact_name: str, fact_value: str, object_id: int, object_type: str, object: Tagger, object_args: Dict, tagger: TextTagger = None):
+def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], fact_name: str, fact_value: str, object_id: int, object_type: str, object: Tagger, object_args: Dict, tagger: TextTagger = None):
 
     for i, scroll_batch in enumerate(generator):
         logging.getLogger(INFO_LOGGER).info(f"Appyling {object_type} with ID {object_id} to batch {i+1}...")
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
+            flat_hit = ec.flatten(hit)
             existing_facts = hit.get("texta_facts", [])
 
             for field in fields:
-                text = hit.get(field, None)
+                text = flat_hit.get(field, None)
                 if text and isinstance(text, str):
                     if object_type == "tagger":
                         result = apply_loaded_tagger(object, tagger,  text, input_type="text", feedback=None, use_logger = False)
@@ -510,7 +511,7 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
             callback_progress=progress,
         )
 
-        actions = update_generator(generator=searcher, fields=fields, fact_name=fact_name, fact_value=fact_value, object_id=object_id, object_type=object_type, object=object, object_args=object_args, tagger=tagger)
+        actions = update_generator(generator=searcher, ec=ec, fields=fields, fact_name=fact_name, fact_value=fact_value, object_id=object_id, object_type=object_type, object=object, object_args=object_args, tagger=tagger)
         for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes, max_retries=max_retries):
             if not success:
                 logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))

@@ -324,8 +324,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
     @action(detail=True, methods=['post'], serializer_class=ApplyTaggerSerializer)
     def apply_to_index(self, request, pk=None, project_pk=None):
-        from toolkit.tagger.tasks import apply_tagger_to_index
-
+        """Apply tagger to an Elasticsearch index."""
         with transaction.atomic():
             # We're pulling the serializer with the function bc otherwise it will not
             # fetch the context for whatever reason.
