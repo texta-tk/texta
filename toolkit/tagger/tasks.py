@@ -335,9 +335,12 @@ def apply_loaded_tagger(tagger_object: Tagger, tagger: TextTagger, content: Unio
             logging.getLogger(INFO_LOGGER).info(f"Tagging text with content: {content}!")
         tagger_result = tagger.tag_text(content)
 
-    # positive tagger_result["prediction"] can either be "true" (if positive examples were restricted by query)
-    # or tagger.object_description (if positive examples were restricted by specific facts)
-    result = True if (tagger_object.description == tagger_result["prediction"] or tagger_result["prediction"] == "true") else False
+    # Result is false if binary tagger's prediction is false, but true otherwise
+    # (for multiclass, the result is always true as one of the classes is always predicted)
+    result = False if tagger_result["prediction"] == "false" else True
+
+    # Use tagger description as tag for binary taggers and tagger prediction as tag for multiclass taggers
+    tag = tagger.description if tagger_result["prediction"] in {"true", "false"} else tagger_result["prediction"]
 
     if use_logger:
         logging.getLogger(INFO_LOGGER).info(f"Tagger description: {tagger_object.description}")
@@ -346,7 +349,7 @@ def apply_loaded_tagger(tagger_object: Tagger, tagger: TextTagger, content: Unio
     tagger_id = tagger_object.pk
     # create output dict
     prediction = {
-        'tag': tagger.description,
+        'tag': tag,
         'probability': tagger_result['probability'],
         'tagger_id': tagger_id,
         'result': result
@@ -467,6 +470,7 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
                         # get tags
                         tags += apply_tagger_group(object_id, text, tag_candidates, request=None, input_type='text', lemmatize=object_args["lemmatize"], feedback=False, use_async=False)
                         result = tags
+                        
                     new_facts = to_texta_fact(result, field, fact_name, fact_value)
                     if new_facts:
                         existing_facts.extend(new_facts)
@@ -489,7 +493,6 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
 @task(name="apply_tagger_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str], fact_name: str, fact_value: str, query: dict, bulk_size: int, max_chunk_bytes: int, es_timeout: int, object_type: str, object_args: Dict):
     try:
-        max_retries = 3 # TODO: move somewhere
         tagger = None
         if object_type == "tagger":
             object = Tagger.objects.get(pk=object_id)
@@ -512,7 +515,7 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
         )
 
         actions = update_generator(generator=searcher, ec=ec, fields=fields, fact_name=fact_name, fact_value=fact_value, object_id=object_id, object_type=object_type, object=object, object_args=object_args, tagger=tagger)
-        for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes, max_retries=max_retries):
+        for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes, max_retries=3):
             if not success:
                 logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
 

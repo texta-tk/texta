@@ -16,6 +16,7 @@ from toolkit.test_settings import (TEST_FACT_NAME,
                                    TEST_FIELD,
                                    TEST_FIELD_CHOICE,
                                    TEST_INDEX,
+                                   TEST_QUERY,
                                    TEST_VERSION_PREFIX,
                                    TEST_KEEP_PLOT_FILES, VERSION_NAMESPACE)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
@@ -34,8 +35,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
 
         self.client.login(username='taggerOwner', password='pw')
         # new fact name and value used when applying tagger to index
-        self.new_fact_name = "TEST_TAGGER_NAME"
-        self.new_fact_value = "TEST_TAGGER_VALUE"
+        self.new_fact_name = "TEST_TAGGER_GROUP_NAME"
 
         # Create copy of test index
         self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
@@ -62,6 +62,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
         self.run_models_retrain()
         self.create_taggers_with_empty_fields()
         self.run_apply_tagger_group_to_index()
+        self.run_apply_tagger_group_to_index_invalid_input()
         self.run_model_export_import()
         self.run_tagger_instances_have_mention_to_tagger_group()
 
@@ -204,6 +205,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
             "new_fact_name": self.new_fact_name,
             "indices": [{"name": self.test_index_copy}],
             "fields": [TEST_FIELD],
+            "query": json.dumps(TEST_QUERY),
             "lemmatize": False,
             "bulk_size": 50,
             "n_similar_docs": 10,
@@ -225,9 +227,27 @@ class TaggerGroupViewTests(APITransactionTestCase):
         # Check if applying tagger group results in at least one new fact value for each tagger in the group
         # Exact numbers cannot be checked as creating taggers contains random and thus
         # predicting with them isn't entirely deterministic
-        self.assertTrue(results["foo"] >= 1)
-        self.assertTrue(results["bar"] >= 1)
-        self.assertTrue(results["FUBAR"] >= 1)
+        self.assertTrue(len(results) >= 1)
+
+
+    def run_apply_tagger_group_to_index_invalid_input(self):
+        """Tests applying tagger group to index with invalid input using apply_to_index endpoint."""
+
+        url = f'{self.url}{self.test_tagger_group_id}/apply_to_index/'
+
+        payload = {
+            "description": "apply tagger test task",
+            "new_fact_name": self.new_fact_name,
+            "indices": [{"name": self.test_index_copy}],
+            "fields": "invalid_field_format",
+            "lemmatize": False,
+            "bulk_size": 50,
+            "n_similar_docs": 10,
+            "n_candidate_tags": 10
+        }
+        response = self.client.post(url, payload, format='json')
+        print_output('test_apply_tagger_group_to_index_invalid_input:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
     def run_create_and_delete_tagger_group_removes_related_children_models_plots(self):

@@ -86,6 +86,7 @@ class TaggerViewTests(APITransactionTestCase):
         self.run_model_retrain()
         self.run_model_export_import()
         self.run_apply_tagger_to_index()
+        self.run_apply_tagger_to_index_invalid_input()
         self.run_tag_and_feedback_and_retrain()
         self.create_tagger_with_empty_fields()
         self.create_tagger_then_delete_tagger_and_created_model()
@@ -411,6 +412,7 @@ class TaggerViewTests(APITransactionTestCase):
             "new_fact_value": self.new_fact_value,
             "indices": [{"name": self.test_index_copy}],
             "fields": [TEST_FIELD],
+            "query": json.dumps(TEST_QUERY),
             "lemmatize": False,
             "bulk_size": 100
         }
@@ -431,6 +433,25 @@ class TaggerViewTests(APITransactionTestCase):
         # Exact numbers cannot be checked as creating taggers contains random and thus
         # predicting with them isn't entirely deterministic
         self.assertTrue(results[self.new_fact_value] >= 1)
+
+
+    def run_apply_tagger_to_index_invalid_input(self):
+        """Tests applying tagger to index using apply_to_index endpoint with invalid input."""
+
+        test_tagger_id = self.test_tagger_ids[0]
+        url = f'{self.url}{test_tagger_id}/apply_to_index/'
+
+        payload = {
+            "description": "apply tagger test task",
+            "new_fact_name": self.new_fact_name,
+            "new_fact_value": self.new_fact_value,
+            "fields": "invalid_field_format",
+            "lemmatize": False,
+            "bulk_size": 100
+        }
+        response = self.client.post(url, payload, format='json')
+        print_output('test_apply_tagger_to_index_invalid_input:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
     def run_model_retrain(self):

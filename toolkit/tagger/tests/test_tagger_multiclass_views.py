@@ -1,6 +1,7 @@
 import json
 import os
 import pathlib
+import uuid
 from io import BytesIO
 from time import sleep
 from typing import List
@@ -9,6 +10,10 @@ from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
+from toolkit.elastic.models import Reindexer
+from toolkit.elastic.aggregator import ElasticAggregator
+from toolkit.elastic.core import ElasticCore
+
 from toolkit.core.task.models import Task
 from toolkit.settings import RELATIVE_MODELS_PATH
 from toolkit.tagger.models import Tagger
@@ -16,6 +21,7 @@ from toolkit.test_settings import (TEST_FIELD,
                                    TEST_FIELD_CHOICE,
                                    TEST_FACT_NAME,
                                    TEST_INDEX,
+                                   TEST_QUERY,
                                    TEST_VERSION_PREFIX,
                                    TEST_KEEP_PLOT_FILES
                                    )
@@ -43,10 +49,30 @@ class TaggerViewTests(APITransactionTestCase):
         self.test_tagger_ids = []
         self.client.login(username='taggerOwner', password='pw')
 
+        # new fact name and value used when applying tagger to index
+        self.new_fact_name = "TEST_MULTICLASS_TAGGER_NAME"
+
+        # Create copy of test index
+        self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
+        # Generate name for new index containing random id to make sure it doesn't already exist
+        self.test_index_copy = f"test_apply_multiclass_tagger_{uuid.uuid4().hex}"
+
+        self.reindex_payload = {
+            "description": "test index for applying multiclass taggers",
+            "indices": [TEST_INDEX],
+            "new_index": self.test_index_copy,
+            "fields": [TEST_FIELD]
+        }
+        resp = self.client.post(self.reindex_url, self.reindex_payload, format='json')
+        print_output("reindex test index for applying multiclass tagger:response.data:", resp.json())
+        self.reindexer_object = Reindexer.objects.get(pk=resp.json()["id"])
+
 
     def test_run(self):
         self.run_create_multiclass_tagger_training_and_task_signal()
         self.run_multiclass_tag_text(self.test_tagger_ids)
+        self.run_apply_multiclass_tagger_to_index()
+        self.run_apply_mutliclass_tagger_to_index_invalid_input()
 
 
     def add_cleanup_files(self, tagger_id):
@@ -60,6 +86,8 @@ class TaggerViewTests(APITransactionTestCase):
 
     def tearDown(self) -> None:
         Tagger.objects.all().delete()
+        res = ElasticCore().delete_index(self.test_index_copy)
+        print_output(f"Delete apply_multiclass_taggers test index {self.test_index_copy}", res)
 
 
     def run_create_multiclass_tagger_training_and_task_signal(self):
@@ -110,3 +138,59 @@ class TaggerViewTests(APITransactionTestCase):
             self.assertTrue(response.data)
             self.assertTrue('result' in response.data)
             self.assertTrue('probability' in response.data)
+
+
+    def run_apply_multiclass_tagger_to_index(self):
+        """Tests applying multiclass tagger to index using apply_to_index endpoint."""
+        # Make sure reindexer task has finished
+        while self.reindexer_object.task.status != Task.STATUS_COMPLETED:
+            print_output('test_apply_multiclass_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
+            sleep(2)
+
+        test_tagger_id = self.test_tagger_ids[0]
+        url = f'{self.url}{test_tagger_id}/apply_to_index/'
+
+        payload = {
+            "description": "apply multiclass tagger test task",
+            "new_fact_name": self.new_fact_name,
+            "indices": [{"name": self.test_index_copy}],
+            "fields": TEST_FIELD_CHOICE,
+            "query": json.dumps(TEST_QUERY),
+            "lemmatize": False,
+            "bulk_size": 100
+        }
+        response = self.client.post(url, payload, format='json')
+        print_output('test_apply_multiclass_tagger_to_index:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        tagger_object = Tagger.objects.get(pk=test_tagger_id)
+
+        # Wait til the task has finished
+        while tagger_object.task.status != Task.STATUS_COMPLETED:
+            print_output('test_apply_mutliclass_tagger_to_index: waiting for applying tagger task to finish, current status:', tagger_object.task.status)
+            sleep(2)
+
+        results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution(self.new_fact_name)
+        print_output("test_apply_multiclass_tagger_to_index:elastic aggerator results:", results)
+
+        # Check if applying the tagger results in at least 1 new fact
+        # Exact numbers cannot be checked as creating taggers contains random and thus
+        # predicting with them isn't entirely deterministic
+        self.assertTrue(len(results) >= 1)
+
+
+    def run_apply_mutliclass_tagger_to_index_invalid_input(self):
+        """Tests applying multiclass tagger to index using apply_to_index endpoint with invalid input."""
+
+        test_tagger_id = self.test_tagger_ids[0]
+        url = f'{self.url}{test_tagger_id}/apply_to_index/'
+
+        payload = {
+            "description": "apply tagger test task",
+            "new_fact_name": self.new_fact_name,
+            "fields": "invalid_field_format",
+            "lemmatize": False,
+            "bulk_size": 100
+        }
+        response = self.client.post(url, payload, format='json')
+        print_output('test_apply_tagger_to_index_invalid_input:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

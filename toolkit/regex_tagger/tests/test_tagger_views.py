@@ -45,11 +45,26 @@ class RegexTaggerViewTests(APITransactionTestCase):
 
         self.police, self.medic, self.firefighter = ids
 
+        # Create copy of test index
+        self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
+        # Generate name for new index containing random id to make sure it doesn't already exist
+        self.test_index_copy = f"test_apply_tagger_{uuid.uuid4().hex}"
+
+        self.reindex_payload = {
+            "description": "test index for applying taggers",
+            "indices": [TEST_INDEX],
+            "new_index": self.test_index_copy,
+            "fields": [TEST_FIELD]
+        }
+        resp = self.client.post(self.reindex_url, self.reindex_payload, format='json')
+        print_output("reindex test index for applying tagger:response.data:", resp.json())
+        self.reindexer_object = Reindexer.objects.get(pk=resp.json()["id"])
+
 
     def tearDown(self) -> None:
-        pass
-        #res = ElasticCore().delete_index(self.test_index_copy)
-        #print_output(f"Delete [Regex Tagger] apply_taggers test index {self.test_index_copy}", res)
+        res = ElasticCore().delete_index(self.test_index_copy)
+        print_output(f"Delete [Regex Tagger] apply_taggers test index {self.test_index_copy}", res)
+
 
     def test(self):
         self.run_test_apply_tagger_to_index()
@@ -83,6 +98,7 @@ class RegexTaggerViewTests(APITransactionTestCase):
 
         # Check if lexicon gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
 
     def run_test_regex_tagger_duplicate(self):
         """Tests RegexTagger duplication."""
@@ -326,28 +342,10 @@ class RegexTaggerViewTests(APITransactionTestCase):
         """Tests applying tagger to index using apply_to_index endpoint."""
 
 
-        # Create copy of test index
-
-        self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
-        # Generate name for new index containing random id to make sure it doesn't already exist
-        self.test_index_copy = "test_regex_tagger_apply_kkk"#f"test_apply_tagger_{uuid.uuid4().hex}"
-
-        self.reindex_payload = {
-            "description": "test index for applying taggers",
-            "indices": [TEST_INDEX],
-            "new_index": self.test_index_copy,
-            "fields": [TEST_FIELD]
-        }
-        resp = self.client.post(self.reindex_url, self.reindex_payload, format='json')
-        print_output("reindex test index for applying tagger:response.data:", resp.json())
-        self.reindexer_object = Reindexer.objects.get(pk=resp.json()["id"])
-
-
         # Make sure reindexer task has finished
-        #while self.reindexer_object.task.status != Task.STATUS_COMPLETED:
-        #    print_output('[Regex Tagger] test_apply_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
-        #    print_output("REINDEXER OBJECT", self.reindexer_object)
-        #    sleep(2)
+        while self.reindexer_object.task.status != Task.STATUS_COMPLETED:
+            print_output('[Regex Tagger] test_apply_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
+            sleep(2)
 
         tagger_payload = {
             "description": "LOLL",
