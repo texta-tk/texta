@@ -445,7 +445,6 @@ def to_texta_fact(tagger_result: List[Dict[str, Union[str, int, bool]]], field: 
 
 
 def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], fact_name: str, fact_value: str, object_id: int, object_type: str, object: Tagger, object_args: Dict, tagger: TextTagger = None):
-
     for i, scroll_batch in enumerate(generator):
         logging.getLogger(INFO_LOGGER).info(f"Appyling {object_type} with ID {object_id} to batch {i+1}...")
         for raw_doc in scroll_batch:
@@ -470,7 +469,7 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
                         # get tags
                         tags += apply_tagger_group(object_id, text, tag_candidates, request=None, input_type='text', lemmatize=object_args["lemmatize"], feedback=False, use_async=False)
                         result = tags
-                        
+
                     new_facts = to_texta_fact(result, field, fact_name, fact_value)
                     if new_facts:
                         existing_facts.extend(new_facts)
@@ -492,6 +491,7 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
 
 @task(name="apply_tagger_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str], fact_name: str, fact_value: str, query: dict, bulk_size: int, max_chunk_bytes: int, es_timeout: int, object_type: str, object_args: Dict):
+    """Apply Tagger or TaggerGroup to index."""
     try:
         tagger = None
         if object_type == "tagger":

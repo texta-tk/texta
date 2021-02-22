@@ -39,7 +39,6 @@ def process_texta_facts(facts: List[str], priority: Optional[str] = None):
 
 
 def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], object: Union[RegexTagger, RegexTaggerGroup], fact_name: str, fact_value: str, add_spans: bool):
-
     for scroll_batch in generator:
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
@@ -69,6 +68,7 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
 
 @task(name="apply_regex_tagger_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def apply_regex_tagger(object_id: int, object_type: str, indices: List[str], fields: List[str], query: dict, bulk_size: int = 100, max_chunk_bytes: int = 104857600, fact_name: str = "", fact_value: str = "", add_spans: bool = True):
+    """Apply RegexTagger or RegexTaggerGroup to index."""
     try:
         if object_type == "regex_tagger_group":
             object = RegexTaggerGroup.objects.get(pk=object_id)

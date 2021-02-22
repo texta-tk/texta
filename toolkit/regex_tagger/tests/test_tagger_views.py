@@ -1,4 +1,5 @@
 import json
+import uuid
 from io import BytesIO
 from time import sleep
 from django.urls import reverse
@@ -48,7 +49,7 @@ class RegexTaggerViewTests(APITransactionTestCase):
         # Create copy of test index
         self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
         # Generate name for new index containing random id to make sure it doesn't already exist
-        self.test_index_copy = f"test_apply_tagger_{uuid.uuid4().hex}"
+        self.test_index_copy = f"test_apply_regex_tagger_{uuid.uuid4().hex}"
 
         self.reindex_payload = {
             "description": "test index for applying taggers",

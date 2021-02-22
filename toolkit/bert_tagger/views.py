@@ -218,7 +218,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
     @action(detail=True, methods=['post'], serializer_class=ApplyTaggerSerializer)
     def apply_to_index(self, request, pk=None, project_pk=None):
-        """Apply bert tagger to an Elasticsearch index."""
+        """Apply BERT tagger to an Elasticsearch index."""
         with transaction.atomic():
             # We're pulling the serializer with the function bc otherwise it will not
             # fetch the context for whatever reason.
@@ -245,5 +245,5 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             args = (pk, indices, fields, fact_name, fact_value, query, bulk_size, max_chunk_bytes, es_timeout)
             transaction.on_commit(lambda: apply_tagger_to_index.apply_async(args=args, queue=CELERY_LONG_TERM_TASK_QUEUE))
 
-            message = "Started process of applying Tagger with id: {}".format(tagger_object.id)
+            message = "Started process of applying BERT Tagger with id: {}".format(tagger_object.id)
             return Response({"message": message}, status=status.HTTP_201_CREATED)

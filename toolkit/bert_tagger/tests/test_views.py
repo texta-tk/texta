@@ -53,6 +53,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         # new fact name and value used when applying tagger to index
         self.new_fact_name = "TEST_BERT_TAGGER_NAME"
+        self.new_multiclass_fact_name = "TEST_BERT_TAGGER_NAME_MC"
         self.new_fact_value = "TEST_BERT_TAGGER_VALUE"
 
         # Create copy of test index
@@ -376,7 +377,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         payload = {
             "description": "apply bert tagger to index test task",
-            "new_fact_name": self.new_fact_name,
+            "new_fact_name": self.new_multiclass_fact_name,
             "new_fact_value": self.new_fact_value,
             "indices": [{"name": self.test_index_copy}],
             "fields": TEST_FIELD_CHOICE,
@@ -393,7 +394,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
             print_output('test_apply_multiclass_bert_tagger_to_index: waiting for applying tagger task to finish, current status:', tagger_object.task.status)
             sleep(2)
 
-        results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution(self.new_fact_name)
+        results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution(self.new_multiclass_fact_name)
         print_output("test_apply_multiclass_bert_tagger_to_index:elastic aggerator results:", results)
 
         # Check if applying the tagger results in at least 1 new fact
