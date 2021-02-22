@@ -100,4 +100,4 @@ def apply_regex_tagger(object_id: int, object_type: str, indices: List[str], fie
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(e)
         error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
-        regex_tagger_group.task.add_error(error_message)
+        object.task.add_error(error_message)
