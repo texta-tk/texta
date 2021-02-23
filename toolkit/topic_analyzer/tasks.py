@@ -1,8 +1,8 @@
 import json
 import logging
+
 from celery.decorators import task
 from django.db import transaction
-
 from texta_tools.text_processor import TextProcessor
 
 from toolkit.base_tasks import BaseTask
@@ -13,7 +13,6 @@ from toolkit.tools.show_progress import ShowProgress
 from toolkit.topic_analyzer.clustering import ClusterContent, Clustering
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 from toolkit.topic_analyzer.serializers import ClusteringSerializer
-from toolkit.embedding.choices import W2V_EMBEDDING, FASTTEXT_EMBEDDING
 
 
 @task(name="start_clustering_task", base=BaseTask)
@@ -119,49 +118,48 @@ def perform_data_clustering(clustering_id):
 
 @task(name="save_clustering_results", base=BaseTask)
 def save_clustering_results(clustering_result: dict):
-    with transaction.atomic():
-        clustering_obj = ClusteringResult.objects.get(pk=clustering_result["pk"])
-        clustering_obj.task.update_status("saving_results")
+    clustering_obj = ClusteringResult.objects.get(pk=clustering_result["pk"])
+    clustering_obj.task.update_status("saving_results")
 
-        clustering_results = clustering_result["results"]
-        fields = clustering_result["fields"]
-        indices = clustering_result["indices"]
-        display_fields = clustering_result["display_fields"]
-        vectors_filepath = clustering_result["vectors_filepath"]
-        stop_words = clustering_result["stop_words"]
-        significant_words_filter = clustering_result["significant_words_filter"]
+    clustering_results = clustering_result["results"]
+    fields = clustering_result["fields"]
+    indices = clustering_result["indices"]
+    display_fields = clustering_result["display_fields"]
+    vectors_filepath = clustering_result["vectors_filepath"]
+    stop_words = clustering_result["stop_words"]
+    significant_words_filter = clustering_result["significant_words_filter"]
 
-        clustering_obj.vector_model.name = vectors_filepath
-        clustering_obj.save()
+    clustering_obj.vector_model.name = vectors_filepath
+    clustering_obj.save()
 
-        clusters = []
-        for cluster_id, document_ids in clustering_results:
-            document_ids_json = json.dumps(document_ids)
+    clusters = []
+    for cluster_id, document_ids in clustering_results:
+        document_ids_json = json.dumps(document_ids)
 
-            sw = Cluster.get_significant_words(indices=indices, document_ids=document_ids, fields=fields, stop_words=stop_words, exclude=significant_words_filter)
-            cluster_content = ClusterContent(document_ids, vectors_filepath=vectors_filepath)
+        sw = Cluster.get_significant_words(indices=indices, document_ids=document_ids, fields=fields, stop_words=stop_words, exclude=significant_words_filter)
+        cluster_content = ClusterContent(document_ids, vectors_filepath=vectors_filepath)
 
-            label = Cluster.objects.create(
-                significant_words=json.dumps(sw),
-                document_ids=document_ids_json,
-                cluster_id=cluster_id,
-                fields=json.dumps(fields),
-                display_fields=json.dumps(display_fields),
-                indices=json.dumps(indices),
-                intracluster_similarity=cluster_content.get_intracluster_similarity()
-            )
+        label = Cluster.objects.create(
+            significant_words=json.dumps(sw),
+            document_ids=document_ids_json,
+            cluster_id=cluster_id,
+            fields=json.dumps(fields),
+            display_fields=json.dumps(display_fields),
+            indices=json.dumps(indices),
+            intracluster_similarity=cluster_content.get_intracluster_similarity()
+        )
 
-            clusters.append(label)
+        clusters.append(label)
 
-        # To avoid having stray clusters after retraining, we delete the previous ones,
-        # and replace them with the new ones. As we don't reuse clusters it should be safe.
-        if clustering_obj.cluster_result.count() == 0:
-            clustering_obj.cluster_result.set(clusters)
-        else:
-            clustering_obj.cluster_result.all().delete()
-            clustering_obj.cluster_result.set(clusters)
+    # To avoid having stray clusters after retraining, we delete the previous ones,
+    # and replace them with the new ones. As we don't reuse clusters it should be safe.
+    if clustering_obj.cluster_result.count() == 0:
+        clustering_obj.cluster_result.set(clusters)
+    else:
+        clustering_obj.cluster_result.all().delete()
+        clustering_obj.cluster_result.set(clusters)
 
-        return clustering_obj.id
+    return clustering_obj.id
 
 
 @task(name="finish_clustering_task", base=BaseTask)
