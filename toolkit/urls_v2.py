@@ -6,7 +6,18 @@ from toolkit.anonymizer.urls import router as anonymizer_router
 from toolkit.bert_tagger.urls import router as bert_tagger_router
 from toolkit.core.core_variable.views import CoreVariableViewSet
 from toolkit.core.health.views import HealthView
-from toolkit.core.project.views import DocumentView, ExportSearchView, GetFactsView, GetFieldsView, GetIndicesView, GetSpamView, ProjectViewSet, ScrollView, SearchByQueryView, SearchView
+from toolkit.core.project.views import (
+    DocumentView,
+    ExportSearchView,
+    GetFactsView,
+    GetFieldsView,
+    GetIndicesView,
+    GetSpamView,
+    ProjectViewSet,
+    ScrollView,
+    SearchByQueryView,
+    SearchView
+)
 from toolkit.core.task.views import TaskAPIView
 from toolkit.core.urls import router as core_router
 from toolkit.core.user_profile import views as profile_views
@@ -14,7 +25,7 @@ from toolkit.dataset_import.views import DatasetImportViewSet
 from toolkit.docparser.views import DocparserView
 from toolkit.document_importer.views import DocumentImportView, DocumentInstanceView, UpdateSplitDocument
 from toolkit.elastic.urls import index_router
-from toolkit.elastic.views import ElasticGetIndices, ReindexerViewSet, SnowballProcessor
+from toolkit.elastic.views import ElasticGetIndices, ReindexerViewSet, SnowballProcessor, FaceAnalyzerViewSet
 from toolkit.embedding.urls import embedding_router
 from toolkit.mlp.urls import mlp_router
 from toolkit.mlp.views import MLPListProcessor, MlpDocsProcessor
@@ -43,6 +54,7 @@ project_router.registry.extend(regex_tagger_router.registry)
 project_router.registry.extend(anonymizer_router.registry)
 project_router.registry.extend(bert_tagger_router.registry)
 
+project_router.register('elastic/face_analyzer', FaceAnalyzerViewSet, basename='face_analyzer')
 project_router.register('elastic/reindexer', ReindexerViewSet, basename='reindexer')
 project_router.register('elastic/dataset_imports', DatasetImportViewSet, basename='dataset_import')
 
