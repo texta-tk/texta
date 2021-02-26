@@ -19,11 +19,6 @@ from toolkit.elastic.validators import (
 from toolkit.settings import REST_FRAMEWORK
 
 
-class SnowballSerializer(serializers.Serializer):
-    text = serializers.CharField()
-    language = serializers.ChoiceField(choices=get_snowball_choices(), default=get_snowball_choices()[0][0])
-
-
 class AddMappingToIndexSerializer(serializers.Serializer):
     mappings = serializers.DictField()
 
