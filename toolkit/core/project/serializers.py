@@ -149,9 +149,9 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
         resource_dict = {}
         resources = (
             'lexicons',
-            'elastic/reindexer',
-            'elastic/index_splitter',
-            'elastic/dataset_imports',
+            'reindexer',
+            'index_splitter',
+            'dataset_imports',
             'searches',
             'scroll',
             'clustering',
@@ -165,7 +165,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
             'anonymizers',
             'regex_tagger_groups',
             'mlp_index',
-            'elastic/face_analyzer'
+
         )
         for resource_name in resources:
             resource_dict[resource_name] = f'{base_url}{resource_name}/'
