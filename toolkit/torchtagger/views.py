@@ -14,7 +14,7 @@ from texta_tools.embedding import W2VEmbedding
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.feedback import Feedback
+from toolkit.elastic.tools.feedback import Feedback
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed

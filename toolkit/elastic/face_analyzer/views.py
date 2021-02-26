@@ -53,6 +53,7 @@ class FaceAnalyzerViewSet(viewsets.GenericViewSet):
         project_object = Project.objects.get(pk=project_pk)
         project_indices = project_object.get_indices()
 
+        # TODO: Check Elastic
         # TODO: Validate image
         # TODO: Validate elastic index name
 
@@ -91,6 +92,7 @@ class FaceAnalyzerViewSet(viewsets.GenericViewSet):
             index = ",".join(project_indices)
 
         # TODO: Validate input image
+        # TODO: Check Elastic
 
         if not project_indices:
             return Response({'error': 'No indices to use for reference!'}, status=status.HTTP_400_BAD_REQUEST)

@@ -25,7 +25,8 @@ from toolkit.dataset_import.urls import router as dataset_import_router
 from toolkit.docparser.views import DocparserView
 from toolkit.document_importer.views import DocumentImportView, DocumentInstanceView, UpdateSplitDocument
 from toolkit.elastic.urls import index_router, router as reindexer_router, splitter_router
-from toolkit.elastic.views import ElasticGetIndices, SnowballProcessor#, FaceAnalyzerViewSet
+from toolkit.elastic.views import ElasticGetIndices, SnowballProcessor
+from toolkit.elastic.face_analyzer.views import FaceAnalyzerViewSet
 from toolkit.embedding.urls import embedding_router
 from toolkit.mlp.urls import mlp_router
 from toolkit.mlp.views import MLPListProcessor, MlpDocsProcessor
@@ -61,7 +62,7 @@ project_router.registry.extend(bert_tagger_router.registry)
 project_router.register(r'clustering', ClusteringViewSet, basename='clustering')
 clustering_router = routers.NestedSimpleRouter(project_router, r'clustering', lookup='clustering')
 clustering_router.register("clusters", ClusterViewSet, basename="cluster")
-#project_router.register('elastic/face_analyzer', FaceAnalyzerViewSet, basename='face_analyzer')
+project_router.register('elastic/face_analyzer', FaceAnalyzerViewSet, basename='face_analyzer')
 
 app_name = 'toolkit_v1'
 

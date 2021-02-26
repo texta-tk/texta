@@ -3,10 +3,10 @@ import json
 
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.aggregator import ElasticAggregator
-from toolkit.elastic.feedback import Feedback
+from toolkit.elastic.tools.feedback import Feedback
 from toolkit.elastic.query import Query
 from toolkit.tools.lemmatizer import ElasticLemmatizer
-from .exceptions import InvalidDataSampleError
+from ..exceptions import InvalidDataSampleError
 
 
 class InvalidDataSampleError(Exception):
