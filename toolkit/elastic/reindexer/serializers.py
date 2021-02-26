@@ -8,7 +8,13 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.reindexer.models import Reindexer
-from toolkit.elastic.validators import check_for_banned_beginning_chars, check_for_colons, check_for_special_symbols, check_for_upper_case, check_for_wildcards
+from toolkit.elastic.validators import (
+    check_for_banned_beginning_chars,
+    check_for_colons,
+    check_for_special_symbols,
+    check_for_upper_case,
+    check_for_wildcards
+)
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
 
 

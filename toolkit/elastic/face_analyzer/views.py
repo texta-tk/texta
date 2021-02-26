@@ -63,21 +63,16 @@ class FaceAnalyzerViewSet(viewsets.GenericViewSet):
         # get project indices
         project_object = Project.objects.get(pk=project_pk)
         project_indices = project_object.get_indices()
-
-        # TODO: Validate elastic index name
-
+        # write file to disk
         file_path = write_file_to_disk(img_file)
-
         # analyze & add photo to elastic
         face_analyzer = create_analyzer_object(index)
         face_vectors = face_analyzer.add_photo(file_path, name=name, value=value)
-
         # create & add index to project if it does not exist
         if not index not in project_indices:
             index, is_open = Index.objects.get_or_create(name=index)
             project_object.indices.add(index)
             project_object.save()
-
         return Response({"success": f"{len(face_vectors)} face(s) added to index {index}."})
     
 
@@ -99,12 +94,11 @@ class FaceAnalyzerViewSet(viewsets.GenericViewSet):
             index = serializer.validated_data["index"]
         else:
             index = ",".join(project_indices)
-
+        # check if indices exist and are correct
         if not project_indices:
             return Response({'error': 'No indices to use for reference!'}, status=status.HTTP_400_BAD_REQUEST)
         if index not in project_indices:
             return Response({'error': f'Index {index} not in project!'}, status=status.HTTP_400_BAD_REQUEST)
-        
         # create analyzer object
         face_analyzer = create_analyzer_object(index)
         # write file to disk
