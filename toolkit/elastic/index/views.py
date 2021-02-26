@@ -8,44 +8,23 @@ from django.http import JsonResponse
 from django_filters import rest_framework as filters
 from rest_auth import views
 from django.urls import reverse
-from rest_framework import mixins, permissions, status, viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
-from texta_face_analyzer.face_analyzer import FaceAnalyzer
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.exceptions import ElasticIndexAlreadyExists
-from toolkit.elastic.models import Index
-from toolkit.elastic.serializers import (
+from toolkit.elastic.index.models import Index
+from toolkit.elastic.index.serializers import (
     AddMappingToIndexSerializer,
     AddTextaFactsMapping,
     IndexSerializer,
-    SnowballSerializer
 )
 from toolkit.permissions.project_permissions import IsSuperUser, ProjectResourceAllowed
-from toolkit.tools.lemmatizer import ElasticLemmatizer
 from toolkit.tools.common_utils import write_file_to_disk, delete_file
 from toolkit.helper_functions import get_core_setting
 from toolkit.settings import RELATIVE_PROJECT_DATA_PATH
-
-
-class SnowballProcessor(views.APIView):
-    serializer_class = SnowballSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-
-    def post(self, request):
-        serializer = SnowballSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        text = serializer.validated_data["text"]
-        language = serializer.validated_data["language"]
-
-        lemmatizer = ElasticLemmatizer(language=language)
-        lemmatized = lemmatizer.lemmatize(text)
-
-        return Response({"text": lemmatized})
 
 
 class IndicesFilter(filters.FilterSet):

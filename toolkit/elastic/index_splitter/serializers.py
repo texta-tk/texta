@@ -16,7 +16,7 @@ from toolkit.elastic.validators import (
     check_for_upper_case,
     check_for_wildcards
 )
-from toolkit.elastic.serializers import IndexSerializer
+from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
 from toolkit.settings import REST_FRAMEWORK
 from toolkit.elastic.choices import LABEL_DISTRIBUTION

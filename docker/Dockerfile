@@ -1,5 +1,12 @@
 FROM continuumio/miniconda3:latest
 
+# Install system packages
+RUN set -x \
+    && apt-get update && apt-get install cmake -y \
+    # apt clean up
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy environment file
 COPY environment-nogpu.yaml /var/environment.yaml
 

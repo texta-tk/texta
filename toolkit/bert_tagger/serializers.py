@@ -3,7 +3,7 @@ import json
 from rest_framework import serializers
 from toolkit.helper_functions import get_downloaded_bert_models
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.elastic.serializers import IndexSerializer
+from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
 from toolkit.bert_tagger import choices
 from toolkit.bert_tagger.models import BertTagger

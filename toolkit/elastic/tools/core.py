@@ -111,7 +111,7 @@ class ElasticCore:
 
         Put this into a separate function to make using it
         """
-        from toolkit.elastic.models import Index
+        from toolkit.elastic.index.models import Index
         with transaction.atomic():
             opened, closed = self.get_indices()
 

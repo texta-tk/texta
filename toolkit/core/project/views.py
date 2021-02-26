@@ -24,7 +24,8 @@ from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.elastic.tools.query import Query
 from toolkit.elastic.tools.searcher import ElasticSearcher
-from toolkit.elastic.serializers import ElasticScrollSerializer, IndexSerializer
+from toolkit.elastic.tools.serializers import ElasticScrollSerializer
+from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.elastic.tools.spam_detector import SpamDetector
 from toolkit.exceptions import InvalidInputDocument, ProjectValidationFailed, SerializerNotValid
 from toolkit.helper_functions import hash_string

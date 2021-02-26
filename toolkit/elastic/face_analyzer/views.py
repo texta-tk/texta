@@ -13,7 +13,7 @@ from texta_face_analyzer.face_analyzer import FaceAnalyzer
 from .serializers import FaceAnalyzerSerializer, AddFaceSerializer
 from toolkit.elastic.decorators import elastic_connection
 from toolkit.core.project.models import Project
-from toolkit.elastic.models import Index
+from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.permissions.project_permissions import IsSuperUser, ProjectResourceAllowed
 from toolkit.tools.common_utils import write_file_to_disk, delete_file

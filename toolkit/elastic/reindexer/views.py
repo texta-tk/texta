@@ -8,7 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
-from toolkit.elastic.models import Index
+from toolkit.elastic.index.models import Index
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.reindexer.serializers import ReindexerCreateSerializer
 from toolkit.permissions.project_permissions import ProjectResourceAllowed

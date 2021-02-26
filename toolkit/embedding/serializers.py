@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from toolkit.elastic.serializers import IndexSerializer
+from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.embedding.models import Embedding, Task
 from toolkit.embedding import choices
 from toolkit.core.task.serializers import TaskSerializer

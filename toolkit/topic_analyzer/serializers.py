@@ -6,7 +6,7 @@ from rest_framework import serializers
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
-from toolkit.elastic.serializers import IndexSerializer
+from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.settings import REST_FRAMEWORK
 from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
