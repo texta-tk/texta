@@ -89,8 +89,8 @@ class FaceAnalyzerViewSet(viewsets.GenericViewSet):
         """
         Analyzes input image by:
         1. detecting all faces,
-        2. vectorizing found faces.
-        Vectorized faces are compared to face vectors in Elasticsearch.
+        2. vectorizing found faces,
+        3. comparing vectors to ones indexed in Elasticsearch.
         """
         serializer = FaceAnalyzerSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
