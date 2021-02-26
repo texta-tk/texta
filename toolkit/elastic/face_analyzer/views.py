@@ -55,8 +55,11 @@ class FaceAnalyzerViewSet(viewsets.GenericViewSet):
     @action(detail=False, methods=["post"], serializer_class=AddFaceSerializer)
     def add_face(self, request, project_pk=None):
         """
-        Identifies faces on input image, vectorizes them, and stores to Elasticsearch index.
-        These indexed faces can later be queried for similarity.
+        Processes image by:
+        1. Identifying faces on input image,
+        2. vectorizing them,
+        3. storing vectors to Elasticsearch index.
+        These indexed faces can later be queried for similarity!
         """
         serializer = AddFaceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
