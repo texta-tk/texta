@@ -4,7 +4,7 @@ from typing import Optional
 
 from django.contrib.auth.models import User
 from toolkit.core.project.models import Project
-from toolkit.elastic.models import Index
+from toolkit.elastic.index.models import Index
 from termcolor import colored
 
 

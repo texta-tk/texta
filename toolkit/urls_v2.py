@@ -25,7 +25,7 @@ from toolkit.dataset_import.views import DatasetImportViewSet
 from toolkit.docparser.views import DocparserView
 from toolkit.elastic.document_importer.views import DocumentImportView, DocumentInstanceView, UpdateSplitDocument
 from toolkit.elastic.urls import index_router
-from toolkit.elastic.views import ElasticGetIndices
+from toolkit.elastic.index.views import ElasticGetIndices
 from toolkit.elastic.snowball.views import SnowballProcessor
 from toolkit.elastic.index_splitter.views import IndexSplitterViewSet
 from toolkit.elastic.reindexer.views import ReindexerViewSet

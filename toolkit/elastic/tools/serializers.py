@@ -1,56 +1,8 @@
-from typing import List
-import json
-
-from django.urls import reverse
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from toolkit.core.project.models import Project
-from toolkit.elastic.choices import get_snowball_choices
-from toolkit.elastic.models import Index
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
-from toolkit.elastic.validators import (
-    check_for_banned_beginning_chars,
-    check_for_colons,
-    check_for_special_symbols,
-    check_for_upper_case,
-    check_for_wildcards
-)
-from toolkit.settings import REST_FRAMEWORK
-
-
-class AddMappingToIndexSerializer(serializers.Serializer):
-    mappings = serializers.DictField()
-
-
-class IndexSerializer(serializers.ModelSerializer):
-    is_open = serializers.BooleanField(default=True)
-    url = serializers.SerializerMethodField()
-    name = serializers.CharField(
-        max_length=255,
-        validators=[
-            check_for_wildcards,
-            check_for_colons,
-            check_for_special_symbols,
-            check_for_banned_beginning_chars,
-            check_for_upper_case
-        ]
-    )
-
-    def get_url(self, obj):
-        default_version = REST_FRAMEWORK.get("DEFAULT_VERSION")
-
-        index = reverse(f"{default_version}:index-detail", kwargs={"pk": obj.pk})
-        if "request" in self.context:
-            request = self.context["request"]
-            url = request.build_absolute_uri(index)
-            return url
-        else:
-            return None
-
-    class Meta:
-        model = Index
-        fields = "__all__"
+from toolkit.elastic.index.serializers import IndexSerializer
 
 
 class ElasticMoreLikeThisSerializer(serializers.Serializer):
@@ -65,12 +17,6 @@ class ElasticMoreLikeThisSerializer(serializers.Serializer):
     stop_words = serializers.ListField(default=[], help_text="An array of stop words. Any word in this set is considered 'uninteresting' and ignored.")
     include_meta = serializers.BooleanField(default=False, help_text="Whether to add the documents meta information (id, index, doctype) into the returning set of documents.")
     size = serializers.IntegerField(min_value=1, max_value=10000, default=10, help_text="How many documents to return with the end result. Default: 10")
-
-
-# An empty serializer because otherwise it defaults to the Index one, creating confusion
-# inside the BrowsableAPI.
-class AddTextaFactsMapping(serializers.Serializer):
-    pass
 
 
 class ElasticFactSerializer(serializers.Serializer):

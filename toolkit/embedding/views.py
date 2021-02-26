@@ -12,7 +12,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
-from toolkit.elastic.models import Index
+from toolkit.elastic.index.models import Index
 from toolkit.embedding.models import Embedding
 from toolkit.embedding.serializers import EmbeddingPredictSimilarWordsSerializer, EmbeddingSerializer
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, SerializerNotValid

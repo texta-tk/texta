@@ -9,7 +9,7 @@ from toolkit.core.project.models import Project
 from toolkit.core.project.validators import check_if_in_elastic
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
-from toolkit.elastic.serializers import IndexSerializer
+from toolkit.elastic.index.serializers import IndexSerializer
 
 
 class ExportSearcherResultsSerializer(serializers.Serializer):
@@ -90,7 +90,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
 
 
     def update(self, instance, validated_data):
-        from toolkit.elastic.models import Index
+        from toolkit.elastic.index.models import Index
 
         if "title" in validated_data:
             instance.title = validated_data["title"]
@@ -115,7 +115,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
 
 
     def create(self, validated_data):
-        from toolkit.elastic.models import Index
+        from toolkit.elastic.index.models import Index
         indices: List[str] = validated_data["get_indices"]
         title = validated_data["title"]
         users = validated_data["users"]

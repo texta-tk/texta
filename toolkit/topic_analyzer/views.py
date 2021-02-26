@@ -20,9 +20,9 @@ from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 from toolkit.topic_analyzer.serializers import ClusterSerializer, ClusteringIdsSerializer, ClusteringSerializer, TransferClusterDocumentsSerializer
 from .clustering import ClusterContent
 from ..elastic.tools.document import ElasticDocument
-from ..elastic.models import Index
+from toolkit.elastic.index.models import Index
 from ..elastic.tools.searcher import ElasticSearcher
-from ..elastic.serializers import ElasticFactSerializer, ElasticMoreLikeThisSerializer
+from ..elastic.tools.serializers import ElasticFactSerializer, ElasticMoreLikeThisSerializer
 from ..pagination import PageNumberPaginationDataOnly
 from ..permissions.project_permissions import ProjectResourceAllowed
 from ..settings import REST_FRAMEWORK

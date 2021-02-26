@@ -4,7 +4,7 @@ from django.db.models import Avg, Sum
 from rest_framework import serializers
 
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.elastic.serializers import IndexSerializer
+from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
 from toolkit.tagger.choices import (
     DEFAULT_MAX_SAMPLE_SIZE,

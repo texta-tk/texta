@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.models import Index
+from toolkit.elastic.index.models import Index
 from toolkit.settings import CORE_SETTINGS
 from toolkit.test_settings import TEST_INDEX, VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, project_creation

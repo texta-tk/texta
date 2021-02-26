@@ -8,15 +8,15 @@ from django.http import JsonResponse
 from django_filters import rest_framework as filters
 from rest_auth import views
 from django.urls import reverse
-from rest_framework import mixins, permissions, status, viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.exceptions import ElasticIndexAlreadyExists
-from toolkit.elastic.models import Index
-from toolkit.elastic.serializers import (
+from toolkit.elastic.index.models import Index
+from toolkit.elastic.index.serializers import (
     AddMappingToIndexSerializer,
     AddTextaFactsMapping,
     IndexSerializer,

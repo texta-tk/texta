@@ -6,7 +6,7 @@ from .models import RegexTagger, RegexTaggerGroup
 from .validators import validate_patterns
 from ..core.task.serializers import TaskSerializer
 from ..elastic.tools.searcher import EMPTY_QUERY
-from ..elastic.serializers import IndexSerializer
+from toolkit.elastic.index.serializers import IndexSerializer
 
 
 PRIORITY_CHOICES = (

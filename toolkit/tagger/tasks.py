@@ -13,7 +13,7 @@ from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.tools.data_sample import DataSample
 from toolkit.elastic.tools.feedback import Feedback
-from toolkit.elastic.models import Index
+from toolkit.elastic.index.models import Index
 from toolkit.helper_functions import get_indices_from_object
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, MEDIA_URL
 from toolkit.tagger.models import Tagger, TaggerGroup

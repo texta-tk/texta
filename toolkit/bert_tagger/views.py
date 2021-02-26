@@ -15,7 +15,7 @@ from texta_bert_tagger.tagger import BertTagger
 from toolkit.core.project.models import Project
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.feedback import Feedback
-from toolkit.elastic.models import Index
+from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, DownloadingModelsNotAllowedError, InvalidModelIdentifierError
 from toolkit.helper_functions import add_finite_url_to_feedback, download_bert_requirements, get_downloaded_bert_models
