@@ -54,6 +54,10 @@ class FaceAnalyzerViewSet(viewsets.GenericViewSet):
 
     @action(detail=False, methods=["post"], serializer_class=AddFaceSerializer)
     def add_face(self, request, project_pk=None):
+        """
+        Identifies faces on input image, vectorizes them, and stores to Elasticsearch index.
+        These indexed faces can later be queried for similarity.
+        """
         serializer = AddFaceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         # get request params
@@ -82,6 +86,12 @@ class FaceAnalyzerViewSet(viewsets.GenericViewSet):
 
 
     def post(self, request, project_pk=None, serializer_class=FaceAnalyzerSerializer):
+        """
+        Analyzes input image by:
+        1. detecting all faces,
+        2. vectorizing found faces.
+        Vectorized faces are compared to face vectors in Elasticsearch.
+        """
         serializer = FaceAnalyzerSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         # get request params
