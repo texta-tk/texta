@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-from toolkit.elastic.searcher import EMPTY_QUERY
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.core.project.models import Project
 from toolkit.constants import MAX_DESC_LEN
 

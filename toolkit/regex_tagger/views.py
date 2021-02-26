@@ -11,9 +11,9 @@ from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
-from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.document import ElasticDocument
-from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.elastic.tools.core import ElasticCore
+from toolkit.elastic.tools.document import ElasticDocument
+from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup
 from toolkit.regex_tagger.serializers import (

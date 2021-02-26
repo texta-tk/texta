@@ -2,7 +2,7 @@ from typing import List
 
 from elasticsearch_dsl import Search, Q
 
-from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.tools.core import ElasticCore
 
 
 class ElasticAggregator:

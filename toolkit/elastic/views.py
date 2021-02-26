@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from texta_face_analyzer.face_analyzer import FaceAnalyzer
 
 from toolkit.core.project.models import Project
-from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.exceptions import ElasticIndexAlreadyExists
 from toolkit.elastic.models import Index
 from toolkit.elastic.serializers import (

@@ -4,7 +4,7 @@ import elasticsearch
 from elasticsearch_dsl import Search
 from elasticsearch_dsl.query import MoreLikeThis
 
-from toolkit.elastic.core import ElasticCore, elastic_connection
+from toolkit.elastic.tools.core import ElasticCore, elastic_connection
 
 
 ES_SCROLL_SIZE = 500

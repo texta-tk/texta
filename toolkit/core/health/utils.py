@@ -9,7 +9,7 @@ from celery.task.control import inspect
 from rest_framework import exceptions
 from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetMemoryInfo
 
-from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.tools.core import ElasticCore
 from toolkit.helper_functions import get_core_setting
 from toolkit.settings import BASE_DIR, BROKER_URL, ERROR_LOGGER
 

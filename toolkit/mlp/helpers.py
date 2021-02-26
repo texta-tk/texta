@@ -3,8 +3,8 @@ from typing import List
 
 from texta_mlp.mlp import MLP
 
-from toolkit.elastic.document import ElasticDocument
-from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.elastic.tools.document import ElasticDocument
+from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.settings import INFO_LOGGER
 
 

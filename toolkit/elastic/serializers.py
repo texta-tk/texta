@@ -8,9 +8,9 @@ from rest_framework.exceptions import ValidationError
 from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.elastic.choices import LABEL_DISTRIBUTION, get_snowball_choices
-from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.models import Index
-from toolkit.elastic.searcher import EMPTY_QUERY
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.elastic.validators import check_for_banned_beginning_chars, check_for_colons, check_for_special_symbols, check_for_upper_case, check_for_wildcards
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
 from toolkit.settings import REST_FRAMEWORK

@@ -1,5 +1,5 @@
 # CHOICES FOR EMBEDDING APP
-from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.tools.core import ElasticCore
 
 def get_field_choices():
    es = ElasticCore()

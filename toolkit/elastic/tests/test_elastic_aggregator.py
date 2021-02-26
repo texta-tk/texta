@@ -1,5 +1,5 @@
 from django.test import TestCase
-from toolkit.elastic.aggregator import ElasticAggregator
+from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE, TEST_FACT_NAME
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 

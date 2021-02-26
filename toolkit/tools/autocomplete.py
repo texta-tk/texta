@@ -1,5 +1,5 @@
 from toolkit.core.lexicon.models import Lexicon
-from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.elastic.tools.searcher import ElasticSearcher
 
 
 class Autocomplete:

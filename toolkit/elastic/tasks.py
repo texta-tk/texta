@@ -7,12 +7,12 @@ from celery.decorators import task
 
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.core.task.models import Task
-from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.document import ElasticDocument
+from toolkit.elastic.tools.core import ElasticCore
+from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.elastic.mapping_generator import SchemaGenerator
 from toolkit.elastic.models import Reindexer, IndexSplitter
-from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.elastic.aggregator import ElasticAggregator
+from toolkit.elastic.tools.searcher import ElasticSearcher
+from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.choices import LABEL_DISTRIBUTION
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.settings import ERROR_LOGGER, INFO_LOGGER

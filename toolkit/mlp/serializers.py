@@ -5,7 +5,7 @@ from rest_framework import serializers
 from texta_mlp.mlp import SUPPORTED_ANALYZERS
 
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.elastic.searcher import EMPTY_QUERY
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.elastic.serializers import IndexSerializer
 from toolkit.mlp.models import MLPWorker
 from toolkit.settings import REST_FRAMEWORK

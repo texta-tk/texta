@@ -5,7 +5,7 @@ from elasticsearch_dsl import Q, Search
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.tools.core import ElasticCore
 from toolkit.test_settings import TEST_INDEX, VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 

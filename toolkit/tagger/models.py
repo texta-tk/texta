@@ -18,7 +18,7 @@ from toolkit.core.lexicon.models import Lexicon
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.models import Index
-from toolkit.elastic.searcher import EMPTY_QUERY
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, RELATIVE_MODELS_PATH
 from toolkit.tagger.choices import (

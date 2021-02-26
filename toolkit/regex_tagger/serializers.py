@@ -5,7 +5,7 @@ from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUr
 from .models import RegexTagger, RegexTaggerGroup
 from .validators import validate_patterns
 from ..core.task.serializers import TaskSerializer
-from ..elastic.searcher import EMPTY_QUERY
+from ..elastic.tools.searcher import EMPTY_QUERY
 from ..elastic.serializers import IndexSerializer
 
 

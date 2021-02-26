@@ -12,9 +12,9 @@ from texta_tagger.tagger import Tagger as TextTagger
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
-from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.models import Index
-from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, SerializerNotValid
 from toolkit.helper_functions import add_finite_url_to_feedback
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
