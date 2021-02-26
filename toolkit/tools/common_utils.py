@@ -1,4 +1,22 @@
 from itertools import zip_longest
+from toolkit.settings import UPLOAD_PATH
+import uuid
+import os
+
+def write_file_to_disk(file_object):
+    """
+    Writes file object to disk by creating a unique filename to avoid name conflicts.
+    """
+    file_name = f"file_{uuid.uuid4().hex}_{file_object.name}"
+    file_path = os.path.join(UPLOAD_PATH, file_name)
+    with open(file_path, "wb") as fh:
+        fh.write(file_object.file.read())
+    return file_path
+
+
+def delete_file(file_path):
+    if os.path.exists(file_path):
+        os.remove(file_path)
 
 
 def grouper(n, iterable, fillvalue=None):
