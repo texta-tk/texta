@@ -13,6 +13,7 @@ from texta_face_analyzer.face_analyzer import FaceAnalyzer
 from .serializers import FaceAnalyzerSerializer, AddFaceSerializer
 from toolkit.elastic.decorators import elastic_connection
 from toolkit.core.project.models import Project
+from toolkit.elastic.models import Index
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.permissions.project_permissions import IsSuperUser, ProjectResourceAllowed
 from toolkit.tools.common_utils import write_file_to_disk, delete_file
@@ -69,7 +70,7 @@ class FaceAnalyzerViewSet(viewsets.GenericViewSet):
         face_analyzer = create_analyzer_object(index)
         face_vectors = face_analyzer.add_photo(file_path, name=name, value=value)
         # create & add index to project if it does not exist
-        if not index not in project_indices:
+        if index not in project_indices:
             index, is_open = Index.objects.get_or_create(name=index)
             project_object.indices.add(index)
             project_object.save()
