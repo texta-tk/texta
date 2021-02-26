@@ -56,6 +56,7 @@ project_router.registry.extend(regex_tagger_router.registry)
 project_router.registry.extend(anonymizer_router.registry)
 project_router.registry.extend(bert_tagger_router.registry)
 
+
 # TODO Look for putting this into a better place.
 project_router.register(r'clustering', ClusteringViewSet, basename='clustering')
 clustering_router = routers.NestedSimpleRouter(project_router, r'clustering', lookup='clustering')

@@ -25,7 +25,10 @@ from toolkit.dataset_import.views import DatasetImportViewSet
 from toolkit.docparser.views import DocparserView
 from toolkit.document_importer.views import DocumentImportView, DocumentInstanceView, UpdateSplitDocument
 from toolkit.elastic.urls import index_router
-from toolkit.elastic.views import ElasticGetIndices, ReindexerViewSet, SnowballProcessor, FaceAnalyzerViewSet
+from toolkit.elastic.views import ElasticGetIndices, SnowballProcessor
+from toolkit.elastic.index_splitter.views import IndexSplitterViewSet
+from toolkit.elastic.reindexer.views import ReindexerViewSet
+from toolkit.elastic.face_analyzer.views import FaceAnalyzerViewSet
 from toolkit.embedding.urls import embedding_router
 from toolkit.mlp.urls import mlp_router
 from toolkit.mlp.views import MLPListProcessor, MlpDocsProcessor
@@ -54,9 +57,12 @@ project_router.registry.extend(regex_tagger_router.registry)
 project_router.registry.extend(anonymizer_router.registry)
 project_router.registry.extend(bert_tagger_router.registry)
 
+# elastic resources
+project_router.register('elastic/dataset_imports', DatasetImportViewSet, basename='dataset_import')
 project_router.register('elastic/face_analyzer', FaceAnalyzerViewSet, basename='face_analyzer')
 project_router.register('elastic/reindexer', ReindexerViewSet, basename='reindexer')
 project_router.register('elastic/dataset_imports', DatasetImportViewSet, basename='dataset_import')
+project_router.register('elastic/index_splitter', IndexSplitterViewSet, basename='index_splitter')
 
 # TODO Look for putting this into a better place.
 project_router.register(r'clustering', ClusteringViewSet, basename='clustering')
