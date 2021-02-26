@@ -10,7 +10,7 @@ from texta_tools.embedding import W2VEmbedding
 from texta_tools.mlp_analyzer import get_mlp_analyzer
 
 from toolkit.core.task.models import Task
-from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
+from toolkit.torch_tagger.models import TorchTagger as TorchTaggerObject
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.base_tasks import TransactionAwareTask
 from toolkit.elastic.tools.data_sample import DataSample

@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('elastic', '0003_index'),
-        ('torchtagger', '0001_initial'),
+        ('torch_tagger', '0001_initial'),
     ]
 
     operations = [
