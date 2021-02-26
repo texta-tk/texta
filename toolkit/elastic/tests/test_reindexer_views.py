@@ -7,7 +7,7 @@ from rest_framework.test import APITransactionTestCase
 
 from toolkit.core.task.models import Task
 from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.models import Reindexer
+from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.test_settings import *
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation

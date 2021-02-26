@@ -8,7 +8,7 @@ from rest_framework.test import APITransactionTestCase
 from toolkit.core.task.models import Task
 from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.models import IndexSplitter
+from toolkit.elastic.index_splitter.models import IndexSplitter
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.test_settings import (INDEX_SPLITTING_TEST_INDEX, INDEX_SPLITTING_TRAIN_INDEX, TEST_INDEX, TEST_VERSION_PREFIX, TEST_QUERY)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation

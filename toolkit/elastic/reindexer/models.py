@@ -38,7 +38,7 @@ class Reindexer(models.Model):
             instance.task = new_task
             instance.save()
 
-            from toolkit.elastic.tasks import reindex_task
+            from toolkit.elastic.reindexer.tasks import reindex_task
             reindex_task.apply_async(args=(instance.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
 

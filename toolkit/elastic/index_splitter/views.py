@@ -10,6 +10,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
+from toolkit.elastic.models import Index
 from toolkit.elastic.index_splitter.models import IndexSplitter
 from toolkit.elastic.index_splitter.serializers import IndexSplitterSerializer
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
