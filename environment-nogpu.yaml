@@ -4,6 +4,7 @@ channels:
   - conda-forge
   - anaconda
   - bioconda
+  - menpo
 
 dependencies:
   - python=3.7
@@ -21,7 +22,7 @@ dependencies:
   - supervisor
   - psycopg2
   - mysqlclient
-  - cmake
+  - dlib
   - pip:
       - django==2.*
       - django-multiselectfield
