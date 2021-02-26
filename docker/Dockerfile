@@ -2,7 +2,7 @@ FROM continuumio/miniconda3:latest
 
 # Install system packages
 RUN set -x \
-    && apt-get update && apt-get install cmake -y \
+    && apt-get update && apt-get install build-essential -y \
     # apt clean up
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
