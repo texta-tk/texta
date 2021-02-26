@@ -11,11 +11,22 @@ from rest_framework.response import Response
 from texta_face_analyzer.face_analyzer import FaceAnalyzer
 
 from .serializers import FaceAnalyzerSerializer, AddFaceSerializer
+from toolkit.elastic.decorators import elastic_connection
 from toolkit.core.project.models import Project
+from toolkit.elastic.tools.core import ElasticCore
 from toolkit.permissions.project_permissions import IsSuperUser, ProjectResourceAllowed
 from toolkit.tools.common_utils import write_file_to_disk, delete_file
 from toolkit.helper_functions import get_core_setting
 from toolkit.settings import RELATIVE_PROJECT_DATA_PATH
+
+
+@elastic_connection
+def create_analyzer_object(index):
+    """
+    Wrapper to check Elastic connection on init.
+    """
+    es_core = ElasticCore()
+    return FaceAnalyzer(es_object=es_core.es, es_index=index)
 
 
 class FaceAnalyzerViewSet(viewsets.GenericViewSet):
@@ -53,14 +64,12 @@ class FaceAnalyzerViewSet(viewsets.GenericViewSet):
         project_object = Project.objects.get(pk=project_pk)
         project_indices = project_object.get_indices()
 
-        # TODO: Check Elastic
-        # TODO: Validate image
         # TODO: Validate elastic index name
 
         file_path = write_file_to_disk(img_file)
 
         # analyze & add photo to elastic
-        face_analyzer = FaceAnalyzer(es_url=get_core_setting("TEXTA_ES_URL"), es_index=index)
+        face_analyzer = create_analyzer_object(index)
         face_vectors = face_analyzer.add_photo(file_path, name=name, value=value)
 
         # create & add index to project if it does not exist
@@ -91,16 +100,13 @@ class FaceAnalyzerViewSet(viewsets.GenericViewSet):
         else:
             index = ",".join(project_indices)
 
-        # TODO: Validate input image
-        # TODO: Check Elastic
-
         if not project_indices:
             return Response({'error': 'No indices to use for reference!'}, status=status.HTTP_400_BAD_REQUEST)
         if index not in project_indices:
             return Response({'error': f'Index {index} not in project!'}, status=status.HTTP_400_BAD_REQUEST)
         
         # create analyzer object
-        face_analyzer = FaceAnalyzer(es_url=get_core_setting("TEXTA_ES_URL"), es_index=index)
+        face_analyzer = create_analyzer_object(index)
         # write file to disk
         file_path = write_file_to_disk(img_file)
         # analyze photo

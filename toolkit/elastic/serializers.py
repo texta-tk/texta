@@ -42,7 +42,6 @@ class IndexSerializer(serializers.ModelSerializer):
         ]
     )
 
-
     def get_url(self, obj):
         default_version = REST_FRAMEWORK.get("DEFAULT_VERSION")
 
@@ -53,7 +52,6 @@ class IndexSerializer(serializers.ModelSerializer):
             return url
         else:
             return None
-
 
     class Meta:
         model = Index
@@ -101,7 +99,6 @@ class ElasticScrollSerializer(serializers.Serializer):
     documents_size = serializers.IntegerField(min_value=1, max_value=300, default=300, help_text="How many documents should be returned in the response. Max is 300.")
     fields = serializers.ListField(default=["*"], help_text="List of field names you wish to be return by Elasticsearch.")
     with_meta = serializers.BooleanField(default=False, help_text="Whether to return raw Elasticsearch hits or remove the metadata from the documents.")
-
 
     # Change what is returned to serializer_instance.validated_data
     def to_internal_value(self, data):
