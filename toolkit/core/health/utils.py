@@ -27,6 +27,10 @@ def get_version():
     return version
 
 
+def reform_float_info(input_str):
+    return float(input_str.replace("gb", "").replace("tb", "").replace("mb", ""))
+
+
 def get_elastic_status(ES_URL=get_core_setting("TEXTA_ES_URL")):
     """
     Checks Elasticsearch connection status and version.
@@ -43,10 +47,10 @@ def get_elastic_status(ES_URL=get_core_setting("TEXTA_ES_URL")):
                 if node["host"]:
                     node_info = {
                         "host": node["host"],
-                        "free": float(node["disk.avail"].replace("gb", "")),
-                        "used": float(node["disk.used"].replace("gb", "")),
-                        "total": float(node["disk.total"].replace("gb", "")),
-                        "percent": float(node["disk.percent"]),
+                        "free": reform_float_info(node["disk.avail"]),
+                        "used": reform_float_info(node["disk.used"]),
+                        "total": reform_float_info(node["disk.total"]),
+                        "percent": reform_float_info(node["disk.percent"]),
                         "unit": "GB"
                         }
                     es_info["disk"].append(node_info)
