@@ -22,8 +22,6 @@ dependencies:
   - supervisor
   - psycopg2
   - mysqlclient
-  - dlib
-  - libgcc
   - pip:
       - django==2.*
       - django-multiselectfield

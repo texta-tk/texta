@@ -1,6 +1,12 @@
 FROM nvidia/cuda:11.1.1-base-ubuntu20.04
 
-RUN apt-get update && apt-get install wget -y
+# Install system packages
+RUN set -x \
+    # rar is a non-free package
+    && apt-get update && apt-get install cmake wget -y \
+    # apt clean up
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Download and install Miniconda
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh

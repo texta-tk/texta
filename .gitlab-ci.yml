@@ -34,7 +34,7 @@ stages:
 
 Test:
   before_script:
-    - apt-get install curl -y
+    - apt-get install curl cmake -y
     - conda env create -f environment-nogpu.yaml && source activate texta-rest
     - python import_test_data.py -es $TEXTA_ES_URL
     - python migrate.py
