@@ -93,7 +93,7 @@ class DocumentImporterAPITestCase(APITestCase):
 
 
     def test_adding_document_without_specified_index_and_that_index_is_added_into_project(self):
-        from toolkit.document_importer.views import DocumentImportView
+        from toolkit.elastic.document_importer.views import DocumentImportView
         sample_id = 65959645
         url = reverse(f"{VERSION_NAMESPACE}:document_import", kwargs={"pk": self.project.pk})
         response = self.client.post(url, data={"documents": [{"_source": self.source, "_id": sample_id}]}, format="json")

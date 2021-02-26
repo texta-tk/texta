@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from texta_tools.text_splitter import TextSplitter
 
 from toolkit.core.project.models import Project
-from toolkit.document_importer.serializers import InsertDocumentsSerializer, UpdateSplitDocumentSerializer
+from toolkit.elastic.document_importer.serializers import InsertDocumentsSerializer, UpdateSplitDocumentSerializer
 from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.elastic.models import Index
 from toolkit.elastic.tools.searcher import ElasticSearcher
