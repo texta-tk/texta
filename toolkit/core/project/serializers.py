@@ -7,8 +7,8 @@ from rest_framework import serializers
 from toolkit.core import choices as choices
 from toolkit.core.project.models import Project
 from toolkit.core.project.validators import check_if_in_elastic
-from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.searcher import EMPTY_QUERY
+from toolkit.elastic.tools.core import ElasticCore
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.elastic.serializers import IndexSerializer
 
 

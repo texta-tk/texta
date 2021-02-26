@@ -1,5 +1,5 @@
 from django.test import TestCase
-from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE
 from toolkit.tools.utils_for_tests import print_output
 from texta_tools.text_processor import TextProcessor

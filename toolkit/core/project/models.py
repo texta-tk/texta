@@ -5,7 +5,7 @@ from django.db import models
 from rest_framework.exceptions import ValidationError
 
 from toolkit.constants import MAX_DESC_LEN
-from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.tools.core import ElasticCore
 
 
 class Project(models.Model):

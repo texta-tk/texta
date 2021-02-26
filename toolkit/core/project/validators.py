@@ -1,6 +1,6 @@
 from typing import List
 from rest_framework.exceptions import ValidationError
-from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.tools.core import ElasticCore
 
 
 def check_if_in_elastic(indices: List[str]):

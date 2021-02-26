@@ -6,27 +6,17 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from toolkit.core.project.models import Project
-from toolkit.core.task.serializers import TaskSerializer
-from toolkit.elastic.choices import LABEL_DISTRIBUTION, get_snowball_choices
-from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.choices import get_snowball_choices
 from toolkit.elastic.models import Index
-from toolkit.elastic.searcher import EMPTY_QUERY
-from toolkit.elastic.validators import check_for_banned_beginning_chars, check_for_colons, check_for_special_symbols, check_for_upper_case, check_for_wildcards
-from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from toolkit.elastic.validators import (
+    check_for_banned_beginning_chars,
+    check_for_colons,
+    check_for_special_symbols,
+    check_for_upper_case,
+    check_for_wildcards
+)
 from toolkit.settings import REST_FRAMEWORK
-
-
-class AddFaceSerializer(serializers.Serializer):
-    image = serializers.FileField()
-    index = serializers.CharField()
-    name = serializers.CharField(required=False, default="KNOWN_FACE")
-    value = serializers.CharField(required=False, default="John Not Doe")
-
-
-class FaceAnalyzerSerializer(serializers.Serializer):
-    image = serializers.FileField()
-    store_image = serializers.BooleanField(default=False)
-    index = serializers.CharField(required=False)
 
 
 class SnowballSerializer(serializers.Serializer):
@@ -52,7 +42,6 @@ class IndexSerializer(serializers.ModelSerializer):
         ]
     )
 
-
     def get_url(self, obj):
         default_version = REST_FRAMEWORK.get("DEFAULT_VERSION")
 
@@ -63,7 +52,6 @@ class IndexSerializer(serializers.ModelSerializer):
             return url
         else:
             return None
-
 
     class Meta:
         model = Index
@@ -111,7 +99,6 @@ class ElasticScrollSerializer(serializers.Serializer):
     documents_size = serializers.IntegerField(min_value=1, max_value=300, default=300, help_text="How many documents should be returned in the response. Max is 300.")
     fields = serializers.ListField(default=["*"], help_text="List of field names you wish to be return by Elasticsearch.")
     with_meta = serializers.BooleanField(default=False, help_text="Whether to return raw Elasticsearch hits or remove the metadata from the documents.")
-
 
     # Change what is returned to serializer_instance.validated_data
     def to_internal_value(self, data):

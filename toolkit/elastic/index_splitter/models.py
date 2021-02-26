@@ -7,7 +7,7 @@ from django.db.models import signals
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.task.models import Task
 from toolkit.elastic.models import Index
-from toolkit.elastic.searcher import EMPTY_QUERY
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.elastic.choices import LABEL_DISTRIBUTION
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 
@@ -46,5 +46,5 @@ class IndexSplitter(models.Model):
         new_task = Task.objects.create(indexsplitter=self, status='created')
         self.task = new_task
         self.save()
-        from toolkit.elastic.tasks import index_splitting_task
+        from toolkit.elastic.index_splitter.tasks import index_splitting_task
         index_splitting_task.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)

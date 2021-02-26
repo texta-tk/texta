@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.models import Index
 from toolkit.settings import CORE_SETTINGS
 from toolkit.test_settings import TEST_INDEX, VERSION_NAMESPACE

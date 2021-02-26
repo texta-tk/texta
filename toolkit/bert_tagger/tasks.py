@@ -9,7 +9,7 @@ from toolkit.core.task.models import Task
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.base_tasks import TransactionAwareTask
-from toolkit.elastic.data_sample import DataSample
+from toolkit.elastic.tools.data_sample import DataSample
 from toolkit.tools.plots import create_tagger_plot
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, BERT_PRETRAINED_MODEL_DIRECTORY, BERT_FINETUNED_MODEL_DIRECTORY, BERT_CACHE_DIR, INFO_LOGGER
 from toolkit.helper_functions import get_core_setting, get_indices_from_object

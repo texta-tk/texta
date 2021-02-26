@@ -7,7 +7,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
-from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.tools.core import ElasticCore
 from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup
 from toolkit.settings import TEXTA_TAGS_KEY
 from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_INTEGER_FIELD, VERSION_NAMESPACE

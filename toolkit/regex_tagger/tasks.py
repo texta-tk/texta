@@ -6,9 +6,9 @@ from celery.decorators import task
 from elasticsearch.helpers import streaming_bulk
 
 from toolkit.base_tasks import TransactionAwareTask
-from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.document import ElasticDocument
-from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.elastic.tools.core import ElasticCore
+from toolkit.elastic.tools.document import ElasticDocument
+from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.regex_tagger.models import RegexTaggerGroup, load_matcher
 from toolkit.regex_tagger.serializers import PRIORITY_CHOICES
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER

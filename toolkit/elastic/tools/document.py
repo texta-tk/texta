@@ -6,7 +6,7 @@ import elasticsearch
 from elasticsearch.helpers import bulk
 from elasticsearch_dsl import Q, Search
 
-from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.decorators import elastic_connection
 from toolkit.settings import ERROR_LOGGER
 

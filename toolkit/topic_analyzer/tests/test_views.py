@@ -6,7 +6,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
-from toolkit.elastic.document import ElasticDocument
+from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.test_settings import (TEST_FIELD, TEST_INDEX, VERSION_NAMESPACE)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult

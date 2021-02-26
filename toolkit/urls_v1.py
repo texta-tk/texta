@@ -24,8 +24,9 @@ from toolkit.core.user_profile import views as profile_views
 from toolkit.dataset_import.urls import router as dataset_import_router
 from toolkit.docparser.views import DocparserView
 from toolkit.document_importer.views import DocumentImportView, DocumentInstanceView, UpdateSplitDocument
-from toolkit.elastic.urls import index_router, router as reindexer_router, splitter_router
-from toolkit.elastic.views import ElasticGetIndices, SnowballProcessor, FaceAnalyzerViewSet
+from toolkit.elastic.urls import index_router, reindexer_router, splitter_router
+from toolkit.elastic.views import ElasticGetIndices, SnowballProcessor
+from toolkit.elastic.face_analyzer.views import FaceAnalyzerViewSet
 from toolkit.embedding.urls import embedding_router
 from toolkit.mlp.urls import mlp_router
 from toolkit.mlp.views import MLPListProcessor, MlpDocsProcessor

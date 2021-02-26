@@ -7,8 +7,8 @@ from texta_mlp.mlp import MLP
 
 from toolkit.core.task.models import Task
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
-from toolkit.elastic.document import ElasticDocument
-from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.elastic.tools.document import ElasticDocument
+from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.mlp.helpers import process_actions
 from toolkit.mlp.models import MLPWorker
 from toolkit.settings import CELERY_MLP_TASK_QUEUE, DEFAULT_MLP_LANGUAGE_CODES, INFO_LOGGER, ERROR_LOGGER, MLP_MODEL_DIRECTORY
