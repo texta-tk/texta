@@ -33,3 +33,4 @@ class FaceAnalyzerSerializer(serializers.Serializer):
         check_for_upper_case
         ]
     )
+    score = serializers.FloatField(max_value=0.9, min_value=0.1, default=0.93, required=False)

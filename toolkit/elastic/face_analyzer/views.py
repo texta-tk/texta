@@ -100,6 +100,7 @@ class FaceAnalyzerViewSet(viewsets.GenericViewSet):
         # get request params
         img_file = serializer.validated_data["image"]   
         store_image = serializer.validated_data["store_image"]
+        score = serializer.validated_data["score"]
         # get project indices
         project_object = Project.objects.get(pk=project_pk)
         project_indices = project_object.get_indices()
@@ -118,7 +119,7 @@ class FaceAnalyzerViewSet(viewsets.GenericViewSet):
         # write file to disk
         file_path = write_file_to_disk(img_file)
         # analyze photo
-        detected_faces, annotated_image = face_analyzer.analyze_photo(file_path)
+        detected_faces, annotated_image = face_analyzer.analyze_photo(file_path, score=score)
         # delete original file
         delete_file(file_path)
         # reform output
