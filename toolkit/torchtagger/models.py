@@ -19,7 +19,7 @@ from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
-from toolkit.torch_tagger import choices
+from toolkit.torchtagger import choices
 
 
 class TorchTagger(models.Model):
@@ -170,7 +170,7 @@ class TorchTagger(models.Model):
         new_task = Task.objects.create(torchtagger=self, status='created')
         self.task = new_task
         self.save()
-        from toolkit.torch_tagger.tasks import train_torchtagger
+        from toolkit.torchtagger.tasks import train_torchtagger
         train_torchtagger.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
 

@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('torch_tagger', '0004_remove_torchtagger_text_field'),
+        ('torchtagger', '0004_remove_torchtagger_text_field'),
     ]
 
     operations = [

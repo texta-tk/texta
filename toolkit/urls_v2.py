@@ -37,7 +37,7 @@ from toolkit.regex_tagger.urls import router as regex_tagger_router
 from toolkit.tagger.urls import router as tagger_router
 from toolkit.tools.swagger import schema_view
 from toolkit.topic_analyzer.views import ClusterViewSet, ClusteringViewSet
-from toolkit.torch_tagger.urls import router as torchtagger_router
+from toolkit.torchtagger.urls import router as torchtagger_router
 from toolkit.uaa_auth.views import RefreshUAATokenView, UAAView
 
 

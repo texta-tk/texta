@@ -60,7 +60,7 @@ INSTALLED_APPS = [
     "toolkit.embedding",
     "toolkit.dataset_import",
     "toolkit.tagger",
-    "toolkit.torch_tagger",
+    "toolkit.torchtagger",
     "toolkit.bert_tagger",
     "toolkit.mlp",
     "toolkit.topic_analyzer",
@@ -285,7 +285,7 @@ BERT_MODEL_DIRECTORY = os.getenv("TEXTA_BERT_MODEL_DIRECTORY_PATH", MODELS_DIR_D
 BERT_PRETRAINED_MODEL_DIRECTORY = os.path.join(BERT_MODEL_DIRECTORY, "bert_tagger", "pretrained")
 BERT_FINETUNED_MODEL_DIRECTORY = os.path.join(BERT_MODEL_DIRECTORY, "bert_tagger", "fine_tuned")
 
-MODEL_TYPES = ["embedding", "tagger", "torch_tagger"]
+MODEL_TYPES = ["embedding", "tagger", "torchtagger"]
 for model_type in MODEL_TYPES:
     model_dir = os.path.join(RELATIVE_MODELS_PATH, model_type)
     if not os.path.exists(model_dir):

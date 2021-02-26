@@ -3,8 +3,8 @@ from rest_framework import serializers
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
-from toolkit.torch_tagger import choices
-from toolkit.torch_tagger.models import TorchTagger
+from toolkit.torchtagger import choices
+from toolkit.torchtagger.models import TorchTagger
 
 class EpochReportSerializer(serializers.Serializer):
     ignore_fields = serializers.ListField(child=serializers.CharField(), default=choices.DEFAULT_REPORT_IGNORE_FIELDS, required=False, help_text=f'Fields to exclude from the output. Default = {choices.DEFAULT_REPORT_IGNORE_FIELDS}')

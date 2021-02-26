@@ -16,11 +16,11 @@ from toolkit.test_settings import (
 )
 from toolkit.core.project.models import Project
 from toolkit.tools.utils_for_tests import project_creation
-from toolkit.torch_tagger.models import TorchTagger
+from toolkit.torchtagger.models import TorchTagger
 from toolkit.core.task.models import Task
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
-from toolkit.torch_tagger.torch_models.models import TORCH_MODELS
+from toolkit.torchtagger.torch_models.models import TORCH_MODELS
 
 
 class TorchTaggerPerformanceTests(TransactionTestCase):

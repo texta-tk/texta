@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('torch_tagger', '0003_rename_paths_to_relative'),
+        ('torchtagger', '0003_rename_paths_to_relative'),
     ]
 
     operations = [

@@ -23,11 +23,11 @@ from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.tagger.serializers import TaggerTagTextSerializer
-from toolkit.torch_tagger.models import TorchTagger as TorchTaggerObject
-from toolkit.torch_tagger.serializers import TagRandomDocSerializer, TorchTaggerSerializer, EpochReportSerializer
-from toolkit.torch_tagger.tasks import train_torchtagger
+from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
+from toolkit.torchtagger.serializers import TagRandomDocSerializer, TorchTaggerSerializer, EpochReportSerializer
+from toolkit.torchtagger.tasks import train_torchtagger
 from toolkit.view_constants import BulkDelete, FeedbackModelView
-from toolkit.torch_tagger import choices
+from toolkit.torchtagger import choices
 
 
 class TorchTaggerFilter(filters.FilterSet):

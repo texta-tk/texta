@@ -9,7 +9,7 @@ def transfer_existing_tagger_paths(apps, schema_editor):
     """
     Function for translating full paths to model files to relative ones.
     """
-    TorchTagger = apps.get_model("torch_tagger", "TorchTagger")
+    TorchTagger = apps.get_model("torchtagger", "TorchTagger")
     for tagger in TorchTagger.objects.all():
         if tagger.model:
             # Take only the file name without the source paths.
@@ -27,7 +27,7 @@ def transfer_existing_tagger_paths(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('torch_tagger', '0002_torchtagger_indices'),
+        ('torchtagger', '0002_torchtagger_indices'),
     ]
 
     operations = [
