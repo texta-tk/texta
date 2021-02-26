@@ -402,19 +402,14 @@ def apply_tagger_group(tagger_group_id: int, content: Union[str, Dict[str, str]]
         group_results = group_task.apply_async(queue=CELERY_SHORT_TERM_TASK_QUEUE)
         result_tags = group_results.get()
 
-        # alternative approach for linear application (but slower!)
-        #while not group_results.ready():
-        #    sleep(0.000001)
-        #if group_results.ready():
-        #    result_tags = [t[1]["result"] for t in group_results.iter_native()]
-
         logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Group task applied.")
 
     else:
         result_tags = []
         for tagger in tagger_objects:
-            result = apply_tagger(tagger.pk, content, input_type=input_type, lemmatize=lemmatize, feedback=feedback)
+            result = apply_tagger(tagger.pk, content, input_type=input_type, lemmatize=lemmatize, feedback=feedback, use_logger=False)
             result_tags.append(result)
+
 
     # retrieve results & remove non-hits
     tags = [tag for tag in result_tags if tag]
@@ -444,7 +439,7 @@ def to_texta_fact(tagger_result: List[Dict[str, Union[str, int, bool]]], field: 
     return new_facts
 
 
-def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], fact_name: str, fact_value: str, object_id: int, object_type: str, object: Tagger, object_args: Dict, tagger: TextTagger = None):
+def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], fact_name: str, fact_value: str, object_id: int, object_type: str, tagger_object: Union[Tagger, TaggerGroup], object_args: Dict, tagger: TextTagger = None):
     for i, scroll_batch in enumerate(generator):
         logging.getLogger(INFO_LOGGER).info(f"Appyling {object_type} with ID {object_id} to batch {i+1}...")
         for raw_doc in scroll_batch:
@@ -456,7 +451,7 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
                 text = flat_hit.get(field, None)
                 if text and isinstance(text, str):
                     if object_type == "tagger":
-                        result = apply_loaded_tagger(object, tagger,  text, input_type="text", feedback=None, use_logger = False)
+                        result = apply_loaded_tagger(tagger_object, tagger,  text, input_type="text", feedback=None, use_logger = False)
                         if result:
                             result = [result]
                         else:
@@ -478,14 +473,12 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
                 # Remove duplicates to avoid adding the same facts with repetitive use.
                 existing_facts = ElasticDocument.remove_duplicate_facts(existing_facts)
 
-            hit["texta_facts"] = existing_facts
-
             yield {
                 "_index": raw_doc["_index"],
                 "_id": raw_doc["_id"],
                 "_type": raw_doc.get("_type", "_doc"),
                 "_op_type": "update",
-                "_source": {'doc': hit},
+                "_source": {"doc": {"texta_facts": existing_facts}}
             }
 
 
@@ -495,12 +488,12 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
     try:
         tagger = None
         if object_type == "tagger":
-            object = Tagger.objects.get(pk=object_id)
-            tagger = load_tagger(object.id, lemmatize=object_args["lemmatize"], use_logger=True)
+            tagger_object = Tagger.objects.get(pk=object_id)
+            tagger = load_tagger(tagger_object.id, lemmatize=object_args["lemmatize"], use_logger=True)
         else:
-            object = TaggerGroup.objects.get(pk=object_id)
+            tagger_object = TaggerGroup.objects.get(pk=object_id)
 
-        progress = ShowProgress(object.task)
+        progress = ShowProgress(tagger_object.task)
 
         ec = ElasticCore()
         [ec.add_texta_facts_mapping(index) for index in indices]
@@ -514,15 +507,15 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
             callback_progress=progress,
         )
 
-        actions = update_generator(generator=searcher, ec=ec, fields=fields, fact_name=fact_name, fact_value=fact_value, object_id=object_id, object_type=object_type, object=object, object_args=object_args, tagger=tagger)
+        actions = update_generator(generator=searcher, ec=ec, fields=fields, fact_name=fact_name, fact_value=fact_value, object_id=object_id, object_type=object_type, tagger_object=tagger_object, object_args=object_args, tagger=tagger)
         for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes, max_retries=3):
             if not success:
                 logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
 
-        object.task.complete()
+        tagger_object.task.complete()
         return True
 
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(e)
         error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
-        object.task.add_error(error_message)
+        tagger_object.task.add_error(error_message)

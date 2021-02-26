@@ -38,7 +38,7 @@ def process_texta_facts(facts: List[str], priority: Optional[str] = None):
         return facts
 
 
-def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], object: Union[RegexTagger, RegexTaggerGroup], fact_name: str, fact_value: str, add_spans: bool):
+def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], tagger_object: Union[RegexTagger, RegexTaggerGroup], fact_name: str, fact_value: str, add_spans: bool):
     for scroll_batch in generator:
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
@@ -48,21 +48,19 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
             for field in fields:
                 text = flat_hit.get(field, None)
                 if text and isinstance(text, str):
-                    results = object.apply([text], field_path=field, fact_name=fact_name, fact_value=fact_value, add_spans=add_spans)
+                    results = tagger_object.apply([text], field_path=field, fact_name=fact_name, fact_value=fact_value, add_spans=add_spans)
                     existing_facts.extend(results)
 
                 if existing_facts:
                     # Remove duplicates to avoid adding the same facts with repetitive use.
                     existing_facts = ElasticDocument.remove_duplicate_facts(existing_facts)
 
-                hit["texta_facts"] = existing_facts
-
                 yield {
                     "_index": raw_doc["_index"],
                     "_id": raw_doc["_id"],
                     "_type": raw_doc.get("_type", "_doc"),
                     "_op_type": "update",
-                    "_source": {'doc': hit},
+                    "_source": {"doc": {"texta_facts": existing_facts}}
                 }
 
 
@@ -71,11 +69,11 @@ def apply_regex_tagger(object_id: int, object_type: str, indices: List[str], fie
     """Apply RegexTagger or RegexTaggerGroup to index."""
     try:
         if object_type == "regex_tagger_group":
-            object = RegexTaggerGroup.objects.get(pk=object_id)
+            tagger_object = RegexTaggerGroup.objects.get(pk=object_id)
         else:
-            object = RegexTagger.objects.get(pk=object_id)
+            tagger_object = RegexTagger.objects.get(pk=object_id)
 
-        progress = ShowProgress(object.task)
+        progress = ShowProgress(tagger_object.task)
 
         ec = ElasticCore()
         [ec.add_texta_facts_mapping(index) for index in indices]
@@ -89,15 +87,15 @@ def apply_regex_tagger(object_id: int, object_type: str, indices: List[str], fie
             scroll_size = bulk_size
         )
 
-        actions = update_generator(generator=searcher, ec=ec, fields=fields, object = object, fact_name=fact_name, fact_value=fact_value, add_spans = add_spans)
+        actions = update_generator(generator=searcher, ec=ec, fields=fields, tagger_object = tagger_object, fact_name=fact_name, fact_value=fact_value, add_spans = add_spans)
         for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes):
             if not success:
                 logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
 
-        object.task.complete()
+        tagger_object.task.complete()
         return True
 
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(e)
         error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
-        object.task.add_error(error_message)
+        tagger_object.task.add_error(error_message)

@@ -148,10 +148,10 @@ def to_texta_facts(tagger_result: List[Dict[str, Union[str, int, bool]]], field:
     return [new_fact]
 
 
-def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], fact_name: str, fact_value: str, object: int, tagger: TorchTagger = None):
+def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], fact_name: str, fact_value: str, tagger_object: TorchTaggerObject, tagger: TorchTagger = None):
 
     for i, scroll_batch in enumerate(generator):
-        logging.getLogger(INFO_LOGGER).info(f"Appyling Torch Tagger with ID {object.id} to batch {i+1}...")
+        logging.getLogger(INFO_LOGGER).info(f"Appyling Torch Tagger with ID {tagger_object.id} to batch {i+1}...")
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
             flat_hit = ec.flatten(hit)
@@ -161,17 +161,16 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
                 text = flat_hit.get(field, None)
                 if text and isinstance(text, str):
 
-                    result = apply_loaded_tagger(tagger, object, text, input_type = "text", feedback = False)
+                    result = apply_loaded_tagger(tagger, tagger_object, text, input_type = "text", feedback = False)
 
                     # If tagger is binary and fact value is not specified by the user, use tagger description as fact value
                     if result["result"] in ["true", "false"]:
                         if not fact_value:
-                            fact_value = object.description
+                            fact_value = tagger_object.description
 
                     # For multitag, use the prediction as fact value
                     else:
                         fact_value = result["result"]
-
 
                     new_facts = to_texta_facts(result, field, fact_name, fact_value, text)
                     existing_facts.extend(new_facts)
@@ -180,14 +179,12 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
                 # Remove duplicates to avoid adding the same facts with repetitive use.
                 existing_facts = ElasticDocument.remove_duplicate_facts(existing_facts)
 
-            hit["texta_facts"] = existing_facts
-
             yield {
                 "_index": raw_doc["_index"],
                 "_id": raw_doc["_id"],
                 "_type": raw_doc.get("_type", "_doc"),
                 "_op_type": "update",
-                "_source": {'doc': hit},
+                "_source": {"doc": {"texta_facts": existing_facts}}
             }
 
 
@@ -195,10 +192,10 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
 def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str], fact_name: str, fact_value: str, query: dict, bulk_size: int, max_chunk_bytes: int, es_timeout: int):
     """Apply Torch Tagger to index."""
     try:
-        object = TorchTaggerObject.objects.get(pk=object_id)
-        tagger = load_tagger(object)
+        tagger_object = TorchTaggerObject.objects.get(pk=object_id)
+        tagger = load_tagger(tagger_object)
 
-        progress = ShowProgress(object.task)
+        progress = ShowProgress(tagger_object.task)
 
         ec = ElasticCore()
         [ec.add_texta_facts_mapping(index) for index in indices]
@@ -213,15 +210,15 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
             scroll_size = bulk_size
         )
 
-        actions = update_generator(generator=searcher, ec=ec, fields=fields, fact_name=fact_name, fact_value=fact_value, object=object, tagger=tagger)
+        actions = update_generator(generator=searcher, ec=ec, fields=fields, fact_name=fact_name, fact_value=fact_value, tagger_object=tagger_object, tagger=tagger)
         for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes, max_retries=3):
             if not success:
                 logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
 
-        object.task.complete()
+        tagger_object.task.complete()
         return True
 
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(e)
         error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
-        object.task.add_error(error_message)
+        tagger_object.task.add_error(error_message)
