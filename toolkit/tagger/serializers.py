@@ -2,7 +2,7 @@ import json
 
 from django.db.models import Avg, Sum
 from rest_framework import serializers
-
+from django.core.exceptions import ObjectDoesNotExist
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
@@ -20,7 +20,65 @@ from toolkit.tagger.choices import (
     get_vectorizer_choices,
     )
 from toolkit.elastic.choices import get_snowball_choices
+from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.tagger.models import Tagger, TaggerGroup
+
+
+class ApplyTaggersSerializer(FieldParseSerializer, serializers.Serializer):
+    author_username = serializers.CharField(source='author.username', read_only=True)
+    description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
+    new_fact_name = serializers.CharField(required=True, help_text="Used as fact name when applying the tagger.")
+    indices = IndexSerializer(many=True, default=[], help_text="Which indices in the project to apply this to.")
+    fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
+    query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)
+    lemmatize = serializers.BooleanField(default=False, help_text='Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
+    es_timeout = serializers.IntegerField(default=10, help_text="Elasticsearch scroll timeout in minutes. Default = 10.")
+    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=1, help_text="How many documents should be sent towards Elasticsearch at once.")
+    max_chunk_bytes = serializers.IntegerField(min_value=1, default=104857600, help_text="Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors.")
+    #num_tags = serializers.IntegerField(read_only=True)
+    taggers = serializers.ListField(
+        help_text='List of Tagger IDs to be used.',
+        child=serializers.IntegerField(),
+        default=[]
+    )
+
+    def validate_taggers(self, taggers):
+        invalid_ids = []
+        for tagger_id in taggers:
+            try:
+                tagger = Tagger.objects.get(pk=tagger_id)
+            except ObjectDoesNotExist:
+                invalid_ids.append(tagger_id)
+        if invalid_ids:
+            raise serializers.ValidationError(f"Taggers with following IDs do not exist: {invalid_ids}")
+        return taggers
+
+class ApplyTaggerSerializer(FieldParseSerializer, serializers.Serializer):
+    description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
+    new_fact_name = serializers.CharField(required=True, help_text="Used as fact name when applying the tagger.")
+    new_fact_value = serializers.CharField(required=False, default="", help_text="Used as fact value when applying the tagger. Defaults to tagger description.")
+    indices = IndexSerializer(many=True, default=[], help_text="Which indices in the project to apply this to.")
+    fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
+    query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)
+    lemmatize = serializers.BooleanField(default=False, help_text='Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
+    es_timeout = serializers.IntegerField(default=10, help_text="Elasticsearch scroll timeout in minutes. Default = 10.")
+    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=1, help_text="How many documents should be sent towards Elasticsearch at once.")
+    max_chunk_bytes = serializers.IntegerField(min_value=1, default=104857600, help_text="Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors.")
+
+
+class ApplyTaggerGroupSerializer(FieldParseSerializer, serializers.Serializer):
+    description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
+    new_fact_name = serializers.CharField(required=True, help_text="Used as fact name when applying the tagger.")
+    indices = IndexSerializer(many=True, default=[], help_text="Which indices in the project to apply this to.")
+    fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
+    query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)
+    lemmatize = serializers.BooleanField(default=False, help_text='Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
+    es_timeout = serializers.IntegerField(default=10, help_text="Elasticsearch scroll timeout in minutes. Default = 10.")
+    use_ner = serializers.BooleanField(default=False, help_text=f'Use MLP Named Entity Recognition to detect tag candidates. Default: False')
+    n_similar_docs = serializers.IntegerField(default=DEFAULT_NUM_DOCUMENTS, help_text=f'Number of documents used in unsupervised prefiltering. Default: {DEFAULT_NUM_DOCUMENTS}')
+    n_candidate_tags = serializers.IntegerField(default=DEFAULT_NUM_CANDIDATES, help_text=f'Number of tag candidates retrieved from unsupervised prefiltering. Default: {DEFAULT_NUM_CANDIDATES}')
+    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=1, help_text="How many documents should be sent towards Elasticsearch at once.")
+    max_chunk_bytes = serializers.IntegerField(min_value=1, default=104857600, help_text="Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors.")
 
 
 class TagRandomDocSerializer(serializers.Serializer):
@@ -133,12 +191,13 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     tagger_statistics = serializers.SerializerMethodField()
     tagger_params = serializers.SerializerMethodField()
     url = serializers.SerializerMethodField()
+    task = TaskSerializer(read_only=True)
 
 
     class Meta:
         model = TaggerGroup
         fields = ('id', 'url', 'author_username', 'description', 'fact_name', 'num_tags', 'minimum_sample_size',
-                  'tagger_status', 'tagger_params', 'tagger', 'tagger_statistics')
+                  'tagger_status', 'tagger_params', 'tagger', 'tagger_statistics', 'task')
 
 
     def get_tagger_status(self, obj):

@@ -35,6 +35,8 @@ class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, P
     ignore_punctuation = serializers.BooleanField(default=True, required=False, help_text="If set False, end-of-sentence characters between lexicon entry words and/or counter lexicon entries, nullify the effect. Default=True")
     url = serializers.SerializerMethodField()
     tagger_groups = serializers.SerializerMethodField(read_only=True)
+    task = TaskSerializer(read_only=True)
+ 
 
 
     def get_tagger_groups(self, value: RegexTagger):
@@ -48,7 +50,8 @@ class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, P
         fields = ('id', 'url', 'author_username',
                   'description', 'lexicon', 'counter_lexicon', 'operator', 'match_type', 'required_words',
                   'phrase_slop', 'counter_slop', 'n_allowed_edits', 'return_fuzzy_match', 'ignore_case',
-                  'ignore_punctuation', 'phrase_slop', 'counter_slop', 'n_allowed_edits', 'return_fuzzy_match', 'ignore_case', 'ignore_punctuation', 'tagger_groups')
+                  'ignore_punctuation', 'phrase_slop', 'counter_slop', 'n_allowed_edits', 'return_fuzzy_match',
+                  'ignore_case', 'ignore_punctuation', 'tagger_groups', 'task')
         fields_to_parse = ('lexicon', 'counter_lexicon')
 
 
@@ -64,6 +67,18 @@ class TagRandomDocSerializer(serializers.Serializer):
 class RegexTaggerTagDocsSerializer(serializers.Serializer):
     docs = serializers.ListField(child=serializers.JSONField(), help_text="List of JSON documents to tag.")
     fields = serializers.ListField(child=serializers.JSONField(), help_text="Dot separated paths of the JSON document to the text you wish to tag.")
+
+class ApplyRegexTaggerSerializer(FieldParseSerializer, serializers.Serializer):
+    description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
+    # priority = serializers.ChoiceField(default=None, choices=PRIORITY_CHOICES)
+    indices = IndexSerializer(many=True, default=[], help_text="Which indices in the project to apply this to.")
+    fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
+    query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)
+    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=1, help_text="How many documents should be sent towards Elasticsearch at once.")
+    max_chunk_bytes = serializers.IntegerField(min_value=1, default=104857600, help_text="Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors.")
+    new_fact_name = serializers.CharField(required=False, default="", help_text="Used as fact name when applying the tagger. Defaults to tagger description.")
+    new_fact_value = serializers.CharField(required=False, default="", help_text="Used as fact value when applying the tagger. Defaults to tagger match.")
+    add_spans = serializers.BooleanField(required=False, default=True, help_text="If enabled, spans of detected matches are added to texta facts and corresponding facts can be highlighted in Searcher. Default = True")
 
 
 class RegexTaggerGroupTagDocumentSerializer(serializers.Serializer):

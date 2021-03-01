@@ -1,15 +1,24 @@
 import json
+import uuid
 from io import BytesIO
-
+from time import sleep
 from django.urls import reverse
+from django.test import override_settings
+
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, APITransactionTestCase
+
+from toolkit.elastic.models import Reindexer
+from toolkit.elastic.aggregator import ElasticAggregator
+from toolkit.elastic.core import ElasticCore
+from toolkit.core.task.models import Task
+from toolkit.regex_tagger.models import RegexTagger
 
 from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_INTEGER_FIELD, TEST_VERSION_PREFIX, VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
-
-class RegexTaggerViewTests(APITestCase):
+@override_settings(CELERY_ALWAYS_EAGER=True)
+class RegexTaggerViewTests(APITransactionTestCase):
 
     def setUp(self):
         self.user = create_test_user('user', 'my@email.com', 'pw')
@@ -37,13 +46,40 @@ class RegexTaggerViewTests(APITestCase):
 
         self.police, self.medic, self.firefighter = ids
 
+        # Create copy of test index
+        self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
+        # Generate name for new index containing random id to make sure it doesn't already exist
+        self.test_index_copy = f"test_apply_regex_tagger_{uuid.uuid4().hex}"
+
+        self.reindex_payload = {
+            "description": "test index for applying taggers",
+            "indices": [TEST_INDEX],
+            "new_index": self.test_index_copy,
+            "fields": [TEST_FIELD]
+        }
+        resp = self.client.post(self.reindex_url, self.reindex_payload, format='json')
+        print_output("reindex test index for applying tagger:response.data:", resp.json())
+        self.reindexer_object = Reindexer.objects.get(pk=resp.json()["id"])
+
+
+    def tearDown(self) -> None:
+        res = ElasticCore().delete_index(self.test_index_copy)
+        print_output(f"Delete [Regex Tagger] apply_taggers test index {self.test_index_copy}", res)
+
 
     def test(self):
+        self.run_test_apply_tagger_to_index()
         self.run_test_regex_tagger_create()
         self.run_test_regex_tagger_duplicate()
+        self.run_test_regex_tagger_tag_nested_doc()
+        self.run_test_regex_tagger_tag_random_doc()
         self.run_test_regex_tagger_tag_text()
         self.run_test_regex_tagger_tag_texts()
         self.run_test_regex_tagger_export_import()
+        self.run_test_regex_tagger_multitag_text()
+        self.run_test_create_and_update_regex_tagger()
+        self.run_test_that_non_text_fields_are_handled_properly()
+        self.run_test_that_creating_taggers_with_invalid_regex_creates_validation_exception()
 
 
     def run_test_regex_tagger_create(self):
@@ -63,6 +99,7 @@ class RegexTaggerViewTests(APITestCase):
 
         # Check if lexicon gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
 
     def run_test_regex_tagger_duplicate(self):
         """Tests RegexTagger duplication."""
@@ -103,7 +140,7 @@ class RegexTaggerViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
-    def test_regex_tagger_tag_nested_doc(self):
+    def run_test_regex_tagger_tag_nested_doc(self):
         url = reverse(f"{VERSION_NAMESPACE}:regex_tagger-tag-doc", kwargs={"project_pk": self.project.pk, "pk": self.police})
         payload = {
             "doc": {
@@ -123,9 +160,9 @@ class RegexTaggerViewTests(APITestCase):
         print_output("test_regex_tagger_tag_nested_doc:response.data", response.data)
 
 
-    def test_regex_tagger_tag_random_doc(self):
+    def run_test_regex_tagger_tag_random_doc(self):
         url = reverse(f"{VERSION_NAMESPACE}:regex_tagger-tag-random-doc", kwargs={"project_pk": self.project.pk, "pk": self.police})
-        response = self.client.post(url, {"fields": [TEST_FIELD]}, format="json")
+        response = self.client.post(url, {"indices": [{"name": TEST_INDEX}], "fields": [TEST_FIELD]}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         self.assertTrue("tagger_id" in response.data)
         self.assertTrue("tag" in response.data)
@@ -237,7 +274,7 @@ class RegexTaggerViewTests(APITestCase):
         self.assertEqual(len(response.json()), 2)
 
 
-    def test_regex_tagger_multitag_text(self):
+    def run_test_regex_tagger_multitag_text(self):
         """Tests multitag endpoint."""
         url = reverse(f"{VERSION_NAMESPACE}:regex_tagger-multitag-text", kwargs={"project_pk": self.project.pk})
         # tagger_url = f'{self.url}multitag_text/'
@@ -262,7 +299,7 @@ class RegexTaggerViewTests(APITestCase):
         self.assertTrue("tuletõrje" in tags)
 
 
-    def test_create_and_update_regex_tagger(self):
+    def run_test_create_and_update_regex_tagger(self):
         payload = {
             "description": "TestRegexTagger",
             "lexicon": ["jossif stalin", "adolf hitler"],
@@ -280,7 +317,7 @@ class RegexTaggerViewTests(APITestCase):
         print_output('test_regex_tagger_create_and_update:response.data', response.data)
 
 
-    def test_that_non_text_fields_are_handled_properly(self):
+    def run_test_that_non_text_fields_are_handled_properly(self):
         url = reverse(f"{VERSION_NAMESPACE}:regex_tagger-tag-random-doc", kwargs={"project_pk": self.project.pk, "pk": self.police})
         response = self.client.post(url, {"fields": [TEST_INTEGER_FIELD]}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
@@ -288,7 +325,7 @@ class RegexTaggerViewTests(APITestCase):
         print_output("test_that_non_text_fields_are_handled_properly", response.data)
 
 
-    def test_that_creating_taggers_with_invalid_regex_creates_validation_exception(self):
+    def run_test_that_creating_taggers_with_invalid_regex_creates_validation_exception(self):
         invalid_payload = {
             "description": "TestRegexTagger",
             "lexicon": ["jossif stalin))", "adolf** hitler"],
@@ -300,3 +337,48 @@ class RegexTaggerViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertTrue("lexicon" in response.data)
         self.assertTrue("counter_lexicon" in response.data)
+
+
+    def run_test_apply_tagger_to_index(self):
+        """Tests applying tagger to index using apply_to_index endpoint."""
+
+
+        # Make sure reindexer task has finished
+        while self.reindexer_object.task.status != Task.STATUS_COMPLETED:
+            print_output('[Regex Tagger] test_apply_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
+            sleep(2)
+
+        tagger_payload = {
+            "description": "LOLL",
+            "lexicon": ["loll"]
+        }
+
+        response = self.client.post(self.url, tagger_payload)
+        print_output('[Regex Tagger] new regex tagger for applying on the index:response.data', response.data)
+        created_id = response.data['id']
+
+        self.tagger_id = created_id
+        url = f'{self.url}{self.tagger_id}/apply_to_index/'
+
+        payload = {
+            "description": "apply tagger test task",
+            "indices": [{"name": self.test_index_copy}],
+            "fields": [TEST_FIELD],
+            "bulk_size": 50
+        }
+        response = self.client.post(url, payload, format='json')
+        print_output('[Regex Tagger] test_apply_tagger_to_index:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        tagger_object = RegexTagger.objects.get(pk=self.tagger_id)
+
+        # Wait til the task has finished
+        while tagger_object.task.status != Task.STATUS_COMPLETED:
+            print_output("tagger object:", tagger_object.to_json())
+            print_output('[Regex Tagger] test_apply_tagger_to_index: waiting for applying tagger task to finish, current status:', tagger_object.task.status)
+            sleep(2)
+
+        results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution("LOLL")
+        print_output("[Regex Tagger] test_apply_tagger_to_index:elastic aggerator results:", results)
+
+        # Applying the tagger should add 197 new facts (with the same amount of values)
+        self.assertEqual(len(results), 8)

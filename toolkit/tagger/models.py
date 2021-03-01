@@ -184,6 +184,7 @@ def auto_delete_file_on_delete(sender, instance: Tagger, **kwargs):
 
 class TaggerGroup(models.Model):
     MODEL_JSON_NAME = "model.json"
+    MODEL_TYPE = "tagger_group"
 
     description = models.CharField(max_length=MAX_DESC_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
@@ -191,6 +192,7 @@ class TaggerGroup(models.Model):
     fact_name = models.CharField(max_length=MAX_DESC_LEN)
     num_tags = models.IntegerField(default=0)
     minimum_sample_size = models.IntegerField(default=DEFAULT_MIN_SAMPLE_SIZE)
+    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
     taggers = models.ManyToManyField(Tagger, default=None)
 
@@ -220,7 +222,7 @@ class TaggerGroup(models.Model):
                 model_json: dict = json.loads(json_string)
                 tg_data = {key: model_json[key] for key in model_json if key != 'taggers'}
                 new_model = TaggerGroup(**tg_data)
-
+                new_model.task = Task.objects.create(taggergroup=new_model, status=Task.STATUS_COMPLETED)
                 new_model.author = User.objects.get(id=request.user.id)
                 new_model.project = Project.objects.get(id=pk)
                 new_model.save()  # Save the intermediate results.
@@ -261,6 +263,7 @@ class TaggerGroup(models.Model):
         json_obj["taggers"] = [tg.to_json() for tg in self.taggers.all()]
         del json_obj["project"]
         del json_obj["author"]
+        del json_obj["task"]
         return json_obj
 
 

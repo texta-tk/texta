@@ -29,9 +29,10 @@ from toolkit.tagger.serializers import (
     TaggerSerializer,
     TaggerTagDocumentSerializer,
     TaggerTagTextSerializer,
-    TaggerMultiTagSerializer
+    TaggerMultiTagSerializer,
+    ApplyTaggerSerializer
     )
-from toolkit.tagger.tasks import apply_tagger, save_tagger_results, start_tagger_task, train_tagger_task
+from toolkit.tagger.tasks import apply_tagger, save_tagger_results, start_tagger_task, train_tagger_task, apply_tagger_to_index
 from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import (
     BulkDelete,
@@ -318,3 +319,39 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         # sort & return tags
         sorted_tags = sorted(group_results, key=lambda k: k['probability'], reverse=True)
         return Response(sorted_tags, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['post'], serializer_class=ApplyTaggerSerializer)
+    def apply_to_index(self, request, pk=None, project_pk=None):
+        """Apply tagger to an Elasticsearch index."""
+        with transaction.atomic():
+            # We're pulling the serializer with the function bc otherwise it will not
+            # fetch the context for whatever reason.
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            tagger_object = self.get_object()
+            tagger_object.task = Task.objects.create(tagger=tagger_object, status=Task.STATUS_CREATED)
+            tagger_object.save()
+
+            project = Project.objects.get(pk=project_pk)
+            indices = [index["name"] for index in serializer.validated_data["indices"]]
+
+            fields = serializer.validated_data["fields"]
+            fact_name = serializer.validated_data["new_fact_name"]
+            fact_value = serializer.validated_data["new_fact_value"]
+            query = serializer.validated_data["query"]
+            bulk_size = serializer.validated_data["bulk_size"]
+            max_chunk_bytes = serializer.validated_data["max_chunk_bytes"]
+            es_timeout = serializer.validated_data["es_timeout"]
+            lemmatize = serializer.validated_data["lemmatize"]
+
+            object_args = {"lemmatize": lemmatize}
+
+            object_type = "tagger"
+
+            args = (pk, indices, fields, fact_name, fact_value, query, bulk_size, max_chunk_bytes, es_timeout, object_type, object_args)
+            transaction.on_commit(lambda: apply_tagger_to_index.apply_async(args=args, queue=CELERY_LONG_TERM_TASK_QUEUE))
+
+            message = "Started process of applying Tagger with id: {}".format(tagger_object.id)
+            return Response({"message": message}, status=status.HTTP_201_CREATED)

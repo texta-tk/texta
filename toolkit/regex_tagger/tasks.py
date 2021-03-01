@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import List, Optional
+from typing import List, Optional, Union, Dict
 
 from celery.decorators import task
 from elasticsearch.helpers import streaming_bulk
@@ -9,7 +9,7 @@ from toolkit.base_tasks import TransactionAwareTask
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.elastic.tools.searcher import ElasticSearcher
-from toolkit.regex_tagger.models import RegexTaggerGroup, load_matcher
+from toolkit.regex_tagger.models import RegexTaggerGroup, RegexTagger, load_matcher
 from toolkit.regex_tagger.serializers import PRIORITY_CHOICES
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER
 from toolkit.tools.show_progress import ShowProgress
@@ -38,38 +38,42 @@ def process_texta_facts(facts: List[str], priority: Optional[str] = None):
         return facts
 
 
-def update_generator(generator: ElasticSearcher, fields: List[str], group_tagger_id: int):
-    tagger = RegexTaggerGroup.objects.get(pk=group_tagger_id)
-
+def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], tagger_object: Union[RegexTagger, RegexTaggerGroup], fact_name: str, fact_value: str, add_spans: bool):
     for scroll_batch in generator:
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
+            flat_hit = ec.flatten(hit)
             existing_facts = hit.get("texta_facts", [])
 
             for field in fields:
-                text = hit.get(field, None)
+                text = flat_hit.get(field, None)
                 if text and isinstance(text, str):
-                    results = tagger.apply([text], field_path=field)
+                    results = tagger_object.apply([text], field_path=field, fact_name=fact_name, fact_value=fact_value, add_spans=add_spans)
                     existing_facts.extend(results)
 
-            if existing_facts:
-                # Remove duplicates to avoid adding the same facts with repetitive use.
-                hit["texta_facts"] = ElasticDocument.remove_duplicate_facts(existing_facts)
+                if existing_facts:
+                    # Remove duplicates to avoid adding the same facts with repetitive use.
+                    existing_facts = ElasticDocument.remove_duplicate_facts(existing_facts)
 
-            yield {
-                "_index": raw_doc["_index"],
-                "_id": raw_doc["_id"],
-                "_type": raw_doc.get("_type", "_doc"),
-                "_op_type": "update",
-                "_source": {'doc': hit},
-            }
+                yield {
+                    "_index": raw_doc["_index"],
+                    "_id": raw_doc["_id"],
+                    "_type": raw_doc.get("_type", "_doc"),
+                    "_op_type": "update",
+                    "_source": {"doc": {"texta_facts": existing_facts}}
+                }
 
 
-@task(name="apply_regex_tagger", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
-def apply_regex_tagger(tagger_group_id: int, indices: List[str], fields: List[str], query: dict, bulk_size=100, max_chunk_bytes=104857600):
+@task(name="apply_regex_tagger_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
+def apply_regex_tagger(object_id: int, object_type: str, indices: List[str], fields: List[str], query: dict, bulk_size: int = 100, max_chunk_bytes: int = 104857600, fact_name: str = "", fact_value: str = "", add_spans: bool = True):
+    """Apply RegexTagger or RegexTaggerGroup to index."""
     try:
-        regex_tagger_group = RegexTaggerGroup.objects.get(pk=tagger_group_id)
-        progress = ShowProgress(regex_tagger_group.task)
+        if object_type == "regex_tagger_group":
+            tagger_object = RegexTaggerGroup.objects.get(pk=object_id)
+        else:
+            tagger_object = RegexTagger.objects.get(pk=object_id)
+
+        progress = ShowProgress(tagger_object.task)
 
         ec = ElasticCore()
         [ec.add_texta_facts_mapping(index) for index in indices]
@@ -80,17 +84,18 @@ def apply_regex_tagger(tagger_group_id: int, indices: List[str], fields: List[st
             query=query,
             output=ElasticSearcher.OUT_RAW,
             callback_progress=progress,
+            scroll_size = bulk_size
         )
 
-        actions = update_generator(generator=searcher, fields=fields, group_tagger_id=regex_tagger_group.pk)
+        actions = update_generator(generator=searcher, ec=ec, fields=fields, tagger_object = tagger_object, fact_name=fact_name, fact_value=fact_value, add_spans = add_spans)
         for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes):
             if not success:
                 logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
 
-        regex_tagger_group.task.complete()
+        tagger_object.task.complete()
         return True
 
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(e)
         error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
-        regex_tagger_group.task.add_error(error_message)
+        tagger_object.task.add_error(error_message)
