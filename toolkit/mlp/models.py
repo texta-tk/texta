@@ -6,8 +6,8 @@ from django.db import models, transaction
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
-from toolkit.elastic.models import Index
-from toolkit.elastic.searcher import EMPTY_QUERY
+from toolkit.elastic.index.models import Index
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.settings import CELERY_MLP_TASK_QUEUE
 
 

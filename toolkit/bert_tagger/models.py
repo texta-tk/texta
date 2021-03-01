@@ -15,8 +15,8 @@ from django.http import HttpResponse
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
-from toolkit.elastic.models import Index
-from toolkit.elastic.searcher import EMPTY_QUERY
+from toolkit.elastic.index.models import Index
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH, BERT_PRETRAINED_MODEL_DIRECTORY, BERT_FINETUNED_MODEL_DIRECTORY
 from toolkit.bert_tagger import choices
 

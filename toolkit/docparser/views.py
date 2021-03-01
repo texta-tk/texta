@@ -8,7 +8,7 @@ from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
 from toolkit.docparser.serializers import DocparserSerializer
-from toolkit.elastic.models import Index
+from toolkit.elastic.index.models import Index
 from toolkit.helper_functions import hash_file
 from toolkit.settings import RELATIVE_PROJECT_DATA_PATH
 

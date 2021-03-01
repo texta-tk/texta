@@ -1,4 +1,4 @@
-from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.tools.core import ElasticCore
 
 
 '''For storing constant variables'''

@@ -6,8 +6,8 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from toolkit.core.project.models import Project
-from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.models import Index
+from toolkit.elastic.tools.core import ElasticCore
+from toolkit.elastic.index.models import Index
 from toolkit.settings import RELATIVE_PROJECT_DATA_PATH, SEARCHER_FOLDER_KEY
 from toolkit.test_settings import REINDEXER_TEST_INDEX, TEST_FACT_NAME, TEST_INDEX, TEST_QUERY, TEST_VERSION_PREFIX, \
     TEST_FIELD, TEST_MATCH_TEXT, VERSION_NAMESPACE

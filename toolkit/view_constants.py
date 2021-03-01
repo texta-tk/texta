@@ -4,9 +4,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
-from toolkit.elastic.aggregator import ElasticAggregator
-from toolkit.elastic.feedback import Feedback
-from toolkit.elastic.query import Query
+from toolkit.elastic.tools.aggregator import ElasticAggregator
+from toolkit.elastic.tools.feedback import Feedback
+from toolkit.elastic.tools.query import Query
 from toolkit.serializer_constants import (FeedbackSerializer, ProjectResourceBulkDeleteSerializer)
 
 

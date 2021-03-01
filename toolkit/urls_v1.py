@@ -6,22 +6,35 @@ from toolkit.anonymizer.urls import router as anonymizer_router
 from toolkit.bert_tagger.urls import router as bert_tagger_router
 from toolkit.core.core_variable.views import CoreVariableViewSet
 from toolkit.core.health.views import HealthView
-from toolkit.core.project.views import DocumentView, ExportSearchView, GetFactsView, GetFieldsView, GetIndicesView, GetSpamView, ProjectViewSet, ScrollView, SearchByQueryView, SearchView
+from toolkit.core.project.views import (
+    DocumentView,
+    ExportSearchView,
+    GetFactsView,
+    GetFieldsView,
+    GetIndicesView,
+    GetSpamView,
+    ProjectViewSet,
+    ScrollView,
+    SearchByQueryView,
+    SearchView
+)
 from toolkit.core.task.views import TaskAPIView
 from toolkit.core.urls import router as core_router
 from toolkit.core.user_profile import views as profile_views
 from toolkit.dataset_import.urls import router as dataset_import_router
 from toolkit.docparser.views import DocparserView
-from toolkit.document_importer.views import DocumentImportView, DocumentInstanceView, UpdateSplitDocument
-from toolkit.elastic.urls import index_router, router as reindexer_router, splitter_router
-from toolkit.elastic.views import ElasticGetIndices, SnowballProcessor
+from toolkit.elastic.document_importer.views import DocumentImportView, DocumentInstanceView, UpdateSplitDocument
+from toolkit.elastic.urls import index_router, reindexer_router, splitter_router
+from toolkit.elastic.index.views import ElasticGetIndices
+from toolkit.elastic.snowball.views import SnowballProcessor
+from toolkit.elastic.face_analyzer.views import FaceAnalyzerViewSet
 from toolkit.embedding.urls import embedding_router
 from toolkit.mlp.urls import mlp_router
 from toolkit.mlp.views import MLPListProcessor, MlpDocsProcessor
 from toolkit.regex_tagger.urls import router as regex_tagger_router
 from toolkit.tagger.urls import router as tagger_router
 from toolkit.tools.swagger import schema_view
-from toolkit.topic_analyzer.views import ClusterViewSet, ClusteringViewSet
+from toolkit.topic_analyzer.views import ClusterViewSet, TopicAnalyzerViewset
 from toolkit.torchtagger.urls import router as torchtagger_router
 from toolkit.uaa_auth.views import RefreshUAATokenView, UAAView
 
@@ -45,10 +58,12 @@ project_router.registry.extend(regex_tagger_router.registry)
 project_router.registry.extend(anonymizer_router.registry)
 project_router.registry.extend(bert_tagger_router.registry)
 
+
 # TODO Look for putting this into a better place.
-project_router.register(r'clustering', ClusteringViewSet, basename='clustering')
+project_router.register(r'clustering', TopicAnalyzerViewset, basename='clustering')
 clustering_router = routers.NestedSimpleRouter(project_router, r'clustering', lookup='clustering')
 clustering_router.register("clusters", ClusterViewSet, basename="cluster")
+project_router.register('elastic/face_analyzer', FaceAnalyzerViewSet, basename='face_analyzer')
 
 app_name = 'toolkit_v1'
 
@@ -66,6 +81,11 @@ urlpatterns = [
     path("task/", TaskAPIView.as_view(), name="task_api"),
     # elastic stemmer
     path("snowball/", SnowballProcessor.as_view(), name="snowball"),
+    
+    
+    # face analyzer
+    #path("projects/<int:pk>/face_analyzer/", FaceAnalyzerView.as_view(), name="face_analyzer"),
+    
     # mlp
     path("mlp/texts/", MLPListProcessor.as_view(), name="mlp_texts"),
     path("mlp/docs/", MlpDocsProcessor.as_view(), name="mlp_docs"),

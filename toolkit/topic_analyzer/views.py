@@ -19,10 +19,10 @@ from texta_tools.text_processor import TextProcessor
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 from toolkit.topic_analyzer.serializers import ClusterSerializer, ClusteringIdsSerializer, ClusteringSerializer, TransferClusterDocumentsSerializer
 from .clustering import ClusterContent
-from ..elastic.document import ElasticDocument
-from ..elastic.models import Index
-from ..elastic.searcher import ElasticSearcher
-from ..elastic.serializers import ElasticFactSerializer, ElasticMoreLikeThisSerializer
+from ..elastic.tools.document import ElasticDocument
+from toolkit.elastic.index.models import Index
+from ..elastic.tools.searcher import ElasticSearcher
+from ..elastic.tools.serializers import ElasticFactSerializer, ElasticMoreLikeThisSerializer
 from ..pagination import PageNumberPaginationDataOnly
 from ..permissions.project_permissions import ProjectResourceAllowed
 from ..settings import REST_FRAMEWORK
@@ -85,7 +85,13 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
 
 
     def retrieve(self, request, *args, **kwargs):
-        queryset = Cluster.objects.filter(clusteringresult__project__pk=self.kwargs["project_pk"], clusteringresult__pk=self.kwargs["clustering_pk"])
+        # API v1 to v2 compliance
+        if "clustering_pk" in self.kwargs:
+            topic_analyzer_pk = self.kwargs["clustering_pk"]
+        elif "topic_analyzer_pk" in self.kwargs:
+            topic_analyzer_pk = self.kwargs["topic_analyzer_pk"]
+
+        queryset = Cluster.objects.filter(clusteringresult__project__pk=self.kwargs["project_pk"], clusteringresult__pk=topic_analyzer_pk)
         cluster = get_object_or_404(queryset, pk=self.kwargs["pk"])
 
         doc_ids = json.loads(cluster.document_ids)
@@ -394,7 +400,7 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         return Response({"message": f"Successfully added fact {serializer.validated_data['fact']} to the documents!"})
 
 
-class ClusteringViewSet(viewsets.ModelViewSet, BulkDelete):
+class TopicAnalyzerViewset(viewsets.ModelViewSet, BulkDelete):
     serializer_class = ClusteringSerializer
     permission_classes = [permissions.IsAuthenticated, ProjectResourceAllowed]
 
@@ -484,7 +490,7 @@ class ClusteringViewSet(viewsets.ModelViewSet, BulkDelete):
 
     def perform_destroy(self, instance: ClusteringResult):
         instance.cluster_result.all().delete()
-        return super(ClusteringViewSet, self).perform_destroy(instance)
+        return super(TopicAnalyzerViewset, self).perform_destroy(instance)
 
 
     @action(detail=True, methods=["post"], serializer_class=ClusteringIdsSerializer)
@@ -516,9 +522,12 @@ class ClusteringViewSet(viewsets.ModelViewSet, BulkDelete):
         clustering_model = ClusteringResult.objects.get(pk=kwargs["pk"])
         clusters = clustering_model.cluster_result.all()
         default_version = REST_FRAMEWORK.get("DEFAULT_VERSION")
-
         for cluster in clusters:
-            relative_url = reverse(f"{default_version}:cluster-detail", kwargs={"pk": cluster.pk, "project_pk": kwargs["project_pk"], "clustering_pk": clustering_model.id})
+            if default_version == "v1":
+                relative_url = reverse(f"{default_version}:cluster-detail", kwargs={"pk": cluster.pk, "project_pk": kwargs["project_pk"], "clustering_pk": clustering_model.id})
+            elif default_version == "v2":
+                relative_url = reverse(f"{default_version}:cluster-detail", kwargs={"pk": cluster.pk, "project_pk": kwargs["project_pk"], "topic_analyzer_pk": clustering_model.id})
+
             url = request.build_absolute_uri(relative_url)
             container.append(
                 {

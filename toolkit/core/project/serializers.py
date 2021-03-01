@@ -7,9 +7,9 @@ from rest_framework import serializers
 from toolkit.core import choices as choices
 from toolkit.core.project.models import Project
 from toolkit.core.project.validators import check_if_in_elastic
-from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.searcher import EMPTY_QUERY
-from toolkit.elastic.serializers import IndexSerializer
+from toolkit.elastic.tools.core import ElasticCore
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from toolkit.elastic.index.serializers import IndexSerializer
 
 
 class ExportSearcherResultsSerializer(serializers.Serializer):
@@ -90,7 +90,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
 
 
     def update(self, instance, validated_data):
-        from toolkit.elastic.models import Index
+        from toolkit.elastic.index.models import Index
 
         if "title" in validated_data:
             instance.title = validated_data["title"]
@@ -115,7 +115,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
 
 
     def create(self, validated_data):
-        from toolkit.elastic.models import Index
+        from toolkit.elastic.index.models import Index
         indices: List[str] = validated_data["get_indices"]
         title = validated_data["title"]
         users = validated_data["users"]
@@ -147,26 +147,47 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
         version_prefix = f'/api/{api_version}'
         base_url = request.build_absolute_uri(f'{version_prefix}/projects/{obj.id}/')
         resource_dict = {}
-        resources = (
-            'lexicons',
-            'reindexer',
-            'index_splitter',
-            'dataset_imports',
-            'searches',
-            'scroll',
-            'clustering',
-            'embeddings',
-            'embedding_clusters',
-            'taggers',
-            'tagger_groups',
-            'torchtaggers',
-            "bert_taggers",
-            'regex_taggers',
-            'anonymizers',
-            'regex_tagger_groups',
-            'mlp_index',
 
-        )
+        if api_version == 'v2':
+            resources = (
+                'lexicons',
+                'elastic/reindexer',
+                'elastic/index_splitter',
+                'elastic/dataset_imports',
+                'elastic/face_analyzer',
+                'elastic/scroll',
+                'searches',
+                'embeddings',
+                'topic_analyzer',
+                'taggers',
+                'tagger_groups',
+                'torchtaggers',
+                'bert_taggers',
+                'regex_taggers',
+                'anonymizers',
+                'regex_tagger_groups',
+                'mlp_index',
+            )
+        elif api_version == 'v1':
+            resources = (
+                'lexicons',
+                'reindexer',
+                'index_splitter',
+                'dataset_imports',
+                'searches',
+                'scroll',
+                'clustering',
+                'embeddings',
+                'taggers',
+                'tagger_groups',
+                'torchtaggers',
+                'bert_taggers',
+                'regex_taggers',
+                'anonymizers',
+                'regex_tagger_groups',
+                'mlp_index',
+            )
+
         for resource_name in resources:
             resource_dict[resource_name] = f'{base_url}{resource_name}/'
 

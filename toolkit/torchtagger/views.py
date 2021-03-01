@@ -3,20 +3,23 @@ import os
 
 import rest_framework.filters as drf_filters
 from django.http import HttpResponse
+from django.db import transaction
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
+from toolkit.core.task.models import Task
 
 from texta_torch_tagger.tagger import TorchTagger
 from texta_tools.text_processor import TextProcessor
 from texta_tools.embedding import W2VEmbedding
 
 from toolkit.core.project.models import Project
-from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.feedback import Feedback
-from toolkit.elastic.models import Index
-from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.elastic.tools.core import ElasticCore
+from toolkit.elastic.tools.feedback import Feedback
+from toolkit.elastic.index.models import Index
+from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed
 from toolkit.helper_functions import add_finite_url_to_feedback
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
@@ -24,8 +27,8 @@ from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.tagger.serializers import TaggerTagTextSerializer
 from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
-from toolkit.torchtagger.serializers import TagRandomDocSerializer, TorchTaggerSerializer, EpochReportSerializer
-from toolkit.torchtagger.tasks import train_torchtagger
+from toolkit.torchtagger.serializers import TagRandomDocSerializer, TorchTaggerSerializer, EpochReportSerializer, ApplyTaggerSerializer
+from toolkit.torchtagger.tasks import train_torchtagger, apply_tagger, apply_tagger_to_index
 from toolkit.view_constants import BulkDelete, FeedbackModelView
 from toolkit.torchtagger import choices
 
@@ -155,7 +158,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         random_doc_filtered = {k: v for k, v in random_doc.items() if k in tagger_fields}
 
         # apply tagger
-        tagger_response = self.apply_tagger(tagger_object, random_doc_filtered, input_type='doc')
+        tagger_response = apply_tagger(tagger_object, random_doc_filtered, input_type='doc')
         response = {"document": random_doc, "prediction": tagger_response}
         return Response(response, status=status.HTTP_200_OK)
 
@@ -173,34 +176,39 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         # apply tagger
         text = serializer.validated_data['text']
         feedback = serializer.validated_data['feedback_enabled']
-        prediction = self.apply_tagger(tagger_object, text, feedback=feedback)
+        prediction = apply_tagger(tagger_object, text, feedback=feedback)
         prediction = add_finite_url_to_feedback(prediction, request)
         return Response(prediction, status=status.HTTP_200_OK)
 
 
-    def apply_tagger(self, tagger_object, tagger_input, input_type='text', feedback=False):
-        # load embedding & phraser
-        embedding = W2VEmbedding()
-        embedding.load_django(tagger_object.embedding)
-        # retrieve model
-        tagger = TorchTagger(embedding)
-        tagger.load_django(tagger_object)
-        # tag text
-        if input_type == 'doc':
-            tagger_result = tagger.tag_doc(tagger_input)
-        else:
-            tagger_result = tagger.tag_text(tagger_input)
-        # reform output
-        prediction = {
-            'probability': tagger_result['probability'],
-            'tagger_id': tagger_object.id,
-            'result': tagger_result['prediction']
-        }
-        # add optional feedback
-        if feedback:
-            project_pk = tagger_object.project.pk
-            feedback_object = Feedback(project_pk, model_object=tagger_object)
-            feedback_id = feedback_object.store(tagger_input, prediction['result'])
-            feedback_url = f'/projects/{project_pk}/torchtaggers/{tagger_object.pk}/feedback/'
-            prediction['feedback'] = {'id': feedback_id, 'url': feedback_url}
-        return prediction
+    @action(detail=True, methods=['post'], serializer_class=ApplyTaggerSerializer)
+    def apply_to_index(self, request, pk=None, project_pk=None):
+        """Applt Torch tagger to an Elasticsearch index."""
+        with transaction.atomic():
+            # We're pulling the serializer with the function bc otherwise it will not
+            # fetch the context for whatever reason.
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            tagger_object = self.get_object()
+            tagger_object.task = Task.objects.create(torchtagger=tagger_object, status=Task.STATUS_CREATED)
+            tagger_object.save()
+
+            project = Project.objects.get(pk=project_pk)
+            indices = [index["name"] for index in serializer.validated_data["indices"]]
+            #indices = project.get_available_or_all_project_indices(indices)
+
+            fields = serializer.validated_data["fields"]
+            fact_name = serializer.validated_data["new_fact_name"]
+            fact_value = serializer.validated_data["new_fact_value"]
+            query = serializer.validated_data["query"]
+            bulk_size = serializer.validated_data["bulk_size"]
+            max_chunk_bytes = serializer.validated_data["max_chunk_bytes"]
+            es_timeout = serializer.validated_data["es_timeout"]
+
+
+            args = (pk, indices, fields, fact_name, fact_value, query, bulk_size, max_chunk_bytes, es_timeout)
+            transaction.on_commit(lambda: apply_tagger_to_index.apply_async(args=args, queue=CELERY_LONG_TERM_TASK_QUEUE))
+
+            message = "Started process of applying Torch Tagger with id: {}".format(tagger_object.id)
+            return Response({"message": message}, status=status.HTTP_201_CREATED)

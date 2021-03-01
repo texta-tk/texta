@@ -21,7 +21,7 @@ DEPLOY_KEY = os.getenv("TEXTA_DEPLOY_KEY", 1)
 # from toolkit.helper_functions import get_core_setting
 # ES_URL = get_core_setting("ES_URL")
 CORE_SETTINGS = {
-    "TEXTA_ES_URL": os.getenv("TEXTA_ES_URL", "http://elastic-dev.texta.ee:9200"),
+    "TEXTA_ES_URL": os.getenv("TEXTA_ES_URL", "http://localhost:9200"),
     "TEXTA_ES_PREFIX": os.getenv("TEXTA_ES_PREFIX", ""),
     "TEXTA_ES_USERNAME": os.getenv("TEXTA_ES_USER", ""),
     "TEXTA_ES_PASSWORD": os.getenv("TEXTA_ES_PASSWORD", ""),
@@ -67,7 +67,6 @@ INSTALLED_APPS = [
     "toolkit.regex_tagger",
     "toolkit.anonymizer",
     "toolkit.docparser",
-    "toolkit.document_importer",
     # TEXTA Extension Apps
     # "docscraper",
     # THIRD PARTY
