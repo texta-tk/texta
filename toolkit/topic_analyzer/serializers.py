@@ -76,7 +76,10 @@ class ClusteringSerializer(serializers.ModelSerializer):
 
     def get_url(self, obj):
         default_version = REST_FRAMEWORK.get("DEFAULT_VERSION")
-        index = reverse(f"{default_version}:clustering-detail", kwargs={"project_pk": obj.project.pk, "pk": obj.pk})
+        if default_version == "v1":
+            index = reverse(f"{default_version}:clustering-detail", kwargs={"project_pk": obj.project.pk, "pk": obj.pk})
+        elif default_version == "v2":
+            index = reverse(f"{default_version}:topic_analyzer-detail", kwargs={"project_pk": obj.project.pk, "pk": obj.pk})
         if "request" in self.context:
             request = self.context["request"]
             url = request.build_absolute_uri(index)

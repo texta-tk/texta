@@ -36,7 +36,7 @@ from toolkit.mlp.views import MLPListProcessor, MlpDocsProcessor
 from toolkit.regex_tagger.urls import router as regex_tagger_router
 from toolkit.tagger.urls import router as tagger_router
 from toolkit.tools.swagger import schema_view
-from toolkit.topic_analyzer.views import ClusterViewSet, ClusteringViewSet
+from toolkit.topic_analyzer.views import ClusterViewSet, TopicAnalyzerViewset
 from toolkit.torchtagger.urls import router as torchtagger_router
 from toolkit.uaa_auth.views import RefreshUAATokenView, UAAView
 
@@ -65,10 +65,12 @@ project_router.register('elastic/reindexer', ReindexerViewSet, basename='reindex
 project_router.register('elastic/dataset_imports', DatasetImportViewSet, basename='dataset_import')
 project_router.register('elastic/index_splitter', IndexSplitterViewSet, basename='index_splitter')
 
+
 # TODO Look for putting this into a better place.
-project_router.register(r'clustering', ClusteringViewSet, basename='clustering')
-clustering_router = routers.NestedSimpleRouter(project_router, r'clustering', lookup='clustering')
+project_router.register(r'topic_analyzer', TopicAnalyzerViewset, basename='topic_analyzer')
+clustering_router = routers.NestedSimpleRouter(project_router, r'topic_analyzer', lookup='topic_analyzer')
 clustering_router.register("clusters", ClusterViewSet, basename="cluster")
+
 
 app_name = 'toolkit_v2'
 
