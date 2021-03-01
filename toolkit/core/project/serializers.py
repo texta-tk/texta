@@ -147,26 +147,49 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
         version_prefix = f'/api/{api_version}'
         base_url = request.build_absolute_uri(f'{version_prefix}/projects/{obj.id}/')
         resource_dict = {}
-        resources = (
-            'lexicons',
-            'elastic/reindexer',
-            'elastic/index_splitter',
-            'elastic/dataset_imports',
-            'searches',
-            'scroll',
-            'clustering',
-            'embeddings',
-            'embedding_clusters',
-            'taggers',
-            'tagger_groups',
-            'torchtaggers',
-            "bert_taggers",
-            'regex_taggers',
-            'anonymizers',
-            'regex_tagger_groups',
-            'mlp_index',
-            'elastic/face_analyzer'
-        )
+
+        if api_version == 'v2':
+            resources = (
+                'lexicons',
+                'elastic/reindexer',
+                'elastic/index_splitter',
+                'elastic/dataset_imports',
+                'elastic/face_analyzer',
+                'searches',
+                'scroll',
+                'clustering',
+                'embeddings',
+                'embedding_clusters',
+                'taggers',
+                'tagger_groups',
+                'torchtaggers',
+                'bert_taggers',
+                'regex_taggers',
+                'anonymizers',
+                'regex_tagger_groups',
+                'mlp_index',
+            )
+        elif api_version == 'v1':
+            resources = (
+                'lexicons',
+                'reindexer',
+                'index_splitter',
+                'dataset_imports',
+                'searches',
+                'scroll',
+                'clustering',
+                'embeddings',
+                'embedding_clusters',
+                'taggers',
+                'tagger_groups',
+                'torchtaggers',
+                'bert_taggers',
+                'regex_taggers',
+                'anonymizers',
+                'regex_tagger_groups',
+                'mlp_index',
+            )
+
         for resource_name in resources:
             resource_dict[resource_name] = f'{base_url}{resource_name}/'
 
