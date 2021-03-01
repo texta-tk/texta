@@ -11,15 +11,15 @@ from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
-from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.document import ElasticDocument
-from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.elastic.tools.core import ElasticCore
+from toolkit.elastic.tools.document import ElasticDocument
+from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup
 from toolkit.regex_tagger.serializers import (
     ApplyRegexTaggerGroupSerializer, RegexGroupTaggerTagTextSerializer, RegexMultitagTextSerializer, RegexTaggerGroupMultitagDocsSerializer, RegexTaggerGroupMultitagTextSerializer,
     RegexTaggerGroupSerializer, RegexTaggerGroupTagDocumentSerializer, RegexTaggerSerializer,
-    RegexTaggerTagDocsSerializer, RegexTaggerTagTextsSerializer, TagRandomDocSerializer
+    RegexTaggerTagDocsSerializer, RegexTaggerTagTextsSerializer, TagRandomDocSerializer, ApplyRegexTaggerSerializer
 )
 from toolkit.serializer_constants import GeneralTextSerializer, ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
@@ -267,6 +267,40 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         results["matches"] = final_matches
         return Response(results, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['post'], serializer_class=ApplyRegexTaggerSerializer)
+    def apply_to_index(self, request, pk=None, project_pk=None):
+        from toolkit.regex_tagger.tasks import apply_regex_tagger
+
+        with transaction.atomic():
+            # We're pulling the serializer with the function bc otherwise it will not
+            # fetch the context for whatever reason.
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            tagger_object: RegexTagger = self.get_object()
+            tagger_object.task = Task.objects.create(regextagger=tagger_object, status=Task.STATUS_CREATED)
+            tagger_object.save()
+
+            project = Project.objects.get(pk=project_pk)
+            indices = [index["name"] for index in serializer.validated_data["indices"]]
+            #indices = project.get_available_or_all_project_indices(indices)
+
+            fields = serializer.validated_data["fields"]
+            query = serializer.validated_data["query"]
+            bulk_size = serializer.validated_data["bulk_size"]
+            max_chunk_bytes = serializer.validated_data["max_chunk_bytes"]
+
+            fact_name = serializer.validated_data["new_fact_name"]
+            fact_value = serializer.validated_data["new_fact_value"]
+
+            add_spans = serializer.validated_data["add_spans"]
+
+            args = (pk, "regex_tagger", indices, fields, query, bulk_size, max_chunk_bytes, fact_name, fact_value, add_spans)
+            transaction.on_commit(lambda: apply_regex_tagger.apply_async(args=args, queue=CELERY_LONG_TERM_TASK_QUEUE))
+
+            message = "Started process of applying RegexTagger with id: {}".format(tagger_object.id)
+            return Response({"message": message}, status=status.HTTP_201_CREATED)
+
 
 class RegexTaggerGroupFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
@@ -407,11 +441,11 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
             bulk_size = serializer.validated_data["bulk_size"]
             max_chunk_bytes = serializer.validated_data["max_chunk_bytes"]
 
-            args = (pk, indices, fields, query, bulk_size, max_chunk_bytes)
+            args = (pk, "regex_tagger_group", indices, fields, query, bulk_size, max_chunk_bytes)
             transaction.on_commit(lambda: apply_regex_tagger.apply_async(args=args, queue=CELERY_LONG_TERM_TASK_QUEUE))
 
             message = "Started process of applying RegexTaggerGroup with id: {}".format(tagger_object.id)
-            return Response({"message": message}, status=status.HTTP_200_OK)
+            return Response({"message": message}, status=status.HTTP_201_CREATED)
 
 
     @action(detail=True, methods=['post'], serializer_class=RegexGroupTaggerTagTextSerializer)

@@ -4,9 +4,9 @@ from django.urls import reverse
 from rest_framework import serializers
 
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.elastic.aggregator import ElasticAggregator
-from toolkit.elastic.searcher import EMPTY_QUERY
-from toolkit.elastic.serializers import IndexSerializer
+from toolkit.elastic.tools.aggregator import ElasticAggregator
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.settings import REST_FRAMEWORK
 from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
@@ -76,7 +76,10 @@ class ClusteringSerializer(serializers.ModelSerializer):
 
     def get_url(self, obj):
         default_version = REST_FRAMEWORK.get("DEFAULT_VERSION")
-        index = reverse(f"{default_version}:clustering-detail", kwargs={"project_pk": obj.project.pk, "pk": obj.pk})
+        if default_version == "v1":
+            index = reverse(f"{default_version}:clustering-detail", kwargs={"project_pk": obj.project.pk, "pk": obj.pk})
+        elif default_version == "v2":
+            index = reverse(f"{default_version}:topic_analyzer-detail", kwargs={"project_pk": obj.project.pk, "pk": obj.pk})
         if "request" in self.context:
             request = self.context["request"]
             url = request.build_absolute_uri(index)

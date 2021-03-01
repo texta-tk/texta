@@ -19,13 +19,14 @@ from toolkit.core.project.models import Project
 from toolkit.core.project.serializers import (CountIndicesSerializer, ExportSearcherResultsSerializer, ProjectDocumentSerializer, ProjectGetFactsSerializer, ProjectGetSpamSerializer, ProjectSearchByQuerySerializer, ProjectSerializer, ProjectSimplifiedSearchSerializer,
                                               ProjectSuggestFactNamesSerializer,
                                               ProjectSuggestFactValuesSerializer)
-from toolkit.elastic.aggregator import ElasticAggregator
-from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.document import ElasticDocument
-from toolkit.elastic.query import Query
-from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.elastic.serializers import ElasticScrollSerializer, IndexSerializer
-from toolkit.elastic.spam_detector import SpamDetector
+from toolkit.elastic.tools.aggregator import ElasticAggregator
+from toolkit.elastic.tools.core import ElasticCore
+from toolkit.elastic.tools.document import ElasticDocument
+from toolkit.elastic.tools.query import Query
+from toolkit.elastic.tools.searcher import ElasticSearcher
+from toolkit.elastic.tools.serializers import ElasticScrollSerializer
+from toolkit.elastic.index.serializers import IndexSerializer
+from toolkit.elastic.tools.spam_detector import SpamDetector
 from toolkit.exceptions import InvalidInputDocument, ProjectValidationFailed, SerializerNotValid
 from toolkit.helper_functions import hash_string
 from toolkit.permissions.project_permissions import (ExtraActionResource, IsSuperUser, ProjectAllowed, ProjectResourceAllowed)

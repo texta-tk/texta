@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from toolkit.core.project.models import Project
-from toolkit.elastic.models import Index
+from toolkit.elastic.index.models import Index
 from toolkit.mlp.models import MLPWorker
 from toolkit.mlp.serializers import MLPDocsSerializer, MLPListSerializer, MLPWorkerSerializer
 from toolkit.mlp.tasks import apply_mlp_on_list, apply_mlp_on_docs

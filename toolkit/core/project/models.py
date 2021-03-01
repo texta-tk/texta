@@ -5,11 +5,11 @@ from django.db import models
 from rest_framework.exceptions import ValidationError
 
 from toolkit.constants import MAX_DESC_LEN
-from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.tools.core import ElasticCore
 
 
 class Project(models.Model):
-    from toolkit.elastic.models import Index
+    from toolkit.elastic.index.models import Index
 
     title = models.CharField(max_length=MAX_DESC_LEN)
     author = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
