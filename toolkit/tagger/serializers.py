@@ -20,7 +20,7 @@ from toolkit.tagger.choices import (
     get_vectorizer_choices,
     )
 from toolkit.elastic.choices import get_snowball_choices
-from toolkit.elastic.searcher import EMPTY_QUERY
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.tagger.models import Tagger, TaggerGroup
 
 
