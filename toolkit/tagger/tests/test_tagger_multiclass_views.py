@@ -10,9 +10,9 @@ from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
-from toolkit.elastic.models import Reindexer
-from toolkit.elastic.aggregator import ElasticAggregator
-from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.tools.models import Reindexer
+from toolkit.elastic.tools.aggregator import ElasticAggregator
+from toolkit.elastic.tools.core import ElasticCore
 
 from toolkit.core.task.models import Task
 from toolkit.settings import RELATIVE_MODELS_PATH
