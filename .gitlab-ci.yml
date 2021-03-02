@@ -2,7 +2,7 @@ image: continuumio/miniconda3:latest
 
 variables:
   # Elastic
-  TEXTA_ES_URL: http://172.18.0.2:9200
+  TEXTA_ES_URL: http://elastic-dev.texta.ee:9200
   # Redis
   TEXTA_REDIS_URL: redis://redis:6379
   # UAA
@@ -22,6 +22,7 @@ variables:
   #TEXTA_ADMIN_PASSWORD: "1234"
   # MLP lang codes
   TEXTA_LANGUAGE_CODES: et,en
+  TEXTA_EXTERNAL_DATA_DIR: /cache
 
 services:
   - name: redis:latest
