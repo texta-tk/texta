@@ -6,6 +6,7 @@ data/media/*
 .vscode/*
 *.png
 data-volumes/*
+data_external/*
 data/log/*
 static
 .idea

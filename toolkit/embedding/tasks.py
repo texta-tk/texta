@@ -10,7 +10,7 @@ from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.embedding.models import Embedding
 from toolkit.settings import (
     CELERY_LONG_TERM_TASK_QUEUE,
-    RELATIVE_MODELS_PATH, NUM_WORKERS
+    RELATIVE_MODELS_PATH
 )
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.helper_functions import get_indices_from_object
