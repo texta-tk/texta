@@ -20,7 +20,9 @@ from toolkit.test_settings import (
     TEST_INDEX,
     TEST_VERSION_PREFIX,
     TEST_KEEP_PLOT_FILES,
-    TEST_QUERY
+    TEST_QUERY,
+    TEST_TORCH_TAGGER_BINARY,
+    TEST_TORCH_TAGGER_MULTICLASS
     )
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 from toolkit.torchtagger.models import TorchTagger
@@ -56,12 +58,26 @@ class TorchTaggerViewTests(APITransactionTestCase):
         self.reindex_payload = {
             "description": "test index for applying taggers",
             "indices": [TEST_INDEX],
+            "query": json.dumps(TEST_QUERY),
             "new_index": self.test_index_copy,
             "fields": TEST_FIELD_CHOICE
         }
         resp = self.client.post(self.reindex_url, self.reindex_payload, format='json')
         print_output("reindex test index for applying torch tagger:response.data:", resp.json())
         self.reindexer_object = Reindexer.objects.get(pk=resp.json()["id"])
+
+        self.test_imported_binary_tagger_id = self.import_test_model(TEST_TORCH_TAGGER_BINARY)
+        self.test_imported_multiclass_tagger_id = self.import_test_model(TEST_TORCH_TAGGER_MULTICLASS)
+
+
+    def import_test_model(self, file_path: str):
+        """Import models for testing."""
+        print_output("Importing model from file:", file_path)
+        files = {"file": open(file_path, "rb")}
+        import_url = f'{self.url}import_model/'
+        resp = self.client.post(import_url, data={'file': open(file_path, "rb")}).json()
+        print_output("Importing test model:", resp)
+        return resp["id"]
 
 
     def tearDown(self) -> None:
@@ -80,7 +96,7 @@ class TorchTaggerViewTests(APITransactionTestCase):
         self.run_tag_and_feedback_and_retrain()
         self.run_model_export_import()
         self.run_apply_binary_tagger_to_index()
-        self.run_apply_mutliclass_tagger_to_index()
+        self.run_apply_multiclass_tagger_to_index()
         self.run_apply_tagger_to_index_invalid_input()
 
 
@@ -277,20 +293,19 @@ class TorchTaggerViewTests(APITransactionTestCase):
             print_output('test_apply_binary_torch_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
             sleep(2)
 
-        url = f'{self.url}{self.test_tagger_id}/apply_to_index/'
+        url = f'{self.url}{self.test_imported_binary_tagger_id}/apply_to_index/'
 
         payload = {
             "description": "apply torch tagger to index test task",
             "new_fact_name": self.new_fact_name,
             "new_fact_value": self.new_fact_value,
             "indices": [{"name": self.test_index_copy}],
-            "fields": TEST_FIELD_CHOICE,
-            "bulk_size": 100
+            "fields": TEST_FIELD_CHOICE
         }
         response = self.client.post(url, payload, format='json')
         print_output('test_apply_binary_torch_tagger_to_index:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        tagger_object = TorchTagger.objects.get(pk=self.test_tagger_id)
+        tagger_object = TorchTagger.objects.get(pk=self.test_imported_binary_tagger_id)
 
         # Wait til the task has finished
         while tagger_object.task.status != Task.STATUS_COMPLETED:
@@ -300,33 +315,32 @@ class TorchTaggerViewTests(APITransactionTestCase):
         results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution(self.new_fact_name)
         print_output("test_apply_binary_torch_tagger_to_index:elastic aggerator results:", results)
 
-        # Check if applying the tagger results in at least 1 new fact
-        # Exact numbers cannot be checked as creating taggers contains random and thus
-        # predicting with them isn't entirely deterministic
-        #self.assertTrue(results[self.new_fact_value] >= 1)
+        # Check if expected number of facts is added
+        self.assertTrue(results[self.new_fact_value] == 30)
+        
+        self.add_cleanup_files(self.test_imported_binary_tagger_id)
 
 
-    def run_apply_mutliclass_tagger_to_index(self):
+    def run_apply_multiclass_tagger_to_index(self):
         """Tests applying multiclass torch tagger to index using apply_to_index endpoint."""
         # Make sure reindexer task has finished
         while self.reindexer_object.task.status != Task.STATUS_COMPLETED:
             print_output('test_apply_multiclass_torch_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
             sleep(2)
 
-        url = f'{self.url}{self.test_multiclass_tagger_id}/apply_to_index/'
+        url = f'{self.url}{self.test_imported_multiclass_tagger_id}/apply_to_index/'
 
         payload = {
             "description": "apply torch tagger to index test task",
             "new_fact_name": self.new_multiclass_fact_name,
             "new_fact_value": self.new_fact_value,
             "indices": [{"name": self.test_index_copy}],
-            "fields": TEST_FIELD_CHOICE,
-            "bulk_size": 100
+            "fields": TEST_FIELD_CHOICE
         }
         response = self.client.post(url, payload, format='json')
         print_output('test_apply_multiclass_torch_tagger_to_index:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        tagger_object = TorchTagger.objects.get(pk=self.test_multiclass_tagger_id)
+        tagger_object = TorchTagger.objects.get(pk=self.test_imported_multiclass_tagger_id)
 
         # Wait til the task has finished
         while tagger_object.task.status != Task.STATUS_COMPLETED:
@@ -336,10 +350,13 @@ class TorchTaggerViewTests(APITransactionTestCase):
         results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution(self.new_multiclass_fact_name)
         print_output("test_apply_multiclass_torch_tagger_to_index:elastic aggerator results:", results)
 
-        # Check if applying the tagger results in at least 1 new fact
-        # Exact numbers cannot be checked as creating taggers contains random and thus
-        # predicting with them isn't entirely deterministic
-        self.assertTrue(len(results) >= 1)
+        # Check if the expected facts with expected number of values is added
+        expected_fact_value = "foo"
+        expected_number_of_facts = 30
+        self.assertTrue(expected_fact_value in results)
+        self.assertTrue(results[expected_fact_value] == expected_number_of_facts )
+
+        self.add_cleanup_files(self.test_imported_multiclass_tagger_id)
 
 
     def run_apply_tagger_to_index_invalid_input(self):
@@ -351,13 +368,13 @@ class TorchTaggerViewTests(APITransactionTestCase):
             "description": "apply torch tagger to index test task",
             "new_fact_name": self.new_fact_name,
             "new_fact_value": self.new_fact_value,
-            "fields": "invalid_field_format",
-            "bulk_size": 100,
-            "query": json.dumps(TEST_QUERY)
+            "fields": "invalid_field_format"
         }
         response = self.client.post(url, payload, format='json')
         print_output('test_invalid_apply_torch_tagger_to_index:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        self.add_cleanup_files(self.test_tagger_id)
 
 
     def run_tag_and_feedback_and_retrain(self):

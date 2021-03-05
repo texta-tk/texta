@@ -281,7 +281,7 @@ MLP_MODEL_DIRECTORY = os.getenv("TEXTA_MLP_MODEL_DIRECTORY_PATH", os.path.join(E
 # BERT pretrained models
 BERT_PRETRAINED_MODEL_DIRECTORY = os.path.join(EXTERNAL_DATA_DIR, "bert_tagger", "pretrained")
 # BERT fine-tuned models
-BERT_FINETUNED_MODEL_DIRECTORY = os.path.join(DATA_DIR, "bert_tagger", "fine_tuned")
+BERT_FINETUNED_MODEL_DIRECTORY = os.path.join(RELATIVE_MODELS_PATH, "bert_tagger", "fine_tuned")
 
 # create model folders
 MODEL_TYPES = ["embedding", "tagger", "torchtagger", "bert_tagger"]
@@ -352,7 +352,8 @@ if SKIP_MLP_RESOURCES is False:
 
 SKIP_BERT_RESOURCES = parse_bool_env("SKIP_BERT_RESOURCES", False)
 if SKIP_BERT_RESOURCES is False:
-    download_bert_requirements(BERT_PRETRAINED_MODEL_DIRECTORY, DEFAULT_BERT_MODELS, BERT_CACHE_DIR, logging.getLogger(INFO_LOGGER))
+    # Download pretrained models with weights initiated for binary classification (using state dict with initialized weights is disabled for multiclass)
+    download_bert_requirements(BERT_PRETRAINED_MODEL_DIRECTORY, DEFAULT_BERT_MODELS, BERT_CACHE_DIR, logging.getLogger(INFO_LOGGER), num_labels=2)
 
 ALLOW_BERT_MODEL_DOWNLOADS = parse_bool_env("TEXTA_ALLOW_BERT_MODEL_DOWNLOADS", True)
 

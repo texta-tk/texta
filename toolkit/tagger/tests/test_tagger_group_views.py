@@ -12,13 +12,17 @@ from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.core.task.models import Task
 from toolkit.tagger.models import Tagger, TaggerGroup
-from toolkit.test_settings import (TEST_FACT_NAME,
-                                   TEST_FIELD,
-                                   TEST_FIELD_CHOICE,
-                                   TEST_INDEX,
-                                   TEST_QUERY,
-                                   TEST_VERSION_PREFIX,
-                                   TEST_KEEP_PLOT_FILES, VERSION_NAMESPACE)
+from toolkit.test_settings import (
+    TEST_FACT_NAME,
+    TEST_FIELD,
+    TEST_FIELD_CHOICE,
+    TEST_INDEX,
+    TEST_QUERY,
+    TEST_VERSION_PREFIX,
+    TEST_KEEP_PLOT_FILES,
+    VERSION_NAMESPACE,
+    TEST_TAGGER_GROUP
+)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
@@ -45,6 +49,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
         self.reindex_payload = {
             "description": "test index for applying tagger group",
             "indices": [TEST_INDEX],
+            "query": json.dumps(TEST_QUERY),
             "new_index": self.test_index_copy,
             "fields": [TEST_FIELD]
         }
@@ -52,6 +57,17 @@ class TaggerGroupViewTests(APITransactionTestCase):
         print_output("reindex test index for applying tagger group:response.data:", resp.json())
         self.reindexer_object = Reindexer.objects.get(pk=resp.json()["id"])
 
+        self.test_imported_tagger_group_id = self.import_test_model(TEST_TAGGER_GROUP)
+
+
+    def import_test_model(self, file_path: str):
+        """Import models for testing."""
+        print_output("Importing model from file:", file_path)
+        files = {"file": open(file_path, "rb")}
+        import_url = f'{self.url}import_model/'
+        resp = self.client.post(import_url, data={'file': open(file_path, "rb")}).json()
+        print_output("Importing test model:", resp)
+        return resp["id"]
 
     def test_run(self):
         self.run_create_and_delete_tagger_group_removes_related_children_models_plots()
@@ -93,7 +109,8 @@ class TaggerGroupViewTests(APITransactionTestCase):
                 "classifier": "LinearSVC",
                 "feature_selector": "SVM Feature Selector",
                 "maximum_sample_size": 500,
-                "negative_multiplier": 1.0
+                "negative_multiplier": 1.0,
+                "indices": [{"name": TEST_INDEX}]
             }
         }
         response = self.client.post(self.url, payload, format='json')
@@ -131,6 +148,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
                 "feature_selector": "SVM Feature Selector",
                 "maximum_sample_size": 500,
                 "negative_multiplier": 1.0,
+                "indices": [{"name": TEST_INDEX}]
             }
         }
         response = self.client.post(self.url, payload, format='json')
@@ -198,23 +216,21 @@ class TaggerGroupViewTests(APITransactionTestCase):
             print_output('test_apply_tagger_group_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
             sleep(2)
 
-        url = f'{self.url}{self.test_tagger_group_id}/apply_to_index/'
+        url = f'{self.url}{self.test_imported_tagger_group_id}/apply_to_index/'
 
         payload = {
             "description": "apply tagger test task",
             "new_fact_name": self.new_fact_name,
             "indices": [{"name": self.test_index_copy}],
             "fields": [TEST_FIELD],
-            "query": json.dumps(TEST_QUERY),
             "lemmatize": False,
-            "bulk_size": 50,
             "n_similar_docs": 10,
             "n_candidate_tags": 10
         }
         response = self.client.post(url, payload, format='json')
         print_output('test_apply_tagger_group_to_index:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        tagger_group_object = TaggerGroup.objects.get(pk=self.test_tagger_group_id)
+        tagger_group_object = TaggerGroup.objects.get(pk=self.test_imported_tagger_group_id)
 
         # Wait til the task has finished
         while tagger_group_object.task.status != Task.STATUS_COMPLETED:
@@ -224,12 +240,26 @@ class TaggerGroupViewTests(APITransactionTestCase):
         results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution(self.new_fact_name)
         print_output("test_apply_tagger_group_to_index:elastic aggerator results:", results)
 
-        # Check if applying tagger group results in at least one new fact value for each tagger in the group
-        # Exact numbers cannot be checked as creating taggers contains random and thus
-        # predicting with them isn't entirely deterministic
+        self.assertTrue(len(results) >= 1)
 
-        # omit the check temporarily 
-        #self.assertTrue(len(results) >= 1)
+        fact_value_1 = "bar"
+        fact_value_2 = "foo"
+
+        n_fact_value_1 = 3
+        n_fact_value_2 = 2
+
+        # Check if expected number of new facts is added to the index
+        self.assertTrue(fact_value_1 in results)
+        self.assertTrue(fact_value_2 in results)
+        self.assertTrue(results[fact_value_1] == n_fact_value_1)
+        self.assertTrue(results[fact_value_2] == n_fact_value_2)
+
+        # clean
+        imported_tagger_group = TaggerGroup.objects.get(id=self.test_imported_tagger_group_id)
+
+        for tagger in imported_tagger_group.taggers.all():
+            # Remove tagger files after test is done
+            self.add_cleanup_files(tagger.id)
 
 
     def run_apply_tagger_group_to_index_invalid_input(self):
@@ -264,6 +294,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
                 "feature_selector": "SVM Feature Selector",
                 "maximum_sample_size": 500,
                 "negative_multiplier": 1.0,
+                "indices": [{"name": TEST_INDEX}]
             }
         }
 

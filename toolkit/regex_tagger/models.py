@@ -6,7 +6,7 @@ from typing import List, Optional
 from django.contrib.auth.models import User
 from django.core import serializers
 from django.db import models, transaction
-from texta_lexicon_matcher.lexicon_matcher import LexiconMatcher, SUPPORTED_MATCH_TYPES, SUPPORTED_OPERATORS
+from texta_lexicon_matcher.lexicon_matcher import LexiconMatcher
 
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
@@ -15,6 +15,7 @@ from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.settings import TEXTA_TAGS_KEY
 
+from toolkit.regex_tagger import choices
 
 def load_matcher(regex_tagger_object):
     # parse lexicons
@@ -45,17 +46,17 @@ class RegexTagger(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
 
-    lexicon = models.TextField(default='')
-    counter_lexicon = models.TextField(default='')
-    operator = models.CharField(max_length=25, default=SUPPORTED_OPERATORS[0])
-    match_type = models.CharField(max_length=25, default=SUPPORTED_MATCH_TYPES[0])
-    required_words = models.FloatField(default=1.0)
-    phrase_slop = models.IntegerField(default=0)
-    counter_slop = models.IntegerField(default=0)
-    n_allowed_edits = models.IntegerField(default=0)
-    return_fuzzy_match = models.BooleanField(default=True)
-    ignore_case = models.BooleanField(default=True)
-    ignore_punctuation = models.BooleanField(default=True)
+    lexicon = models.TextField(default="")
+    counter_lexicon = models.TextField(default="")
+    operator = models.CharField(max_length=25, default=choices.DEFAULT_OPERATOR)
+    match_type = models.CharField(max_length=25, default=choices.DEFAULT_MATCH_TYPE)
+    required_words = models.FloatField(default=choices.DEFAULT_REQUIRED_WORDS)
+    phrase_slop = models.IntegerField(default=choices.DEFAULT_PHRASE_SLOP)
+    counter_slop = models.IntegerField(default=choices.DEFAULT_COUNTER_SLOP)
+    n_allowed_edits = models.IntegerField(default=choices.DEFAULT_N_ALLOWED_EDITS)
+    return_fuzzy_match = models.BooleanField(default=choices.DEFAULT_RETURN_FUZZY_MATCH)
+    ignore_case = models.BooleanField(default=choices.DEFAULT_IGNORE_CASE)
+    ignore_punctuation = models.BooleanField(default=choices.DEFAULT_IGNORE_PUNCTUATION)
 
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 

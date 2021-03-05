@@ -22,7 +22,9 @@ from toolkit.test_settings import (
     TEST_VERSION_PREFIX,
     TEST_KEEP_PLOT_FILES,
     TEST_BERT_MODEL,
-    TEST_QUERY
+    TEST_QUERY,
+    TEST_BERT_TAGGER_MULTICLASS,
+    TEST_BERT_TAGGER_BINARY
     )
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file, remove_folder
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
@@ -49,7 +51,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         # Check if TEST_BERT_MODEL is already downloaded
         available_models = get_downloaded_bert_models(BERT_PRETRAINED_MODEL_DIRECTORY)
         self.test_model_existed = True if TEST_BERT_MODEL in available_models else False
-        download_bert_requirements(BERT_PRETRAINED_MODEL_DIRECTORY, [TEST_BERT_MODEL], cache_directory=BERT_CACHE_DIR)
+        download_bert_requirements(BERT_PRETRAINED_MODEL_DIRECTORY, [TEST_BERT_MODEL], cache_directory=BERT_CACHE_DIR, num_labels = 2)
 
         # new fact name and value used when applying tagger to index
         self.new_fact_name = "TEST_BERT_TAGGER_NAME"
@@ -64,12 +66,26 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.reindex_payload = {
             "description": "test index for applying taggers",
             "indices": [TEST_INDEX],
+            "query": json.dumps(TEST_QUERY),
             "new_index": self.test_index_copy,
             "fields": TEST_FIELD_CHOICE
         }
         resp = self.client.post(self.reindex_url, self.reindex_payload, format='json')
         print_output("reindex test index for applying bert tagger:response.data:", resp.json())
         self.reindexer_object = Reindexer.objects.get(pk=resp.json()["id"])
+
+        self.test_imported_binary_tagger_id = self.import_test_model(TEST_BERT_TAGGER_BINARY)
+        self.test_imported_multiclass_tagger_id = self.import_test_model(TEST_BERT_TAGGER_MULTICLASS)
+
+
+    def import_test_model(self, file_path: str):
+        """Import fine-tuned models for testing."""
+        print_output("Importing model from file:", file_path)
+        files = {"file": open(file_path, "rb")}
+        import_url = f'{self.url}import_model/'
+        resp = self.client.post(import_url, data={'file': open(file_path, "rb")}).json()
+        print_output("Importing test model:", resp)
+        return resp["id"]
 
 
     def test(self):
@@ -84,7 +100,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.run_bert_tag_and_feedback_and_retrain()
         self.run_bert_model_export_import()
         self.run_apply_binary_tagger_to_index()
-        self.run_apply_mutliclass_tagger_to_index()
+        self.run_apply_multiclass_tagger_to_index()
         self.run_apply_tagger_to_index_invalid_input()
 
         self.add_cleanup_files(self.test_tagger_id)
@@ -96,7 +112,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         print_output(f"Delete apply_bert_taggers test index {self.test_index_copy}", res)
 
 
-    def add_cleanup_files(self, tagger_id):
+    def add_cleanup_files(self, tagger_id: int):
         tagger_object = BertTaggerObject.objects.get(pk=tagger_id)
         self.addCleanup(remove_file, tagger_object.model.path)
         if not TEST_KEEP_PLOT_FILES:
@@ -110,7 +126,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
 
     def run_train_multiclass_bert_tagger_using_fact_name(self):
-        """Tests BertTagger training with multiple classes and if a new Task gets created via the signal"""
+        """Tests BertTagger training with multiple classes and if a new Task gets created via the signal."""
         payload = {
             "description": "TestBertTaggerObjectTraining",
             "fact_name": TEST_FACT_NAME,
@@ -138,7 +154,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
 
     def run_train_bert_tagger_using_query(self):
-        """Tests BertTagger training, and if a new Task gets created via the signal"""
+        """Tests BertTagger training, and if a new Task gets created via the signal."""
         payload = {
             "description": "TestBertTaggerTraining",
             "fields": TEST_FIELD_CHOICE,
@@ -336,21 +352,19 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
             print_output('test_apply_binary_bert_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
             sleep(2)
 
-        url = f'{self.url}{self.test_tagger_id}/apply_to_index/'
+        url = f'{self.url}{self.test_imported_binary_tagger_id}/apply_to_index/'
 
         payload = {
             "description": "apply bert tagger to index test task",
             "new_fact_name": self.new_fact_name,
             "new_fact_value": self.new_fact_value,
             "indices": [{"name": self.test_index_copy}],
-            "fields": TEST_FIELD_CHOICE,
-            "bulk_size": 100,
-            "query": json.dumps(TEST_QUERY)
+            "fields": TEST_FIELD_CHOICE
         }
         response = self.client.post(url, payload, format='json')
         print_output('test_apply_binary_bert_tagger_to_index:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        tagger_object = BertTaggerObject.objects.get(pk=self.test_tagger_id)
+        tagger_object = BertTaggerObject.objects.get(pk=self.test_imported_binary_tagger_id)
 
         # Wait til the task has finished
         while tagger_object.task.status != Task.STATUS_COMPLETED:
@@ -360,34 +374,33 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution(self.new_fact_name)
         print_output("test_apply_binary_bert_tagger_to_index:elastic aggerator results:", results)
 
-        # Check if applying the tagger results in at least 1 new fact
-        # Exact numbers cannot be checked as creating taggers contains random and thus
-        # predicting with them isn't entirely deterministic
-        self.assertTrue(results[self.new_fact_value] >= 1)
+        # Check if the expected number of facts are added to the index
+        expected_number_of_facts = 19
+        self.assertTrue(results[self.new_fact_value] == expected_number_of_facts)
+
+        self.add_cleanup_files(self.test_imported_binary_tagger_id)
 
 
-    def run_apply_mutliclass_tagger_to_index(self):
+    def run_apply_multiclass_tagger_to_index(self):
         """Tests applying multiclass BERT tagger to index using apply_to_index endpoint."""
         # Make sure reindexer task has finished
         while self.reindexer_object.task.status != Task.STATUS_COMPLETED:
             print_output('test_apply_multiclass_bert_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
             sleep(2)
 
-        url = f'{self.url}{self.test_multiclass_tagger_id}/apply_to_index/'
+        url = f'{self.url}{self.test_imported_multiclass_tagger_id}/apply_to_index/'
 
         payload = {
             "description": "apply bert tagger to index test task",
             "new_fact_name": self.new_multiclass_fact_name,
             "new_fact_value": self.new_fact_value,
             "indices": [{"name": self.test_index_copy}],
-            "fields": TEST_FIELD_CHOICE,
-            "bulk_size": 100,
-            "query": json.dumps(TEST_QUERY)
+            "fields": TEST_FIELD_CHOICE
         }
         response = self.client.post(url, payload, format='json')
         print_output('test_apply_multiclass_bert_tagger_to_index:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        tagger_object = BertTaggerObject.objects.get(pk=self.test_multiclass_tagger_id)
+        tagger_object = BertTaggerObject.objects.get(pk=self.test_imported_multiclass_tagger_id)
 
         # Wait til the task has finished
         while tagger_object.task.status != Task.STATUS_COMPLETED:
@@ -397,10 +410,13 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution(self.new_multiclass_fact_name)
         print_output("test_apply_multiclass_bert_tagger_to_index:elastic aggerator results:", results)
 
-        # Check if applying the tagger results in at least 1 new fact
-        # Exact numbers cannot be checked as creating taggers contains random and thus
-        # predicting with them isn't entirely deterministic
-        self.assertTrue(len(results) >= 1)
+        # Check if the expected facts and the expected number of them are added to the index
+        expected_fact_value = "bar"
+        expected_number_of_facts = 30
+        self.assertTrue(expected_fact_value in results)
+        self.assertTrue(results[expected_fact_value] == expected_number_of_facts)
+
+        self.add_cleanup_files(self.test_imported_multiclass_tagger_id)
 
 
     def run_apply_tagger_to_index_invalid_input(self):
@@ -419,6 +435,8 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         response = self.client.post(url, payload, format='json')
         print_output('test_invalid_apply_bert_tagger_to_index:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        self.add_cleanup_files(self.test_tagger_id)
 
 
     def run_bert_tag_and_feedback_and_retrain(self):

@@ -10,7 +10,7 @@ from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.regex_tagger.models import RegexTaggerGroup, RegexTagger, load_matcher
-from toolkit.regex_tagger.serializers import PRIORITY_CHOICES
+from toolkit.regex_tagger.choices import PRIORITY_CHOICES
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER
 from toolkit.tools.show_progress import ShowProgress
 
@@ -65,7 +65,7 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
 
 
 @task(name="apply_regex_tagger_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
-def apply_regex_tagger(object_id: int, object_type: str, indices: List[str], fields: List[str], query: dict, bulk_size: int = 100, max_chunk_bytes: int = 104857600, fact_name: str = "", fact_value: str = "", add_spans: bool = True):
+def apply_regex_tagger(object_id: int, object_type: str, indices: List[str], fields: List[str], query: dict, es_timeout: int = 10, bulk_size: int = 100, max_chunk_bytes: int = 104857600, fact_name: str = "", fact_value: str = "", add_spans: bool = True):
     """Apply RegexTagger or RegexTaggerGroup to index."""
     try:
         if object_type == "regex_tagger_group":
@@ -82,6 +82,7 @@ def apply_regex_tagger(object_id: int, object_type: str, indices: List[str], fie
             indices=indices,
             field_data=fields + ["texta_facts"],  # Get facts to add upon existing ones.
             query=query,
+            timeout = f"{es_timeout}m",
             output=ElasticSearcher.OUT_RAW,
             callback_progress=progress,
             scroll_size = bulk_size

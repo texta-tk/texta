@@ -21,10 +21,7 @@ from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, RELATIVE_MODELS_PATH
-from toolkit.tagger.choices import (
-    DEFAULT_CLASSIFIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE,
-    DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_VECTORIZER, DEFAULT_SCORING_OPTIONS, DEFAULT_SCORING_FUNCTION
-)
+from toolkit.tagger import choices
 
 
 class Tagger(models.Model):
@@ -40,12 +37,12 @@ class Tagger(models.Model):
     fields = models.TextField(default=json.dumps([]))
     embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
     stop_words = models.TextField(default='')
-    vectorizer = models.CharField(default=DEFAULT_VECTORIZER, max_length=MAX_DESC_LEN)
-    classifier = models.CharField(default=DEFAULT_CLASSIFIER, max_length=MAX_DESC_LEN)
-    negative_multiplier = models.FloatField(default=DEFAULT_NEGATIVE_MULTIPLIER, blank=True)
-    maximum_sample_size = models.IntegerField(default=DEFAULT_MAX_SAMPLE_SIZE, blank=True)
-    score_threshold = models.FloatField(default=0.0, blank=True)
-    snowball_language = models.CharField(default=None, null=True, max_length=MAX_DESC_LEN)
+    vectorizer = models.CharField(default=choices.DEFAULT_VECTORIZER, max_length=MAX_DESC_LEN)
+    classifier = models.CharField(default=choices.DEFAULT_CLASSIFIER, max_length=MAX_DESC_LEN)
+    negative_multiplier = models.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER, blank=True)
+    maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, blank=True)
+    score_threshold = models.FloatField(default=choices.DEFAULT_SCORE_THRESHOLD, blank=True)
+    snowball_language = models.CharField(default=choices.DEFAULT_SNOWBALL_LANGUAGE, null=True, max_length=MAX_DESC_LEN)
 
     precision = models.FloatField(default=None, null=True)
     recall = models.FloatField(default=None, null=True)
@@ -53,7 +50,7 @@ class Tagger(models.Model):
     num_features = models.IntegerField(default=None, null=True)
     num_examples = models.TextField(default="{}", null=True)
     confusion_matrix = models.TextField(default="[]", null=True, blank=True)
-    scoring_function = models.CharField(default=DEFAULT_SCORING_FUNCTION, max_length=MAX_DESC_LEN, null=True, blank=True)
+    scoring_function = models.CharField(default=choices.DEFAULT_SCORING_FUNCTION, max_length=MAX_DESC_LEN, null=True, blank=True)
 
     model = models.FileField(null=True, verbose_name='', default=None)
     model_size = models.FloatField(default=None, null=True)
@@ -191,7 +188,7 @@ class TaggerGroup(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     fact_name = models.CharField(max_length=MAX_DESC_LEN)
     num_tags = models.IntegerField(default=0)
-    minimum_sample_size = models.IntegerField(default=DEFAULT_MIN_SAMPLE_SIZE)
+    minimum_sample_size = models.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE)
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
     taggers = models.ManyToManyField(Tagger, default=None)
