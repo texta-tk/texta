@@ -73,7 +73,7 @@ def apply_mlp_on_index(self, mlp_id: int):
 
         scroll_size = 100
         searcher = ElasticSearcher(
-            query=mlp_object.query,
+            query=json.loads(mlp_object.query),
             indices=indices,
             field_data=field_data,
             output=ElasticSearcher.OUT_RAW,
