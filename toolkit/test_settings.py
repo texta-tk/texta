@@ -41,8 +41,8 @@ TEST_VERSION_PREFIX = f"/api/{VERSION_NAMESPACE}"
 TEST_UAA_USERNAME = 'test1'
 TEST_UAA_PASSWORD = 'test1'
 
-TEST_IMAGE_FILE_1 = os.path.join(TEST_DATA_DIR, "photos", "test_image_1.jpg")
-TEST_IMAGE_FILE_2 = os.path.join(TEST_DATA_DIR, "photos", "test_image_2.jpg")
+TEST_IMAGE_FILE_1 = os.path.join(TEST_DATA_DIR, "import_test_data", "photos", "test_image_1.jpg")
+TEST_IMAGE_FILE_2 = os.path.join(TEST_DATA_DIR, "import_test_data", "photos", "test_image_2.jpg")
 
 # The port for APILiveServerTestCase
 # Made this env-readable to make it easier to run tests in a Docker build.
@@ -55,4 +55,4 @@ TEST_BERT_MODEL = "prajjwal1/bert-tiny"
 W2V_EMBEDDING = "W2VEmbedding"
 FASTTEXT_EMBEDDING = "FastTextEmbedding"
 
-TEST_FACE_ANALYZER_INDEX =  "test_face_analyzer_index"
+TEST_FACE_ANALYZER_INDEX = "test_face_analyzer_index"
