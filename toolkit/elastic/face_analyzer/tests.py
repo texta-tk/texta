@@ -1,4 +1,5 @@
 import json
+from unittest import skipIf
 
 from django.test import override_settings
 from rest_framework import status
@@ -32,10 +33,11 @@ class FaceAnalyzerViewTests(APITransactionTestCase):
         ElasticCore().delete_index(TEST_FACE_ANALYZER_INDEX)
 
 
+    @skipIf(ElasticCore().build_flavor() == "oss", "Vector support is only available past the Basic license!")
     def test_run(self):
         self.run_test_add_face()
         self.run_test_analyze_photo()
-    
+
 
     def run_test_add_face(self):
         image = open(TEST_IMAGE_FILE_1, "rb")

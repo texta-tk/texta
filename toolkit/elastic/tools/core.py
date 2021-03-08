@@ -103,6 +103,11 @@ class ElasticCore:
 
 
     @elastic_connection
+    def build_flavor(self):
+        return self.es.info()["version"]["build_flavor"]
+
+
+    @elastic_connection
     def syncher(self):
         """
         Wipe the slate clean and create a new set of Index objects.
