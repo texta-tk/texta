@@ -87,8 +87,7 @@ class MLPElasticWorkerViewset(viewsets.ModelViewSet, BulkDelete):
             worker: MLPWorker = serializer.save(
                 author=self.request.user,
                 project=project,
-                fields=json.dumps(serializer.validated_data["fields"]),
-                query=json.dumps(serializer.validated_data["query"]),
+                fields=json.dumps(serializer.validated_data["fields"], ensure_ascii=False),
                 analyzers=json.dumps(analyzers),
             )
 
