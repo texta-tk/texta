@@ -1,4 +1,5 @@
 # Create your tests here.
+import json
 from django.test import override_settings
 from django.urls import reverse
 from elasticsearch_dsl import Keyword, Mapping
@@ -158,7 +159,7 @@ class MLPIndexProcessing(APITransactionTestCase):
         payload = {
             "description": "TestingIndexProcessing",
             "fields": [TEST_FIELD],
-            "query": {'query': {'match': {'comment_content_lemmas': query_string}}}
+            "query": json.dumps({'query': {'match': {'comment_content_lemmas': query_string}}}, ensure_ascii=False)
         }
 
         response = self.client.post(self.url, data=payload, format="json")
