@@ -1,5 +1,7 @@
 FROM nvidia/cuda:11.1.1-base-ubuntu20.04
 
+RUN DEBIAN_FRONTEND="noninteractive"
+
 # Install system packages
 RUN set -x \
     && apt-get update && apt-get install cmake build-essential wget -y \
