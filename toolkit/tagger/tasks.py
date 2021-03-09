@@ -4,35 +4,33 @@ import os
 import pathlib
 import re
 import secrets
-from time import sleep
-from elasticsearch.helpers import streaming_bulk
+from typing import Dict, List, Union
+
+from celery import group
 from celery.decorators import task
+from celery.result import allow_join_result
+from elasticsearch.helpers import streaming_bulk
 from texta_tagger.tagger import Tagger as TextTagger
 from texta_tools.embedding import W2VEmbedding
-from django.db import transaction
-from celery import group
-from celery import chord
-from celery.result import allow_join_result
+
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.core.task.models import Task
-from toolkit.elastic.tools.data_sample import DataSample
-from toolkit.elastic.tools.feedback import Feedback
 from toolkit.elastic.index.models import Index
-from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.elastic.tools.core import ElasticCore
+from toolkit.elastic.tools.data_sample import DataSample
 from toolkit.elastic.tools.document import ElasticDocument
+from toolkit.elastic.tools.feedback import Feedback
 from toolkit.elastic.tools.query import Query
-from toolkit.helper_functions import get_indices_from_object
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE, INFO_LOGGER, MEDIA_URL, ERROR_LOGGER
+from toolkit.elastic.tools.searcher import ElasticSearcher
+from toolkit.embedding.models import Embedding
+from toolkit.helper_functions import add_finite_url_to_feedback, get_indices_from_object
+from toolkit.mlp.tasks import apply_mlp_on_list
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, MEDIA_URL
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.tools.lemmatizer import CeleryLemmatizer, ElasticLemmatizer
 from toolkit.tools.plots import create_tagger_plot
 from toolkit.tools.show_progress import ShowProgress
-from toolkit.mlp.tasks import apply_mlp_on_list
-from toolkit.helper_functions import add_finite_url_to_feedback
 
-
-from typing import List, Union, Dict
 
 def create_tagger_batch(tagger_group_id, taggers_to_create):
     """Creates Tagger objects from list of tagger data and saves into tagger group object."""
@@ -44,6 +42,10 @@ def create_tagger_batch(tagger_group_id, taggers_to_create):
         indices = [index["name"] for index in tagger_data["indices"]]
         indices = tagger_group_object.project.get_available_or_all_project_indices(indices)
         tagger_data.pop("indices")
+
+        embedding_id = tagger_data.get("embedding", None)
+        if embedding_id:
+            tagger_data["embedding"] = Embedding.objects.get(pk=embedding_id)
 
         created_tagger = Tagger.objects.create(
             **tagger_data,
@@ -149,7 +151,7 @@ def train_tagger_task(tagger_id: int):
         tagger.train(
             data_sample.data,
             field_list=field_data,
-            scoring = scoring_function
+            scoring=scoring_function
         )
 
         # save tagger to disk
@@ -323,7 +325,7 @@ def load_tagger(tagger_id: int, lemmatize: bool = False, use_logger: bool = True
     return tagger
 
 
-def apply_loaded_tagger(tagger_object: Tagger, tagger: TextTagger, content: Union [str, Dict[str, str]], input_type: str = "text", feedback: bool = False, use_logger: bool = True):
+def apply_loaded_tagger(tagger_object: Tagger, tagger: TextTagger, content: Union[str, Dict[str, str]], input_type: str = "text", feedback: bool = False, use_logger: bool = True):
     """Applying loaded tagger."""
     # check input type
     if input_type == 'doc':
@@ -398,18 +400,18 @@ def apply_tagger_group(tagger_group_id: int, content: Union[str, Dict[str, str]]
     logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Loaded {len(tagger_objects)} tagger objects.")
     # predict tags
     if use_async:
-        group_task = group(apply_tagger.s(tagger.pk, content, input_type=input_type, lemmatize=lemmatize, feedback=feedback, use_logger=False) for tagger in tagger_objects)
-        group_results = group_task.apply_async(queue=CELERY_SHORT_TERM_TASK_QUEUE)
-        result_tags = group_results.get()
+        with allow_join_result():
+            group_task = group(apply_tagger.s(tagger.pk, content, input_type=input_type, lemmatize=lemmatize, feedback=feedback, use_logger=False) for tagger in tagger_objects)
+            group_results = group_task.apply_async(queue=CELERY_SHORT_TERM_TASK_QUEUE)
+            result_tags = group_results.get()
 
-        logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Group task applied.")
+            logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Group task applied.")
 
     else:
         result_tags = []
         for tagger in tagger_objects:
             result = apply_tagger(tagger.pk, content, input_type=input_type, lemmatize=lemmatize, feedback=feedback, use_logger=False)
             result_tags.append(result)
-
 
     # retrieve results & remove non-hits
     tags = [tag for tag in result_tags if tag]
@@ -433,7 +435,7 @@ def to_texta_fact(tagger_result: List[Dict[str, Union[str, int, bool]]], field: 
                 "fact": fact_name,
                 "str_val": str_val,
                 "doc_path": field,
-                "spans": json.dumps([[0,0]])
+                "spans": json.dumps([[0, 0]])
             }
             new_facts.append(new_fact)
     return new_facts
@@ -441,7 +443,7 @@ def to_texta_fact(tagger_result: List[Dict[str, Union[str, int, bool]]], field: 
 
 def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], fact_name: str, fact_value: str, object_id: int, object_type: str, tagger_object: Union[Tagger, TaggerGroup], object_args: Dict, tagger: TextTagger = None):
     for i, scroll_batch in enumerate(generator):
-        logging.getLogger(INFO_LOGGER).info(f"Appyling {object_type} with ID {object_id} to batch {i+1}...")
+        logging.getLogger(INFO_LOGGER).info(f"Appyling {object_type} with ID {object_id} to batch {i + 1}...")
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
             flat_hit = ec.flatten(hit)
@@ -451,7 +453,7 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
                 text = flat_hit.get(field, None)
                 if text and isinstance(text, str):
                     if object_type == "tagger":
-                        result = apply_loaded_tagger(tagger_object, tagger,  text, input_type="text", feedback=None, use_logger = False)
+                        result = apply_loaded_tagger(tagger_object, tagger, text, input_type="text", feedback=None, use_logger=False)
                         if result:
                             result = [result]
                         else:
@@ -499,11 +501,11 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
         [ec.add_texta_facts_mapping(index) for index in indices]
 
         searcher = ElasticSearcher(
-            indices = indices,
-            field_data = fields + ["texta_facts"],  # Get facts to add upon existing ones.
-            query = query,
-            output = ElasticSearcher.OUT_RAW,
-            timeout = f"{es_timeout}m",
+            indices=indices,
+            field_data=fields + ["texta_facts"],  # Get facts to add upon existing ones.
+            query=query,
+            output=ElasticSearcher.OUT_RAW,
+            timeout=f"{es_timeout}m",
             callback_progress=progress,
         )
 

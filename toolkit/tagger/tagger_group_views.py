@@ -5,8 +5,6 @@ import re
 
 import rest_framework.filters as drf_filters
 from django.db import transaction
-from celery import group, chord
-from celery.result import allow_join_result
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
 from rest_framework import mixins, permissions, status, viewsets
@@ -18,23 +16,14 @@ from toolkit.core.health.utils import get_redis_status
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.query import Query
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, SerializerNotValid
-from toolkit.helper_functions import add_finite_url_to_feedback
-from toolkit.mlp.tasks import apply_mlp_on_list
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE, INFO_LOGGER
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER
 from toolkit.tagger.models import TaggerGroup
-from toolkit.tagger.serializers import (
-    TagRandomDocSerializer,
-    TaggerGroupSerializer,
-    TaggerGroupTagDocumentSerializer,
-    TaggerGroupTagTextSerializer,
-    ApplyTaggerGroupSerializer
-)
-from toolkit.tagger.tasks import apply_tagger, apply_tagger_group, get_tag_candidates, get_mlp, create_tagger_objects, save_tagger_results, start_tagger_task, train_tagger_task, apply_tagger_to_index
+from toolkit.tagger.serializers import (ApplyTaggerGroupSerializer, TagRandomDocSerializer, TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer)
+from toolkit.tagger.tasks import apply_tagger_group, apply_tagger_to_index, create_tagger_objects, get_mlp, get_tag_candidates, save_tagger_results, start_tagger_task, train_tagger_task
 from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import BulkDelete, TagLogicViews
 
@@ -100,6 +89,10 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
         # retrive tagger options from hybrid tagger serializer
         validated_tagger_data = serializer.validated_data.pop('tagger')
+        embedding_model_object = validated_tagger_data.pop('embedding', None)
+        if embedding_model_object:
+            validated_tagger_data["embedding"] = embedding_model_object.pk
+
         validated_tagger_data.update('')
 
         # create tagger group object
@@ -316,7 +309,6 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         return Response(response, status=status.HTTP_200_OK)
 
 
-
     @action(detail=True, methods=['post'], serializer_class=ApplyTaggerGroupSerializer)
     def apply_to_index(self, request, pk=None, project_pk=None):
 
@@ -330,17 +322,15 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
             tagger_group_object.task = Task.objects.create(taggergroup=tagger_group_object, status=Task.STATUS_CREATED)
             tagger_group_object.save()
 
-
             if not get_redis_status()['alive']:
                 raise RedisNotAvailable('Redis not available. Check if Redis is running.')
 
             project = Project.objects.get(pk=project_pk)
             indices = [index["name"] for index in serializer.validated_data["indices"]]
-            #indices = project.get_available_or_all_project_indices(indices)
+            # indices = project.get_available_or_all_project_indices(indices)
 
             if not ElasticCore().check_if_indices_exist(indices):
-                return Response({'error': f'One or more index from {list(hybrid_tagger_object.project.get_indices())} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
-
+                return Response({'error': f'One or more index from {indices} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
             fields = serializer.validated_data["fields"]
             fact_name = serializer.validated_data["new_fact_name"]
@@ -363,7 +353,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
             # fact value is always tagger description when applying the tagger group
             fact_value = ""
 
-            #object_id = tagger_object.pk
+            # object_id = tagger_object.pk
             object_type = "tagger_group"
 
             args = (pk, indices, fields, fact_name, fact_value, query, bulk_size, max_chunk_bytes, es_timeout, object_type, object_args)
