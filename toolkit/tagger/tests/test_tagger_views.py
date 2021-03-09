@@ -7,23 +7,17 @@ from time import sleep
 from typing import List
 
 from django.test import override_settings
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
+from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.tools.core import ElasticCore
-from toolkit.core.task.models import Task
 from toolkit.settings import RELATIVE_MODELS_PATH
 from toolkit.tagger.models import Tagger
-from toolkit.test_settings import (TEST_FIELD,
-                                   TEST_FIELD_CHOICE,
-                                   TEST_INDEX,
-                                   TEST_MATCH_TEXT,
-                                   TEST_QUERY,
-                                   TEST_VERSION_PREFIX,
-                                   TEST_KEEP_PLOT_FILES
-                                   )
+from toolkit.test_settings import (TEST_FIELD, TEST_FIELD_CHOICE, TEST_INDEX, TEST_KEEP_PLOT_FILES, TEST_MATCH_TEXT, TEST_QUERY, TEST_VERSION_PREFIX, VERSION_NAMESPACE)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
@@ -67,6 +61,41 @@ class TaggerViewTests(APITransactionTestCase):
         print_output("reindex test index for applying tagger:response.data:", resp.json())
         self.reindexer_object = Reindexer.objects.get(pk=resp.json()["id"])
 
+
+    def __train_embedding_for_tagger(self) -> int:
+        url = reverse(f"{VERSION_NAMESPACE}:embedding-list", kwargs={"project_pk": self.project.pk})
+        payload = {
+            "description": "TestEmbedding",
+            "fields": [TEST_FIELD],
+            "max_vocab": 10000,
+            "min_freq": 5,
+            "num_dimensions": 100
+        }
+        response = self.client.post(url, data=payload, format="json")
+        self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+        print_output("__train_embedding_for_tagger:response.data", response.data)
+        return response.data["id"]
+
+
+    def test_training_tagger_with_embedding(self):
+        url = reverse(f"{VERSION_NAMESPACE}:tagger-list", kwargs={"project_pk": self.project.pk})
+        embedding_id = self.__train_embedding_for_tagger()
+        payload = {
+            "description": "TestTagger",
+            "query": json.dumps(TEST_QUERY),
+            "fields": [TEST_FIELD],
+            "vectorizer": "TfIdf Vectorizer",
+            "classifier": "LinearSVC",
+            "maximum_sample_size": 500,
+            "negative_multiplier": 1.0,
+            "score_threshold": 0.1,
+            "embedding": embedding_id
+        }
+        response = self.client.post(url, data=payload, format="json")
+        self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+        print_output("test_training_tagger_with_embedding:response.data", response.data)
+        self.run_tag_text([response.data["id"]])
+        self.add_cleanup_files(response.data["id"])
 
 
     def test_run(self):
@@ -228,6 +257,7 @@ class TaggerViewTests(APITransactionTestCase):
             put_response = self.client.put(tagger_url, payload, format='json')
             print_output("put_response", put_response.data)
             self.assertEqual(put_response.status_code, status.HTTP_200_OK)
+
 
     def run_tag_text(self, test_tagger_ids: List[int]):
         """Tests the endpoint for the tag_text action"""
