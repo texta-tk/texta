@@ -92,7 +92,7 @@ def import_docs(params):
             es.indices.delete(index=index, ignore=[400, 404])
             es.indices.create(index=index, body={'mappings': FACT_MAPPING})
             print(f"Created index {index} with fact mappings.")
-            print(f"Line-per-line data insertion into ES {ES_URL}, this might take a moment...")
+            print("Line-per-line data insertion, this might take a moment...")
             for line in lines:
                 line = line.strip()
                 if line:

@@ -23,7 +23,8 @@ from toolkit.test_settings import (TEST_FIELD,
                                    TEST_INDEX,
                                    TEST_QUERY,
                                    TEST_VERSION_PREFIX,
-                                   TEST_KEEP_PLOT_FILES
+                                   TEST_KEEP_PLOT_FILES,
+                                   TEST_TAGGER_MULTICLASS
                                    )
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
@@ -60,12 +61,25 @@ class TaggerViewTests(APITransactionTestCase):
         self.reindex_payload = {
             "description": "test index for applying multiclass taggers",
             "indices": [TEST_INDEX],
+            "query": json.dumps(TEST_QUERY),
             "new_index": self.test_index_copy,
             "fields": [TEST_FIELD]
         }
         resp = self.client.post(self.reindex_url, self.reindex_payload, format='json')
         print_output("reindex test index for applying multiclass tagger:response.data:", resp.json())
         self.reindexer_object = Reindexer.objects.get(pk=resp.json()["id"])
+
+        self.test_imported_multiclass_tagger_id = self.import_test_model(TEST_TAGGER_MULTICLASS)
+
+
+    def import_test_model(self, file_path: str):
+        """Import models for testing."""
+        print_output("Importing model from file:", file_path)
+        files = {"file": open(file_path, "rb")}
+        import_url = f'{self.url}import_model/'
+        resp = self.client.post(import_url, data={'file': open(file_path, "rb")}).json()
+        print_output("Importing test model:", resp)
+        return resp["id"]
 
 
     def test_run(self):
@@ -147,7 +161,7 @@ class TaggerViewTests(APITransactionTestCase):
             print_output('test_apply_multiclass_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
             sleep(2)
 
-        test_tagger_id = self.test_tagger_ids[0]
+        test_tagger_id = self.test_imported_multiclass_tagger_id
         url = f'{self.url}{test_tagger_id}/apply_to_index/'
 
         payload = {
@@ -155,9 +169,7 @@ class TaggerViewTests(APITransactionTestCase):
             "new_fact_name": self.new_fact_name,
             "indices": [{"name": self.test_index_copy}],
             "fields": TEST_FIELD_CHOICE,
-            "query": json.dumps(TEST_QUERY),
-            "lemmatize": False,
-            "bulk_size": 100
+            "lemmatize": False
         }
         response = self.client.post(url, payload, format='json')
         print_output('test_apply_multiclass_tagger_to_index:response.data', response.data)
@@ -173,9 +185,21 @@ class TaggerViewTests(APITransactionTestCase):
         print_output("test_apply_multiclass_tagger_to_index:elastic aggerator results:", results)
 
         # Check if applying the tagger results in at least 1 new fact
-        # Exact numbers cannot be checked as creating taggers contains random and thus
-        # predicting with them isn't entirely deterministic
         self.assertTrue(len(results) >= 1)
+
+        fact_value_1 = "bar"
+        fact_value_2 = "foo"
+
+        n_fact_value_1 = 18
+        n_fact_value_2 = 12
+
+        # Check if expected number of new facts is added to the index
+        self.assertTrue(fact_value_1 in results)
+        self.assertTrue(fact_value_2 in results)
+        self.assertTrue(results[fact_value_1] == n_fact_value_1)
+        self.assertTrue(results[fact_value_2] == n_fact_value_2)
+
+        self.add_cleanup_files(test_tagger_id)
 
 
     def run_apply_mutliclass_tagger_to_index_invalid_input(self):

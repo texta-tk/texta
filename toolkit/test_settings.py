@@ -1,8 +1,9 @@
 """Settings for unit tests"""
 import os
 
-from .settings import TEST_DATA_DIR
+from .settings import TEST_DATA_DIR as TEST_DATA_DIR_ROOT
 
+TEST_DATA_DIR = os.path.join(TEST_DATA_DIR_ROOT, "import_test_data")
 
 TEST_INDEX = "texta_test_index"
 TEST_DOCTYPE = "texta_test_index"
@@ -41,8 +42,27 @@ TEST_VERSION_PREFIX = f"/api/{VERSION_NAMESPACE}"
 TEST_UAA_USERNAME = 'test1'
 TEST_UAA_PASSWORD = 'test1'
 
-TEST_IMAGE_FILE_1 = os.path.join(TEST_DATA_DIR, "import_test_data", "photos", "test_image_1.jpg")
-TEST_IMAGE_FILE_2 = os.path.join(TEST_DATA_DIR, "import_test_data", "photos", "test_image_2.jpg")
+TEST_IMAGE_FILE_1 = os.path.join(TEST_DATA_DIR, "photos", "test_image_1.jpg")
+TEST_IMAGE_FILE_2 = os.path.join(TEST_DATA_DIR, "photos", "test_image_2.jpg")
+
+# Test BERT models trained on GPU
+TEST_BERT_TAGGER_BINARY_GPU = os.path.join(TEST_DATA_DIR, "models", "bert_tagger", "gpu", "berttagger_model_41.zip")
+TEST_BERT_TAGGER_MULTICLASS_GPU = os.path.join(TEST_DATA_DIR, "models", "bert_tagger", "gpu", "berttagger_model_42.zip")
+
+# Test BERT model trained on CPU
+TEST_BERT_TAGGER_BINARY_CPU = os.path.join(TEST_DATA_DIR, "models", "bert_tagger", "cpu", "berttagger_model_1.zip")
+
+# Test Torch models trained on GPU
+TEST_TORCH_TAGGER_BINARY_GPU = os.path.join(TEST_DATA_DIR, "models", "torch_tagger", "gpu", "torchtagger_model_12.zip")
+TEST_TORCH_TAGGER_MULTICLASS_GPU = os.path.join(TEST_DATA_DIR, "models", "torch_tagger", "gpu", "torchtagger_model_13.zip")
+
+# Test Torch model trained on CPU
+TEST_TORCH_TAGGER_BINARY_CPU = os.path.join(TEST_DATA_DIR, "models", "torch_tagger", "cpu", "torchtagger_model_1.zip")
+
+TEST_TAGGER_BINARY = os.path.join(TEST_DATA_DIR, "models", "tagger", "tagger_model_35.zip")
+TEST_TAGGER_MULTICLASS = os.path.join(TEST_DATA_DIR, "models", "tagger", "tagger_model_36.zip")
+
+TEST_TAGGER_GROUP = os.path.join(TEST_DATA_DIR, "models", "tagger_group", "tagger_group_5.zip")
 
 # The port for APILiveServerTestCase
 # Made this env-readable to make it easier to run tests in a Docker build.

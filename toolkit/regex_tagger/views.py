@@ -289,13 +289,14 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
             query = serializer.validated_data["query"]
             bulk_size = serializer.validated_data["bulk_size"]
             max_chunk_bytes = serializer.validated_data["max_chunk_bytes"]
+            es_timeout = serializer.validated_data["es_timeout"]
 
             fact_name = serializer.validated_data["new_fact_name"]
             fact_value = serializer.validated_data["new_fact_value"]
 
             add_spans = serializer.validated_data["add_spans"]
 
-            args = (pk, "regex_tagger", indices, fields, query, bulk_size, max_chunk_bytes, fact_name, fact_value, add_spans)
+            args = (pk, "regex_tagger", indices, fields, query, es_timeout, bulk_size, max_chunk_bytes, fact_name, fact_value, add_spans)
             transaction.on_commit(lambda: apply_regex_tagger.apply_async(args=args, queue=CELERY_LONG_TERM_TASK_QUEUE))
 
             message = "Started process of applying RegexTagger with id: {}".format(tagger_object.id)
@@ -440,8 +441,9 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
             query = serializer.validated_data["query"]
             bulk_size = serializer.validated_data["bulk_size"]
             max_chunk_bytes = serializer.validated_data["max_chunk_bytes"]
+            es_timeout = serializer.validated_data["es_timeout"]
 
-            args = (pk, "regex_tagger_group", indices, fields, query, bulk_size, max_chunk_bytes)
+            args = (pk, "regex_tagger_group", indices, fields, query, es_timeout, bulk_size, max_chunk_bytes)
             transaction.on_commit(lambda: apply_regex_tagger.apply_async(args=args, queue=CELERY_LONG_TERM_TASK_QUEUE))
 
             message = "Started process of applying RegexTaggerGroup with id: {}".format(tagger_object.id)
