@@ -5,7 +5,6 @@ from rest_framework import serializers
 from texta_mlp.mlp import SUPPORTED_ANALYZERS
 
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.mlp.models import MLPWorker
 from toolkit.settings import REST_FRAMEWORK
@@ -34,7 +33,7 @@ class MLPWorkerSerializer(serializers.ModelSerializer):
     description = serializers.CharField()
     task = TaskSerializer(read_only=True, required=False)
     url = serializers.SerializerMethodField()
-    query = serializers.JSONField(help_text='Query in JSON format', required=False, default=EMPTY_QUERY)
+    query = serializers.JSONField(help_text='Query in JSON format', required=False)
     fields = serializers.ListField(required=True)
     analyzers = serializers.MultipleChoiceField(
         choices=list(SUPPORTED_ANALYZERS),
