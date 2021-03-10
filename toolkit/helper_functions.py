@@ -113,11 +113,11 @@ def download_mlp_requirements(model_directory: str, supported_langs: List[str], 
     MLP.download_concatenator_resources(model_directory, logger=logger)
 
 
-def download_bert_requirements(model_directory: str, supported_models: List[str], cache_directory: str, logger=None):
+def download_bert_requirements(model_directory: str, supported_models: List[str], cache_directory: str, logger=None, num_labels: int = None):
     """ Download pretrained BERT models & tokenizers.
     """
     from texta_bert_tagger.tagger import BertTagger
-    errors, failed_models = BertTagger.download_pretrained_models(bert_models=supported_models, save_dir=model_directory, cache_dir=cache_directory, logger=logger)
+    errors, failed_models = BertTagger.download_pretrained_models(bert_models=supported_models, save_dir=model_directory, cache_dir=cache_directory, logger=logger, num_labels=num_labels)
     return (errors, failed_models)
 
 

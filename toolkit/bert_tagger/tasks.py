@@ -56,7 +56,6 @@ def train_bert_tagger(tagger_id, testing=False):
         else:
             sklearn_avg_function = choices.DEFAULT_SKLEARN_AVG_MULTICLASS
 
-
         # NB! saving pretrained models must be disabled!
         tagger = BertTagger(
             allow_standard_output = choices.DEFAULT_ALLOW_STANDARD_OUTPUT,
@@ -64,10 +63,16 @@ def train_bert_tagger(tagger_id, testing=False):
             sklearn_avg_function = sklearn_avg_function,
             use_gpu = choices.DEFAULT_USE_GPU,
             save_pretrained = False,
-            pretrained_models_dir = "",
+            pretrained_models_dir = BERT_PRETRAINED_MODEL_DIRECTORY,
             logger = logging.getLogger(INFO_LOGGER),
             cache_dir = BERT_CACHE_DIR
         )
+
+        # use state dict for binary taggers
+        if data_sample.is_binary:
+            tagger.config.use_state_dict = True
+        else:
+            tagger.config.use_state_dict = False
 
         # train tagger and get result statistics
         report = tagger.train(
@@ -128,11 +133,18 @@ def load_tagger(tagger_object: BertTaggerObject) -> BertTagger:
     tagger = BertTagger(
         allow_standard_output = choices.DEFAULT_ALLOW_STANDARD_OUTPUT,
         save_pretrained = False,
+        pretrained_models_dir = BERT_PRETRAINED_MODEL_DIRECTORY,
         use_gpu = choices.DEFAULT_USE_GPU,
         logger = logging.getLogger(INFO_LOGGER),
         cache_dir = BERT_CACHE_DIR
     )
     tagger.load(tagger_object.model.path)
+
+    # use state dict for binary taggers
+    if tagger.config.n_classes == 2:
+        tagger.config.use_state_dict = True
+    else:
+        tagger.config.use_state_dict = False
     return tagger
 
 

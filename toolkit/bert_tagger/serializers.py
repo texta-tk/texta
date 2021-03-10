@@ -17,9 +17,9 @@ class ApplyTaggerSerializer(FieldParseSerializer, serializers.Serializer):
     indices = IndexSerializer(many=True, default=[], help_text="Which indices in the project to apply this to.")
     fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
     query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)
-    es_timeout = serializers.IntegerField(default=10, help_text="Elasticsearch scroll timeout in minutes. Default = 10.")
-    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=1, help_text="How many documents should be sent towards Elasticsearch at once.")
-    max_chunk_bytes = serializers.IntegerField(min_value=1, default=104857600, help_text="Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors.")
+    es_timeout = serializers.IntegerField(default=choices.DEFAULT_ES_TIMEOUT, help_text=f"Elasticsearch scroll timeout in minutes. Default = {choices.DEFAULT_ES_TIMEOUT}.")
+    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=choices.DEFAULT_BULK_SIZE, help_text=f"How many documents should be sent towards Elasticsearch at once. Default = {choices.DEFAULT_BULK_SIZE}.")
+    max_chunk_bytes = serializers.IntegerField(min_value=1, default=choices.DEFAULT_MAX_CHUNK_BYTES, help_text=f"Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors. Default = {choices.DEFAULT_MAX_CHUNK_BYTES}.")
 
 
 class BertDownloaderSerializer(serializers.Serializer):

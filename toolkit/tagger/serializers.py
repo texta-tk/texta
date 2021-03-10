@@ -6,24 +6,13 @@ from django.core.exceptions import ObjectDoesNotExist
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
-from toolkit.tagger.choices import (
-    DEFAULT_MAX_SAMPLE_SIZE,
-    DEFAULT_MIN_SAMPLE_SIZE,
-    DEFAULT_NEGATIVE_MULTIPLIER,
-    DEFAULT_NUM_CANDIDATES,
-    DEFAULT_NUM_DOCUMENTS,
-    DEFAULT_SCORE_THRESHOLD,
-    DEFAULT_TAGGER_GROUP_FACT_NAME,
-    DEFAULT_SCORING_OPTIONS,
-    DEFAULT_SCORING_FUNCTION,
-    get_classifier_choices,
-    get_vectorizer_choices,
-    )
+from toolkit.tagger import choices
 from toolkit.elastic.choices import get_snowball_choices
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.tagger.models import Tagger, TaggerGroup
 
 
+# NB! Currently not used
 class ApplyTaggersSerializer(FieldParseSerializer, serializers.Serializer):
     author_username = serializers.CharField(source='author.username', read_only=True)
     description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
@@ -32,9 +21,9 @@ class ApplyTaggersSerializer(FieldParseSerializer, serializers.Serializer):
     fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
     query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)
     lemmatize = serializers.BooleanField(default=False, help_text='Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
-    es_timeout = serializers.IntegerField(default=10, help_text="Elasticsearch scroll timeout in minutes. Default = 10.")
-    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=1, help_text="How many documents should be sent towards Elasticsearch at once.")
-    max_chunk_bytes = serializers.IntegerField(min_value=1, default=104857600, help_text="Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors.")
+    es_timeout = serializers.IntegerField(default=choices.DEFAULT_ES_TIMEOUT, help_text="Elasticsearch scroll timeout in minutes. Default:10.")
+    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=choices.DEFAULT_BULK_SIZE, help_text="How many documents should be sent towards Elasticsearch at once.")
+    max_chunk_bytes = serializers.IntegerField(min_value=1, default=choices.DEFAULT_MAX_CHUNK_BYTES, help_text="Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors.")
     #num_tags = serializers.IntegerField(read_only=True)
     taggers = serializers.ListField(
         help_text='List of Tagger IDs to be used.',
@@ -61,9 +50,9 @@ class ApplyTaggerSerializer(FieldParseSerializer, serializers.Serializer):
     fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
     query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)
     lemmatize = serializers.BooleanField(default=False, help_text='Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
-    es_timeout = serializers.IntegerField(default=10, help_text="Elasticsearch scroll timeout in minutes. Default = 10.")
-    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=1, help_text="How many documents should be sent towards Elasticsearch at once.")
-    max_chunk_bytes = serializers.IntegerField(min_value=1, default=104857600, help_text="Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors.")
+    es_timeout = serializers.IntegerField(default=choices.DEFAULT_ES_TIMEOUT, help_text=f"Elasticsearch scroll timeout in minutes. Default:{choices.DEFAULT_ES_TIMEOUT}.")
+    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=choices.DEFAULT_BULK_SIZE, help_text=f"How many documents should be sent towards Elasticsearch at once. Default:{choices.DEFAULT_BULK_SIZE}.")
+    max_chunk_bytes = serializers.IntegerField(min_value=1, default=choices.DEFAULT_MAX_CHUNK_BYTES, help_text=f"Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors. Default:{choices.DEFAULT_MAX_CHUNK_BYTES}.")
 
 
 class ApplyTaggerGroupSerializer(FieldParseSerializer, serializers.Serializer):
@@ -72,13 +61,13 @@ class ApplyTaggerGroupSerializer(FieldParseSerializer, serializers.Serializer):
     indices = IndexSerializer(many=True, default=[], help_text="Which indices in the project to apply this to.")
     fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
     query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)
-    lemmatize = serializers.BooleanField(default=False, help_text='Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
-    es_timeout = serializers.IntegerField(default=10, help_text="Elasticsearch scroll timeout in minutes. Default = 10.")
-    use_ner = serializers.BooleanField(default=False, help_text=f'Use MLP Named Entity Recognition to detect tag candidates. Default: False')
-    n_similar_docs = serializers.IntegerField(default=DEFAULT_NUM_DOCUMENTS, help_text=f'Number of documents used in unsupervised prefiltering. Default: {DEFAULT_NUM_DOCUMENTS}')
-    n_candidate_tags = serializers.IntegerField(default=DEFAULT_NUM_CANDIDATES, help_text=f'Number of tag candidates retrieved from unsupervised prefiltering. Default: {DEFAULT_NUM_CANDIDATES}')
-    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=1, help_text="How many documents should be sent towards Elasticsearch at once.")
-    max_chunk_bytes = serializers.IntegerField(min_value=1, default=104857600, help_text="Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors.")
+    lemmatize = serializers.BooleanField(default=False, help_text='Use MLP lemmatizer if available. Use only if training data was lemmatized. Default:False')
+    use_ner = serializers.BooleanField(default=False, help_text=f'Use MLP Named Entity Recognition to detect tag candidates. Default:False')
+    n_similar_docs = serializers.IntegerField(default=choices.DEFAULT_NUM_DOCUMENTS, help_text=f'Number of documents used in unsupervised prefiltering. Default:{choices.DEFAULT_NUM_DOCUMENTS}')
+    n_candidate_tags = serializers.IntegerField(default=choices.DEFAULT_NUM_CANDIDATES, help_text=f'Number of tag candidates retrieved from unsupervised prefiltering. Default:{choices.DEFAULT_NUM_CANDIDATES}')
+    es_timeout = serializers.IntegerField(default=choices.DEFAULT_ES_TIMEOUT, help_text=f"Elasticsearch scroll timeout in minutes. Default:{choices.DEFAULT_ES_TIMEOUT}.")
+    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=choices.DEFAULT_BULK_SIZE, help_text=f"How many documents should be sent towards Elasticsearch at once. Default:{choices.DEFAULT_BULK_SIZE}.")
+    max_chunk_bytes = serializers.IntegerField(min_value=1, default=choices.DEFAULT_MAX_CHUNK_BYTES, help_text=f"Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors. Default:{choices.DEFAULT_MAX_CHUNK_BYTES}.")
 
 
 class TagRandomDocSerializer(serializers.Serializer):
@@ -117,8 +106,8 @@ class TaggerGroupTagTextSerializer(serializers.Serializer):
     text = serializers.CharField(help_text=f'Raw text input.')
     lemmatize = serializers.BooleanField(default=False, help_text=f'Use MLP lemmatizer to lemmatize input text. Use only if training data was lemmatized. Default: False')
     use_ner = serializers.BooleanField(default=False, help_text=f'Use MLP Named Entity Recognition to detect tag candidates. Default: False')
-    n_similar_docs = serializers.IntegerField(default=DEFAULT_NUM_DOCUMENTS, help_text=f'Number of documents used in unsupervised prefiltering. Default: {DEFAULT_NUM_DOCUMENTS}')
-    n_candidate_tags = serializers.IntegerField(default=DEFAULT_NUM_CANDIDATES, help_text=f'Number of tag candidates retrieved from unsupervised prefiltering. Default: {DEFAULT_NUM_CANDIDATES}')
+    n_similar_docs = serializers.IntegerField(default=choices.DEFAULT_NUM_DOCUMENTS, help_text=f'Number of documents used in unsupervised prefiltering. Default: {choices.DEFAULT_NUM_DOCUMENTS}')
+    n_candidate_tags = serializers.IntegerField(default=choices.DEFAULT_NUM_CANDIDATES, help_text=f'Number of tag candidates retrieved from unsupervised prefiltering. Default: {choices.DEFAULT_NUM_CANDIDATES}')
     feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 
@@ -126,8 +115,8 @@ class TaggerGroupTagDocumentSerializer(serializers.Serializer):
     doc = serializers.JSONField(help_text=f'Document in JSON format.')
     lemmatize = serializers.BooleanField(default=False, help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
     use_ner = serializers.BooleanField(default=False, help_text=f'Use MLP Named Entity Recognition to detect tag candidates. Default: False')
-    n_similar_docs = serializers.IntegerField(default=DEFAULT_NUM_DOCUMENTS, help_text=f'Number of documents used in unsupervised prefiltering. Default: {DEFAULT_NUM_DOCUMENTS}')
-    n_candidate_tags = serializers.IntegerField(default=DEFAULT_NUM_CANDIDATES, help_text=f'Number of tag candidates retrieved from unsupervised prefiltering. Default: {DEFAULT_NUM_CANDIDATES}')
+    n_similar_docs = serializers.IntegerField(default=choices.DEFAULT_NUM_DOCUMENTS, help_text=f'Number of documents used in unsupervised prefiltering. Default: {choices.DEFAULT_NUM_DOCUMENTS}')
+    n_candidate_tags = serializers.IntegerField(default=choices.DEFAULT_NUM_CANDIDATES, help_text=f'Number of tag candidates retrieved from unsupervised prefiltering. Default: {choices.DEFAULT_NUM_CANDIDATES}')
     feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 
@@ -136,13 +125,13 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     description = serializers.CharField(help_text=f'Description for the Tagger. Will be used as tag.')
     indices = IndexSerializer(many=True, default=[])
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
-    vectorizer = serializers.ChoiceField(choices=get_vectorizer_choices(), default=get_vectorizer_choices()[0][0], help_text=f'Vectorizer algorithm to create document vectors. NB! HashingVectorizer does not support feature name extraction!')
-    classifier = serializers.ChoiceField(choices=get_classifier_choices(), default=get_classifier_choices()[0][0], help_text=f'Classification algorithm used in the model.')
-    negative_multiplier = serializers.IntegerField(default=DEFAULT_NEGATIVE_MULTIPLIER, help_text=f'Multiplies the size of positive samples to determine negative example set size. Default: {DEFAULT_NEGATIVE_MULTIPLIER}')
-    maximum_sample_size = serializers.IntegerField(default=DEFAULT_MAX_SAMPLE_SIZE, help_text=f'Maximum number of documents used to build a model. Default: {DEFAULT_MAX_SAMPLE_SIZE}')
-    score_threshold = serializers.FloatField(default=DEFAULT_SCORE_THRESHOLD, help_text=f'Elasticsearch score threshold for filtering out irrelevant examples. All examples below first document\'s score * score threshold are ignored. Float between 0 and 1. Default: {DEFAULT_SCORE_THRESHOLD}')
-    snowball_language = serializers.ChoiceField(choices=get_snowball_choices(), default=get_snowball_choices()[0][0], help_text='Uses Snowball stemmer with specified language to normalize the texts. Default: None')
-    scoring_function = serializers.ChoiceField(choices=DEFAULT_SCORING_OPTIONS, default=DEFAULT_SCORING_FUNCTION, required=False, help_text=f'Scoring function used while evaluating the results on dev set.')
+    vectorizer = serializers.ChoiceField(choices=choices.get_vectorizer_choices(), default=choices.DEFAULT_VECTORIZER, help_text=f'Vectorizer algorithm to create document vectors. NB! HashingVectorizer does not support feature name extraction!')
+    classifier = serializers.ChoiceField(choices=choices.get_classifier_choices(), default=choices.DEFAULT_CLASSIFIER, help_text=f'Classification algorithm used in the model.')
+    negative_multiplier = serializers.IntegerField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER, help_text=f'Multiplies the size of positive samples to determine negative example set size. Default: {choices.DEFAULT_NEGATIVE_MULTIPLIER}')
+    maximum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, help_text=f'Maximum number of documents used to build a model. Default: {choices.DEFAULT_MAX_SAMPLE_SIZE}')
+    score_threshold = serializers.FloatField(default=choices.DEFAULT_SCORE_THRESHOLD, help_text=f'Elasticsearch score threshold for filtering out irrelevant examples. All examples below first document\'s score * score threshold are ignored. Float between 0 and 1. Default: {choices.DEFAULT_SCORE_THRESHOLD}')
+    snowball_language = serializers.ChoiceField(choices=get_snowball_choices(), default=choices.DEFAULT_SNOWBALL_LANGUAGE, help_text=f'Uses Snowball stemmer with specified language to normalize the texts. Default: {choices.DEFAULT_SNOWBALL_LANGUAGE}')
+    scoring_function = serializers.ChoiceField(choices=choices.DEFAULT_SCORING_OPTIONS, default=choices.DEFAULT_SCORING_FUNCTION, required=False, help_text=f'Scoring function used while evaluating the results on dev set. Default: {choices.DEFAULT_SCORING_FUNCTION}')
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
@@ -183,8 +172,8 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
 class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True)
     description = serializers.CharField(help_text=f'Description for the Tagger Group.')
-    minimum_sample_size = serializers.IntegerField(default=DEFAULT_MIN_SAMPLE_SIZE, help_text=f'Minimum number of documents required to train a model. Default: {DEFAULT_MIN_SAMPLE_SIZE}')
-    fact_name = serializers.CharField(default=DEFAULT_TAGGER_GROUP_FACT_NAME, help_text=f'Fact name used to filter tags (fact values). Default: {DEFAULT_TAGGER_GROUP_FACT_NAME}')
+    minimum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, help_text=f'Minimum number of documents required to train a model. Default: {choices.DEFAULT_MIN_SAMPLE_SIZE}')
+    fact_name = serializers.CharField(default=choices.DEFAULT_TAGGER_GROUP_FACT_NAME, help_text=f'Fact name used to filter tags (fact values). Default: {choices.DEFAULT_TAGGER_GROUP_FACT_NAME}')
     tagger = TaggerSerializer(write_only=True, remove_fields=['description', 'query', 'fact_name'])
     num_tags = serializers.IntegerField(read_only=True)
     tagger_status = serializers.SerializerMethodField()
