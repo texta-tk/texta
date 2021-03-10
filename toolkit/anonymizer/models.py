@@ -9,6 +9,7 @@ from django.core import serializers
 from toolkit.core.project.models import Project
 from toolkit.constants import MAX_DESC_LEN
 
+from toolkit.anonymizer import choices
 
 class Anonymizer(models.Model):
     MODEL_TYPE = "anonymizer"
@@ -18,12 +19,12 @@ class Anonymizer(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
 
-    replace_misspelled_names = models.BooleanField(default=True)
-    replace_single_last_names = models.BooleanField(default=True)
-    replace_single_first_names = models.BooleanField(default=True)
-    misspelling_threshold = models.FloatField(default=0.9)
-    mimic_casing = models.BooleanField(default=True)
-    auto_adjust_threshold = models.BooleanField(default=False)
+    replace_misspelled_names = models.BooleanField(default=choices.DEFAULT_REPLACE_MISSPELLED_NAMES)
+    replace_single_last_names = models.BooleanField(default=choices.DEFAULT_REPLACE_SINGLE_LAST_NAMES)
+    replace_single_first_names = models.BooleanField(default=choices.DEFAULT_REPLACE_SINGLE_FIRST_NAMES)
+    misspelling_threshold = models.FloatField(default=choices.DEFAULT_MISSPELLING_THRESHOLD)
+    mimic_casing = models.BooleanField(default=choices.DEFAULT_MIMIC_CASING)
+    auto_adjust_threshold = models.BooleanField(default=choices.DEFAULT_AUTO_ADJUST)
 
     def __str__(self):
         return self.description
