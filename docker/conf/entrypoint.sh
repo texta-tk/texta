@@ -29,5 +29,6 @@ source activate texta-rest && \
 # OWNERSHIP TO WWW-DATA
 chown www-data:www-data -R /var/texta-rest/static/ && chmod 777 -R /var/texta-rest/static/
 chown www-data:www-data -R /var/texta-rest/data/ && chmod 777 -R /var/texta-rest/data/
+chown www-data:www-data -R /var/texta-rest/data_external/ && chmod 777 -R /var/texta-rest/data_external/
 
 exec "$@"
