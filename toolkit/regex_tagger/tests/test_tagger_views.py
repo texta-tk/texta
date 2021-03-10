@@ -14,7 +14,14 @@ from toolkit.elastic.tools.core import ElasticCore
 from toolkit.core.task.models import Task
 from toolkit.regex_tagger.models import RegexTagger
 
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_INTEGER_FIELD, TEST_VERSION_PREFIX, VERSION_NAMESPACE
+from toolkit.test_settings import (
+    TEST_FIELD,
+    TEST_INDEX,
+    TEST_INTEGER_FIELD,
+    TEST_VERSION_PREFIX,
+    VERSION_NAMESPACE,
+    TEST_QUERY
+)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
@@ -54,6 +61,7 @@ class RegexTaggerViewTests(APITransactionTestCase):
         self.reindex_payload = {
             "description": "test index for applying taggers",
             "indices": [TEST_INDEX],
+            "query": json.dumps(TEST_QUERY),
             "new_index": self.test_index_copy,
             "fields": [TEST_FIELD]
         }
@@ -350,7 +358,8 @@ class RegexTaggerViewTests(APITransactionTestCase):
 
         tagger_payload = {
             "description": "LOLL",
-            "lexicon": ["loll"]
+            "lexicon": ["loll"],
+            "counter_lexicon": ["päris"]
         }
 
         response = self.client.post(self.url, tagger_payload)
@@ -363,8 +372,7 @@ class RegexTaggerViewTests(APITransactionTestCase):
         payload = {
             "description": "apply tagger test task",
             "indices": [{"name": self.test_index_copy}],
-            "fields": [TEST_FIELD],
-            "bulk_size": 50
+            "fields": [TEST_FIELD]
         }
         response = self.client.post(url, payload, format='json')
         print_output('[Regex Tagger] test_apply_tagger_to_index:response.data', response.data)
@@ -380,5 +388,13 @@ class RegexTaggerViewTests(APITransactionTestCase):
         results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution("LOLL")
         print_output("[Regex Tagger] test_apply_tagger_to_index:elastic aggerator results:", results)
 
-        # Applying the tagger should add 197 new facts (with the same amount of values)
-        self.assertEqual(len(results), 8)
+        # Check if expected number if new facts is added
+        fact_value_1 = "loll"
+        fact_value_2 = "lollikindel"
+        n_fact_value_1 = 28
+        n_fact_value_2 = 1
+
+        self.assertTrue(fact_value_1 in results)
+        self.assertTrue(fact_value_2 in results)
+        self.assertTrue(results[fact_value_1] == n_fact_value_1)
+        self.assertTrue(results[fact_value_2] == n_fact_value_2)

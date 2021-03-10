@@ -1,42 +1,36 @@
 from rest_framework import serializers
-from texta_lexicon_matcher.lexicon_matcher import SUPPORTED_MATCH_TYPES, SUPPORTED_OPERATORS
+
 
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
-from .models import RegexTagger, RegexTaggerGroup
-from .validators import validate_patterns
-from ..core.task.serializers import TaskSerializer
-from ..elastic.tools.searcher import EMPTY_QUERY
+from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup
+from toolkit.regex_tagger.validators import validate_patterns
+from toolkit.regex_tagger import choices
+from toolkit.core.task.serializers import TaskSerializer
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.elastic.index.serializers import IndexSerializer
 
 
-PRIORITY_CHOICES = (
-    ("first_span", "first_span"),
-    ("last_span", "last_span"),
-)
-
-MATCH_TYPE_CHOICES = [(match_type, match_type) for match_type in SUPPORTED_MATCH_TYPES]
-OPERATOR_CHOICES = [(operator, operator) for operator in SUPPORTED_OPERATORS]
 
 
 class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer):
     description = serializers.CharField()
     author_username = serializers.CharField(source='author.username', read_only=True)
     lexicon = serializers.ListField(child=serializers.CharField(required=True), validators=[validate_patterns], help_text="Words/phrases/regex patterns to match.")
-    counter_lexicon = serializers.ListField(child=serializers.CharField(required=False), default=[], validators=[validate_patterns], help_text="Words/phrases/regex patterns to nullify lexicon matches. Default=[]")
+    counter_lexicon = serializers.ListField(child=serializers.CharField(required=False), default=[], validators=[validate_patterns], help_text="Words/phrases/regex patterns to nullify lexicon matches. Default = [].")
 
-    operator = serializers.ChoiceField(default=SUPPORTED_OPERATORS[0], choices=OPERATOR_CHOICES, required=False, help_text="Logical operation between lexicon entries. Choices = ['and', 'or']. Default='or'")
-    match_type = serializers.ChoiceField(default=SUPPORTED_MATCH_TYPES[0], choices=MATCH_TYPE_CHOICES, required=False, help_text="How to match lexicon entries to text. Choices = ['prefix', 'exact', 'subword']. Default='prefix'")
-    required_words = serializers.FloatField(default=1.0, required=False, help_text="Required ratio of lexicon entries matched in text for returning a positive result. NB! Only takes effect if operator=='and'. Default=1.0")
-    phrase_slop = serializers.IntegerField(default=0, required=False, help_text="Number of non-lexicon words allowed between the words of one lexicon entry. Default=0")
-    counter_slop = serializers.IntegerField(default=0, required=False, help_text="Number of words allowed between lexicon entries and counter lexicon entries for the latter to have effect. Default=0")
-    n_allowed_edits = serializers.IntegerField(default=0, required=False, help_text="Number of allowed character changes between lexicon entries and candidate matches in text. Default=0.")
-    return_fuzzy_match = serializers.BooleanField(default=True, required=False, help_text="Return fuzzy match (opposed to exact lexicon entry)? Default=True")
-    ignore_case = serializers.BooleanField(default=True, required=False, help_text="Ignore case while matching? Default=True")
-    ignore_punctuation = serializers.BooleanField(default=True, required=False, help_text="If set False, end-of-sentence characters between lexicon entry words and/or counter lexicon entries, nullify the effect. Default=True")
+    operator = serializers.ChoiceField(default=choices.DEFAULT_OPERATOR, choices=choices.OPERATOR_CHOICES, required=False, help_text=f"Logical operation between lexicon entries. Choices =  {choices.OPERATOR_CHOICES}. Default = {choices.DEFAULT_OPERATOR}.")
+    match_type = serializers.ChoiceField(default=choices.DEFAULT_MATCH_TYPE, choices=choices.MATCH_TYPE_CHOICES, required=False, help_text=f"How to match lexicon entries to text. Choices = {choices.SUPPORTED_MATCH_TYPES}. Default= {choices.DEFAULT_MATCH_TYPE}.")
+    required_words = serializers.FloatField(default=choices.DEFAULT_REQUIRED_WORDS, required=False, help_text=f"Required ratio of lexicon entries matched in text for returning a positive result. NB! Only takes effect if operator=='and'. Default = {choices.DEFAULT_REQUIRED_WORDS}.")
+    phrase_slop = serializers.IntegerField(default=choices.DEFAULT_PHRASE_SLOP, required=False, help_text=f"Number of non-lexicon words allowed between the words of one lexicon entry. Default = {choices.DEFAULT_PHRASE_SLOP}.")
+    counter_slop = serializers.IntegerField(default=choices.DEFAULT_COUNTER_SLOP, required=False, help_text=f"Number of words allowed between lexicon entries and counter lexicon entries for the latter to have effect. Default = {choices.DEFAULT_COUNTER_SLOP}")
+    n_allowed_edits = serializers.IntegerField(default=choices.DEFAULT_N_ALLOWED_EDITS, required=False, help_text=f"Number of allowed character changes between lexicon entries and candidate matches in text. Default = {choices.DEFAULT_N_ALLOWED_EDITS}.")
+    return_fuzzy_match = serializers.BooleanField(default=choices.DEFAULT_RETURN_FUZZY_MATCH, required=False, help_text=f"Return fuzzy match (opposed to exact lexicon entry)? Default = {choices.DEFAULT_RETURN_FUZZY_MATCH }.")
+    ignore_case = serializers.BooleanField(default=choices.DEFAULT_IGNORE_CASE, required=False, help_text=f"Ignore case while matching? Default = {choices.DEFAULT_IGNORE_CASE}.")
+    ignore_punctuation = serializers.BooleanField(default=choices.DEFAULT_IGNORE_PUNCTUATION, required=False, help_text=f"If set False, end-of-sentence characters between lexicon entry words and/or counter lexicon entries, nullify the effect. Default = {choices.DEFAULT_IGNORE_PUNCTUATION}.")
     url = serializers.SerializerMethodField()
     tagger_groups = serializers.SerializerMethodField(read_only=True)
     task = TaskSerializer(read_only=True)
- 
+
 
 
     def get_tagger_groups(self, value: RegexTagger):
@@ -69,16 +63,16 @@ class RegexTaggerTagDocsSerializer(serializers.Serializer):
     fields = serializers.ListField(child=serializers.JSONField(), help_text="Dot separated paths of the JSON document to the text you wish to tag.")
 
 class ApplyRegexTaggerSerializer(FieldParseSerializer, serializers.Serializer):
-    description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
-    # priority = serializers.ChoiceField(default=None, choices=PRIORITY_CHOICES)
-    indices = IndexSerializer(many=True, default=[], help_text="Which indices in the project to apply this to.")
-    fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
-    query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)
-    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=1, help_text="How many documents should be sent towards Elasticsearch at once.")
-    max_chunk_bytes = serializers.IntegerField(min_value=1, default=104857600, help_text="Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors.")
-    new_fact_name = serializers.CharField(required=False, default="", help_text="Used as fact name when applying the tagger. Defaults to tagger description.")
-    new_fact_value = serializers.CharField(required=False, default="", help_text="Used as fact value when applying the tagger. Defaults to tagger match.")
-    add_spans = serializers.BooleanField(required=False, default=True, help_text="If enabled, spans of detected matches are added to texta facts and corresponding facts can be highlighted in Searcher. Default = True")
+    description = serializers.CharField(required=True, help_text=f"Text for distinguishing this task from others.")
+    indices = IndexSerializer(many=True, default=[], help_text=f"Which indices in the project to apply this to.")
+    fields = serializers.ListField(required=True, child=serializers.CharField(), help_text=f"Which fields to extract the text from.")
+    query = serializers.JSONField(help_text=f"Filter the documents which to scroll and apply to.", default=EMPTY_QUERY)
+    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=choices.DEFAULT_BULK_SIZE, help_text=f"How many documents should be sent towards Elasticsearch at once. Default = {choices.DEFAULT_BULK_SIZE}")
+    max_chunk_bytes = serializers.IntegerField(min_value=1, default=choices.DEFAULT_MAX_CHUNK_BYTES, help_text=f"Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors. Default = {choices.DEFAULT_MAX_CHUNK_BYTES}.")
+    es_timeout = serializers.IntegerField(default=choices.DEFAULT_ES_TIMEOUT, help_text=f"Elasticsearch scroll timeout in minutes. Default = {choices.DEFAULT_ES_TIMEOUT}.")
+    new_fact_name = serializers.CharField(required=False, default="", help_text=f"Used as fact name when applying the tagger. Defaults to tagger description.")
+    new_fact_value = serializers.CharField(required=False, default="", help_text=f"Used as fact value when applying the tagger. Defaults to tagger match.")
+    add_spans = serializers.BooleanField(required=False, default=choices.DEFAULT_ADD_SPANS, help_text=f"If enabled, spans of detected matches are added to texta facts and corresponding facts can be highlighted in Searcher. Default = {choices.DEFAULT_ADD_SPANS}")
 
 
 class RegexTaggerGroupTagDocumentSerializer(serializers.Serializer):
@@ -139,9 +133,9 @@ class RegexTaggerGroupMultitagDocsSerializer(serializers.Serializer):
 
 class ApplyRegexTaggerGroupSerializer(FieldParseSerializer, serializers.Serializer):
     description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
-    # priority = serializers.ChoiceField(default=None, choices=PRIORITY_CHOICES)
     indices = IndexSerializer(many=True, default=[], help_text="Which indices in the project to apply this to.")
     fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
     query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)
-    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=1, help_text="How many documents should be sent towards Elasticsearch at once.")
-    max_chunk_bytes = serializers.IntegerField(min_value=1, default=104857600, help_text="Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors.")
+    es_timeout = serializers.IntegerField(default=choices.DEFAULT_ES_TIMEOUT, help_text=f"Elasticsearch scroll timeout in minutes. Default = {choices.DEFAULT_ES_TIMEOUT}.")
+    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=choices.DEFAULT_BULK_SIZE, help_text=f"How many documents should be sent towards Elasticsearch at once. Default = {choices.DEFAULT_BULK_SIZE}.")
+    max_chunk_bytes = serializers.IntegerField(min_value=1, default=choices.DEFAULT_MAX_CHUNK_BYTES, help_text=f"Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors. Default = {choices.DEFAULT_MAX_CHUNK_BYTES}.")
