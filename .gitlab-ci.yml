@@ -66,8 +66,7 @@ Build:
   stage: build-final
   tags:
     - docker
-  trigger:
-    - texta/texta-rest-front
+  trigger: texta/texta-rest-front
   script:
     - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD docker.texta.ee
     #- sh ./docker/build_and_push.sh
