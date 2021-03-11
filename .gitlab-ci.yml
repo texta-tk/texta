@@ -30,20 +30,20 @@ services:
     alias: texta-uaa
 
 stages:
-  - test
-  - build-test
-  - build-front
-  - build-final
+  - test-back
+  - build-test-image
+  - build-and-test-front
+  - build-final-image
 
 
-Test:
+TestBack:
   # Tests back-end locally
   before_script:
     - apt-get install curl cmake build-essential -y
     - conda env create -f environment-nogpu.yaml && source activate texta-rest
     - python import_test_data.py -es $TEXTA_ES_URL
     - python migrate.py
-  stage: test
+  stage: test-back
   tags:
     - ci-test
   script:
@@ -51,9 +51,9 @@ Test:
     - python manage.py test
 
 
-BuildTest:
+BuildTestImage:
   # Builds back image for front tests
-  stage: build-test
+  stage: build-test-image
   tags:
     - docker
   script:
@@ -64,17 +64,17 @@ BuildTest:
     - master
 
 
-BuildFront:
+BuildAndTestFront:
   # Executes front pipeline
-  stage: build-front
+  stage: build-and-test-front
   trigger: texta/texta-rest-front
   only:
     - master
 
 
-BuildFinal:
+BuildFinalImage:
   # Builds final image with new front
-  stage: build-final
+  stage: build-final-image
   tags:
     - docker
   script:
