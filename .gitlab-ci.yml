@@ -11,8 +11,8 @@ variables:
   TEXTA_UAA_USER: test1
   TEXTA_UAA_EMAIL: test1@test1.com
   TEXTA_UAA_PWD: test1
-  TEXTA_UAA_URL: http://texta-uaa:8080/uaa
-  TEXTA_UAA_AUTH_URL: http://texta-uaa:8080/uaa/oauth/authorize
+  TEXTA_UAA_URL: http://dev.texta.ee:8050/uaa
+  TEXTA_UAA_AUTH_URL: http://dev.texta.ee:8050/uaa/oauth/authorize
   TEXTA_UAA_FRONT_REDIRECT_URL: http://localhost:4200/oauth
   TEXTA_UAA_CLIENT_ID: login
   TEXTA_UAA_CLIENT_SECRET: loginsecret
@@ -26,13 +26,12 @@ variables:
 
 services:
   - name: redis:latest
-  - name: docker.texta.ee/texta/texta-uaa:latest
-    alias: texta-uaa
+
 
 stages:
   - test-back
   - build-test-image
-  - build-and-test-front
+  - test-and-build-front
   - build-final-image
 
 
@@ -58,15 +57,15 @@ BuildTestImage:
     - docker
   script:
     - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD docker.texta.ee  
-    - docker build --compress --force-rm --no-cache -t docker.texta.ee/texta/texta-rest/test-rest:latest -f ./docker/Dockerfile .
-    - docker push docker.texta.ee/texta/texta-rest/texta-test:latest
+    - docker build --compress --force-rm --no-cache -t docker.texta.ee/texta/texta-rest/test:latest -f ./docker/Dockerfile .
+    - docker push docker.texta.ee/texta/texta-rest/test:latest
   only:
     - master
 
 
-BuildAndTestFront:
+TestAndBuildFront:
   # Executes front pipeline
-  stage: build-and-test-front
+  stage: test-and-build-front
   trigger: texta/texta-rest-front
   only:
     - master
