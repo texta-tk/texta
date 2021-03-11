@@ -31,7 +31,7 @@ services:
 stages:
   - test-back
   - build-test-image
-  - build-and-test-front
+  - test-and-build-front
   - build-final-image
 
 
