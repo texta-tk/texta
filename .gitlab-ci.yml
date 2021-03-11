@@ -11,8 +11,8 @@ variables:
   TEXTA_UAA_USER: test1
   TEXTA_UAA_EMAIL: test1@test1.com
   TEXTA_UAA_PWD: test1
-  TEXTA_UAA_URL: http://dev.texta.ee:8050/uaa
-  TEXTA_UAA_AUTH_URL: http://dev.texta.ee:8050/uaa/oauth/authorize
+  TEXTA_UAA_URL: http://texta-uaa:8080/uaa
+  TEXTA_UAA_AUTH_URL: http://texta-uaa:8080/uaa/oauth/authorize
   TEXTA_UAA_FRONT_REDIRECT_URL: http://localhost:4200/oauth
   TEXTA_UAA_CLIENT_ID: login
   TEXTA_UAA_CLIENT_SECRET: loginsecret
@@ -26,6 +26,8 @@ variables:
 
 services:
   - name: redis:latest
+  - name: docker.texta.ee/texta/texta-uaa:latest
+    alias: texta-uaa
 
 
 stages:
