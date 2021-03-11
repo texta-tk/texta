@@ -63,6 +63,7 @@ BuildTestImage:
     - docker push docker.texta.ee/texta/texta-rest/test:latest
   only:
     - master
+    - tags
 
 
 TestAndBuildFront:
@@ -71,6 +72,7 @@ TestAndBuildFront:
   trigger: texta/texta-rest-front
   only:
     - master
+    - tags
 
 
 BuildFinalImage:
