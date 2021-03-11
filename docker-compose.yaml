@@ -7,7 +7,7 @@ services:
     restart: on-failure
     image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.5.0
     ports:
-      - 9200:9200
+      - 9200
     environment:
       - bootstrap.memory_lock=true
       - discovery.type=single-node
@@ -22,7 +22,7 @@ services:
     container_name: redis
     image: redis
     ports:
-      - 6379:6379
+      - 6379
     restart: always
   
   texta-postgres:
@@ -30,7 +30,7 @@ services:
     image: postgres:11
     restart: on-failure
     ports:
-      - 5432:5432
+      - 5432
     environment:
       POSTGRES_DATABASE: docker
       POSTGRES_USER: docker
@@ -50,6 +50,7 @@ services:
       - ./docker/conf/env
     volumes:
       - toolkit-data:/var/texta-rest/data
+      - external-data:/var/texta-rest/data_external
     depends_on:
       - texta-postgres
       - texta-elasticsearch

@@ -45,11 +45,19 @@ TEST_UAA_PASSWORD = 'test1'
 TEST_IMAGE_FILE_1 = os.path.join(TEST_DATA_DIR, "photos", "test_image_1.jpg")
 TEST_IMAGE_FILE_2 = os.path.join(TEST_DATA_DIR, "photos", "test_image_2.jpg")
 
-TEST_BERT_TAGGER_MULTICLASS = os.path.join(TEST_DATA_DIR, "models", "bert_tagger", "berttagger_model_40.zip")
-TEST_BERT_TAGGER_BINARY = os.path.join(TEST_DATA_DIR, "models", "bert_tagger", "berttagger_model_39.zip")
+# Test BERT models trained on GPU
+TEST_BERT_TAGGER_BINARY_GPU = os.path.join(TEST_DATA_DIR, "models", "bert_tagger", "gpu", "berttagger_model_41.zip")
+TEST_BERT_TAGGER_MULTICLASS_GPU = os.path.join(TEST_DATA_DIR, "models", "bert_tagger", "gpu", "berttagger_model_42.zip")
 
-TEST_TORCH_TAGGER_MULTICLASS = os.path.join(TEST_DATA_DIR, "models", "torch_tagger", "torchtagger_model_8.zip")
-TEST_TORCH_TAGGER_BINARY = os.path.join(TEST_DATA_DIR, "models", "torch_tagger", "torchtagger_model_7.zip")
+# Test BERT model trained on CPU
+TEST_BERT_TAGGER_BINARY_CPU = os.path.join(TEST_DATA_DIR, "models", "bert_tagger", "cpu", "berttagger_model_1.zip")
+
+# Test Torch models trained on GPU
+TEST_TORCH_TAGGER_BINARY_GPU = os.path.join(TEST_DATA_DIR, "models", "torch_tagger", "gpu", "torchtagger_model_12.zip")
+TEST_TORCH_TAGGER_MULTICLASS_GPU = os.path.join(TEST_DATA_DIR, "models", "torch_tagger", "gpu", "torchtagger_model_13.zip")
+
+# Test Torch model trained on CPU
+TEST_TORCH_TAGGER_BINARY_CPU = os.path.join(TEST_DATA_DIR, "models", "torch_tagger", "cpu", "torchtagger_model_1.zip")
 
 TEST_TAGGER_BINARY = os.path.join(TEST_DATA_DIR, "models", "tagger", "tagger_model_35.zip")
 TEST_TAGGER_MULTICLASS = os.path.join(TEST_DATA_DIR, "models", "tagger", "tagger_model_36.zip")
@@ -67,4 +75,4 @@ TEST_BERT_MODEL = "prajjwal1/bert-tiny"
 W2V_EMBEDDING = "W2VEmbedding"
 FASTTEXT_EMBEDDING = "FastTextEmbedding"
 
-TEST_FACE_ANALYZER_INDEX =  "test_face_analyzer_index"
+TEST_FACE_ANALYZER_INDEX = "test_face_analyzer_index"

@@ -23,8 +23,9 @@ from toolkit.test_settings import (
     TEST_KEEP_PLOT_FILES,
     TEST_BERT_MODEL,
     TEST_QUERY,
-    TEST_BERT_TAGGER_MULTICLASS,
-    TEST_BERT_TAGGER_BINARY
+    TEST_BERT_TAGGER_MULTICLASS_GPU,
+    TEST_BERT_TAGGER_BINARY_GPU,
+    TEST_BERT_TAGGER_BINARY_CPU
     )
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file, remove_folder
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
@@ -74,8 +75,10 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         print_output("reindex test index for applying bert tagger:response.data:", resp.json())
         self.reindexer_object = Reindexer.objects.get(pk=resp.json()["id"])
 
-        self.test_imported_binary_tagger_id = self.import_test_model(TEST_BERT_TAGGER_BINARY)
-        self.test_imported_multiclass_tagger_id = self.import_test_model(TEST_BERT_TAGGER_MULTICLASS)
+        self.test_imported_binary_gpu_tagger_id = self.import_test_model(TEST_BERT_TAGGER_BINARY_GPU)
+        self.test_imported_multiclass_gpu_tagger_id = self.import_test_model(TEST_BERT_TAGGER_MULTICLASS_GPU)
+
+        self.test_imported_binary_cpu_tagger_id = self.import_test_model(TEST_BERT_TAGGER_BINARY_CPU)
 
 
     def import_test_model(self, file_path: str):
@@ -92,6 +95,8 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.run_train_multiclass_bert_tagger_using_fact_name()
         self.run_train_bert_tagger_using_query()
         self.run_bert_tag_text()
+        self.run_bert_tag_with_imported_gpu_model()
+        self.run_bert_tag_with_imported_cpu_model()
         self.run_bert_tag_random_doc()
         self.run_bert_epoch_reports_get()
         self.run_bert_epoch_reports_post()
@@ -185,6 +190,40 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.add_cleanup_files(tagger_id)
 
 
+    def run_bert_tag_with_imported_gpu_model(self):
+        """Test applying imported model trained on GPU."""
+        payload = {
+            "text": "mine kukele, loll"
+        }
+        response = self.client.post(f'{self.url}{self.test_imported_binary_gpu_tagger_id}/tag_text/', payload)
+        print_output('test_bert_tagger_tag_with_imported_gpu_model:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue("probability" in response.data)
+        self.assertTrue("result" in response.data)
+        self.assertTrue("tagger_id" in response.data)
+        # Check if tagger learned to predict
+        self.assertEqual("true", response.data["result"])
+
+        self.add_cleanup_files(self.test_imported_binary_gpu_tagger_id)
+
+
+    def run_bert_tag_with_imported_cpu_model(self):
+        """Tests applying imported model trained on CPU."""
+        payload = {
+            "text": "mine kukele, loll"
+        }
+        response = self.client.post(f'{self.url}{self.test_imported_binary_cpu_tagger_id}/tag_text/', payload)
+        print_output('test_bert_tagger_tag_with_imported_cpu_model:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue("probability" in response.data)
+        self.assertTrue("result" in response.data)
+        self.assertTrue("tagger_id" in response.data)
+        # Check if tagger learned to predict
+        self.assertEqual("true", response.data["result"])
+
+        self.add_cleanup_files(self.test_imported_binary_cpu_tagger_id)
+
+
     def run_bert_tag_text(self):
         """Tests tag prediction for texts."""
         payload = {
@@ -196,8 +235,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertTrue("probability" in response.data)
         self.assertTrue("result" in response.data)
         self.assertTrue("tagger_id" in response.data)
-        # Check if tagger learned to predict
-        self.assertEqual("true", response.data["result"])
 
 
     def run_bert_tag_random_doc(self):
@@ -352,7 +389,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
             print_output('test_apply_binary_bert_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
             sleep(2)
 
-        url = f'{self.url}{self.test_imported_binary_tagger_id}/apply_to_index/'
+        url = f'{self.url}{self.test_imported_binary_gpu_tagger_id}/apply_to_index/'
 
         payload = {
             "description": "apply bert tagger to index test task",
@@ -364,7 +401,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         response = self.client.post(url, payload, format='json')
         print_output('test_apply_binary_bert_tagger_to_index:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        tagger_object = BertTaggerObject.objects.get(pk=self.test_imported_binary_tagger_id)
+        tagger_object = BertTaggerObject.objects.get(pk=self.test_imported_binary_gpu_tagger_id)
 
         # Wait til the task has finished
         while tagger_object.task.status != Task.STATUS_COMPLETED:
@@ -375,10 +412,10 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         print_output("test_apply_binary_bert_tagger_to_index:elastic aggerator results:", results)
 
         # Check if the expected number of facts are added to the index
-        expected_number_of_facts = 19
+        expected_number_of_facts = 29
         self.assertTrue(results[self.new_fact_value] == expected_number_of_facts)
 
-        self.add_cleanup_files(self.test_imported_binary_tagger_id)
+        self.add_cleanup_files(self.test_imported_binary_gpu_tagger_id)
 
 
     def run_apply_multiclass_tagger_to_index(self):
@@ -388,7 +425,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
             print_output('test_apply_multiclass_bert_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
             sleep(2)
 
-        url = f'{self.url}{self.test_imported_multiclass_tagger_id}/apply_to_index/'
+        url = f'{self.url}{self.test_imported_multiclass_gpu_tagger_id}/apply_to_index/'
 
         payload = {
             "description": "apply bert tagger to index test task",
@@ -400,7 +437,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         response = self.client.post(url, payload, format='json')
         print_output('test_apply_multiclass_bert_tagger_to_index:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        tagger_object = BertTaggerObject.objects.get(pk=self.test_imported_multiclass_tagger_id)
+        tagger_object = BertTaggerObject.objects.get(pk=self.test_imported_multiclass_gpu_tagger_id)
 
         # Wait til the task has finished
         while tagger_object.task.status != Task.STATUS_COMPLETED:
@@ -416,7 +453,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertTrue(expected_fact_value in results)
         self.assertTrue(results[expected_fact_value] == expected_number_of_facts)
 
-        self.add_cleanup_files(self.test_imported_multiclass_tagger_id)
+        self.add_cleanup_files(self.test_imported_multiclass_gpu_tagger_id)
 
 
     def run_apply_tagger_to_index_invalid_input(self):

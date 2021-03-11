@@ -21,8 +21,9 @@ from toolkit.test_settings import (
     TEST_VERSION_PREFIX,
     TEST_KEEP_PLOT_FILES,
     TEST_QUERY,
-    TEST_TORCH_TAGGER_BINARY,
-    TEST_TORCH_TAGGER_MULTICLASS
+    TEST_TORCH_TAGGER_BINARY_GPU,
+    TEST_TORCH_TAGGER_MULTICLASS_GPU,
+    TEST_TORCH_TAGGER_BINARY_CPU
     )
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 from toolkit.torchtagger.models import TorchTagger
@@ -34,7 +35,7 @@ class TorchTaggerViewTests(APITransactionTestCase):
     def setUp(self):
         # Owner of the project
         self.user = create_test_user('torchTaggerOwner', 'my@email.com', 'pw')
-        self.project = project_creation("torchTaggerTestProject", TEST_INDEX, self.user)
+        self.project = project_creation('torchTaggerTestProject', TEST_INDEX, self.user)
         self.project.users.add(self.user)
         self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/torchtaggers/'
         self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
@@ -66,8 +67,10 @@ class TorchTaggerViewTests(APITransactionTestCase):
         print_output("reindex test index for applying torch tagger:response.data:", resp.json())
         self.reindexer_object = Reindexer.objects.get(pk=resp.json()["id"])
 
-        self.test_imported_binary_tagger_id = self.import_test_model(TEST_TORCH_TAGGER_BINARY)
-        self.test_imported_multiclass_tagger_id = self.import_test_model(TEST_TORCH_TAGGER_MULTICLASS)
+        self.test_imported_binary_gpu_tagger_id = self.import_test_model(TEST_TORCH_TAGGER_BINARY_GPU)
+        self.test_imported_multiclass_gpu_tagger_id = self.import_test_model(TEST_TORCH_TAGGER_MULTICLASS_GPU)
+
+        self.test_imported_binary_cpu_tagger_id = self.import_test_model(TEST_TORCH_TAGGER_BINARY_CPU)
 
 
     def import_test_model(self, file_path: str):
@@ -90,6 +93,8 @@ class TorchTaggerViewTests(APITransactionTestCase):
         self.run_train_tagger_using_query()
         self.run_train_multiclass_tagger_using_fact_name()
         self.run_tag_text()
+        self.run_tag_with_imported_gpu_model()
+        self.run_tag_with_imported_cpu_model()
         self.run_tag_random_doc()
         self.run_epoch_reports_get()
         self.run_epoch_reports_post()
@@ -190,6 +195,34 @@ class TorchTaggerViewTests(APITransactionTestCase):
         self.assertTrue('result' in response.data)
         self.assertTrue('probability' in response.data)
         self.assertTrue('tagger_id' in response.data)
+
+
+    def run_tag_with_imported_gpu_model(self):
+        """Test applying imported model trained on GPU."""
+        payload = {
+            "text": "mine kukele, kala"
+        }
+        response = self.client.post(f'{self.url}{self.test_imported_binary_gpu_tagger_id}/tag_text/', payload)
+        print_output('test_torchtagger_tag_with_imported_gpu_model:response.data', response.data)
+        self.assertTrue(isinstance(response.data, dict))
+        self.assertTrue('result' in response.data)
+        self.assertTrue('probability' in response.data)
+        self.assertTrue('tagger_id' in response.data)
+        self.add_cleanup_files(self.test_imported_binary_gpu_tagger_id)
+
+
+    def run_tag_with_imported_cpu_model(self):
+        """Test applying imported model trained on CPU."""
+        payload = {
+            "text": "mine kukele, kala"
+        }
+        response = self.client.post(f'{self.url}{self.test_imported_binary_cpu_tagger_id}/tag_text/', payload)
+        print_output('test_torchtagger_tag_with_imported_cpu_model:response.data', response.data)
+        self.assertTrue(isinstance(response.data, dict))
+        self.assertTrue('result' in response.data)
+        self.assertTrue('probability' in response.data)
+        self.assertTrue('tagger_id' in response.data)
+        self.add_cleanup_files(self.test_imported_binary_cpu_tagger_id)
 
 
     def run_tag_random_doc(self):
@@ -293,7 +326,7 @@ class TorchTaggerViewTests(APITransactionTestCase):
             print_output('test_apply_binary_torch_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
             sleep(2)
 
-        url = f'{self.url}{self.test_imported_binary_tagger_id}/apply_to_index/'
+        url = f'{self.url}{self.test_imported_binary_gpu_tagger_id}/apply_to_index/'
 
         payload = {
             "description": "apply torch tagger to index test task",
@@ -305,7 +338,7 @@ class TorchTaggerViewTests(APITransactionTestCase):
         response = self.client.post(url, payload, format='json')
         print_output('test_apply_binary_torch_tagger_to_index:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        tagger_object = TorchTagger.objects.get(pk=self.test_imported_binary_tagger_id)
+        tagger_object = TorchTagger.objects.get(pk=self.test_imported_binary_gpu_tagger_id)
 
         # Wait til the task has finished
         while tagger_object.task.status != Task.STATUS_COMPLETED:
@@ -316,9 +349,9 @@ class TorchTaggerViewTests(APITransactionTestCase):
         print_output("test_apply_binary_torch_tagger_to_index:elastic aggerator results:", results)
 
         # Check if expected number of facts is added
-        self.assertTrue(results[self.new_fact_value] == 30)
-        
-        self.add_cleanup_files(self.test_imported_binary_tagger_id)
+        self.assertTrue(results[self.new_fact_value] == 25)
+
+        self.add_cleanup_files(self.test_imported_binary_gpu_tagger_id)
 
 
     def run_apply_multiclass_tagger_to_index(self):
@@ -328,7 +361,7 @@ class TorchTaggerViewTests(APITransactionTestCase):
             print_output('test_apply_multiclass_torch_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
             sleep(2)
 
-        url = f'{self.url}{self.test_imported_multiclass_tagger_id}/apply_to_index/'
+        url = f'{self.url}{self.test_imported_multiclass_gpu_tagger_id}/apply_to_index/'
 
         payload = {
             "description": "apply torch tagger to index test task",
@@ -340,7 +373,7 @@ class TorchTaggerViewTests(APITransactionTestCase):
         response = self.client.post(url, payload, format='json')
         print_output('test_apply_multiclass_torch_tagger_to_index:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        tagger_object = TorchTagger.objects.get(pk=self.test_imported_multiclass_tagger_id)
+        tagger_object = TorchTagger.objects.get(pk=self.test_imported_multiclass_gpu_tagger_id)
 
         # Wait til the task has finished
         while tagger_object.task.status != Task.STATUS_COMPLETED:
@@ -351,12 +384,18 @@ class TorchTaggerViewTests(APITransactionTestCase):
         print_output("test_apply_multiclass_torch_tagger_to_index:elastic aggerator results:", results)
 
         # Check if the expected facts with expected number of values is added
-        expected_fact_value = "foo"
-        expected_number_of_facts = 30
-        self.assertTrue(expected_fact_value in results)
-        self.assertTrue(results[expected_fact_value] == expected_number_of_facts )
+        fact_value_1 = "foo"
+        expected_count_1 = 28
 
-        self.add_cleanup_files(self.test_imported_multiclass_tagger_id)
+        fact_value_2 = "bar"
+        expected_count_2 = 2
+
+        self.assertTrue(fact_value_1 in results)
+        self.assertTrue(fact_value_2 in results)
+        self.assertTrue(results[fact_value_1] == expected_count_1)
+        self.assertTrue(results[fact_value_2] == expected_count_2)
+
+        self.add_cleanup_files(self.test_imported_multiclass_gpu_tagger_id)
 
 
     def run_apply_tagger_to_index_invalid_input(self):

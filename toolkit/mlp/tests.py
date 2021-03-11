@@ -1,4 +1,5 @@
 # Create your tests here.
+import json
 from django.test import override_settings
 from django.urls import reverse
 from elasticsearch_dsl import Keyword, Mapping
@@ -44,7 +45,7 @@ class MLPListsTests(APITestCase):
             self.assertTrue("text" in mlp and mlp["text"])
             self.assertTrue("lemmas" in mlp and mlp["lemmas"])
             self.assertTrue("pos_tags" in mlp and mlp["pos_tags"])
-            self.assertTrue("lang" in mlp and mlp["lang"])
+            self.assertTrue("language" in mlp and mlp["language"])
 
 
     def test_fact_processing(self):
@@ -58,7 +59,7 @@ class MLPListsTests(APITestCase):
     def test_separate_analyzer_handling(self):
         response = self.client.post(self.url, data={**self.payload, "analyzers": ["lemmas"]}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
-        demanded_keys = ["text", "lemmas", "lang"]
+        demanded_keys = ["text", "lemmas", "language"]
         for doc in response.data:
             mlp = doc["text"]
             for key in mlp.keys():
@@ -96,7 +97,7 @@ class MLPDocsTests(APITestCase):
                 self.assertTrue("text" in mlp and mlp["text"])
                 self.assertTrue("lemmas" in mlp and mlp["lemmas"])
                 self.assertTrue("pos_tags" in mlp and mlp["pos_tags"])
-                self.assertTrue("lang" in mlp and mlp["lang"])
+                self.assertTrue("language" in mlp and mlp["language"])
 
 
     def test_fact_processing(self):
@@ -111,7 +112,7 @@ class MLPDocsTests(APITestCase):
     def test_separate_analyzer_handling(self):
         response = self.client.post(self.url, format="json", data={**self.payload, "analyzers": ["lemmas"]})
         self.assertTrue(response.status_code == status.HTTP_200_OK)
-        demanded_keys = ["text", "lemmas", "lang"]
+        demanded_keys = ["text", "lemmas", "language"]
         mlp_keys = [f"{key}_mlp" for key in self.payload["fields_to_parse"]]
         for doc in response.data:
             for mlp_field_key in mlp_keys:
@@ -132,7 +133,7 @@ class MLPDocsTests(APITestCase):
             self.assertTrue("text" in mlp and mlp["text"])
             self.assertTrue("lemmas" in mlp and mlp["lemmas"])
             self.assertTrue("pos_tags" in mlp and mlp["pos_tags"])
-            self.assertTrue("lang" in mlp and mlp["lang"])
+            self.assertTrue("language" in mlp and mlp["language"])
 
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
@@ -158,7 +159,7 @@ class MLPIndexProcessing(APITransactionTestCase):
         payload = {
             "description": "TestingIndexProcessing",
             "fields": [TEST_FIELD],
-            "query": {'query': {'match': {'comment_content_lemmas': query_string}}}
+            "query": json.dumps({'query': {'match': {'comment_content_lemmas': query_string}}}, ensure_ascii=False)
         }
 
         response = self.client.post(self.url, data=payload, format="json")
@@ -171,8 +172,8 @@ class MLPIndexProcessing(APITransactionTestCase):
                 self.assertTrue(f"{TEST_FIELD}_mlp.lemmas" in hit)
                 self.assertTrue(f"{TEST_FIELD}_mlp.pos_tags" in hit)
                 self.assertTrue(f"{TEST_FIELD}_mlp.text" in hit)
-                self.assertTrue(f"{TEST_FIELD}_mlp.lang.analysis_lang" in hit)
-                self.assertTrue(f"{TEST_FIELD}_mlp.lang.detected_lang" in hit)
+                self.assertTrue(f"{TEST_FIELD}_mlp.language.analysis" in hit)
+                self.assertTrue(f"{TEST_FIELD}_mlp.language.detected" in hit)
                 self._check_for_if_query_correct(hit, TEST_FIELD, query_string)
 
 
