@@ -32,6 +32,7 @@ services:
 stages:
   - test
   - build-test
+  - build-front
   - build-final
 
 
@@ -50,7 +51,7 @@ Test:
     - python manage.py test
 
 
-Build-Test:
+BuildTest:
   # Builds back image for front tests
   stage: build-test
   tags:
@@ -61,15 +62,20 @@ Build-Test:
     - docker push docker.texta.ee/texta/texta-rest/texta-test:latest
 
 
-Build:
+BuildFront:
+  # Executes front pipeline
+  stage: build-front
+  trigger: texta/texta-rest-front
+
+
+BuildFinal:
   # Builds final image with new front
   stage: build-final
   tags:
     - docker
-  trigger: texta/texta-rest-front
   script:
     - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD docker.texta.ee
-    #- sh ./docker/build_and_push.sh
-    #- docker system prune --volumes -f
-  #only:
-  #  - tags
+    - sh ./docker/build_and_push.sh
+    - docker system prune --volumes -f
+  only:
+    - tags
