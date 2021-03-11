@@ -83,4 +83,3 @@ BuildFinal:
     - docker system prune --volumes -f
   only:
     - tags
-    - master
