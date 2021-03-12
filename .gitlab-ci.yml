@@ -29,35 +29,60 @@ services:
   - name: docker.texta.ee/texta/texta-uaa:latest
     alias: texta-uaa
 
-stages:
-  - test
-  - build
 
-Test:
+stages:
+  - test-back
+  - build-test-image
+  - test-and-build-front
+  - build-final-image
+
+
+TestBack:
+  # Tests back-end locally
   before_script:
     - apt-get install curl cmake build-essential -y
     - conda env create -f environment-nogpu.yaml && source activate texta-rest
     - python import_test_data.py -es $TEXTA_ES_URL
     - python migrate.py
-  stage: test
+  stage: test-back
   tags:
     - ci-test
-  artifacts:
-    paths:
-      - data/media
-    expire_in: 1 week
   script:
     - sh wait-for-uaa.sh
     - python manage.py test
 
-Build:
-  stage: build
+
+BuildTestImage:
+  # Builds back image for front tests
+  stage: build-test-image
+  tags:
+    - docker
+  script:
+    - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD docker.texta.ee  
+    - docker build --compress --force-rm --no-cache -t docker.texta.ee/texta/texta-rest/test:latest -f ./docker/Dockerfile .
+    - docker push docker.texta.ee/texta/texta-rest/test:latest
+  only:
+    - master
+    - tags
+
+
+TestAndBuildFront:
+  # Executes front pipeline
+  stage: test-and-build-front
+  trigger: texta/texta-rest-front
+  only:
+    - master
+    - tags
+
+
+BuildFinalImage:
+  # Builds final image with new front
+  stage: build-final-image
   tags:
     - docker
   script:
     - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD docker.texta.ee
     - sh ./docker/build_and_push.sh
     - docker system prune --volumes -f
-    - curl --request POST --form "token=$CI_JOB_TOKEN" --form ref=master https://git.texta.ee/api/v4/projects/84/trigger/pipeline
   only:
     - tags
