@@ -37,7 +37,7 @@ class ElasticScrollSerializer(serializers.Serializer):
     indices = serializers.ListField(child=serializers.CharField(), default=[], help_text="From which indices to search, by default all project indices are chosen.")
     scroll_id = serializers.CharField(required=False)
     query = serializers.DictField(default=EMPTY_QUERY, help_text="Query to limit returned documents.")
-    documents_size = serializers.IntegerField(min_value=1, max_value=300, default=300, help_text="How many documents should be returned in the response. Max is 300.")
+    documents_size = serializers.IntegerField(min_value=1, max_value=1500, default=300, help_text="How many documents should be returned in the response. Max is 1500.")
     fields = serializers.ListField(default=["*"], help_text="List of field names you wish to be return by Elasticsearch.")
     with_meta = serializers.BooleanField(default=False, help_text="Whether to return raw Elasticsearch hits or remove the metadata from the documents.")
 
