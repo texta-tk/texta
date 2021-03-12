@@ -288,8 +288,8 @@ class TaggerViewTests(APITransactionTestCase):
 
     def run_tag_text_result_check(self, test_tagger_ids: List[int]):
         """Tests the endpoint to check if the tagger result corresponds to the input text."""
-        payload_pos = {"text": "This is some test text for the Tagger Test loll"}
-        payload_neg = {"text": "This is some test text for the Tagger Test"}
+        payload_pos = {"text": "This is some loll test text for the Tagger Test loll"}
+        payload_neg = {"text": "asdssj kkks kkkkhhhhh fhfhhfdja jsdksjk"}
 
         payloads = {True: payload_pos, False: payload_neg}
 
@@ -301,7 +301,7 @@ class TaggerViewTests(APITransactionTestCase):
 
                 self.assertEqual(response.status_code, status.HTTP_200_OK)
                 self.assertEqual(response.data['result'], label)
-
+                print_output("Checking prediction results", f"Expected label: {label}; Predicted label: {response.data['result']}")
 
     def run_tag_text_with_lemmatization(self):
         """Tests the endpoint for the tag_text action"""
