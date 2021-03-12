@@ -69,12 +69,12 @@ BuildTestImage:
 TestAndBuildFront:
   # Executes front pipeline
   stage: test-and-build-front
-  trigger: texta/texta-rest-front
-  strategy: depend
+  trigger:
+    project: texta/texta-rest-front
+    strategy: depend
   only:
     - master
     - tags
-
 
 BuildFinalImage:
   # Builds final image with new front
