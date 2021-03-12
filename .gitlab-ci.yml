@@ -70,6 +70,7 @@ TestAndBuildFront:
   # Executes front pipeline
   stage: test-and-build-front
   trigger: texta/texta-rest-front
+  strategy: depend
   only:
     - master
     - tags
