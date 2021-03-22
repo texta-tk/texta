@@ -1,4 +1,5 @@
 import os
+import pathlib
 
 from celery import Celery
 
@@ -10,6 +11,9 @@ app = Celery('taskman')
 # pickle the object when using Windows.
 app.config_from_object('django.conf:settings')
 app.autodiscover_tasks()
+for path in pathlib.Path("toolkit/elastic/").rglob("*"):
+    if path.is_dir():
+        app.autodiscover_tasks([f"toolkit.elastic.{path.name}"])
 
 
 @app.task(bind=True)
