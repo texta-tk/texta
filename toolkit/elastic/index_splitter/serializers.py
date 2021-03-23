@@ -119,7 +119,7 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
         if fact == "" and data["distribution"] in ["custom", "equal", "original"]:
             raise serializers.ValidationError('fact must be specified with "custom", "equal" or "original" distribution')
         if data["distribution"] in ["custom", "equal", "original"]:
-            if "text_facts" not in data["fields"]:
+            if "fields" in data and "texta_facts" not in data["fields"]:
                 project_fields = self._get_project_fields()
                 field_data = [field["path"] for field in project_fields]
                 if "texta_facts" not in field_data:
