@@ -96,9 +96,8 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
 
 
     def validate_fields(self, value):
-        ''' check if changed fields included in the request are in the relevant project fields '''
-        project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
-        project_fields = ElasticCore().get_fields(indices=project_obj.get_indices())
+        ''' check if fields included in the request are in the relevant project fields '''
+        project_fields = self._get_project_fields()
         field_data = [field["path"] for field in project_fields]
         for field in value:
             if field not in field_data:
@@ -117,6 +116,20 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
         fact = data.get("fact")
         if data["distribution"] == "custom" and len(data["custom_distribution"]) == 0:
             raise serializers.ValidationError("field custom_distribution can not be empty with custom label distribution")
-        if fact == "" and data["distribution"] in ["custom", "equal" or "original"]:
+        if fact == "" and data["distribution"] in ["custom", "equal", "original"]:
             raise serializers.ValidationError('fact must be specified with "custom", "equal" or "original" distribution')
+        if data["distribution"] in ["custom", "equal", "original"]:
+            if "text_facts" not in data["fields"]:
+                project_fields = self._get_project_fields()
+                field_data = [field["path"] for field in project_fields]
+                if "texta_facts" not in field_data:
+                    raise serializers.ValidationError(f'Field texta_facts is required but it is not in project fields.: {project_fields}')
+                else:
+                    data["fields"].append("texta_facts")
         return data
+
+    def _get_project_fields(self):
+        project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
+        project_fields = ElasticCore().get_fields(indices=project_obj.get_indices())
+        return project_fields
+
