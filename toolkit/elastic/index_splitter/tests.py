@@ -178,7 +178,7 @@ class IndexSplitterViewTests(APITransactionTestCase):
             "test_index": INDEX_SPLITTING_TEST_INDEX,
             "distribution": "custom",
             "fact": self.FACT,
-            "custom_distribution": custom_distribution
+            "custom_distribution": json.dumps(custom_distribution)
         }
 
         response = self.client.post(self.url, data=payload, format="json")

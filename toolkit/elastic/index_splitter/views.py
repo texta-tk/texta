@@ -52,8 +52,7 @@ class IndexSplitterViewSet(mixins.CreateModelMixin,
         splitter_model = serializer.save(
             author=self.request.user,
             project=project_obj,
-            fields=json.dumps(serializer.validated_data.get('fields', [])),
-            custom_distribution = json.dumps(serializer.validated_data.get("custom_distribution", {}))
+            fields=json.dumps(serializer.validated_data.get('fields', []))
         )
 
         for index in Index.objects.filter(name__in=indices, is_open=True):
