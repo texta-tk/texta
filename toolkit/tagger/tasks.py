@@ -4,6 +4,7 @@ import os
 import pathlib
 import re
 import secrets
+
 from typing import Dict, List, Union
 
 from celery import group
@@ -415,15 +416,18 @@ def apply_tagger_group(tagger_group_id: int, content: Union[str, Dict[str, str]]
 
     # retrieve results & remove non-hits
     tags = [tag for tag in result_tags if tag]
+
     logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Retrieved results for {len(tags)} taggers.")
     # remove non-hits
-    tags = [tag for tag in tags if tag['result']]
+    tags = [tag for tag in tags if tag["result"]]
+
+
     logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Retrieved {len(tags)} positive tags.")
     # if feedback was enabled, add urls
     if feedback:
         tags = [add_finite_url_to_feedback(tag, request) for tag in tags]
     # sort by probability and return
-    return sorted(tags, key=lambda k: k['probability'], reverse=True)
+    return sorted(tags, key=lambda k: k["probability"], reverse=True)
 
 
 def to_texta_fact(tagger_result: List[Dict[str, Union[str, int, bool]]], field: str, fact_name: str, fact_value: str):
@@ -441,7 +445,7 @@ def to_texta_fact(tagger_result: List[Dict[str, Union[str, int, bool]]], field: 
     return new_facts
 
 
-def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], fact_name: str, fact_value: str, object_id: int, object_type: str, tagger_object: Union[Tagger, TaggerGroup], object_args: Dict, tagger: TextTagger = None):
+def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], fact_name: str, fact_value: str, max_tags: int, object_id: int, object_type: str, tagger_object: Union[Tagger, TaggerGroup], object_args: Dict, tagger: TextTagger = None):
     for i, scroll_batch in enumerate(generator):
         logging.getLogger(INFO_LOGGER).info(f"Appyling {object_type} with ID {object_id} to batch {i + 1}...")
         for raw_doc in scroll_batch:
@@ -455,19 +459,21 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
                     if object_type == "tagger":
                         result = apply_loaded_tagger(tagger_object, tagger, text, input_type="text", feedback=None, use_logger=False)
                         if result:
-                            result = [result]
+                            tags = [result]
                         else:
-                            result = []
+                            tags = []
                     else:
                         # update text and tags with MLP
-                        combined_texts, tags = get_mlp(object_id, [text], lemmatize=object_args["lemmatize"], use_ner=object_args["use_ner"])
+                        combined_texts, ner_tags = get_mlp(object_id, [text], lemmatize=object_args["lemmatize"], use_ner=object_args["use_ner"])
                         # retrieve tag candidates
-                        tag_candidates = get_tag_candidates(object_id, [text], ignore_tags=tags, n_similar_docs=object_args["n_similar_docs"], max_candidates=object_args["n_candidate_tags"])
-                        # get tags
-                        tags += apply_tagger_group(object_id, text, tag_candidates, request=None, input_type='text', lemmatize=object_args["lemmatize"], feedback=False, use_async=False)
-                        result = tags
+                        tag_candidates = get_tag_candidates(object_id, [text], ignore_tags=ner_tags, n_similar_docs=object_args["n_similar_docs"], max_candidates=object_args["n_candidate_tags"])
+                        # get tags (sorted by probability in descending order)
+                        tagger_group_tags = apply_tagger_group(object_id, text, tag_candidates, request=None, input_type='text', lemmatize=object_args["lemmatize"], feedback=False, use_async=False)
+                        # take only `max_tags` first tags
+                        tags = ner_tags + tagger_group_tags[:max_tags]
 
-                    new_facts = to_texta_fact(result, field, fact_name, fact_value)
+
+                    new_facts = to_texta_fact(tags, field, fact_name, fact_value)
                     if new_facts:
                         existing_facts.extend(new_facts)
 
@@ -485,7 +491,7 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
 
 
 @task(name="apply_tagger_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
-def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str], fact_name: str, fact_value: str, query: dict, bulk_size: int, max_chunk_bytes: int, es_timeout: int, object_type: str, object_args: Dict):
+def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str], fact_name: str, fact_value: str, query: dict, bulk_size: int, max_chunk_bytes: int, es_timeout: int, object_type: str, object_args: Dict, max_tags: int = 10000):
     """Apply Tagger or TaggerGroup to index."""
     try:
         tagger = None
@@ -509,7 +515,7 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
             callback_progress=progress,
         )
 
-        actions = update_generator(generator=searcher, ec=ec, fields=fields, fact_name=fact_name, fact_value=fact_value, object_id=object_id, object_type=object_type, tagger_object=tagger_object, object_args=object_args, tagger=tagger)
+        actions = update_generator(generator=searcher, ec=ec, fields=fields, fact_name=fact_name, fact_value=fact_value, max_tags=max_tags, object_id=object_id, object_type=object_type, tagger_object=tagger_object, object_args=object_args, tagger=tagger)
         for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes, max_retries=3):
             if not success:
                 logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))

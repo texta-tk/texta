@@ -346,6 +346,10 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             es_timeout = serializer.validated_data["es_timeout"]
             lemmatize = serializer.validated_data["lemmatize"]
 
+            if tagger_object.fact_name:
+                # Disable fact_value usage for multiclass taggers
+                fact_value = ""
+
             object_args = {"lemmatize": lemmatize}
 
             object_type = "tagger"

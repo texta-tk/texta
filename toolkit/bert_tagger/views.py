@@ -241,6 +241,9 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             max_chunk_bytes = serializer.validated_data["max_chunk_bytes"]
             es_timeout = serializer.validated_data["es_timeout"]
 
+            if tagger_object.fact_name:
+                # Disable fact_value usage for multiclass taggers
+                fact_value = ""
 
             args = (pk, indices, fields, fact_name, fact_value, query, bulk_size, max_chunk_bytes, es_timeout)
             transaction.on_commit(lambda: apply_tagger_to_index.apply_async(args=args, queue=CELERY_LONG_TERM_TASK_QUEUE))

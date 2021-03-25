@@ -342,6 +342,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
             lemmatize = serializer.validated_data["lemmatize"]
             n_similar_docs = serializer.validated_data["n_similar_docs"]
             n_candidate_tags = serializer.validated_data["n_candidate_tags"]
+            max_tags = serializer.validated_data["max_tags"]
 
             object_args = {
                 "n_similar_docs": n_similar_docs,
@@ -356,7 +357,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
             # object_id = tagger_object.pk
             object_type = "tagger_group"
 
-            args = (pk, indices, fields, fact_name, fact_value, query, bulk_size, max_chunk_bytes, es_timeout, object_type, object_args)
+            args = (pk, indices, fields, fact_name, fact_value, query, bulk_size, max_chunk_bytes, es_timeout, object_type, object_args, max_tags)
             transaction.on_commit(lambda: apply_tagger_to_index.apply_async(args=args, queue=CELERY_LONG_TERM_TASK_QUEUE))
 
             message = "Started process of applying Tagger with id: {}".format(tagger_group_object.id)

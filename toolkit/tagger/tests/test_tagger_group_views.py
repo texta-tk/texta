@@ -12,6 +12,7 @@ from rest_framework.test import APITransactionTestCase
 from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.tools.aggregator import ElasticAggregator
+from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.test_settings import (TEST_FACT_NAME, TEST_FIELD, TEST_FIELD_CHOICE, TEST_INDEX, TEST_KEEP_PLOT_FILES, TEST_QUERY, TEST_TAGGER_GROUP, TEST_VERSION_PREFIX, VERSION_NAMESPACE)
@@ -32,6 +33,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
         self.client.login(username='taggerOwner', password='pw')
         # new fact name and value used when applying tagger to index
         self.new_fact_name = "TEST_TAGGER_GROUP_NAME"
+        self.new_fact_name_tag_limit = "TEST_TAGGER_GROUP_NAME_LIMITED_TAGS"
 
         # Create copy of test index
         self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
@@ -70,6 +72,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
         self.run_models_retrain()
         self.create_taggers_with_empty_fields()
         self.run_apply_tagger_group_to_index()
+        self.run_apply_tagger_group_to_index_with_tag_limit()
         self.run_apply_tagger_group_to_index_invalid_input()
         self.run_model_export_import()
         self.run_tagger_instances_have_mention_to_tagger_group()
@@ -273,6 +276,55 @@ class TaggerGroupViewTests(APITransactionTestCase):
 
         # Check if at least one new fact is added
         self.assertTrue(len(results) >= 1)
+
+        # clean
+        imported_tagger_group = TaggerGroup.objects.get(id=self.test_imported_tagger_group_id)
+
+        for tagger in imported_tagger_group.taggers.all():
+            # Remove tagger files after test is done
+            self.add_cleanup_files(tagger.id)
+
+
+    def run_apply_tagger_group_to_index_with_tag_limit(self):
+        """Tests applying tagger group with tag limit to index using apply_to_index endpoint."""
+        # Make sure reindexer task has finished
+        while self.reindexer_object.task.status != Task.STATUS_COMPLETED:
+            print_output('test_apply_tagger_group_to_index_tag_limit: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
+            sleep(2)
+
+        url = f'{self.url}{self.test_imported_tagger_group_id}/apply_to_index/'
+
+        payload = {
+            "description": "apply tagger test task",
+            "new_fact_name": self.new_fact_name_tag_limit,
+            "indices": [{"name": self.test_index_copy}],
+            "fields": [TEST_FIELD],
+            "lemmatize": False,
+            "n_similar_docs": 10,
+            "n_candidate_tags": 10,
+            "max_tags": 1
+        }
+        response = self.client.post(url, payload, format='json')
+        print_output('test_apply_tagger_group_to_index_tag_limit:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        tagger_group_object = TaggerGroup.objects.get(pk=self.test_imported_tagger_group_id)
+
+        # Wait til the task has finished
+        while tagger_group_object.task.status != Task.STATUS_COMPLETED:
+            print_output('test_apply_tagger_group_to_index_tag_limit: waiting for applying tagger task to finish, current status:', tagger_group_object.task.status)
+            sleep(2)
+
+        # Scroll over the index to check if the correct amount of tags were added
+        s = ElasticSearcher(indices=[self.test_index_copy], output=ElasticSearcher.OUT_RAW)
+
+        for scroll_batch in s:
+            for raw_doc in scroll_batch:
+                hit = raw_doc["_source"]
+                texta_facts = hit.get("texta_facts", [])
+                relevant_facts = [fact for fact in texta_facts if fact["fact"] == self.new_fact_name_tag_limit]
+
+                # Check if at most `max_tags` were added
+                self.assertTrue(len(relevant_facts) <= 1)
 
         # clean
         imported_tagger_group = TaggerGroup.objects.get(id=self.test_imported_tagger_group_id)
