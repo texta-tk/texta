@@ -15,6 +15,9 @@ class Query:
     def __dict__(self):
         return self.query
 
+    def add_sub_query(self, sub_query):
+        self.query["query"]["bool"][self.operator].append(sub_query["query"])
+
     def add_fact_filter(self, fact_name, fact_value, filter_id=1):
         """
         Adds fact filter to existing query.
@@ -33,7 +36,7 @@ class Query:
                             ]
                         }
                     }
-        }
+            }
         }
 
         self.query["query"]["bool"][self.operator].append(query)
