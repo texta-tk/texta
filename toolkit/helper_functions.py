@@ -2,6 +2,7 @@ import hashlib
 import os
 import pathlib
 import re
+import json
 from functools import partial
 from typing import List
 
@@ -148,6 +149,22 @@ def hash_string(content: str):
     content_bytes = content.encode('utf-8')
     hash_str = hashlib.md5(content_bytes).hexdigest()
     return hash_str
+
+
+def load_stop_words_from_string(stop_words_string: str) -> List[str]:
+    """Loads stop words from whitespace-separated string into list."""
+    stop_words = re.split(" |\n|\r\n", stop_words_string)
+    stop_words = [stop_word for stop_word in stop_words if stop_word]
+    return stop_words
+
+
+def load_stop_words(stop_words_string: str) -> List[str]:
+    """Loads stop words either from regular string or JSON string"""
+    try:
+        stop_words = json.loads(stop_words_string)
+    except:
+        stop_words = load_stop_words_from_string(stop_words_string)
+    return stop_words
 
 
 def parse_bool_env(env_name: str, default: bool):

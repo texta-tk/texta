@@ -10,6 +10,7 @@ from toolkit.tagger import choices
 from toolkit.elastic.choices import get_snowball_choices
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.tagger.models import Tagger, TaggerGroup
+from toolkit.helper_functions import load_stop_words
 
 
 # NB! Currently not used
@@ -70,6 +71,10 @@ class ApplyTaggerGroupSerializer(FieldParseSerializer, serializers.Serializer):
     bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=choices.DEFAULT_BULK_SIZE, help_text=f"How many documents should be sent towards Elasticsearch at once. Default:{choices.DEFAULT_BULK_SIZE}.")
     max_chunk_bytes = serializers.IntegerField(min_value=1, default=choices.DEFAULT_MAX_CHUNK_BYTES, help_text=f"Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors. Default:{choices.DEFAULT_MAX_CHUNK_BYTES}.")
 
+
+class StopWordSerializer(serializers.Serializer):
+    stop_words = serializers.ListField(child=serializers.CharField(required=False), required=True, help_text=f"List of stop words to add.")
+    overwrite_existing = serializers.BooleanField(required=False, default=choices.DEFAULT_OVERWRITE_EXISTING_STOPWORDS, help_text=f"If enabled, overwrites all existing stop words, otherwise appends to the existing ones. Default: {choices.DEFAULT_OVERWRITE_EXISTING_STOPWORDS}.")
 
 class TagRandomDocSerializer(serializers.Serializer):
     indices = IndexSerializer(many=True, default=[])
@@ -133,6 +138,7 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     score_threshold = serializers.FloatField(default=choices.DEFAULT_SCORE_THRESHOLD, help_text=f'Elasticsearch score threshold for filtering out irrelevant examples. All examples below first document\'s score * score threshold are ignored. Float between 0 and 1. Default: {choices.DEFAULT_SCORE_THRESHOLD}')
     snowball_language = serializers.ChoiceField(choices=get_snowball_choices(), default=choices.DEFAULT_SNOWBALL_LANGUAGE, help_text=f'Uses Snowball stemmer with specified language to normalize the texts. Default: {choices.DEFAULT_SNOWBALL_LANGUAGE}')
     scoring_function = serializers.ChoiceField(choices=choices.DEFAULT_SCORING_OPTIONS, default=choices.DEFAULT_SCORING_FUNCTION, required=False, help_text=f'Scoring function used while evaluating the results on dev set. Default: {choices.DEFAULT_SCORING_FUNCTION}')
+    stop_words = serializers.ListField(child=serializers.CharField(), default=[], required=False, help_text='Stop words to add. Default = [].')
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
@@ -145,9 +151,9 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
         model = Tagger
         fields = ('id', 'url', 'author_username', 'description', 'query', 'fact_name', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
                   'maximum_sample_size', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score', 'snowball_language', 'scoring_function',
-                  'num_features', 'num_examples', 'confusion_matrix', 'plot', 'task', 'indices', 'tagger_groups')
+                  'num_features', 'num_examples', 'confusion_matrix', 'plot', 'task', 'indices', 'tagger_groups', 'stop_words')
         read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'stop_words', 'num_examples', 'tagger_groups', 'confusion_matrix')
-        fields_to_parse = ('fields',)
+        fields_to_parse = ('fields', 'stop_words')
 
 
     def __init__(self, *args, **kwargs):
@@ -225,6 +231,7 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
             params = {
                 'fields': json.loads(first_tagger.fields),
                 'vectorizer': first_tagger.vectorizer,
-                'classifier': first_tagger.classifier
+                'classifier': first_tagger.classifier,
+                'stop_words': load_stop_words(first_tagger.stop_words)
             }
             return params

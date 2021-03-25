@@ -24,7 +24,7 @@ from toolkit.elastic.tools.feedback import Feedback
 from toolkit.elastic.tools.query import Query
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.embedding.models import Embedding
-from toolkit.helper_functions import add_finite_url_to_feedback, get_indices_from_object
+from toolkit.helper_functions import add_finite_url_to_feedback, get_indices_from_object, load_stop_words
 from toolkit.mlp.tasks import apply_mlp_on_list
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, MEDIA_URL
 from toolkit.tagger.models import Tagger, TaggerGroup
@@ -75,7 +75,8 @@ def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries,
         tagger_data = tagger_serializer.copy()
         tagger_data.update({"query": json.dumps(tag_queries[i])})
         tagger_data.update({"description": tag})
-        tagger_data.update({"fields": json.dumps(tagger_data["fields"])})
+        tagger_data.update({"fields": json.dumps(tagger_data["fields"])}),
+        tagger_data.update({"stop_words": json.dumps(tagger_data["stop_words"])})
         taggers_to_create.append(tagger_data)
         # if batch size reached, save result
         if len(taggers_to_create) >= batch_size:
@@ -115,8 +116,8 @@ def train_tagger_task(tagger_id: int):
         indices = get_indices_from_object(tagger_object)
         field_data = json.loads(tagger_object.fields)
         # split stop words by space or newline and remove empties
-        stop_words = re.split(" |\n|\r\n", tagger_object.stop_words)
-        stop_words = [stop_word for stop_word in stop_words if stop_word]
+
+        stop_words = load_stop_words(tagger_object.stop_words)
 
         # get scoring function
         if tagger_object.scoring_function != "default":
@@ -310,7 +311,10 @@ def load_tagger(tagger_id: int, lemmatize: bool = False, use_logger: bool = True
     else:
         lemmatizer = None
     # create text processor object for tagger
-    stop_words = tagger_object.stop_words.split(' ')
+
+    # Load stop words
+    stop_words = load_stop_words(tagger_object.stop_words)
+
     # load embedding
     if tagger_object.embedding:
         embedding = W2VEmbedding()
@@ -527,3 +531,4 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
         logging.getLogger(ERROR_LOGGER).exception(e)
         error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
         tagger_object.task.add_error(error_message)
+        tagger_object.task.update_status(Task.STATUS_FAILED)

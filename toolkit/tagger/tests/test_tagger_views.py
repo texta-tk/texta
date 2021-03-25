@@ -119,8 +119,7 @@ class TaggerViewTests(APITransactionTestCase):
         self.run_tag_doc_with_lemmatization()
         self.run_tag_random_doc()
         self.run_stop_word_list()
-        self.run_stop_word_add()
-        self.run_stop_word_replace()
+        self.run_stop_word_add_and_replace()
         self.run_list_features()
         self.run_multitag_text()
         self.run_model_retrain()
@@ -163,7 +162,8 @@ class TaggerViewTests(APITransactionTestCase):
                     "classifier": classifier_opt,
                     "maximum_sample_size": 500,
                     "negative_multiplier": 1.0,
-                    "score_threshold": 0.1
+                    "score_threshold": 0.1,
+                    "stop_words": ["asdfghjkl"]
                 }
                 # as lemmatization is slow, do it only once
                 lemmatize = False
@@ -288,8 +288,8 @@ class TaggerViewTests(APITransactionTestCase):
 
     def run_tag_text_result_check(self, test_tagger_ids: List[int]):
         """Tests the endpoint to check if the tagger result corresponds to the input text."""
-        payload_pos = {"text": "This is some loll test text for the Tagger Test loll"}
-        payload_neg = {"text": "asdssj kkks kkkkhhhhh fhfhhfdja jsdksjk"}
+        payload_pos = {"text": "This is some test text for the Tagger Test loll"}
+        payload_neg = {"text": "This is some test text for the Tagger Test"}
 
         payloads = {True: payload_pos, False: payload_neg}
 
@@ -301,7 +301,7 @@ class TaggerViewTests(APITransactionTestCase):
 
                 self.assertEqual(response.status_code, status.HTTP_200_OK)
                 self.assertEqual(response.data['result'], label)
-                print_output("Checking prediction results", f"Expected label: {label}; Predicted label: {response.data['result']}")
+
 
     def run_tag_text_with_lemmatization(self):
         """Tests the endpoint for the tag_text action"""
@@ -395,38 +395,42 @@ class TaggerViewTests(APITransactionTestCase):
             self.assertTrue('stop_words' in response.data)
 
 
-    def run_stop_word_add(self):
+    def run_stop_word_add_and_replace(self):
         """Tests the endpoint for the stop_word_add action"""
         for test_tagger_id in self.test_tagger_ids:
             url = f'{self.url}{test_tagger_id}/stop_words/'
-            payload = {"text": "stopsõna"}
+            payload = {'stop_words': ['stopsõna']}
             response = self.client.post(url, payload, format='json')
-            print_output('run_stop_word_add:response.data', response.data)
+            print_output('run_stop_word_add_and_replace:add_new:response.data', response.data)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
             self.assertTrue('stop_words' in response.data)
             self.assertTrue('stopsõna' in response.data['stop_words'])
 
-
-    def run_stop_word_replace(self):
-        for test_tagger_id in self.test_tagger_ids:
-            """Tests the endpoint for the stop_word_remove action"""
-            # First add stop_words
-            url = f'{self.url}{test_tagger_id}/stop_words/'
-            payload = {"text": "stopsõna"}
+            # Add new stop words to the existing one
+            payload = {'stop_words': ['stopsõna2', 'stopsõna3'], 'overwrite_existing': False}
             response = self.client.post(url, payload, format='json')
-
-            # Then replace them
-            payload = {"text": "sõnastop"}
-            response = self.client.post(url, payload, format='json')
-            print_output('run_stop_word_replace:response.data', response.data)
+            print_output('run_stop_word_add_and_replace:append_to_current_list:response.data', response.data)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-            # Check if response data is not empty, but a result instead
+            # Check if all the added stop words are present in response data
             self.assertTrue(response.data)
             self.assertTrue('stop_words' in response.data)
-            self.assertTrue('stopsõna' not in response.data['stop_words'])
-            self.assertTrue('sõnastop' in response.data['stop_words'])
+            self.assertTrue('stopsõna' in response.data['stop_words'])
+            self.assertTrue('stopsõna2' in response.data['stop_words'])
+            self.assertTrue('stopsõna3' in response.data['stop_words'])
+
+            # Add new stop words and overwrite the existing ones
+            payload = {'stop_words': ['stopsõna4'], 'overwrite_existing': True}
+            response = self.client.post(url, payload, format='json')
+            print_output('run_stop_word_add_and_replace:overwrite_existing:response.data', response.data)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            # Check if all the added stop words are present in response data
+            self.assertTrue(response.data)
+            # Check if the old stop words are replaced
+            self.assertTrue('stop_words' in response.data)
+            self.assertTrue('stopsõna4' in response.data['stop_words'])
+            self.assertFalse('stopsõna' in response.data['stop_words'])
 
 
     def run_multitag_text(self):
@@ -503,7 +507,7 @@ class TaggerViewTests(APITransactionTestCase):
         self.assertTrue(TEST_MATCH_TEXT in feature_dict)
         # add stop word before retraining
         url = f'{self.url}{test_tagger_id}/stop_words/'
-        payload = {"text": TEST_MATCH_TEXT}
+        payload = {"stop_words": [TEST_MATCH_TEXT], 'overwrite_existing': True}
         response = self.client.post(url, payload, format='json')
         # retrain tagger
         url = f'{self.url}{test_tagger_id}/retrain_tagger/'

@@ -16,7 +16,7 @@ from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, SerializerNotValid
-from toolkit.helper_functions import add_finite_url_to_feedback
+from toolkit.helper_functions import add_finite_url_to_feedback, load_stop_words
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import (
     GeneralTextSerializer,
@@ -30,7 +30,8 @@ from toolkit.tagger.serializers import (
     TaggerTagDocumentSerializer,
     TaggerTagTextSerializer,
     TaggerMultiTagSerializer,
-    ApplyTaggerSerializer
+    ApplyTaggerSerializer,
+    StopWordSerializer
     )
 from toolkit.tagger.tasks import apply_tagger, save_tagger_results, start_tagger_task, train_tagger_task, apply_tagger_to_index
 from toolkit.tagger.validators import validate_input_document
@@ -78,7 +79,8 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         tagger: Tagger = serializer.save(
             author=self.request.user,
             project=project,
-            fields=json.dumps(serializer.validated_data['fields'])
+            fields=json.dumps(serializer.validated_data['fields']),
+            stop_words=json.dumps(serializer.validated_data.get('stop_words', []), ensure_ascii=False)
         )
 
         for index in Index.objects.filter(name__in=indices, is_open=True):
@@ -127,23 +129,36 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         return Response(feature_info, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get', 'post'], serializer_class=GeneralTextSerializer)
+    @action(detail=True, methods=['get', 'post'], serializer_class=StopWordSerializer)
     def stop_words(self, request, pk=None, project_pk=None):
         """Adds stop word to Tagger model. Input Text is a string of space separated words, eg 'word1 word2 word3'"""
         tagger_object = self.get_object()
+
+        existing_stop_words = load_stop_words(tagger_object.stop_words)
+
         if self.request.method == 'GET':
-            success = {'stop_words': tagger_object.stop_words}
+            success = {'stop_words': existing_stop_words}
             return Response(success, status=status.HTTP_200_OK)
+
         elif self.request.method == 'POST':
-            serializer = GeneralTextSerializer(data=request.data)
+            serializer = StopWordSerializer(data=request.data)
 
             # check if valid request
             if not serializer.is_valid():
                 raise SerializerNotValid(detail=serializer.errors)
 
-            new_stop_words = serializer.validated_data['text']
+            new_stop_words = serializer.validated_data['stop_words']
+            overwrite_existing = serializer.validated_data['overwrite_existing']
+
+            if not overwrite_existing:
+                # Add previous stopwords to the new ones
+                new_stop_words+=existing_stop_words
+
+            # Remove duplicates
+            new_stop_words = list(set(new_stop_words))
+
             # save tagger object
-            tagger_object.stop_words = new_stop_words
+            tagger_object.stop_words = json.dumps(new_stop_words)
             tagger_object.save()
 
             return Response({"stop_words": new_stop_words}, status=status.HTTP_200_OK)

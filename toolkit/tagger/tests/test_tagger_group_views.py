@@ -157,7 +157,8 @@ class TaggerGroupViewTests(APITransactionTestCase):
                 "feature_selector": "SVM Feature Selector",
                 "maximum_sample_size": 500,
                 "negative_multiplier": 1.0,
-                "indices": [{"name": TEST_INDEX}]
+                "indices": [{"name": TEST_INDEX}],
+                "stop_words": ["asdfghjkl"]
             }
         }
         response = self.client.post(self.url, payload, format='json')

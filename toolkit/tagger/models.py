@@ -36,7 +36,7 @@ class Tagger(models.Model):
     indices = models.ManyToManyField(Index)
     fields = models.TextField(default=json.dumps([]))
     embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
-    stop_words = models.TextField(default='')
+    stop_words = models.TextField(default="[]")
     vectorizer = models.CharField(default=choices.DEFAULT_VECTORIZER, max_length=MAX_DESC_LEN)
     classifier = models.CharField(default=choices.DEFAULT_CLASSIFIER, max_length=MAX_DESC_LEN)
     negative_multiplier = models.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER, blank=True)
@@ -54,7 +54,7 @@ class Tagger(models.Model):
 
     model = models.FileField(null=True, verbose_name='', default=None)
     model_size = models.FloatField(default=None, null=True)
-    plot = models.FileField(upload_to='data/media', null=True, verbose_name='')
+    plot = models.FileField(upload_to="data/media", null=True, verbose_name="")
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
 
