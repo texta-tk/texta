@@ -62,12 +62,13 @@ class DataSample:
 
 
     @staticmethod
-    def _create_queries(fact_name, tags):
+    def _create_queries(fact_name, tags, sub_query):
         """Creates queries for finding documents for each tag."""
         queries = []
         for tag in tags:
             query = Query()
             query.add_fact_filter(fact_name, tag)
+            query.add_sub_query(sub_query)
             queries.append(query.query)
         return queries
 
@@ -88,18 +89,18 @@ class DataSample:
         min_count = 0
         if hasattr(self.tagger_object, 'fact_name'):
             fact_name = self.tagger_object.fact_name
-
+        query = json.loads(self.tagger_object.query)
         if fact_name:
             # retrieve class names using fact_name field
             if hasattr(self.tagger_object, 'minimum_sample_size'):
                 min_count = self.tagger_object.minimum_sample_size
             class_names = self._get_tags(fact_name, min_count)
-            queries = self._create_queries(fact_name, class_names)
+            queries = self._create_queries(fact_name, class_names, query)
         else:
             # use description as class name for binary decisions
             class_names = ['true']
             # if fact name not present, use query provided
-            queries = [json.loads(self.tagger_object.query)]
+            queries = [query]
         return class_names, queries
 
 
@@ -131,6 +132,7 @@ class DataSample:
 
 
     def _get_class_sample(self, query, class_name):
+        print(query)
         """Returns sample for given class"""
         # limit the docs according to max sample size & feedback size
         limit = int(self.tagger_object.maximum_sample_size)

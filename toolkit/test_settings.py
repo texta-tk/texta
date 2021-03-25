@@ -29,6 +29,7 @@ TEST_INTEGER_FIELD = "client_ip"
 TEST_FACT_NAME = "TEEMA"
 TEST_MATCH_TEXT = "loll"
 TEST_QUERY = {"query": {"match": {TEST_FIELD: {"query": TEST_MATCH_TEXT}}}}
+TEST_EMPTY_QUERY = {"query": {"match_all": {}}}
 
 TEST_DATASETS = (
     os.path.join(TEST_DATA_DIR, "import_test_data.csv"),

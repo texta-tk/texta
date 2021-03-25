@@ -1,9 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# Create your models here
+from toolkit.constants import MAX_DESC_LEN
+
+
 class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    # define the application user is used for (e.g. "toolkit" and "law")
+    application = models.CharField(max_length=MAX_DESC_LEN, default="toolkit")
 
     def __str__(self):
-        return f'Profile - {self.user.username}'
+        return f"Profile - {self.user.username}"
