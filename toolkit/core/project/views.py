@@ -378,7 +378,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             raise SerializerNotValid(detail=serializer.errors)
 
         project_object: Project = self.get_object()
-        indices = [index["name"] for index in serializer.validated_data["indices"]]
+        indices = serializer.validated_data["indices"]
         indices = project_object.get_available_or_all_project_indices(indices)
         if not indices:
             return Response([])

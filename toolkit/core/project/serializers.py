@@ -206,7 +206,7 @@ class ProjectSuggestFactValuesSerializer(serializers.Serializer):
                                      help_text=f'Number of suggestions. Default: {choices.DEFAULT_SUGGESTION_LIMIT}.')
     startswith = serializers.CharField(help_text=f'The string to autocomplete fact values with.', allow_blank=True)
     fact_name = serializers.CharField(help_text='Fact name from which to suggest values.')
-    indices = IndexSerializer(many=True, default=[], help_text="Which indices to use for the fact search.")
+    indices = serializers.ListField(child=serializers.CharField(), default=[], required=False, help_text="Which indices to use for the fact search.")
 
 
 class CountIndicesSerializer(serializers.Serializer):
