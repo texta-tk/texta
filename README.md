@@ -66,27 +66,27 @@ Running Docker with GPU support requires NVIDIA Container Toolkit to be installe
   shared amongst multiple instances. Best to give this a simple number (Default: 1).
 * TEXTA_ADMIN_PASSWORD - Password of the admin user created on first run.
 * TEXTA_USE_CSRF - Disable CSRF for integration tests.
-* TEXTA_CELERY_ALWAYS_EAGER - Whether to use Celerys async features or not, useful for testing purposes locally. By
-  default False.
-* TEXTA_SHORT_TASK_WORKERS - Number of processes available for short term tasks (default=3).
-* TEXTA_LONG_TASK_WORKERS - Number of processes available for long term tasks (default=5)
-* TEXTA_MLP_TASK_WORKERS - Number of processes available for MLP based tasks (default=2)
+* TEXTA_CELERY_ALWAYS_EAGER - Whether to use Celerys async features or not, useful for testing purposes locally. (Default: False)
+* TEXTA_SHORT_TASK_WORKERS - Number of processes available for short term tasks (Default: 3).
+* TEXTA_LONG_TASK_WORKERS - Number of processes available for long term tasks (Default: 5).
+* TEXTA_MLP_TASK_WORKERS - Number of processes available for MLP based tasks (Default: 2).
 * TEXTA_RELATIVE_MODELS_DIR - Relative path of the directory in which all the different types of models are stored in.
-  Defaults to "/data/models".
+  (Default: "/data/models").
 * TEXTA_LANGUAGE_CODES - Comma separated string of Stanza supported language codes to use for Multilingual Processing.
-  Defaults to "et,en,ru".
+  (Default: "et,en,ru").
 * TEXTA_MLP_MODEL_DIRECTORY_PATH - Relative path to the directory into which Stanza models will be stored under the "
   stanza" folder (setting this to ./home/texta will create ./home/texta/stanza which contains subfolders for every
-  language like ./home/texta/stanza/et etc). Defaults to "./data/models".
+  language like ./home/texta/stanza/et etc). (Default: "./data/models").
 * TEXTA_ALLOW_BERT_MODEL_DOWNLOADS - Boolean flag indicating if the users can download additional BERT models.
-  Default to False.
+  (Default: False).
 * TEXTA_BERT_MODEL_DIRECTORY_PATH - Relative path to the directory into which pretrained and fine-tuned BERT models will
   be stored under the "bert_tagger" folder. (setting this to ./home/texta will create ./home/texta/bert_tagger/pretrained/
   which contains subfolders for every downloaded bert more like ./home/texta/bert_model/pretrained/bert-base-multilingual-cased
-  etc and ./home/texta/bert_model/fine_tuned/ which will store fine-tuned BERT models. Defaults to "./data/models".
+  etc and ./home/texta/bert_model/fine_tuned/ which will store fine-tuned BERT models. (Default: "./data/models").
 * TEXTA_BERT_MODELS - Comma seprated string of pretrained BERT models to download.
-  Default to "bert-base-multilingual-cased,bert-base-uncased,EMBEDDIA/finest-bert"
-* SKIP_BERT_RESOURCES - If set "True", skips downloading pretrained BERT models. Defaults to False.
+  (Default: "bert-base-multilingual-cased,bert-base-uncased,EMBEDDIA/finest-bert").
+* SKIP_BERT_RESOURCES - If set "True", skips downloading pretrained BERT models. (Default: False).
+* TEXTA_EVALUATOR_MEMORY_BUFFER_GB - The minimum amount of memory that should be left free while using the evaluator, unit = GB. (Default = 50% of available_memory)
 
 ## External services
 

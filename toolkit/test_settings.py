@@ -9,6 +9,7 @@ TEST_INDEX = "texta_test_index"
 TEST_DOCTYPE = "texta_test_index"
 TEST_INDEX_REINDEX = f"{TEST_INDEX}_reindexed"
 TEST_INDEX_LARGE = "texta_test_index_large"
+TEST_INDEX_EVALUATOR = "texta_test_index_evaluator"
 REINDEXER_TEST_INDEX = "reindexer_test_index"
 
 REINDEXER_VALIDATION_TEST_INDEX_1 = "test_*_index"

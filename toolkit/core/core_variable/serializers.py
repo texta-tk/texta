@@ -9,7 +9,7 @@ from ..health.utils import get_elastic_status
 
 
 class CoreVariableSerializer(serializers.HyperlinkedModelSerializer):
-    
+
     name = serializers.ChoiceField(
         help_text="Name of the core variable.",
         choices=CORE_VARIABLE_CHOICES,
@@ -19,7 +19,7 @@ class CoreVariableSerializer(serializers.HyperlinkedModelSerializer):
     value = serializers.CharField(
         help_text="Value of the core variable.",
         required=False)
-    
+
     env_value = serializers.SerializerMethodField()
 
 
@@ -49,6 +49,12 @@ class CoreVariableSerializer(serializers.HyperlinkedModelSerializer):
         service_alive = True
         if name == "TEXTA_ES_URL":
             service_alive = get_elastic_status(ES_URL=value)["alive"]
+        if name == "TEXTA_EVALUATOR_MEMORY_BUFFER_GB":
+            if value:
+                try:
+                    float_value = float(value)
+                except ValueError:
+                    raise serializers.ValidationError(f"The value inside the string should be either a float or an integer.")
 
         # if not alive, raise Error
         if not service_alive:

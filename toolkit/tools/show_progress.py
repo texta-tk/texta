@@ -30,8 +30,8 @@ class ShowProgress(object):
         if amount == 0:
             return
         self.n_count += amount
-        percentage = (100.0 * self.n_count) / self.n_total
-
+        percentage = 100.0 * (self.n_count / self.n_total)
+    
         self.update_view(percentage)
 
     @avoid_db_timeout

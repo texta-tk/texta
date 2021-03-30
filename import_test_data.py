@@ -28,11 +28,18 @@ parser.add_argument(
     help='The final index name of the testing index, that will be added to Elasticsearch. If an old index exists, IT WILL BE DELETED!'
 )
 parser.add_argument(
+    '-ei',
+    type=str,
+    default='texta_test_index_evaluator',
+    help='The final index name of the evaluation testing index, that will be added to Elasticsearch. If an old index exists, IT WILL BE DELETED!'
+)
+parser.add_argument(
     '-lg',
     type=bool,
     default=False,
     help='Also import larger dataset for performance testing.'
 )
+
 
 args = parser.parse_args()
 
@@ -40,6 +47,7 @@ HOST = args.es
 LARGE = args.lg
 
 url_prefix = "https://git.texta.ee/texta/texta-resources/raw/master/tk_test_data/"
+
 
 dataset_params = {
     "lg": {
@@ -51,6 +59,11 @@ dataset_params = {
         "index": args.i,
         "url": url_prefix + "elastic_data/texta_test_index.zip",
         "file_name": "texta_test_index"
+    },
+    "ev": {
+        "index": args.ei,
+        "url": url_prefix + "elastic_data/texta_test_index_evaluator.zip",
+        "file_name": "texta_test_index_evaluator"
     },
     "collection": {
         "url": url_prefix + "import_data/import_test_data.zip"
@@ -116,6 +129,8 @@ def main():
     try:
         print("Processing small dataset:")
         import_docs(dataset_params["sm"])
+        print("Processing evaluator dataset:")
+        import_docs(dataset_params["ev"])
         if LARGE is True:
             print("Processing large dataset:")
             import_docs(dataset_params["lg"])

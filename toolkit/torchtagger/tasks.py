@@ -222,3 +222,4 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
         logging.getLogger(ERROR_LOGGER).exception(e)
         error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
         tagger_object.task.add_error(error_message)
+        tagger_object.task.update_status(Task.STATUS_FAILED)
