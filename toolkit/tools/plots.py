@@ -1,12 +1,14 @@
 from itertools import product
 from io import BytesIO
 from django.core.files.base import ContentFile
+from typing import List
 import matplotlib
-
+import math
 # For non-GUI rendering
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import numpy as np
+
 
 
 def save_plot(plt):
@@ -37,7 +39,7 @@ def create_tagger_plot(statistics: dict):
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
         plt.title('Receiver operating characteristic')
-        plt.legend(loc="lower right")
+        plt.legend(loc='lower right')
     # plot confusion matrix
     # set values based on number of classes
     if len(classes) == 2:
@@ -55,10 +57,45 @@ def create_tagger_plot(statistics: dict):
     thresh = cm.max() / 1.5
     for i, j in product(range(cm.shape[0]), range(cm.shape[1])):
         plt.text(j, i, format(cm[i, j], fmt),
-                 horizontalalignment="center",
-                 color="white" if cm[i, j] > thresh else "black")
+                 horizontalalignment='center',
+                 color='white' if cm[i, j] > thresh else 'black')
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
+    plt.tight_layout()
+    # save & return
+    return save_plot(plt)
+
+
+def create_confusion_plot(confusion_matrix: List[List[int]], classes: List[str]):
+    """
+    Generate confusion matrix plot.
+    """
+    # Scale the size of the figure depending on the number of labels
+    cm_size_multiplier = 1 + math.ceil(len(classes)/5)
+
+    plt.figure(figsize=(2*cm_size_multiplier, 2*cm_size_multiplier))
+
+    cm = np.asarray(confusion_matrix, dtype='int64')
+
+    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.title('Confusion matrix', size=12)
+    tick_marks = np.arange(len(classes))
+
+    # Scale xticks rotation based on label lengths
+    longest_label_len = len(max(classes, key=len))
+    rot = 45 if (longest_label_len <= 10  or len(classes) == 2) else 90
+
+    plt.xticks(tick_marks, classes, rotation=rot, size=10)
+    plt.yticks(tick_marks, classes, size=10)
+    fmt = 'd'
+    thresh = cm.max() / 1.5
+    for i, j in product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], fmt),
+                 horizontalalignment='center',
+                 color='white' if cm[i, j] > thresh else 'black')
+
+    plt.ylabel('True label', size=11)
+    plt.xlabel('Predicted label', size=11)
     plt.tight_layout()
     # save & return
     return save_plot(plt)

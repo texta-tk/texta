@@ -3,6 +3,7 @@ import os
 import pathlib
 import re
 import json
+import psutil
 from functools import partial
 from typing import List
 
@@ -11,6 +12,7 @@ from django.core.exceptions import PermissionDenied
 from django.views.static import serve
 from django.db import connections
 
+from rest_framework import serializers
 
 def avoid_db_timeout(func):
     def inner_wrapper(*args, **kwargs):
@@ -64,7 +66,7 @@ def add_finite_url_to_feedback(decision_dict, request):
     return decision_dict
 
 
-def get_core_setting(setting_name):
+def get_core_setting(setting_name: str):
     """
     Retrieves value for a variable from core settings.
     :param: str variable_name: Name for the variable whose value will be returned.
@@ -86,6 +88,37 @@ def get_core_setting(setting_name):
             return variable_match[0].value
     except Exception as e:
         return CORE_SETTINGS[setting_name]
+
+
+def set_core_setting(setting_name: str, setting_value: str):
+    """
+    Set core settings outside of the API.
+    :param: str setting name: Name of the variable to update.
+    :param: str setting_value: New Value of the variable.
+    """
+    from toolkit.core.core_variable.models import CoreVariable
+    from toolkit.core.core_variable.serializers import CoreVariableSerializer
+
+    # As the new param doesn't actually get passed through the serializer,
+    # check if the type is correct
+    if not isinstance(setting_value, str):
+        raise serializers.ValidationError(f"The type of the value should be {type('')}, not {type(setting_value)}.")
+
+    data = {"name": setting_name, "value": setting_value}
+
+    validated_data = CoreVariableSerializer().validate(data)
+    variable_matches = CoreVariable.objects.filter(name=validated_data["name"])
+
+    if not variable_matches:
+        # Add a new variable
+        new_variable = CoreVariable(name=validated_data["name"], value=validated_data["value"])
+        new_variable.save()
+
+    else:
+        # Change existing variable
+        variable_match = variable_matches[0]
+        variable_match.value = validated_data["value"]
+        variable_match.save()
 
 
 @login_required
@@ -165,6 +198,18 @@ def load_stop_words(stop_words_string: str) -> List[str]:
     except:
         stop_words = load_stop_words_from_string(stop_words_string)
     return stop_words
+
+
+def calculate_memory_buffer(memory_buffer: str = "", ratio: float = 0.5, unit: str="gb"):
+    """
+    Calculate memory buffer based on available memory and given ratio
+    if the buffer isn't specified, otherwise return the buffer.
+    """
+    unit_map = {"gb": 1024**3, "mb": 1024**2, "kb": 1024**1, "b": 1024**0}
+    if not memory_buffer:
+        available_memory = psutil.virtual_memory().available / unit_map[unit]
+        memory_buffer = available_memory*ratio
+    return float(memory_buffer)
 
 
 def parse_bool_env(env_name: str, default: bool):
