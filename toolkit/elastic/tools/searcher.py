@@ -223,84 +223,100 @@ class ElasticSearcher:
     # batch search makes an inital search, and then keeps pulling batches of results, until none are left.
     @elastic_connection
     def scroll(self):
-        page = self.core.es.search(index=self.indices, body=self.query, scroll=self.scroll_timeout, size=self.scroll_size)
-        scroll_id = page['_scroll_id']
-        current_page = 0
-        # set page size
-        page_size = len(page['hits']['hits'])
-        num_scrolled = 0
-        # set score threshold
-        if page['hits']['max_score']:
-            lowest_allowed_score = page['hits']['max_score'] * self.score_threshold
-        else:
-            lowest_allowed_score = self.score_threshold
-        # set scroll break default
-        scroll_break = False
-        # iterate through scroll
-        while page_size > 0 and scroll_break is False:
-            # process output
-            if self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID, self.OUT_TEXT, self.OUT_TEXT_WITH_ID):
-                if self.callback_progress:
-                    self.callback_progress.update(page_size)
-                for hit in page['hits']['hits']:
-                    # if scroll limit reached, break the scroll
-                    if self.scroll_limit and num_scrolled >= self.scroll_limit:
-                        scroll_break = True
-                        break
-                    # if score too low, break scroll
-                    elif hit['_score'] < lowest_allowed_score:
-                        scroll_break = True
-                        break
-                    if hit['_id'] not in self.ignore_ids:
-                        num_scrolled += 1
-                        parsed_doc = self._parse_doc(hit)
-                        if self.output == self.OUT_TEXT:
-                            for field in parsed_doc.values():
-                                if self.text_processor:
-                                    field = self.text_processor.process(field)
-                                    for text in field:
-                                        yield " ".join(text)
-                                else:
-                                    yield field
+        scroll_id = None
 
+        try:
 
-                        elif self.output == self.OUT_TEXT_WITH_ID:
-                            document = {}
-                            for key, value in parsed_doc.items():
-                                if key in self.field_data:
-                                    processed_field = self.text_processor.process(value)
-                                    document[key] = processed_field
-                            yield hit["_id"], document
+            # Zero-out the progress in case the same ElasticSearch instance is used twice while iterating through the dataset
+            if self.callback_progress:
+                self.callback_progress.update_view(0)
+                self.callback_progress.n_count = 0
 
-
-                        elif self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID):
-                            if self.text_processor:
-                                parsed_doc = {k: '\n'.join(self.text_processor.process(v)[0]) for k, v in parsed_doc.items()}
-
-                            if self.output == self.OUT_DOC_WITH_ID:
-                                parsed_doc['_id'] = hit['_id']
-                            yield parsed_doc
-
-            # return raw hit
-            elif self.output == self.OUT_RAW:
-
-                if self.callback_progress:
-                    self.callback_progress.update(page_size)
-
-                # filter page by score
-                page = [doc for doc in page["hits"]["hits"] if doc['_score'] > lowest_allowed_score]
-                # if score too low, break scroll
-                if not page:
-                    scroll_break = True
-                    break
-                # filter by ignored ids
-                page = [doc for doc in page if doc['_id'] not in self.ignore_ids]
-                if page:
-                    num_scrolled += len(page)
-                    yield page
-
-            # get new page
-            page = self.core.es.scroll(scroll_id=scroll_id, scroll=self.scroll_timeout)
+            page = self.core.es.search(index=self.indices, body=self.query, scroll=self.scroll_timeout, size=self.scroll_size)
             scroll_id = page['_scroll_id']
+            current_page = 0
+            # set page size
             page_size = len(page['hits']['hits'])
-            current_page += 1
+            num_scrolled = 0
+            # set score threshold
+            if page['hits']['max_score']:
+                lowest_allowed_score = page['hits']['max_score'] * self.score_threshold
+            else:
+                lowest_allowed_score = self.score_threshold
+            # set scroll break default
+            scroll_break = False
+            # iterate through scroll
+            while page_size > 0 and scroll_break is False:
+                # process output
+                if self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID, self.OUT_TEXT, self.OUT_TEXT_WITH_ID):
+                    if self.callback_progress:
+                        self.callback_progress.update(page_size)
+                    for hit in page['hits']['hits']:
+                        # if scroll limit reached, break the scroll
+                        if self.scroll_limit and num_scrolled >= self.scroll_limit:
+                            scroll_break = True
+                            break
+                        # if score too low, break scroll
+                        elif hit['_score'] < lowest_allowed_score:
+                            scroll_break = True
+                            break
+                        if hit['_id'] not in self.ignore_ids:
+                            num_scrolled += 1
+                            parsed_doc = self._parse_doc(hit)
+                            if self.output == self.OUT_TEXT:
+                                for field in parsed_doc.values():
+                                    if self.text_processor:
+                                        field = self.text_processor.process(field)
+                                        for text in field:
+                                            yield " ".join(text)
+                                    else:
+                                        yield field
+
+
+                            elif self.output == self.OUT_TEXT_WITH_ID:
+                                document = {}
+                                for key, value in parsed_doc.items():
+                                    if key in self.field_data:
+                                        processed_field = self.text_processor.process(value)
+                                        document[key] = processed_field
+                                yield hit["_id"], document
+
+
+                            elif self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID):
+                                if self.text_processor:
+                                    parsed_doc = {k: '\n'.join(self.text_processor.process(v)[0]) for k, v in parsed_doc.items()}
+
+                                if self.output == self.OUT_DOC_WITH_ID:
+                                    parsed_doc['_id'] = hit['_id']
+                                yield parsed_doc
+
+                # return raw hit
+                elif self.output == self.OUT_RAW:
+
+                    if self.callback_progress:
+                        self.callback_progress.update(page_size)
+
+                    # filter page by score
+                    page = [doc for doc in page["hits"]["hits"] if doc['_score'] > lowest_allowed_score]
+                    # if score too low, break scroll
+                    if not page:
+                        scroll_break = True
+                        break
+                    # filter by ignored ids
+                    page = [doc for doc in page if doc['_id'] not in self.ignore_ids]
+                    if page:
+                        num_scrolled += len(page)
+                        yield page
+
+                # get new page
+                page = self.core.es.scroll(scroll_id=scroll_id, scroll=self.scroll_timeout)
+                scroll_id = page['_scroll_id']
+                page_size = len(page['hits']['hits'])
+                current_page += 1
+
+            if scroll_id:
+                self.core.es.clear_scroll(body={'scroll_id': scroll_id})
+        except Exception as e:
+            if scroll_id:
+                self.core.es.clear_scroll(body={'scroll_id': scroll_id})
+            raise e

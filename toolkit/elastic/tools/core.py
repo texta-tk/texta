@@ -82,9 +82,13 @@ class ElasticCore:
 
 
     @elastic_connection
-    def delete_index(self, index):
-        # returns either {'acknowledged': True} or a detailed error response
-        return self.es.indices.delete(index=index, ignore=[400, 404])
+    def delete_index(self, index: str, ignore=[400, 404]) -> dict:
+        """
+        :param ignore: Which status code responses should not throw an exception.
+        :param index: Name of single index to delete or a coma separated list of indices to deleted.
+        :returns: Either {'acknowledged': True} or a detailed error response.
+        """
+        return self.es.indices.delete(index=index, ignore=ignore)
 
 
     @elastic_connection
@@ -323,7 +327,7 @@ class ElasticCore:
 
 
     @elastic_connection
-    def get_index_stats(self, indices = "_all"):
+    def get_index_stats(self, indices="_all"):
         store = {}
 
         # Get size of indices.

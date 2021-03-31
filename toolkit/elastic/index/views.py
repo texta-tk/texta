@@ -1,30 +1,22 @@
-from elasticsearch_dsl import Mapping
-import json
-import uuid
-
 import rest_framework.filters as drf_filters
 from django.db import transaction
 from django.http import JsonResponse
 from django_filters import rest_framework as filters
+from elasticsearch_dsl import Mapping
 from rest_auth import views
-from django.urls import reverse
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.core.project.models import Project
-from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.exceptions import ElasticIndexAlreadyExists
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import (
     AddMappingToIndexSerializer,
     AddTextaFactsMapping,
-    IndexSerializer,
+    IndexBulkDeleteSerializer, IndexSerializer,
 )
-from toolkit.permissions.project_permissions import IsSuperUser, ProjectResourceAllowed
-from toolkit.tools.common_utils import write_file_to_disk, delete_file
-from toolkit.helper_functions import get_core_setting
-from toolkit.settings import RELATIVE_PROJECT_DATA_PATH
+from toolkit.elastic.tools.core import ElasticCore
+from toolkit.permissions.project_permissions import IsSuperUser
 
 
 class IndicesFilter(filters.FilterSet):
@@ -40,6 +32,7 @@ class IndicesFilter(filters.FilterSet):
 
 class ElasticGetIndices(views.APIView):
     permission_classes = (IsSuperUser,)
+
 
     def get(self, request):
         """
@@ -143,6 +136,24 @@ class IndexViewSet(mixins.CreateModelMixin,
             es.delete_index(index_name)
             Index.objects.filter(pk=pk).delete()
             return Response({"message": f"Deleted index {index_name} from Elasticsearch!"})
+
+
+    @action(detail=False, methods=['post'], serializer_class=IndexBulkDeleteSerializer)
+    def bulk_delete(self, request, project_pk=None):
+        serializer: IndexBulkDeleteSerializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        # Initialize Elastic requirements.
+        ec = ElasticCore()
+        # Get the index names.
+        ids = serializer.validated_data["ids"]
+        objects = Index.objects.filter(pk__in=ids)
+        index_names = [item.name for item in objects]
+        # Ensure deletion on both Elastic and DB.
+        if index_names:
+            ec.delete_index(",".join(index_names))
+        deleted = objects.delete()
+        info = {"num_deleted": deleted[0], "deleted_types": deleted[1]}
+        return Response(info, status=status.HTTP_200_OK)
 
 
     @action(detail=False, methods=['post'])
