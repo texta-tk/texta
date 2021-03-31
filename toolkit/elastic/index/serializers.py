@@ -36,6 +36,7 @@ class IndexSerializer(serializers.ModelSerializer):
         ]
     )
 
+
     def get_url(self, obj):
         default_version = REST_FRAMEWORK.get("DEFAULT_VERSION")
 
@@ -47,6 +48,11 @@ class IndexSerializer(serializers.ModelSerializer):
         else:
             return None
 
+
     class Meta:
         model = Index
         fields = "__all__"
+
+
+class IndexBulkDeleteSerializer(serializers.Serializer):
+    ids = serializers.ListSerializer(child=serializers.IntegerField(), default=[])

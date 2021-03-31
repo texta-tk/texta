@@ -38,7 +38,6 @@ class EmbeddingViewTests(TransactionTestCase):
         self.run_model_export_import()
         self.create_embedding_with_empty_fields()
         self.create_embedding_then_delete_embedding_and_created_model()
-        
 
 
     def tearDown(self):
@@ -68,6 +67,8 @@ class EmbeddingViewTests(TransactionTestCase):
         self.assertTrue(created_embedding.task is not None)
         # Check if Embedding gets trained and completed
         self.assertEqual(created_embedding.task.status, Task.STATUS_COMPLETED)
+        self.assertTrue(created_embedding.task.progress <= 100)
+
 
     def run_create_W2V_embedding_training_and_task_signal(self):
         """Tests the endpoint for a new W2V Embedding, and if a new Task gets created via the signal"""
@@ -95,6 +96,7 @@ class EmbeddingViewTests(TransactionTestCase):
         # Check if Embedding gets trained and completed
         self.assertEqual(created_embedding.task.status, Task.STATUS_COMPLETED)
 
+
     def run_create_fasttext_embedding_training_and_task_signal(self):
         """Tests the endpoint for a new FastText Embedding, and if a new Task gets created via the signal"""
         payload = {
@@ -120,6 +122,7 @@ class EmbeddingViewTests(TransactionTestCase):
         self.assertTrue(created_embedding.task is not None)
         # Check if Embedding gets trained and completed
         self.assertEqual(created_embedding.task.status, Task.STATUS_COMPLETED)
+
 
     def create_embedding_then_delete_embedding_and_created_model(self):
         payload = {
@@ -179,10 +182,11 @@ class EmbeddingViewTests(TransactionTestCase):
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
 
+
     def run_predict_with_all_lists_and_check_none_are_in_the_response(self):
         """Tests the endpoint for the predict action"""
         # Send only "text" in payload, because "output_size" should be 10 by default
-        payload = {"positives_used": ["jooksma", "hüppama"], "positives_unused": ["medal", "ujuma", "võistlus"], "negatives_used": ["tennis", "ujula"], "negatives_unused":  ["ronima"]}
+        payload = {"positives_used": ["jooksma", "hüppama"], "positives_unused": ["medal", "ujuma", "võistlus"], "negatives_used": ["tennis", "ujula"], "negatives_unused": ["ronima"]}
         predict_url = f'{self.url}{self.test_embedding_id}/predict_similar/'
         response = self.client.post(predict_url, json.dumps(payload), content_type='application/json')
         print_output('predict_with_all_lists_and_check_none_are_in_the_response:response.data', response.data)
@@ -194,8 +198,8 @@ class EmbeddingViewTests(TransactionTestCase):
         for list_name in payload.keys():
             for elem in payload[list_name]:
                 self.assertTrue(elem not in suggestions)
-        
-       
+
+
     def run_phrase(self):
         """Tests the endpoint for the predict action"""
         payload = {"text": "See on mingi eesti keelne tekst testimiseks"}
