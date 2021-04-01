@@ -372,14 +372,26 @@ class TaggerViewTests(APITransactionTestCase):
             test_tagger_object = Tagger.objects.get(pk=test_tagger_id)
             # pass if using HashingVectorizer as it does not support feature listing
             if test_tagger_object.vectorizer != 'Hashing Vectorizer':
-                list_features_url = f'{self.url}{test_tagger_id}/list_features/?size=10'
-                response = self.client.get(list_features_url)
+                list_features_get_url = f'{self.url}{test_tagger_id}/list_features/?size=10'
+                response = self.client.get(list_features_get_url)
                 print_output('test_list_features:response.data', response.data)
                 self.assertEqual(response.status_code, status.HTTP_200_OK)
                 # Check if response data is not empty, but a result instead
                 self.assertTrue(response.data)
                 self.assertTrue('features' in response.data)
+                self.assertTrue('total_features' in response.data)
+                self.assertTrue('showing_features' in response.data)
+                self.assertTrue(response.data['total_features'] >= response.data['showing_features'])
                 # Check if any features listed
+                self.assertTrue(len(response.data['features']) > 0)
+
+                list_features_post_url = f'{self.url}{test_tagger_id}/list_features/'
+                response = self.client.post(list_features_post_url, format="json", data={"size": 10})
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+                self.assertTrue('features' in response.data)
+                self.assertTrue('total_features' in response.data)
+                self.assertTrue('showing_features' in response.data)
+                self.assertTrue(response.data['total_features'] >= response.data['showing_features'])
                 self.assertTrue(len(response.data['features']) > 0)
 
 

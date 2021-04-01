@@ -75,6 +75,7 @@ class ApplyTaggerGroupSerializer(FieldParseSerializer, serializers.Serializer):
 class StopWordSerializer(serializers.Serializer):
     stop_words = serializers.ListField(child=serializers.CharField(required=False), required=True, help_text=f"List of stop words to add.")
     overwrite_existing = serializers.BooleanField(required=False, default=choices.DEFAULT_OVERWRITE_EXISTING_STOPWORDS, help_text=f"If enabled, overwrites all existing stop words, otherwise appends to the existing ones. Default: {choices.DEFAULT_OVERWRITE_EXISTING_STOPWORDS}.")
+    ignore_numbers = serializers.BooleanField(required=False, default=choices.DEFAULT_IGNORE_NUMBERS, help_text='If enabled, ignore all numbers as possible features.')
 
 class TagRandomDocSerializer(serializers.Serializer):
     indices = IndexSerializer(many=True, default=[])
@@ -105,7 +106,7 @@ class TaggerMultiTagSerializer(serializers.Serializer):
 
 
 class TaggerListFeaturesSerializer(serializers.Serializer):
-    size = serializers.IntegerField(default=100, help_text='Default: 100')
+    size = serializers.IntegerField(default=100, help_text='Number of features to display. Default: 100')
 
 
 class TaggerGroupTagTextSerializer(serializers.Serializer):
@@ -138,7 +139,8 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     score_threshold = serializers.FloatField(default=choices.DEFAULT_SCORE_THRESHOLD, help_text=f'Elasticsearch score threshold for filtering out irrelevant examples. All examples below first document\'s score * score threshold are ignored. Float between 0 and 1. Default: {choices.DEFAULT_SCORE_THRESHOLD}')
     snowball_language = serializers.ChoiceField(choices=get_snowball_choices(), default=choices.DEFAULT_SNOWBALL_LANGUAGE, help_text=f'Uses Snowball stemmer with specified language to normalize the texts. Default: {choices.DEFAULT_SNOWBALL_LANGUAGE}')
     scoring_function = serializers.ChoiceField(choices=choices.DEFAULT_SCORING_OPTIONS, default=choices.DEFAULT_SCORING_FUNCTION, required=False, help_text=f'Scoring function used while evaluating the results on dev set. Default: {choices.DEFAULT_SCORING_FUNCTION}')
-    stop_words = serializers.ListField(child=serializers.CharField(), default=[], required=False, help_text='Stop words to add. Default = [].')
+    stop_words = serializers.ListField(child=serializers.CharField(), default=[], required=False, help_text='Stop words to add. Default = [].',  write_only=True)
+    ignore_numbers = serializers.BooleanField(default=choices.DEFAULT_IGNORE_NUMBERS, required=False, help_text='If enabled, ignore all numbers as possible features.')
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
@@ -151,9 +153,9 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
         model = Tagger
         fields = ('id', 'url', 'author_username', 'description', 'query', 'fact_name', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
                   'maximum_sample_size', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score', 'snowball_language', 'scoring_function',
-                  'num_features', 'num_examples', 'confusion_matrix', 'plot', 'task', 'indices', 'tagger_groups', 'stop_words')
-        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'stop_words', 'num_examples', 'tagger_groups', 'confusion_matrix')
-        fields_to_parse = ('fields', 'stop_words')
+                  'num_features', 'num_examples', 'confusion_matrix', 'plot', 'task', 'indices', 'tagger_groups', 'ignore_numbers')
+        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'num_examples', 'tagger_groups', 'confusion_matrix')
+        fields_to_parse = ('fields',)
 
 
     def __init__(self, *args, **kwargs):
@@ -232,6 +234,7 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
                 'fields': json.loads(first_tagger.fields),
                 'vectorizer': first_tagger.vectorizer,
                 'classifier': first_tagger.classifier,
-                'stop_words': load_stop_words(first_tagger.stop_words)
+                'stop_words': load_stop_words(first_tagger.stop_words),
+                'ignore_numbers': first_tagger.ignore_numbers
             }
             return params
