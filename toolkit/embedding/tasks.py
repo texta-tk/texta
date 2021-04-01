@@ -45,8 +45,7 @@ def train_embedding(embedding_id):
                                     output=ElasticSearcher.OUT_TEXT)
         # create embedding object & train
         embedding = embedding_object.get_embedding()
-        # turn iterator into list as we don't want to lemmatize multiple times
-        embedding.train(list(sentences), use_phraser=use_phraser)
+        embedding.train(sentences, use_phraser=use_phraser)
 
         # close all db connections
         for conn in connections.all():
