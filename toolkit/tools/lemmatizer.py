@@ -25,7 +25,7 @@ class ElasticLemmatizer:
     def __init__(self, language="english"):
         self.core = ElasticCore()
         self.indices_client = IndicesClient(self.core.es)
-        self.splitter = TextSplitter()
+        self.splitter = TextSplitter(split_by="WORD_LIMIT")
         self.snowball_filter = {"type": "snowball", "language": language}
 
     def lemmatize(self, text):
