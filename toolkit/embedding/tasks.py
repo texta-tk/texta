@@ -7,11 +7,10 @@ from texta_tools.text_processor import TextProcessor
 from toolkit.base_tasks import BaseTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.tools.searcher import ElasticSearcher
+from toolkit.tools.lemmatizer import ElasticLemmatizer
 from toolkit.embedding.models import Embedding
-from toolkit.settings import (
-    CELERY_LONG_TERM_TASK_QUEUE,
-    RELATIVE_MODELS_PATH
-)
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
+
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.helper_functions import get_indices_from_object
 
@@ -30,17 +29,24 @@ def train_embedding(embedding_id):
         field_data = json.loads(embedding_object.fields)
         max_documents = embedding_object.max_documents
         use_phraser = embedding_object.use_phraser
+        snowball_language = embedding_object.snowball_language
+        # add stemmer if asked
+        if snowball_language:
+            snowball_lemmatizer = ElasticLemmatizer(language=snowball_language)
+        else:
+            snowball_lemmatizer = None
         # iterator for texts
         sentences = ElasticSearcher(query=json.loads(embedding_object.query),
                                     indices=indices,
                                     field_data=field_data,
                                     callback_progress=show_progress,
                                     scroll_limit=max_documents,
-                                    text_processor=TextProcessor(sentences=True, remove_stop_words=True, words_as_list=True),
+                                    text_processor=TextProcessor(sentences=True, remove_stop_words=True, words_as_list=True, lemmatizer=snowball_lemmatizer),
                                     output=ElasticSearcher.OUT_TEXT)
         # create embedding object & train
         embedding = embedding_object.get_embedding()
-        embedding.train(sentences, use_phraser=use_phraser)
+        # turn iterator into list as we don't want to lemmatize multiple times
+        embedding.train(list(sentences), use_phraser=use_phraser)
 
         # close all db connections
         for conn in connections.all():

@@ -17,7 +17,7 @@ from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from toolkit.embedding.choices import W2V_EMBEDDING, FASTTEXT_EMBEDDING
+from toolkit.embedding.choices import W2V_EMBEDDING, FASTTEXT_EMBEDDING, DEFAULT_SNOWBALL_LANGUAGE
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
 
@@ -36,6 +36,7 @@ class Embedding(models.Model):
     min_freq = models.IntegerField(default=10)
     vocab_size = models.IntegerField(default=0)
     use_phraser = models.BooleanField(default=True)
+    snowball_language = models.CharField(default=DEFAULT_SNOWBALL_LANGUAGE, null=True, max_length=MAX_DESC_LEN)
     embedding_type = models.TextField(default=W2V_EMBEDDING)
     embedding_model = models.FileField(null=True, verbose_name='', default=None)
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
