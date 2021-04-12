@@ -81,3 +81,4 @@ volumes:
   elastic-data:
   toolkit-data:
   postgres-data:
+  external-data:
