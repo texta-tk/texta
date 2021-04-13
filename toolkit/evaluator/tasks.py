@@ -437,9 +437,11 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
             conn.close_if_unusable_or_obsolete()
 
         # Generate confusion matrix plot and save it
+
         image_name = f"{secrets.token_hex(15)}.png"
         evaluator_object.plot.save(image_name, create_confusion_plot(scores["confusion_matrix"], classes), save=False)
         image_path = pathlib.Path(MEDIA_URL) / image_name
+        evaluator_object.plot.name = str(image_path)
 
         # Add final scores to the model
         evaluator_object.precision = scores["precision"]
@@ -449,7 +451,7 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
         evaluator_object.confusion_matrix = json.dumps(scores["confusion_matrix"])
 
         evaluator_object.individual_results = json.dumps(bin_scores)
-        evaluator_object.plot.name = str(image_path)
+
 
         evaluator_object.save()
         evaluator_object.task.complete()
