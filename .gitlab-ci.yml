@@ -1,4 +1,4 @@
-image: continuumio/miniconda3:latest
+image: docker.texta.ee/texta/texta-rest-base-image:latest
 
 variables:
   # Elastic
