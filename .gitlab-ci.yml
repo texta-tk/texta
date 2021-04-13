@@ -40,7 +40,7 @@ stages:
 TestBack:
   # Tests back-end locally
   before_script:
-    - conda env create -f environment-nogpu.yaml && source activate texta-rest
+    - source activate texta-rest
     - python import_test_data.py -es $TEXTA_ES_URL
     - python migrate.py
   stage: test-back
