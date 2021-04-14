@@ -37,6 +37,7 @@ class Tagger(models.Model):
     fields = models.TextField(default=json.dumps([]))
     embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
     stop_words = models.TextField(default="[]")
+    ignore_numbers = models.BooleanField(default=None, null=True)
     vectorizer = models.CharField(default=choices.DEFAULT_VECTORIZER, max_length=MAX_DESC_LEN)
     classifier = models.CharField(default=choices.DEFAULT_CLASSIFIER, max_length=MAX_DESC_LEN)
     negative_multiplier = models.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER, blank=True)

@@ -118,6 +118,7 @@ def train_tagger_task(tagger_id: int):
         # split stop words by space or newline and remove empties
 
         stop_words = load_stop_words(tagger_object.stop_words)
+        ignore_numbers = tagger_object.ignore_numbers
 
         # get scoring function
         if tagger_object.scoring_function != "default":
@@ -148,6 +149,7 @@ def train_tagger_task(tagger_id: int):
         tagger = TextTagger(
             embedding=embedding,
             custom_stop_words=stop_words,
+            ignore_numbers = ignore_numbers,
             classifier=tagger_object.classifier,
             vectorizer=tagger_object.vectorizer)
         tagger.train(

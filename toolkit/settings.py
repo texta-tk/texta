@@ -46,6 +46,8 @@ ALLOWED_HOSTS = parse_list_env_headers("TEXTA_ALLOWED_HOSTS", ["*"])
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv("TEXTA_MAX_UPLOAD", 1024 * 1024 * 1024))
 
+# Directory of a placeholder plot image
+EMPTY_PLOT_DIR = os.path.join(BASE_DIR, "toolkit", "tools", "default_plots", "no_plot.png")
 
 # Application definition
 INSTALLED_APPS = [

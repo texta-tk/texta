@@ -349,7 +349,7 @@ class TorchTaggerViewTests(APITransactionTestCase):
         print_output("test_apply_binary_torch_tagger_to_index:elastic aggerator results:", results)
 
         # Check if expected number of facts is added
-        self.assertTrue(results[self.new_fact_value] == 25)
+        self.assertTrue(results[self.new_fact_value] == 24)
 
         self.add_cleanup_files(self.test_imported_binary_gpu_tagger_id)
 
@@ -385,10 +385,10 @@ class TorchTaggerViewTests(APITransactionTestCase):
 
         # Check if the expected facts with expected number of values is added
         fact_value_1 = "foo"
-        expected_count_1 = 28
+        expected_count_1 = 27
 
         fact_value_2 = "bar"
-        expected_count_2 = 2
+        expected_count_2 = 3
 
         self.assertTrue(fact_value_1 in results)
         self.assertTrue(fact_value_2 in results)

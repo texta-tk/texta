@@ -1,4 +1,4 @@
-image: continuumio/miniconda3:latest
+image: docker.texta.ee/texta/texta-rest-base-image:latest
 
 variables:
   # Elastic
@@ -40,8 +40,7 @@ stages:
 TestBack:
   # Tests back-end locally
   before_script:
-    - apt-get install curl cmake build-essential -y
-    - conda env create -f environment-nogpu.yaml && source activate texta-rest
+    - source activate texta-rest
     - python import_test_data.py -es $TEXTA_ES_URL
     - python migrate.py
   stage: test-back

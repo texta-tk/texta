@@ -95,11 +95,16 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         return Response({"success": "Tagger instance deleted, model and plot removed"}, status=status.HTTP_204_NO_CONTENT)
 
 
-    @action(detail=True, methods=['get'], serializer_class=TaggerListFeaturesSerializer)
+    @action(detail=True, methods=['get', 'post'], serializer_class=TaggerListFeaturesSerializer)
     def list_features(self, request, pk=None, project_pk=None):
         """Returns list of features for the tagger. By default, features are sorted by their relevance in descending order."""
-        serializer = TaggerListFeaturesSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+
+        if self.request.method == 'GET':
+            serializer = TaggerListFeaturesSerializer(data=request.query_params)
+
+        elif self.request.method == 'POST':
+            serializer = TaggerListFeaturesSerializer(data=request.data)
+
         # retrieve tagger object
         tagger_object: Tagger = self.get_object()
         # check if tagger exists
@@ -120,18 +125,21 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         selected_features = [{'feature': feature, 'coefficient': feature_coefs[i]} for i, feature in enumerate(selected_features) if feature_coefs[i] > 0]
         selected_features = sorted(selected_features, key=lambda k: k['coefficient'], reverse=True)
 
-        features_to_show = selected_features[:serializer.validated_data['size']]
+        serializer.is_valid(raise_exception=True)
+        size = serializer.validated_data['size']
+        features_to_show = selected_features[:size]
+
         feature_info = {
-            'features': features_to_show,
             'total_features': len(selected_features),
-            'showing_features': len(features_to_show)
+            'showing_features': len(features_to_show),
+            'features': features_to_show
         }
         return Response(feature_info, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['get', 'post'], serializer_class=StopWordSerializer)
     def stop_words(self, request, pk=None, project_pk=None):
-        """Adds stop word to Tagger model. Input Text is a string of space separated words, eg 'word1 word2 word3'"""
+        """Adds stop word to Tagger model. Input should be a list of strings, e.g. ['word1', 'word2', 'word3']."""
         tagger_object = self.get_object()
 
         existing_stop_words = load_stop_words(tagger_object.stop_words)
@@ -149,6 +157,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
             new_stop_words = serializer.validated_data['stop_words']
             overwrite_existing = serializer.validated_data['overwrite_existing']
+            ignore_numbers = serializer.validated_data['ignore_numbers']
 
             if not overwrite_existing:
                 # Add previous stopwords to the new ones
@@ -159,9 +168,10 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
             # save tagger object
             tagger_object.stop_words = json.dumps(new_stop_words)
+            tagger_object.ignore_numbers = ignore_numbers
             tagger_object.save()
 
-            return Response({"stop_words": new_stop_words}, status=status.HTTP_200_OK)
+            return Response({"stop_words": new_stop_words, "ignore_numbers": ignore_numbers}, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['post'])
