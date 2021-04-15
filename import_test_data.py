@@ -6,6 +6,7 @@ from io import BytesIO
 from urllib.request import urlopen
 
 from elasticsearch import Elasticsearch
+from elasticsearch.helpers import bulk
 
 from toolkit.settings import CORE_SETTINGS, TEST_DATA_DIR
 
@@ -40,14 +41,12 @@ parser.add_argument(
     help='Also import larger dataset for performance testing.'
 )
 
-
 args = parser.parse_args()
 
 HOST = args.es
 LARGE = args.lg
 
 url_prefix = "https://git.texta.ee/texta/texta-resources/raw/master/tk_test_data/"
-
 
 dataset_params = {
     "lg": {
@@ -88,6 +87,19 @@ FACT_MAPPING = {
 }
 
 
+def actions_generator(fp, index_name):
+    for line in fp:
+        line = line.strip()
+        if line:
+            document = json.loads(line)
+            yield {
+                "_index": index_name,
+                "_type": "_doc",
+                "_source": document,
+                "retry_on_conflict": 3
+            }
+
+
 def import_docs(params):
     print("Downloading test data.")
     response = urlopen(params["url"])
@@ -95,24 +107,17 @@ def import_docs(params):
     print("Reading test data.")
     with zipfile.ZipFile(test_data_zip) as z:
         with z.open(params["file_name"] + '.jl') as f:
-            lines = f.readlines()
-    if not lines:
-        print("Failed reading test data.")
-    else:
-        print("Deleting existing index for safety precaution.")
-        indices = params["index"].split(",")
-        for index in indices:
-            es.indices.delete(index=index, ignore=[400, 404])
-            es.indices.create(index=index, body={'mappings': FACT_MAPPING})
-            print(f"Created index {index} with fact mappings.")
-            print("Line-per-line data insertion, this might take a moment...")
-            for line in lines:
-                line = line.strip()
-                if line:
-                    doc = json.dumps(json.loads(line))
-                    es.index(index=index, body=doc)
-            print('Test Elasticsearch index imported successfully')
-            print('')
+            print("Deleting existing index for safety precaution.")
+            indices = params["index"].split(",")
+            for index in indices:
+                es.indices.delete(index=index, ignore=[400, 404])
+                es.indices.create(index=index, body={'mappings': FACT_MAPPING})
+                print(f"Created index {index} with fact mappings.")
+                print("Line-per-line data insertion, this might take a moment...")
+                actions = actions_generator(f, index)
+                bulk(client=es, actions=actions, refresh="wait_for")
+                print('Test Elasticsearch index imported successfully')
+                print('')
 
 
 def import_collections(params):

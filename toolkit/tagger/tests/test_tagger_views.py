@@ -73,6 +73,7 @@ class TaggerViewTests(APITransactionTestCase):
         print_output("Importing test model:", resp)
         return resp["id"]
 
+
     def __train_embedding_for_tagger(self) -> int:
         url = reverse(f"{VERSION_NAMESPACE}:embedding-list", kwargs={"project_pk": self.project.pk})
         payload = {

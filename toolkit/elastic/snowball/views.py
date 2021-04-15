@@ -1,6 +1,6 @@
 from rest_auth import views
-from rest_framework.response import Response
 from rest_framework import permissions
+from rest_framework.response import Response
 
 from toolkit.elastic.snowball.serializers import SnowballSerializer
 from toolkit.tools.lemmatizer import ElasticLemmatizer
@@ -9,6 +9,7 @@ from toolkit.tools.lemmatizer import ElasticLemmatizer
 class SnowballProcessor(views.APIView):
     serializer_class = SnowballSerializer
     permission_classes = (permissions.IsAuthenticated,)
+
 
     def post(self, request):
         serializer = SnowballSerializer(data=request.data)

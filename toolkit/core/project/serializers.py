@@ -167,6 +167,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
                 'anonymizers',
                 'regex_tagger_groups',
                 'mlp_index',
+                'lang_index',
                 'evaluators'
             )
         elif api_version == 'v1':
@@ -187,6 +188,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
                 'anonymizers',
                 'regex_tagger_groups',
                 'mlp_index',
+                'lang_index',
                 'evaluators'
             )
 

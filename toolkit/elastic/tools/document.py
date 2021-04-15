@@ -6,8 +6,8 @@ import elasticsearch
 from elasticsearch.helpers import bulk
 from elasticsearch_dsl import Q, Search
 
-from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.decorators import elastic_connection
+from toolkit.elastic.tools.core import ElasticCore
 from toolkit.settings import ERROR_LOGGER
 
 
@@ -113,7 +113,7 @@ class ElasticDocument:
 
 
     @elastic_connection
-    def update(self, index, doc_id, doc, doc_type="_doc", retry_on_conflict=1):
+    def update(self, index, doc_id, doc, doc_type="_doc", retry_on_conflict=3):
         """
         Updates document in ES by ID.
         """

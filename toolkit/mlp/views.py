@@ -12,8 +12,8 @@ from rest_framework.views import APIView
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.index.models import Index
-from toolkit.mlp.models import MLPWorker
-from toolkit.mlp.serializers import MLPDocsSerializer, MLPListSerializer, MLPWorkerSerializer
+from toolkit.mlp.models import ApplyLangWorker, MLPWorker
+from toolkit.mlp.serializers import ApplyLangOnIndicesSerializer, MLPDocsSerializer, MLPListSerializer, MLPWorkerSerializer
 from toolkit.mlp.tasks import apply_mlp_on_list, apply_mlp_on_docs
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.settings import CELERY_MLP_TASK_QUEUE
@@ -63,7 +63,7 @@ class MLPElasticWorkerViewset(viewsets.ModelViewSet, BulkDelete):
     serializer_class = MLPWorkerSerializer
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
-    ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'f1_score', 'precision', 'recall', 'task__status')
+    ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'task__status')
 
     permission_classes = (
         ProjectResourceAllowed,
@@ -89,6 +89,41 @@ class MLPElasticWorkerViewset(viewsets.ModelViewSet, BulkDelete):
                 project=project,
                 fields=json.dumps(serializer.validated_data["fields"], ensure_ascii=False),
                 analyzers=json.dumps(analyzers),
+            )
+
+            for index in Index.objects.filter(name__in=indices, is_open=True):
+                worker.indices.add(index)
+
+            worker.process()
+
+
+class ApplyLangOnIndices(viewsets.ModelViewSet, BulkDelete):
+    serializer_class = ApplyLangOnIndicesSerializer
+
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+    ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'task__status')
+
+    permission_classes = (
+        ProjectResourceAllowed,
+        permissions.IsAuthenticated
+    )
+
+
+    def get_queryset(self):
+        return ApplyLangWorker.objects.filter(project=self.kwargs['project_pk'])
+
+
+    def perform_create(self, serializer):
+        with transaction.atomic():
+            project = Project.objects.get(id=self.kwargs['project_pk'])
+            indices = [index["name"] for index in serializer.validated_data["indices"]]
+            indices = project.get_available_or_all_project_indices(indices)
+
+            serializer.validated_data.pop("indices")
+
+            worker: ApplyLangWorker = serializer.save(
+                author=self.request.user,
+                project=project,
             )
 
             for index in Index.objects.filter(name__in=indices, is_open=True):

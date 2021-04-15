@@ -2,9 +2,7 @@ import json
 import logging
 import os
 import pathlib
-import re
 import secrets
-
 from typing import Dict, List, Union
 
 from celery import group
@@ -140,7 +138,8 @@ def train_tagger_task(tagger_id: int):
             indices=indices,
             field_data=field_data,
             show_progress=show_progress,
-            snowball_language=tagger_object.snowball_language
+            snowball_language=tagger_object.snowball_language,
+            detect_lang=tagger_object.detect_lang
         )
         # update status to training
         show_progress.update_step("training")
@@ -149,7 +148,6 @@ def train_tagger_task(tagger_id: int):
         tagger = TextTagger(
             embedding=embedding,
             custom_stop_words=stop_words,
-            ignore_numbers = ignore_numbers,
             classifier=tagger_object.classifier,
             vectorizer=tagger_object.vectorizer)
         tagger.train(
@@ -427,7 +425,6 @@ def apply_tagger_group(tagger_group_id: int, content: Union[str, Dict[str, str]]
     # remove non-hits
     tags = [tag for tag in tags if tag["result"]]
 
-
     logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Retrieved {len(tags)} positive tags.")
     # if feedback was enabled, add urls
     if feedback:
@@ -477,7 +474,6 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
                         tagger_group_tags = apply_tagger_group(object_id, text, tag_candidates, request=None, input_type='text', lemmatize=object_args["lemmatize"], feedback=False, use_async=False)
                         # take only `max_tags` first tags
                         tags = ner_tags + tagger_group_tags[:max_tags]
-
 
                     new_facts = to_texta_fact(tags, field, fact_name, fact_value)
                     if new_facts:

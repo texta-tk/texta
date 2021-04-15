@@ -46,6 +46,8 @@ ALLOWED_HOSTS = parse_list_env_headers("TEXTA_ALLOWED_HOSTS", ["*"])
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv("TEXTA_MAX_UPLOAD", 1024 * 1024 * 1024))
 
+NAN_LANGUAGE_TOKEN_KEY = "UNK"
+
 # Directory of a placeholder plot image
 EMPTY_PLOT_DIR = os.path.join(BASE_DIR, "toolkit", "tools", "default_plots", "no_plot.png")
 
@@ -278,7 +280,7 @@ CELERY_DEFAULT_ROUTING_KEY = 'short_term_tasks'
 DATA_DIR = os.getenv("TEXTA_DATA_DIR", os.path.join(BASE_DIR, "data"))
 # base dir for 3rd party models (e.g. MLP or BERT)
 # defaults to "external" in data dir
-EXTERNAL_DATA_DIR = os.getenv("TEXTA_EXTERNAL_DATA_DIR",  os.path.join(DATA_DIR, "external"))
+EXTERNAL_DATA_DIR = os.getenv("TEXTA_EXTERNAL_DATA_DIR", os.path.join(DATA_DIR, "external"))
 # cache folder for BERT
 CACHE_DIR_DEFAULT = os.path.join(EXTERNAL_DATA_DIR, ".cache")
 CACHE_DIR = os.getenv("TEXTA_CACHE_DIR", CACHE_DIR_DEFAULT)
@@ -332,15 +334,11 @@ TEST_DATA_DIR = os.path.join(DATA_DIR, "test")
 if not os.path.exists(TEST_DATA_DIR):
     os.makedirs(TEST_DATA_DIR)
 
-
-
-
 # default BERT models
 DEFAULT_BERT_MODELS = parse_list_env_headers("TEXTA_BERT_MODELS", ["bert-base-multilingual-cased", "EMBEDDIA/finest-bert", "bert-base-uncased"])
 
 # default MLP languages
 DEFAULT_MLP_LANGUAGE_CODES = parse_list_env_headers("TEXTA_LANGUAGE_CODES", ["et", "en", "ru", "ar"])
-
 
 # Logger IDs, used in apps.
 INFO_LOGGER = "info_logger"
@@ -375,7 +373,5 @@ ALLOW_BERT_MODEL_DOWNLOADS = parse_bool_env("TEXTA_ALLOW_BERT_MODEL_DOWNLOADS", 
 
 RELATIVE_PROJECT_DATA_PATH = os.getenv("TOOLKIT_PROJECT_DATA_PATH", os.path.join(DATA_DIR, "projects"))
 pathlib.Path(RELATIVE_PROJECT_DATA_PATH).mkdir(parents=True, exist_ok=True)
-
-
 
 SEARCHER_FOLDER_KEY = "searcher"
