@@ -97,7 +97,10 @@ def filter_and_average_results(binary_results: dict, min_count: int, max_count: 
     # Calculate average scores of filtered scores
     avg_scores = {}
     for metric in metrics:
-        avg_scores[metric] = np.mean(filtered_scores[metric])
+        if filtered_scores[metric]:
+            avg_scores[metric] = np.mean(filtered_scores[metric])
+        else:
+            avg_scores[metric] = 0
     avg_scores["count"] = len(filtered_scores[metric])
     return avg_scores
 

@@ -100,6 +100,8 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
         self.run_export_import(self.binary_evaluators["macro"])
         self.run_export_import(self.multilabel_evaluators["macro"])
 
+        self.run_patch(self.binary_evaluators["macro"])
+
         self.run_delete(self.binary_evaluators["macro"])
 
 
@@ -110,6 +112,23 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
             pass
         if not TEST_KEEP_PLOT_FILES:
             self.addCleanup(remove_file, evaluator_object.plot.path)
+
+
+    def run_patch(self, evaluator_id: int):
+        """Test updating description."""
+        url = f"{self.url}{evaluator_id}/"
+
+        payload = {"description": "New description"}
+
+        response = self.client.patch(url, payload, format="json")
+        print_output(f"evaluator:run_patch:response.data:", response.data)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = self.client.get(url, format="json")
+        self.assertEqual(response.data["description"], "New description")
+
+        self.add_cleanup_files(evaluator_id)
+
 
     def run_test_invalid_fact_name(self):
         """

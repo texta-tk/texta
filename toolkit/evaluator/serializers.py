@@ -71,6 +71,11 @@ class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSeriali
 
     def validate(self, data):
         """ Check if all inserted facts and fact values are present in the indices."""
+
+        # For PATCH
+        if len(data) == 1 and "description" in data:
+            return data
+            
         indices = [index.get("name") for index in data.get("indices")]
 
         true_fact = data.get("true_fact")
