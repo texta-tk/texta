@@ -112,6 +112,17 @@ class ElasticCore:
 
 
     @elastic_connection
+    def get_version(self) -> Tuple[int, int, int]:
+        """
+        :return: All three numbers of the Elasticsearch cluster version as integers.
+        """
+        info = self.es.info()
+        version = info["version"]["number"]
+        first, second, third = version.split(".")
+        return int(first), int(second), int(third)
+
+
+    @elastic_connection
     def syncher(self):
         """
         Wipe the slate clean and create a new set of Index objects.

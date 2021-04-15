@@ -1,16 +1,18 @@
 import json
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Avg, Sum
 from rest_framework import serializers
-from django.core.exceptions import ObjectDoesNotExist
+from rest_framework.exceptions import ValidationError
+
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.elastic.choices import get_snowball_choices
 from toolkit.elastic.index.serializers import IndexSerializer
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from toolkit.helper_functions import load_stop_words
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
 from toolkit.tagger import choices
-from toolkit.elastic.choices import get_snowball_choices
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.tagger.models import Tagger, TaggerGroup
-from toolkit.helper_functions import load_stop_words
 
 
 # NB! Currently not used
@@ -25,12 +27,13 @@ class ApplyTaggersSerializer(FieldParseSerializer, serializers.Serializer):
     es_timeout = serializers.IntegerField(default=choices.DEFAULT_ES_TIMEOUT, help_text="Elasticsearch scroll timeout in minutes. Default:10.")
     bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=choices.DEFAULT_BULK_SIZE, help_text="How many documents should be sent towards Elasticsearch at once.")
     max_chunk_bytes = serializers.IntegerField(min_value=1, default=choices.DEFAULT_MAX_CHUNK_BYTES, help_text="Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors.")
-    #num_tags = serializers.IntegerField(read_only=True)
+    # num_tags = serializers.IntegerField(read_only=True)
     taggers = serializers.ListField(
         help_text='List of Tagger IDs to be used.',
         child=serializers.IntegerField(),
         default=[]
     )
+
 
     def validate_taggers(self, taggers):
         invalid_ids = []
@@ -42,6 +45,7 @@ class ApplyTaggersSerializer(FieldParseSerializer, serializers.Serializer):
         if invalid_ids:
             raise serializers.ValidationError(f"Taggers with following IDs do not exist: {invalid_ids}")
         return taggers
+
 
 class ApplyTaggerSerializer(FieldParseSerializer, serializers.Serializer):
     description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
@@ -76,6 +80,7 @@ class StopWordSerializer(serializers.Serializer):
     stop_words = serializers.ListField(child=serializers.CharField(required=False), required=True, help_text=f"List of stop words to add.")
     overwrite_existing = serializers.BooleanField(required=False, default=choices.DEFAULT_OVERWRITE_EXISTING_STOPWORDS, help_text=f"If enabled, overwrites all existing stop words, otherwise appends to the existing ones. Default: {choices.DEFAULT_OVERWRITE_EXISTING_STOPWORDS}.")
     ignore_numbers = serializers.BooleanField(required=False, default=choices.DEFAULT_IGNORE_NUMBERS, help_text='If enabled, ignore all numbers as possible features.')
+
 
 class TagRandomDocSerializer(serializers.Serializer):
     indices = IndexSerializer(many=True, default=[])
@@ -136,11 +141,13 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     classifier = serializers.ChoiceField(choices=choices.get_classifier_choices(), default=choices.DEFAULT_CLASSIFIER, help_text=f'Classification algorithm used in the model.')
     negative_multiplier = serializers.IntegerField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER, help_text=f'Multiplies the size of positive samples to determine negative example set size. Default: {choices.DEFAULT_NEGATIVE_MULTIPLIER}')
     maximum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, help_text=f'Maximum number of documents used to build a model. Default: {choices.DEFAULT_MAX_SAMPLE_SIZE}')
-    score_threshold = serializers.FloatField(default=choices.DEFAULT_SCORE_THRESHOLD, help_text=f'Elasticsearch score threshold for filtering out irrelevant examples. All examples below first document\'s score * score threshold are ignored. Float between 0 and 1. Default: {choices.DEFAULT_SCORE_THRESHOLD}')
+    score_threshold = serializers.FloatField(default=choices.DEFAULT_SCORE_THRESHOLD,
+                                             help_text=f'Elasticsearch score threshold for filtering out irrelevant examples. All examples below first document\'s score * score threshold are ignored. Float between 0 and 1. Default: {choices.DEFAULT_SCORE_THRESHOLD}')
     snowball_language = serializers.ChoiceField(choices=get_snowball_choices(), default=choices.DEFAULT_SNOWBALL_LANGUAGE, help_text=f'Uses Snowball stemmer with specified language to normalize the texts. Default: {choices.DEFAULT_SNOWBALL_LANGUAGE}')
     scoring_function = serializers.ChoiceField(choices=choices.DEFAULT_SCORING_OPTIONS, default=choices.DEFAULT_SCORING_FUNCTION, required=False, help_text=f'Scoring function used while evaluating the results on dev set. Default: {choices.DEFAULT_SCORING_FUNCTION}')
-    stop_words = serializers.ListField(child=serializers.CharField(), default=[], required=False, help_text='Stop words to add. Default = [].',  write_only=True)
+    stop_words = serializers.ListField(child=serializers.CharField(), default=[], required=False, help_text='Stop words to add. Default = [].', write_only=True)
     ignore_numbers = serializers.BooleanField(default=choices.DEFAULT_IGNORE_NUMBERS, required=False, help_text='If enabled, ignore all numbers as possible features.')
+    detect_lang = serializers.BooleanField(default=False, help_text="Whether to detect the language for the stemmer from the document itself.")
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
@@ -151,11 +158,17 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
 
     class Meta:
         model = Tagger
-        fields = ('id', 'url', 'author_username', 'description', 'query', 'fact_name', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
+        fields = ('id', 'url', 'author_username', 'description', 'query', 'fact_name', 'fields', 'detect_lang', 'embedding', 'vectorizer', 'classifier', 'stop_words',
                   'maximum_sample_size', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score', 'snowball_language', 'scoring_function',
                   'num_features', 'num_examples', 'confusion_matrix', 'plot', 'task', 'indices', 'tagger_groups', 'ignore_numbers')
         read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'num_examples', 'tagger_groups', 'confusion_matrix')
         fields_to_parse = ('fields',)
+
+
+    def validate(self, attrs):
+        if attrs["detect_lang"] is True and attrs["snowball_language"]:
+            raise ValidationError("Values 'detect_lang' and 'snowball_language' are mutually exclusive, please opt for one!")
+        return attrs
 
 
     def __init__(self, *args, **kwargs):

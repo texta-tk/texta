@@ -44,7 +44,7 @@ class Tagger(models.Model):
     maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, blank=True)
     score_threshold = models.FloatField(default=choices.DEFAULT_SCORE_THRESHOLD, blank=True)
     snowball_language = models.CharField(default=choices.DEFAULT_SNOWBALL_LANGUAGE, null=True, max_length=MAX_DESC_LEN)
-
+    detect_lang = models.BooleanField(default=False)
     precision = models.FloatField(default=None, null=True)
     recall = models.FloatField(default=None, null=True)
     f1_score = models.FloatField(default=None, null=True)
@@ -62,8 +62,10 @@ class Tagger(models.Model):
     def get_indices(self):
         return [index.name for index in self.indices.filter(is_open=True)]
 
+
     def set_confusion_matrix(self, x):
         self.confusion_matrix = json.dumps(x)
+
 
     def get_confusion_matrix(self):
         return json.loads(self.confusion_matrix)

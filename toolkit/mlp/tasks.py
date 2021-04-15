@@ -9,8 +9,8 @@ from toolkit.core.task.models import Task
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.elastic.tools.searcher import ElasticSearcher
-from toolkit.mlp.helpers import process_actions
-from toolkit.mlp.models import MLPWorker
+from toolkit.mlp.helpers import process_lang_actions, process_mlp_actions
+from toolkit.mlp.models import ApplyLangWorker, MLPWorker
 from toolkit.settings import CELERY_MLP_TASK_QUEUE, DEFAULT_MLP_LANGUAGE_CODES, INFO_LOGGER, ERROR_LOGGER, MLP_MODEL_DIRECTORY
 from toolkit.tools.show_progress import ShowProgress
 
@@ -85,7 +85,7 @@ def apply_mlp_on_index(self, mlp_id: int):
         for index in indices:
             searcher.core.add_texta_facts_mapping(index=index)
 
-        actions = process_actions(searcher, analyzers, field_data, mlp_class=mlp, mlp_id=mlp_id)
+        actions = process_mlp_actions(searcher, analyzers, field_data, mlp_class=mlp, mlp_id=mlp_id)
 
         # Send the data towards Elasticsearch
         ed = ElasticDocument("_all")
@@ -105,3 +105,47 @@ def end_mlp_task(self, mlp_id):
     mlp_object = MLPWorker.objects.get(pk=mlp_id)
     mlp_object.task.complete()
     return True
+
+
+@task(name="apply_lang_on_indices", base=TransactionAwareTask, queue=CELERY_MLP_TASK_QUEUE, bind=True)
+def apply_lang_on_indices(self, apply_worker_id: int):
+    worker_object = ApplyLangWorker.objects.get(pk=apply_worker_id)
+    task_object = worker_object.task
+    try:
+        load_mlp()
+        show_progress = ShowProgress(task_object, multiplier=1)
+        show_progress.update_step('scrolling through the indices to apply lang')
+
+        # Get the necessary fields.
+        indices: List[str] = worker_object.get_indices()
+        field = worker_object.field
+
+        scroll_size = 100
+        searcher = ElasticSearcher(
+            query=json.loads(worker_object.query),
+            indices=indices,
+            field_data=[field],
+            output=ElasticSearcher.OUT_RAW,
+            callback_progress=show_progress,
+            scroll_size=scroll_size,
+            scroll_timeout="15m"
+        )
+
+        for index in indices:
+            searcher.core.add_texta_facts_mapping(index=index)
+
+        actions = process_lang_actions(generator=searcher, field=field, worker_id=apply_worker_id, mlp_class=mlp)
+
+        # Send the data towards Elasticsearch
+        ed = ElasticDocument("_all")
+        elastic_response = ed.bulk_update(actions=actions)
+
+        worker_object.task.complete()
+
+        return apply_worker_id
+
+    except Exception as e:
+        logging.getLogger(ERROR_LOGGER).exception(e)
+        task_object.add_error(str(e))
+        task_object.update_status(Task.STATUS_FAILED)
+        raise e

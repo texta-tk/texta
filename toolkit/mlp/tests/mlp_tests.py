@@ -1,16 +1,15 @@
 # Create your tests here.
 import json
+
 from django.test import override_settings
 from django.urls import reverse
-from elasticsearch_dsl import Keyword, Mapping
 from rest_framework import status
 from rest_framework.test import APITestCase, APITransactionTestCase
 
 from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.test_settings import (TEST_FIELD, TEST_INDEX, VERSION_NAMESPACE)
-from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
+from toolkit.tools.utils_for_tests import create_test_user, project_creation
 
 
 DOCTYPE_INDEX_NAME = "test_index_two"

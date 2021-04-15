@@ -40,3 +40,28 @@ class MLPWorker(models.Model):
 
         chain = start_mlp_worker.s() | apply_mlp_on_index.s() | end_mlp_task.s()
         transaction.on_commit(lambda: chain.apply_async(args=(self.pk,), queue=CELERY_MLP_TASK_QUEUE))
+
+
+class ApplyLangWorker(models.Model):
+    description = models.CharField(max_length=MAX_DESC_LEN)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    query = models.TextField(default=json.dumps(EMPTY_QUERY))
+    field = models.TextField()
+    indices = models.ManyToManyField(Index)
+    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
+
+
+    def process(self):
+        from toolkit.mlp.tasks import apply_lang_on_indices
+
+        new_task = Task.objects.create(applylangworker=self, status='created')
+        self.task = new_task
+        self.save()
+
+        # Run the task.
+        apply_lang_on_indices.apply_async(args=(self.pk,), queue=CELERY_MLP_TASK_QUEUE)
+
+
+    def get_indices(self):
+        return [index.name for index in self.indices.filter(is_open=True)]

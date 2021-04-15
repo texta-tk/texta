@@ -1,53 +1,55 @@
 from texta_tagger.pipeline import get_pipeline_builder
 
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.choices import get_snowball_choices
+from toolkit.elastic.tools.core import ElasticCore
+
 
 def get_field_choices():
-   """
-   Retrieves field options from ES.
-   :return: list
-   """
-   es = ElasticCore()
-   if es.connection:
-      return [(a, '{0} - {1}'.format(a['index'], a['path'])) for a in es.get_fields()]
-   else:
-      return []
+    """
+    Retrieves field options from ES.
+    :return: list
+    """
+    es = ElasticCore()
+    if es.connection:
+        return [(a, '{0} - {1}'.format(a['index'], a['path'])) for a in es.get_fields()]
+    else:
+        return []
+
 
 def get_classifier_choices():
-   """
-   Retrieves classifier choices.
-   :return: list
-   """
-   pipeline = get_pipeline_builder()
-   return [(a, a) for a in pipeline.get_classifier_options()]
+    """
+    Retrieves classifier choices.
+    :return: list
+    """
+    pipeline = get_pipeline_builder()
+    return [(a, a) for a in pipeline.get_classifier_options()]
+
 
 def get_vectorizer_choices():
-   """
-   Retrieves vectorizer choices.
-   :return: list
-   """
-   pipeline = get_pipeline_builder()
-   return [(a, a) for a in pipeline.get_extractor_options()]
+    """
+    Retrieves vectorizer choices.
+    :return: list
+    """
+    pipeline = get_pipeline_builder()
+    return [(a, a) for a in pipeline.get_extractor_options()]
 
 
 def get_feature_selector_choices():
-   """
-   Retrieves feature selector choices.
-   :return: list
-   """
-   pipeline = get_pipeline_builder()
-   return [(a, a) for a in pipeline.get_feature_selector_options()]
+    """
+    Retrieves feature selector choices.
+    :return: list
+    """
+    pipeline = get_pipeline_builder()
+    return [(a, a) for a in pipeline.get_feature_selector_options()]
 
 
 def get_tokenizer_choices():
-   """
-   Retrieves tokenizer choices
-   :return: list
-   """
-   pipeline = get_pipeline_builder()
-   return [(a, a) for a in pipeline.get_analyzer_options()]
+    """
+    Retrieves tokenizer choices
+    :return: list
+    """
+    pipeline = get_pipeline_builder()
+    return [(a, a) for a in pipeline.get_analyzer_options()]
 
 
 def get_scoring_choices():
@@ -58,9 +60,10 @@ def get_scoring_choices():
     scoring_choices = ["default", "precision", "recall", "f1_score", "accuracy", "jaccard"]
     return [(a, a) for a in scoring_choices]
 
+
 DEFAULT_VECTORIZER = get_vectorizer_choices()[0][0]
 DEFAULT_CLASSIFIER = get_classifier_choices()[0][0]
-DEFAULT_SNOWBALL_LANGUAGE = get_snowball_choices()[0][0]
+DEFAULT_SNOWBALL_LANGUAGE = get_snowball_choices()[0][0]  # None
 
 DEFAULT_MAX_SAMPLE_SIZE = 10000
 DEFAULT_NEGATIVE_MULTIPLIER = 1.0
