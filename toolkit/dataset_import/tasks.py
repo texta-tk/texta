@@ -1,11 +1,11 @@
 from celery.decorators import task
 
+from toolkit.base_tasks import TransactionAwareTask
+from toolkit.core.task.models import Task
+from toolkit.elastic.index.models import Index
+from toolkit.tools.show_progress import ShowProgress
 from .dataset import Dataset
 from .models import DatasetImport
-from toolkit.core.task.models import Task
-from toolkit.tools.show_progress import ShowProgress
-from toolkit.base_tasks import BaseTask, TransactionAwareTask
-from toolkit.elastic.index.models import Index
 
 
 @task(name="import_dataset", base=TransactionAwareTask)
@@ -42,6 +42,6 @@ def import_dataset(dataset_import_id):
 
     except Exception as e:
         # declare the job failed
-        show_progress.update_errors(str(e))
+        task_object.add_error(str(e))
         task_object.update_status(Task.STATUS_FAILED)
         raise e
