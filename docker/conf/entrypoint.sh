@@ -25,7 +25,7 @@ chown -R www-data /opt/conda/envs/texta-rest/var/tmp/nginx
 chown -R www-data /opt/conda/envs/texta-rest/var/log/nginx
 # ACTIVATE & MIGRATE
 source activate texta-rest && \
-  python3 migrate.py
+  python3 migrate.py -o
 # OWNERSHIP TO WWW-DATA
 chown www-data:www-data -R /var/texta-rest/static/ && chmod 777 -R /var/texta-rest/static/
 chown www-data:www-data -R /var/texta-rest/data/ && chmod 777 -R /var/texta-rest/data/

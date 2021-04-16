@@ -1,6 +1,5 @@
 from texta_tagger.pipeline import get_pipeline_builder
 
-from toolkit.elastic.choices import get_snowball_choices
 from toolkit.elastic.tools.core import ElasticCore
 
 
@@ -63,7 +62,7 @@ def get_scoring_choices():
 
 DEFAULT_VECTORIZER = get_vectorizer_choices()[0][0]
 DEFAULT_CLASSIFIER = get_classifier_choices()[0][0]
-DEFAULT_SNOWBALL_LANGUAGE = get_snowball_choices()[0][0]  # None
+DEFAULT_SNOWBALL_LANGUAGE = None
 
 DEFAULT_MAX_SAMPLE_SIZE = 10000
 DEFAULT_NEGATIVE_MULTIPLIER = 1.0
@@ -72,8 +71,7 @@ DEFAULT_NUM_DOCUMENTS = 25
 DEFAULT_NUM_CANDIDATES = 25
 DEFAULT_MAX_TAGS = 10000
 DEFAULT_TAGGER_GROUP_FACT_NAME = 'TEEMA'
-DEFAULT_VECTORIZER = get_vectorizer_choices()[0][0]
-DEFAULT_CLASSIFIER = get_classifier_choices()[0][0]
+
 DEFAULT_FEATURE_SELECTOR = get_feature_selector_choices()[0][0]
 DEFAULT_SCORE_THRESHOLD = 0.0
 DEFAULT_SCORING_OPTIONS = get_scoring_choices()
