@@ -4,5 +4,5 @@ from ..choices import get_snowball_choices
 
 class SnowballSerializer(serializers.Serializer):
     text = serializers.CharField()
-    language = serializers.ChoiceField(choices=get_snowball_choices(), default=get_snowball_choices()[0][0])
+    language = serializers.ChoiceField(choices=get_snowball_choices(), default=None)
 
