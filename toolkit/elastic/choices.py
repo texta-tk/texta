@@ -23,9 +23,9 @@ def get_cluster_specific_languages() -> List[str]:
 
 
 def get_snowball_choices():
-    choices = [(None, None)]
+    choices = [None]
     languages = get_cluster_specific_languages()
     for lang in languages:
-        choices.append((lang, lang))
+        choices.append(lang)
 
     return choices
