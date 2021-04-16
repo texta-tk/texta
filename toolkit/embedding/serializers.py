@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.embedding.models import Embedding, Task
@@ -13,7 +14,7 @@ class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSeri
     task = TaskSerializer(read_only=True)
     indices = IndexSerializer(many=True, default=[])
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
-    snowball_language = serializers.ChoiceField(choices=get_snowball_choices(), default=choices.DEFAULT_SNOWBALL_LANGUAGE, help_text=f'Uses Snowball stemmer with specified language to normalize the texts. Default: {choices.DEFAULT_SNOWBALL_LANGUAGE}')
+    snowball_language = serializers.CharField(default=choices.DEFAULT_SNOWBALL_LANGUAGE, help_text=f'Uses Snowball stemmer with specified language to normalize the texts. Default: {choices.DEFAULT_SNOWBALL_LANGUAGE}')
     max_documents = serializers.IntegerField(default=choices.DEFAULT_MAX_DOCUMENTS)
     num_dimensions = serializers.IntegerField(
         default=choices.DEFAULT_NUM_DIMENSIONS,
@@ -32,6 +33,13 @@ class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSeri
     embedding_type = serializers.ChoiceField(choices=choices.EMBEDDING_CHOICES, default=choices.EMBEDDING_CHOICES[0])
 
 
+    def validate_snowball_language(self, value: str):
+        languages = get_snowball_choices()
+        if value not in languages:
+            raise ValidationError(f"Language '{value}' is not amongst the supported languages: {languages}!")
+        return value
+
+
     class Meta:
         model = Embedding
         fields = ('id', 'url', 'author_username', 'description', 'indices', 'fields', 'use_phraser', 'embedding_type', 'snowball_language', 'query', 'num_dimensions', 'max_documents', 'min_freq', 'vocab_size', 'task')
@@ -44,6 +52,6 @@ class EmbeddingPredictSimilarWordsSerializer(serializers.Serializer):
     negatives_used = serializers.ListField(child=serializers.CharField(), help_text=f'Negative words for the model. Default: EMPTY', required=False, default=[])
     positives_unused = serializers.ListField(child=serializers.CharField(), help_text=f'Positive words in the lexicon, not used in mining. Default: EMPTY', required=False, default=[])
     negatives_unused = serializers.ListField(child=serializers.CharField(), help_text=f'Negative words left out from the lexicon, not used in mining. Default: EMPTY', required=False, default=[])
-    
+
     output_size = serializers.IntegerField(default=choices.DEFAULT_OUTPUT_SIZE,
                                            help_text=f'Default: {choices.DEFAULT_OUTPUT_SIZE}')
