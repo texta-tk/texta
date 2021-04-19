@@ -36,7 +36,7 @@ class MLPWorkerSerializer(serializers.ModelSerializer, FieldValidationSerializer
     task = TaskSerializer(read_only=True, required=False)
     url = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
-    fields = serializers.ListField(required=True)
+    fields = serializers.ListField(child=serializers.CharField(), required=True, allow_empty=False, help_text="Which fields to apply the MLP on.")
     analyzers = serializers.MultipleChoiceField(
         choices=list(SUPPORTED_ANALYZERS),
         default=["all"]

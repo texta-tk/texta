@@ -639,3 +639,11 @@ class TaggerViewTests(APITransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue('success' in response.data)
         self.add_cleanup_files(tagger_id)
+
+
+    def test_tagger_with_only_description_input(self):
+        payload = {"description": "TestTagger"}
+        response = self.client.post(self.url, data=payload, format="json")
+        print_output("test_tagger_with_only_description_input:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(response.data["fields"][0] == "This field is required.")

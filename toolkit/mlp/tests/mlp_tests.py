@@ -9,7 +9,7 @@ from rest_framework.test import APITestCase, APITransactionTestCase
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.test_settings import (TEST_FIELD, TEST_INDEX, VERSION_NAMESPACE)
-from toolkit.tools.utils_for_tests import create_test_user, project_creation
+from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
 DOCTYPE_INDEX_NAME = "test_index_two"
@@ -181,27 +181,38 @@ class MLPIndexProcessing(APITransactionTestCase):
         self.assertTrue(query_string in text)
 
 
-    # def test_applying_mlp_on_index_with_different_index_and_doctype_names(self):
-    #
-    #     self.ec.es.index(index=DOCTYPE_INDEX_NAME, body={DOCTYPE_FIELD_NAME: "hello there, kenobi!"})
-    #     index, is_created = Index.objects.get_or_create(name=DOCTYPE_INDEX_NAME)
-    #     self.project.indices.add(index)
-    #
-    #     payload = {
-    #         "description": "TestingIndexProcessing",
-    #         "fields": [DOCTYPE_FIELD_NAME],
-    #         "indices": [{"name": DOCTYPE_INDEX_NAME}]
-    #     }
-    #
-    #     response = self.client.post(self.url, data=payload, format="json")
-    #     self.assertTrue(response.status_code == status.HTTP_201_CREATED)
-    #     # Check if MLP was applied to the documents properly.
-    #     s = ElasticSearcher(indices=[DOCTYPE_INDEX_NAME], output=ElasticSearcher.OUT_DOC)
-    #     for hit in s:
-    #         if DOCTYPE_FIELD_NAME in hit:
-    #             self.assertTrue(f"{DOCTYPE_FIELD_NAME}_mlp.lemmas" in hit)
-    #             self.assertTrue(f"{DOCTYPE_FIELD_NAME}_mlp.pos_tags" in hit)
-    #             self.assertTrue(f"{DOCTYPE_FIELD_NAME}_mlp.text" in hit)
-    #             self.assertTrue(f"{DOCTYPE_FIELD_NAME}_mlp.lang" in hit)
-    #
-    #     print_output("test_applying_mlp_on_index_with_different_index_and_doctype_names:response.data", response.data)
+    def test_payload_without_fields_value(self):
+        query_string = "inimene"
+        payload = {
+            "description": "TestingIndexProcessing",
+            "query": json.dumps({'query': {'match': {'comment_content_lemmas': query_string}}}, ensure_ascii=False)
+        }
+        response = self.client.post(self.url, data=payload, format="json")
+        print_output("test_payload_without_fields_value:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(response.data["fields"][0] == "This field is required.")
+
+
+    def test_payload_with_empty_fields_value(self):
+        query_string = "inimene"
+        payload = {
+            "description": "TestingIndexProcessing",
+            "query": json.dumps({'query': {'match': {'comment_content_lemmas': query_string}}}, ensure_ascii=False),
+            "fields": []
+        }
+        response = self.client.post(self.url, data=payload, format="json")
+        print_output("test_payload_without_fields_value:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(response.data["fields"][0] == "This list may not be empty.")
+
+
+    def test_payload_with_invalid_field_value(self):
+        query_string = "inimene"
+        payload = {
+            "description": "TestingIndexProcessing",
+            "fields": ["this_field_does_not_exist"],
+            "query": json.dumps({'query': {'match': {'comment_content_lemmas': query_string}}}, ensure_ascii=False)
+        }
+        response = self.client.post(self.url, data=payload, format="json")
+        print_output("test_payload_with_invalid_field_value:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)

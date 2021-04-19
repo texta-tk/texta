@@ -173,7 +173,7 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
 
 
     def validate(self, attrs):
-        if attrs["detect_lang"] is True and attrs["snowball_language"]:
+        if attrs.get("detect_lang", None) is True and attrs.get("snowball_language", None):
             raise ValidationError("Values 'detect_lang' and 'snowball_language' are mutually exclusive, please opt for one!")
         return attrs
 
