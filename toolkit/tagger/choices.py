@@ -62,7 +62,7 @@ def get_scoring_choices():
 
 DEFAULT_VECTORIZER = get_vectorizer_choices()[0][0]
 DEFAULT_CLASSIFIER = get_classifier_choices()[0][0]
-DEFAULT_SNOWBALL_LANGUAGE = None
+
 
 DEFAULT_MAX_SAMPLE_SIZE = 10000
 DEFAULT_NEGATIVE_MULTIPLIER = 1.0

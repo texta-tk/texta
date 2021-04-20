@@ -9,31 +9,9 @@ from toolkit.elastic.tools.query import Query
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.tools.lemmatizer import ElasticLemmatizer
 from .core import ElasticCore
+from ..choices import ES6_SNOWBALL_MAPPING, ES7_SNOWBALL_MAPPING
 from ..exceptions import InvalidDataSampleError
 from ...tools.show_progress import ShowProgress
-
-
-ES6_SNOWBALL_MAPPING = {
-    "ca": "catalan",
-    "da": "danish",
-    "nl": "dutch",
-    "en": "english",
-    "fi": "finnish",
-    "fr": "french",
-    "de": "german",
-    "hu": "hungarian",
-    "it": "italian",
-    "lt": "lithuanian",
-    "no": "norwegian",
-    "pt": "portuguese",
-    "ro": "romanian",
-    "ru": "russian",
-    "es": "spanish",
-    "sv": "swedish",
-    "tr": "turkish",
-}
-
-ES7_SNOWBALL_MAPPING = {"ar": "arabic", "et": "estonian"}
 
 
 class InvalidDataSampleError(Exception):

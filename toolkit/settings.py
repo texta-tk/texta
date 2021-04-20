@@ -237,6 +237,8 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
+ELASTIC_CLUSTER_VERSION = int(os.getenv("TEXTA_ELASTIC_VERSION", "7"))
+
 # OTHER ELASTICSEARCH OPTIONS
 ES_CONNECTION_PARAMETERS = {
     "use_ssl": parse_bool_env("TEXTA_ES_USE_SSL", False),
@@ -272,7 +274,6 @@ CELERY_QUEUES = (
 CELERY_DEFAULT_QUEUE = 'short_term_tasks'
 CELERY_DEFAULT_EXCHANGE = 'short_term_tasks'
 CELERY_DEFAULT_ROUTING_KEY = 'short_term_tasks'
-
 
 ### DATA DIRECTORIES
 

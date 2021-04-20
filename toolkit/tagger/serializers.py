@@ -6,7 +6,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.elastic.choices import get_snowball_choices
+from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choices
 from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.helper_functions import load_stop_words
@@ -143,7 +143,7 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     maximum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, help_text=f'Maximum number of documents used to build a model. Default: {choices.DEFAULT_MAX_SAMPLE_SIZE}')
     score_threshold = serializers.FloatField(default=choices.DEFAULT_SCORE_THRESHOLD,
                                              help_text=f'Elasticsearch score threshold for filtering out irrelevant examples. All examples below first document\'s score * score threshold are ignored. Float between 0 and 1. Default: {choices.DEFAULT_SCORE_THRESHOLD}')
-    snowball_language = serializers.CharField(default=choices.DEFAULT_SNOWBALL_LANGUAGE, help_text=f'Uses Snowball stemmer with specified language to normalize the texts. Default: {choices.DEFAULT_SNOWBALL_LANGUAGE}')
+    snowball_language = serializers.ChoiceField(choices=get_snowball_choices(), default=DEFAULT_SNOWBALL_LANGUAGE, help_text=f'Uses Snowball stemmer with specified language to normalize the texts. Default: {DEFAULT_SNOWBALL_LANGUAGE}')
     scoring_function = serializers.ChoiceField(choices=choices.DEFAULT_SCORING_OPTIONS, default=choices.DEFAULT_SCORING_FUNCTION, required=False, help_text=f'Scoring function used while evaluating the results on dev set. Default: {choices.DEFAULT_SCORING_FUNCTION}')
     stop_words = serializers.ListField(child=serializers.CharField(), default=[], required=False, help_text='Stop words to add. Default = [].', write_only=True)
     ignore_numbers = serializers.BooleanField(default=choices.DEFAULT_IGNORE_NUMBERS, required=False, help_text='If enabled, ignore all numbers as possible features.')
@@ -154,13 +154,6 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     fact_name = serializers.CharField(default=None, required=False, help_text=f'Fact name used to filter tags (fact values). Default: None')
     url = serializers.SerializerMethodField()
     tagger_groups = serializers.SerializerMethodField(read_only=True)
-
-
-    def validate_snowball_language(self, value: str):
-        languages = get_snowball_choices()
-        if value not in languages:
-            raise ValidationError(f"Language '{value}' is not amongst the supported languages: {languages}!")
-        return value
 
 
     class Meta:

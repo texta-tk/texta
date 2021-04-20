@@ -1,7 +1,6 @@
-from typing import List
+import logging
 
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.data_sample import ES6_SNOWBALL_MAPPING, ES7_SNOWBALL_MAPPING
+from toolkit.settings import ELASTIC_CLUSTER_VERSION, INFO_LOGGER
 
 
 LABEL_DISTRIBUTION = (
@@ -11,21 +10,42 @@ LABEL_DISTRIBUTION = (
     ("custom", "custom")
 )
 
+ES6_SNOWBALL_MAPPING = {
+    "ca": "catalan",
+    "da": "danish",
+    "nl": "dutch",
+    "en": "english",
+    "fi": "finnish",
+    "fr": "french",
+    "de": "german",
+    "hu": "hungarian",
+    "it": "italian",
+    "lt": "lithuanian",
+    "no": "norwegian",
+    "pt": "portuguese",
+    "ro": "romanian",
+    "ru": "russian",
+    "es": "spanish",
+    "sv": "swedish",
+    "tr": "turkish",
+}
 
-def get_cluster_specific_languages() -> List[str]:
-    ec = ElasticCore()
-    first, second, third = ec.get_version()
-    es6_languages = [value for key, value in ES6_SNOWBALL_MAPPING.items()]
-    es7_languages = []
-    if first == 7:
-        es7_languages = [value for key, value in ES7_SNOWBALL_MAPPING.items()]
-    return es6_languages + es7_languages
+ES7_SNOWBALL_MAPPING = {"ar": "arabic", "et": "estonian"}
+DEFAULT_SNOWBALL_LANGUAGE = None
 
 
 def get_snowball_choices():
-    choices = [None]
-    languages = get_cluster_specific_languages()
-    for lang in languages:
-        choices.append(lang)
+    default_choices = [(DEFAULT_SNOWBALL_LANGUAGE, DEFAULT_SNOWBALL_LANGUAGE)]
+    if ELASTIC_CLUSTER_VERSION == 7:
+        languages = {**ES7_SNOWBALL_MAPPING, **ES6_SNOWBALL_MAPPING}
+    elif ELASTIC_CLUSTER_VERSION == 6:
+        languages = ES6_SNOWBALL_MAPPING
+    else:
+        # Just in case, default to the most minimal options.
+        languages = ES6_SNOWBALL_MAPPING
+        logging.getLogger(INFO_LOGGER).warning("Unspecified Elastic cluster version when determining Snowball options!")
 
-    return choices
+    for key, value in languages.items():
+        default_choices.append((value, value))
+
+    return default_choices

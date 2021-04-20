@@ -5,20 +5,20 @@ import secrets
 import tempfile
 import zipfile
 
-from texta_tools.embedding import W2VEmbedding, FastTextEmbedding
-
 from django.contrib.auth.models import User
 from django.core import serializers
 from django.db import models
 from django.dispatch import receiver
 from django.http import HttpResponse
+from texta_tools.embedding import FastTextEmbedding, W2VEmbedding
 
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
+from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE
 from toolkit.elastic.index.models import Index
-from toolkit.embedding.choices import W2V_EMBEDDING, FASTTEXT_EMBEDDING, DEFAULT_SNOWBALL_LANGUAGE
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from toolkit.embedding.choices import FASTTEXT_EMBEDDING, W2V_EMBEDDING
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
 
 
@@ -111,7 +111,7 @@ class Embedding(models.Model):
         Returns embedding object based on embedding type.
         """
         if self.embedding_type == FASTTEXT_EMBEDDING:
-        	return FastTextEmbedding()
+            return FastTextEmbedding()
         elif self.embedding_type == W2V_EMBEDDING:
             return W2VEmbedding()
         else:

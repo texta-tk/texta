@@ -17,6 +17,7 @@ from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.lexicon.models import Lexicon
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
+from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choices
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
@@ -43,7 +44,7 @@ class Tagger(models.Model):
     negative_multiplier = models.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER, blank=True)
     maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, blank=True)
     score_threshold = models.FloatField(default=choices.DEFAULT_SCORE_THRESHOLD, blank=True)
-    snowball_language = models.CharField(default=choices.DEFAULT_SNOWBALL_LANGUAGE, null=True, max_length=MAX_DESC_LEN)
+    snowball_language = models.CharField(choices=get_snowball_choices(), default=DEFAULT_SNOWBALL_LANGUAGE, null=True, max_length=MAX_DESC_LEN)
     detect_lang = models.BooleanField(default=False)
     precision = models.FloatField(default=None, null=True)
     recall = models.FloatField(default=None, null=True)

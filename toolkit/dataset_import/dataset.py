@@ -37,8 +37,7 @@ class Dataset:
         elif file_extension in Dataset.TYPE_JSON:
             # JSON-LINES
             with open(self.file_path) as fh:
-                json_content = fh.read()
-            return True, pd.read_json(json_content, lines=True)
+                return True, pd.read_json(fh, lines=True)
 
         # nothing parsed
         return False, None
