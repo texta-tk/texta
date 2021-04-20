@@ -19,13 +19,13 @@ from toolkit.core.project.models import Project
 from toolkit.core.project.serializers import (CountIndicesSerializer, ExportSearcherResultsSerializer, ProjectDocumentSerializer, ProjectGetFactsSerializer, ProjectGetSpamSerializer, ProjectSearchByQuerySerializer, ProjectSerializer, ProjectSimplifiedSearchSerializer,
                                               ProjectSuggestFactNamesSerializer,
                                               ProjectSuggestFactValuesSerializer)
+from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.elastic.tools.query import Query
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.elastic.tools.serializers import ElasticScrollSerializer
-from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.elastic.tools.spam_detector import SpamDetector
 from toolkit.exceptions import InvalidInputDocument, ProjectValidationFailed, SerializerNotValid
 from toolkit.helper_functions import hash_string
@@ -433,7 +433,8 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             'num_dataset_importers': proj.datasetimport_set.count(),
             'num_bert_taggers': proj.berttagger_set.count(),
             'num_index_splitters': proj.indexsplitter_set.count(),
-            'num_evaluators': proj.evaluator_set.count()
+            'num_evaluators': proj.evaluator_set.count(),
+            'num_lang_detectors': proj.applylangworker_set.count()
         }
 
         return Response(response, status=status.HTTP_200_OK)
