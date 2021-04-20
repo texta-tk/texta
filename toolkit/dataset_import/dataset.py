@@ -48,6 +48,7 @@ class Dataset:
         errors = []
         # retrieve content from file
         success, file_content = self._get_file_content()
+        file_content = file_content.dropna(how="all")
 
         # check if file was parsed
         if not success:
