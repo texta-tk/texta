@@ -154,6 +154,12 @@ def download_bert_requirements(model_directory: str, supported_models: List[str]
     errors, failed_models = BertTagger.download_pretrained_models(bert_models=supported_models, save_dir=model_directory, cache_dir=cache_directory, logger=logger, num_labels=num_labels)
     return (errors, failed_models)
 
+def download_nltk_resources(data_directory: str):
+    """ Download NLTK resources.
+    """
+    import nltk
+    nltk.download("punkt", download_dir=data_directory)
+    nltk.data.path.append(data_directory)
 
 def get_downloaded_bert_models(model_directory: str) -> List[str]:
     """ Retrieve list of downloaded pretrained BERT models.

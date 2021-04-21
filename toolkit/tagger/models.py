@@ -59,6 +59,10 @@ class Tagger(models.Model):
     plot = models.FileField(upload_to="data/media", null=True, verbose_name="")
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
+    balance = models.BooleanField(default=choices.DEFAULT_BALANCE)
+    balance_to_max_limit = models.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT)
+
+
 
     def get_indices(self):
         return [index.name for index in self.indices.filter(is_open=True)]

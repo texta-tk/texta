@@ -59,6 +59,11 @@ class BertTagger(models.Model):
     precision = models.FloatField(default=None, null=True)
     recall = models.FloatField(default=None, null=True)
     f1_score = models.FloatField(default=None, null=True)
+
+    balance = models.BooleanField(default=choices.DEFAULT_BALANCE)
+    use_sentence_shuffle = models.BooleanField(default=choices.DEFAULT_USE_SENTENCE_SHUFFLE)
+    balance_to_max_limit = models.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT)
+
     model = models.FileField(null=True, verbose_name='', default=None)
     plot = models.FileField(upload_to='data/media', null=True, verbose_name='')
 

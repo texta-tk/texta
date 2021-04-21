@@ -46,6 +46,12 @@ class TorchTagger(models.Model):
     negative_multiplier = models.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER)
     maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE)
 
+    balance = models.BooleanField(default=choices.DEFAULT_BALANCE)
+    use_sentence_shuffle = models.BooleanField(default=choices.DEFAULT_USE_SENTENCE_SHUFFLE)
+    balance_to_max_limit = models.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT)
+
+    num_examples = models.TextField(default="{}", null=True)
+
     # RESULTS
     label_index = models.TextField(default=json.dumps({}))
     epoch_reports = models.TextField(default=json.dumps([]))

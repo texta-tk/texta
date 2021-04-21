@@ -6,7 +6,7 @@ import warnings
 from corsheaders.defaults import default_headers
 from kombu import Exchange, Queue
 
-from .helper_functions import download_bert_requirements, download_mlp_requirements, parse_bool_env, parse_list_env_headers
+from .helper_functions import download_bert_requirements, download_mlp_requirements, parse_bool_env, parse_list_env_headers, download_nltk_resources
 from .logging_settings import setup_logging
 
 
@@ -295,6 +295,8 @@ MLP_MODEL_DIRECTORY = os.getenv("TEXTA_MLP_MODEL_DIRECTORY_PATH", os.path.join(E
 BERT_PRETRAINED_MODEL_DIRECTORY = os.path.join(EXTERNAL_DATA_DIR, "bert_tagger", "pretrained")
 # BERT fine-tuned models
 BERT_FINETUNED_MODEL_DIRECTORY = os.path.join(RELATIVE_MODELS_PATH, "bert_tagger", "fine_tuned")
+# NLTK data dir
+NLTK_DATA_DIRECTORY = os.getenv("TEXTA_NLTK_DATA_DIRECTORY_PATH", os.path.join(EXTERNAL_DATA_DIR, "nltk"))
 
 # create model folders
 MODEL_TYPES = ["embedding", "tagger", "torchtagger", "bert_tagger"]
@@ -313,6 +315,10 @@ if not os.path.exists(BERT_PRETRAINED_MODEL_DIRECTORY):
 
 if not os.path.exists(BERT_FINETUNED_MODEL_DIRECTORY):
     os.makedirs(BERT_FINETUNED_MODEL_DIRECTORY)
+
+# create directories for NLTK resources
+if not os.path.exists(NLTK_DATA_DIRECTORY):
+    os.makedirs(NLTK_DATA_DIRECTORY)
 
 # create protected media dirs
 MEDIA_DIR = os.path.join(DATA_DIR, "media")
@@ -367,6 +373,10 @@ SKIP_BERT_RESOURCES = parse_bool_env("SKIP_BERT_RESOURCES", False)
 if SKIP_BERT_RESOURCES is False:
     # Download pretrained models with weights initiated for binary classification (using state dict with initialized weights is disabled for multiclass)
     download_bert_requirements(BERT_PRETRAINED_MODEL_DIRECTORY, DEFAULT_BERT_MODELS, BERT_CACHE_DIR, logging.getLogger(INFO_LOGGER), num_labels=2)
+
+SKIP_NLTK_RESOURCES = parse_bool_env("SKIP_NLTK_RESOURCES", False)
+if SKIP_NLTK_RESOURCES is False:
+    download_nltk_resources(NLTK_DATA_DIRECTORY)
 
 ALLOW_BERT_MODEL_DOWNLOADS = parse_bool_env("TEXTA_ALLOW_BERT_MODEL_DOWNLOADS", True)
 

@@ -25,6 +25,10 @@ from texta_bert_tagger.tagger import BertTagger
 
 from typing import List, Union, Dict
 
+from nltk.tokenize import sent_tokenize
+from collections import defaultdict
+import numpy as np
+
 @task(name="train_bert_tagger", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def train_bert_tagger(tagger_id, testing=False):
     try:
@@ -45,7 +49,10 @@ def train_bert_tagger(tagger_id, testing=False):
             indices,
             fields,
             show_progress=show_progress,
-            join_fields=True
+            join_fields=True,
+            balance = tagger_object.balance,
+            use_sentence_shuffle = tagger_object.use_sentence_shuffle,
+            balance_to_max_limit = tagger_object.balance_to_max_limit
         )
         show_progress.update_step('training')
         show_progress.update_view(0.0)
@@ -150,6 +157,7 @@ def load_tagger(tagger_object: BertTaggerObject) -> BertTagger:
 
 def apply_loaded_tagger(tagger: BertTagger, tagger_object: BertTaggerObject, tagger_input: Union[str, Dict], input_type: str = "text", feedback: bool=False):
     """Apply loaded BERT tagger to doc or text."""
+
     # tag doc or text
     if input_type == 'doc':
         tagger_result = tagger.tag_doc(tagger_input)
