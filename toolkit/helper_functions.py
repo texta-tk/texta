@@ -158,7 +158,10 @@ def download_nltk_resources(data_directory: str):
     """ Download NLTK resources.
     """
     import nltk
-    nltk.download("punkt", download_dir=data_directory)
+    punkt_tokenizers_dir = os.path.join(data_directory, "tokenizers", "punkt")
+    # Check if the punkt tokenizers already downloaded
+    if not os.path.exists(punkt_tokenizers_dir) or not os.listdir(punkt_tokenizers_dir):
+        nltk.download("punkt", download_dir=data_directory)
     nltk.data.path.append(data_directory)
 
 def get_downloaded_bert_models(model_directory: str) -> List[str]:
