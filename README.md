@@ -70,6 +70,7 @@ Toolkit is installed:
 
 ## Deploy & Testing variables
 
+* TEXTA_ELASTIC_VERSION - Must equal to the integer of a the main Elasticsearch cluster version (Default: 6).
 * TEXTA_DEPLOY_KEY - Used to separate different Toolkit instances for cases where Elasticsearch or the database are
   shared amongst multiple instances. Best to give this a simple number (Default: 1).
 * TEXTA_ADMIN_PASSWORD - Password of the admin user created on first run.

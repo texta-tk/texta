@@ -49,23 +49,6 @@ class TaggerSnowballStemmerTests(APITransactionTestCase):
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
 
 
-    def _check_for_features(self, tagger_id: int):
-        # Multiple terms just in case the features of the tagger aren't idempotent, this could need a better approach though.
-        stemmed_check_terms = {"rääki", "loomaae", "ruma", "mõist", "aseme", "saa"}
-        has_stemmed = False
-        url = reverse("v1:tagger-list-features", kwargs={"project_pk": self.project.pk, "pk": tagger_id})
-        response = self.client.get(url)
-        self.assertTrue(response.status_code == status.HTTP_200_OK)
-        features = response.data["features"]
-        for feature_dict in features:
-            feature = feature_dict["feature"]
-            if feature in stemmed_check_terms:
-                has_stemmed = True
-                break
-        print_output("check_tagger_features_for_stemmed_values", {"tagger_id": tagger_id, "has_stemmed": has_stemmed})
-        self.assertTrue(has_stemmed)
-
-
     def test_that_detect_lang_and_snowball_language_are_mutually_exclusive(self):
         payload = {
             "description": "TestTagger",
@@ -102,7 +85,6 @@ class TaggerSnowballStemmerTests(APITransactionTestCase):
         response = self.client.post(url, data=payload, format="json")
         print_output("test_running_snowball_stemmer_with_predefined_language:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
-        self._check_for_features(response.data["id"])
 
 
     @skipIf(skip_for_es6(), "This test only works for ES7 which has an Estonian stemmer!")
@@ -124,7 +106,6 @@ class TaggerSnowballStemmerTests(APITransactionTestCase):
         response = self.client.post(url, data=payload, format="json")
         print_output("test_training_tagger_with_snowball_stemmer_that_detects_lang_from_documents:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
-        self._check_for_features(response.data["id"])
 
 
     def test_running_snowball_stemmer_with_a_wrong_language_value(self):

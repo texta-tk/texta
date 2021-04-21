@@ -1,11 +1,10 @@
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 
-from toolkit.elastic.index.serializers import IndexSerializer
-from toolkit.embedding.models import Embedding, Task
-from toolkit.embedding import choices
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.elastic.choices import get_snowball_choices
+from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choices
+from toolkit.elastic.index.serializers import IndexSerializer
+from toolkit.embedding import choices
+from toolkit.embedding.models import Embedding
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
 
 
@@ -14,7 +13,7 @@ class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSeri
     task = TaskSerializer(read_only=True)
     indices = IndexSerializer(many=True, default=[])
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
-    snowball_language = serializers.CharField(default=choices.DEFAULT_SNOWBALL_LANGUAGE, help_text=f'Uses Snowball stemmer with specified language to normalize the texts. Default: {choices.DEFAULT_SNOWBALL_LANGUAGE}')
+    snowball_language = serializers.ChoiceField(choices=get_snowball_choices(), default=DEFAULT_SNOWBALL_LANGUAGE, help_text=f'Uses Snowball stemmer with specified language to normalize the texts. Default: {DEFAULT_SNOWBALL_LANGUAGE}')
     max_documents = serializers.IntegerField(default=choices.DEFAULT_MAX_DOCUMENTS)
     num_dimensions = serializers.IntegerField(
         default=choices.DEFAULT_NUM_DIMENSIONS,
@@ -31,13 +30,6 @@ class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSeri
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
     url = serializers.SerializerMethodField()
     embedding_type = serializers.ChoiceField(choices=choices.EMBEDDING_CHOICES, default=choices.EMBEDDING_CHOICES[0])
-
-
-    def validate_snowball_language(self, value: str):
-        languages = get_snowball_choices()
-        if value not in languages:
-            raise ValidationError(f"Language '{value}' is not amongst the supported languages: {languages}!")
-        return value
 
 
     class Meta:

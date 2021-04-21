@@ -6,11 +6,10 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from toolkit.core.project.models import Project
-from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.index.models import Index
+from toolkit.elastic.tools.core import ElasticCore
 from toolkit.settings import RELATIVE_PROJECT_DATA_PATH, SEARCHER_FOLDER_KEY
-from toolkit.test_settings import REINDEXER_TEST_INDEX, TEST_FACT_NAME, TEST_INDEX, TEST_QUERY, TEST_VERSION_PREFIX, \
-    TEST_FIELD, TEST_MATCH_TEXT, VERSION_NAMESPACE
+from toolkit.test_settings import REINDEXER_TEST_INDEX, TEST_FACT_NAME, TEST_FIELD, TEST_INDEX, TEST_MATCH_TEXT, TEST_QUERY, TEST_VERSION_PREFIX, VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -32,7 +31,6 @@ class ProjectViewTests(APITestCase):
     def setUp(self):
         # Create a new project_user, all project extra actions need to be permissible for this project_user.
         self.user = create_test_user(name='user', password='pw')
-
         self.admin = create_test_user(name='admin', password='pw')
         self.admin.is_superuser = True
         self.admin.save()
@@ -295,7 +293,7 @@ class ProjectViewTests(APITestCase):
         self.client.login(username="admin", password="pw")
         response = self.client.post(reverse(f"{VERSION_NAMESPACE}:project-list"), format="json", data={
             "title": "faulty_project",
-            "indices": ["the_holy_hand_granade"],
+            "indices": ["unexisting_index_that_throws_error"],
             "users": [reverse(f"{VERSION_NAMESPACE}:user-detail", args=[self.admin.pk])]
         })
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
@@ -306,7 +304,7 @@ class ProjectViewTests(APITestCase):
         pk = Project.objects.last().pk
         url = reverse(f"{VERSION_NAMESPACE}:project-detail", args=[pk])
         payload = {
-            "indices": ["an_european_or_african_swallow"]
+            "indices": ["unexisting_index_that_throws_an_error"]
         }
         response = self.client.patch(url, data=payload, format="json")
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
