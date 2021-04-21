@@ -55,3 +55,4 @@ dependencies:
       - -f https://download.pytorch.org/whl/torch_stable.html
       - pyjwt<2
       - beautifulsoup4
+      - nltk==3.6.*

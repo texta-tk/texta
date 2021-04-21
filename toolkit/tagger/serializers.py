@@ -155,12 +155,16 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     url = serializers.SerializerMethodField()
     tagger_groups = serializers.SerializerMethodField(read_only=True)
 
+    balance = serializers.BooleanField(default=choices.DEFAULT_BALANCE, required=False, help_text=f'Balance sample sizes of different classes. Only applicable for multiclass taggers. Default = {choices.DEFAULT_BALANCE}')
+    balance_to_max_limit = serializers.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT, required=False, help_text=f'If enabled, the number of samples for each class is set to `maximum_sample_size`. Otherwise, it is set to max class size. NB! Only applicable for multiclass taggers with balance == True. Default = {choices.DEFAULT_BALANCE_TO_MAX_LIMIT}')
+
+
 
     class Meta:
         model = Tagger
         fields = ('id', 'url', 'author_username', 'description', 'query', 'fact_name', 'fields', 'detect_lang', 'embedding', 'vectorizer', 'classifier', 'stop_words',
                   'maximum_sample_size', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score', 'snowball_language', 'scoring_function',
-                  'num_features', 'num_examples', 'confusion_matrix', 'plot', 'task', 'indices', 'tagger_groups', 'ignore_numbers')
+                  'num_features', 'num_examples', 'confusion_matrix', 'plot', 'task', 'indices', 'tagger_groups', 'ignore_numbers', 'balance', 'balance_to_max_limit')
         read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'num_examples', 'tagger_groups', 'confusion_matrix')
         fields_to_parse = ('fields',)
 
@@ -248,6 +252,8 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
                 'vectorizer': first_tagger.vectorizer,
                 'classifier': first_tagger.classifier,
                 'stop_words': load_stop_words(first_tagger.stop_words),
-                'ignore_numbers': first_tagger.ignore_numbers
+                'ignore_numbers': first_tagger.ignore_numbers,
+                'balance': first_tagger.balance,
+                'balance_to_max_limit': first_tagger.balance_to_max_limit
             }
             return params

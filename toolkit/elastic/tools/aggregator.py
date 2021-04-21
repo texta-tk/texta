@@ -137,15 +137,16 @@ class ElasticAggregator:
         return sw
 
 
-    def get_fact_values_distribution(self, fact_name: str):
+    def get_fact_values_distribution(self, fact_name: str, fact_name_size: int = 30, fact_value_size: int = 30):
         """
         Returns a dictionary with fact values (labels) as keys and labels' quantities as values.
         """
         self.query["size"] = 0
-        
+
         agg_query = {'fact_values': {'nested': {'path': 'texta_facts'},
-                    'aggs': {'fact_bucket': {'terms': {'field': 'texta_facts.fact'},
-                    'aggs': {'value_bucket': {'terms': {'field': 'texta_facts.str_val'}}}}}}}
+                    'aggs': {'fact_bucket': {'terms': {'field': 'texta_facts.fact', 'size': fact_name_size},
+                    'aggs': {'value_bucket': {'terms': {'field': 'texta_facts.str_val', 'size': fact_value_size}}}}}}}
+        #agg_query["size"] = 30
 
         fact_dist_dict = {}
         response = self._aggregate(agg_query)
@@ -155,8 +156,3 @@ class ElasticAggregator:
                 for fact_value in fact["value_bucket"]["buckets"]:
                     fact_dist_dict[fact_value["key"]] = fact_value["doc_count"]
         return fact_dist_dict
-
-
-
-
-

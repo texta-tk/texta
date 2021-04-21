@@ -54,3 +54,4 @@ dependencies:
       - torchtext==0.6.*
       - pyjwt<2
       - beautifulsoup4
+      - nltk==3.6.*

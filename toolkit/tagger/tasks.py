@@ -139,7 +139,9 @@ def train_tagger_task(tagger_id: int):
             field_data=field_data,
             show_progress=show_progress,
             snowball_language=tagger_object.snowball_language,
-            detect_lang=tagger_object.detect_lang
+            detect_lang=tagger_object.detect_lang,
+            balance=tagger_object.balance,
+            balance_to_max_limit=tagger_object.balance_to_max_limit
         )
         # update status to training
         show_progress.update_step("training")

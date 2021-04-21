@@ -85,6 +85,7 @@ class TaggerViewTests(APITransactionTestCase):
 
     def test_run(self):
         self.run_create_multiclass_tagger_training_and_task_signal()
+        self.run_create_balanced_multiclass_tagger_training_and_task_signal()
         self.run_multiclass_tag_text(self.test_tagger_ids)
         self.run_apply_multiclass_tagger_to_index()
         self.run_apply_mutliclass_tagger_to_index_invalid_input()
@@ -140,6 +141,50 @@ class TaggerViewTests(APITransactionTestCase):
                 self.assertTrue(created_tagger.task is not None)
                 # Check if Tagger gets trained and completed
                 self.assertEqual(created_tagger.task.status, Task.STATUS_COMPLETED)
+
+
+    def run_create_balanced_multiclass_tagger_training_and_task_signal(self):
+        """Tests the endpoint for a new balanced multiclass Tagger, and if a new Task gets created via the signal"""
+        # run test for multiclass training
+        # run test for each vectorizer & classifier option
+        vectorizer_opt = self.vectorizer_opts[0]
+        classifier_opt = self.classifier_opts[0]
+        payload = {
+            "description": "TestBalancedTaggerMultiClass",
+            "fields": TEST_FIELD_CHOICE,
+            "fact_name": TEST_FACT_NAME,
+            "query": json.dumps(TEST_EMPTY_QUERY),
+            "vectorizer": vectorizer_opt,
+            "classifier": classifier_opt,
+            "maximum_sample_size": 150,
+            "negative_multiplier": 1.0,
+            "score_threshold": 0.1,
+            "balance": True,
+            "balance_to_max_limit": True
+        }
+        # as lemmatization is slow, do it only once
+        lemmatize = False
+        # procees to analyze result
+        response = self.client.post(self.url, payload, format='json')
+        print_output('test_create_balanced_multiclass_tagger_training_and_task_signal:response.data', response.data)
+        # Check if Tagger gets created
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        created_tagger = Tagger.objects.get(id=response.data['id'])
+
+        # Check if not errors
+        self.assertEqual(created_tagger.task.errors, '[]')
+        # Remove tagger files after test is done
+        self.add_cleanup_files(created_tagger.id)
+        # Check if Task gets created via a signal
+        self.assertTrue(created_tagger.task is not None)
+        # Check if Tagger gets trained and completed
+        self.assertEqual(created_tagger.task.status, Task.STATUS_COMPLETED)
+
+        # Test if each class has correct number of examples
+        num_examples = json.loads(created_tagger.num_examples)
+        print_output('test_balanced_tagger_num_examples_correct:num_examples', num_examples)
+        for class_size in num_examples.values():
+            self.assertTrue(class_size, payload["maximum_sample_size"])
 
 
     def run_multiclass_tag_text(self, test_tagger_ids: List[int]):

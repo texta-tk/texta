@@ -93,6 +93,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
     def test(self):
         self.run_train_multiclass_bert_tagger_using_fact_name()
+        self.run_train_balanced_multiclass_bert_tagger_using_fact_name()
         self.run_train_bert_tagger_using_query()
         self.run_bert_tag_text()
         self.run_bert_tag_with_imported_gpu_model()
@@ -155,6 +156,43 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         print_output('test_multiclass_bert_tagger_has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
+        self.add_cleanup_files(tagger_id)
+
+
+    def run_train_balanced_multiclass_bert_tagger_using_fact_name(self):
+        """Tests balanced BertTagger training with multiple classes and if a new Task gets created via the signal."""
+        payload = {
+            "description": "TestBalancedBertTaggerObjectTraining",
+            "fact_name": TEST_FACT_NAME,
+            "fields": TEST_FIELD_CHOICE,
+            "indices": [{"name": TEST_INDEX}],
+            "maximum_sample_size": 500,
+            "num_epochs": 2,
+            "max_length": 15,
+            "bert_model": TEST_BERT_MODEL,
+            "balance": True,
+            "use_sentence_shuffle": True,
+            "balance_to_max_limit": True
+        }
+        response = self.client.post(self.url, payload, format='json')
+
+        print_output('test_create_balanced_multiclass_bert_tagger_training_and_task_signal:response.data', response.data)
+        # Check if BertTagger gets created
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # Give the tagger some time to finish training
+        sleep(5)
+        tagger_id = response.data['id']
+        self.test_multiclass_tagger_id  = tagger_id
+        response = self.client.get(f'{self.url}{tagger_id}/')
+        print_output('test_balanced_multiclass_bert_tagger_has_stats:response.data', response.data)
+        for score in ['f1_score', 'precision', 'recall', 'accuracy']:
+            self.assertTrue(isinstance(response.data[score], float))
+
+        num_examples = json.loads(response.data["num_examples"])
+        print_output('test_balanced_bert_tagger_num_examples_correct:num_examples', num_examples)
+        for class_size in num_examples.values():
+            self.assertTrue(class_size, payload["maximum_sample_size"])
+
         self.add_cleanup_files(tagger_id)
 
 

@@ -60,6 +60,10 @@ class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Pr
     learning_rate = serializers.FloatField(default=choices.DEFAULT_LEARNING_RATE, required=False, help_text=f'Learning rate used while training. Default = {choices.DEFAULT_LEARNING_RATE}')
     eps = serializers.FloatField(default=choices.DEFAULT_EPS, help_text=f'Default = {choices.DEFAULT_EPS}')
 
+    balance = serializers.BooleanField(default=choices.DEFAULT_BALANCE, required=False, help_text=f'Balance sample sizes of different classes. Only applicable for multiclass taggers. Default = {choices.DEFAULT_BALANCE}')
+    use_sentence_shuffle = serializers.BooleanField(default=choices.DEFAULT_USE_SENTENCE_SHUFFLE, required=False, help_text=f'Shuffle sentences in added examples. NB! Only applicable for multiclass taggers with balance=True. Default = {choices.DEFAULT_USE_SENTENCE_SHUFFLE}')
+    balance_to_max_limit = serializers.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT, required=False, help_text=f'If enabled, the number of samples for each class is set to `maximum_sample_size`. Otherwise, it is set to max class size. NB! Only applicable for multiclass taggers with balance=True. Default = {choices.DEFAULT_BALANCE_TO_MAX_LIMIT}')
+
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
     url = serializers.SerializerMethodField()
@@ -78,7 +82,7 @@ class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Pr
         fields = ('url', 'author_username', 'id', 'description', 'query', 'fields', 'f1_score', 'precision', 'recall', 'accuracy',
                   'validation_loss', 'training_loss', 'maximum_sample_size', 'minimum_sample_size', 'num_epochs', 'plot', 'task', 'fact_name',
                   'indices', 'bert_model', 'learning_rate', 'eps', 'max_length', 'batch_size', 'adjusted_batch_size',
-                  'split_ratio','negative_multiplier', 'num_examples', 'confusion_matrix')
+                  'split_ratio','negative_multiplier', 'num_examples', 'confusion_matrix', 'balance', 'use_sentence_shuffle', 'balance_to_max_limit')
 
         read_only_fields = ('project', 'fields', 'f1_score', 'precision', 'recall', 'accuracy', 'validation_loss', 'training_loss', 'plot',
                             'task', 'fact_name', 'num_examples', 'adjusted_batch_size', 'confusion_matrix')

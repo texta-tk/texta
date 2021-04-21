@@ -45,10 +45,19 @@ def train_torchtagger(tagger_id, testing=False):
             indices,
             fields,
             show_progress=show_progress,
-            join_fields=True
+            join_fields=True,
+            balance=tagger_object.balance,
+            use_sentence_shuffle=tagger_object.use_sentence_shuffle,
+            balance_to_max_limit=tagger_object.balance_to_max_limit
         )
         show_progress.update_step('training')
         show_progress.update_view(0.0)
+
+        # get num examples and save to model
+        num_examples = {k: len(v) for k, v in data_sample.data.items()}
+        tagger_object.num_examples = json.dumps(num_examples)
+        tagger_object.save()
+
         # create TorchTagger
         tagger = TorchTagger(
             embedding,
@@ -62,6 +71,8 @@ def train_torchtagger(tagger_id, testing=False):
         # save tagger to disk
         tagger_path = os.path.join(RELATIVE_MODELS_PATH, model_type, f'{model_type}_{tagger_id}_{secrets.token_hex(10)}')
         tagger.save(tagger_path)
+
+
         # set tagger location
         tagger_object.model.name = tagger_path
         # save tagger plot
