@@ -61,7 +61,7 @@ class TestElasticCore(TestCase):
 
 
     def tearDown(self) -> None:
-        self.elastic_core.es.indices.delete(DOCTYPE_INDEX_NAME, ignore=[400, 404])
+        self.elastic_core.delete_index(DOCTYPE_INDEX_NAME, ignore=[400, 404])
 
 
     def test_connection(self):

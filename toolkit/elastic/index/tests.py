@@ -42,4 +42,4 @@ class IndexViewsTest(APITestCase):
         if names:
             indices.delete()
             for index in names:
-                self.ec.es.indices.delete(index=index, ignore=[400, 404])
+                self.ec.delete_index(index=index, ignore=[400, 404])

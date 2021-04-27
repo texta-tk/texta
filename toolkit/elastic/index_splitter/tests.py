@@ -6,11 +6,12 @@ from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
 from toolkit.core.task.models import Task
+from toolkit.elastic.index_splitter.models import IndexSplitter
 from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.index_splitter.models import IndexSplitter
 from toolkit.elastic.tools.searcher import ElasticSearcher
-from toolkit.test_settings import (INDEX_SPLITTING_TEST_INDEX, INDEX_SPLITTING_TRAIN_INDEX, TEST_INDEX, TEST_VERSION_PREFIX, TEST_QUERY)
+from toolkit.helper_functions import reindex_test_dataset
+from toolkit.test_settings import (INDEX_SPLITTING_TEST_INDEX, INDEX_SPLITTING_TRAIN_INDEX, TEST_QUERY, TEST_VERSION_PREFIX)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -18,6 +19,7 @@ from toolkit.tools.utils_for_tests import create_test_user, print_output, projec
 class IndexSplitterViewTests(APITransactionTestCase):
     def setUp(self):
         """ User needs to be admin, because of changed indices permissions. """
+        self.test_index_name = reindex_test_dataset()
         self.default_password = 'pw'
         self.default_username = 'indexOwner'
         self.user = create_test_user(self.default_username, 'my@email.com', self.default_password)
@@ -25,20 +27,20 @@ class IndexSplitterViewTests(APITransactionTestCase):
         self.admin = create_test_user(name='admin', password='1234')
         self.admin.is_superuser = True
         self.admin.save()
-        self.project = project_creation("IndexSplittingTestProject", TEST_INDEX, self.user)
+        self.project = project_creation("IndexSplittingTestProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
 
         self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/index_splitter/'
 
         self.client.login(username=self.default_username, password=self.default_password)
-
+        self.ec = ElasticCore()
         self.FACT = "TEEMA"
 
 
     def test_create_splitter_object_and_task_signal(self):
         payload = {
             "description": "Random index splitting",
-            "indices": [{"name": TEST_INDEX}],
+            "indices": [{"name": self.test_index_name}],
             "train_index": INDEX_SPLITTING_TRAIN_INDEX,
             "test_index": INDEX_SPLITTING_TEST_INDEX,
             "distribution": "random",
@@ -61,7 +63,7 @@ class IndexSplitterViewTests(APITransactionTestCase):
 
         sleep(5)
 
-        original_count = ElasticSearcher(indices=TEST_INDEX).count()
+        original_count = ElasticSearcher(indices=self.test_index_name).count()
         test_count = ElasticSearcher(indices=INDEX_SPLITTING_TEST_INDEX).count()
         train_count = ElasticSearcher(indices=INDEX_SPLITTING_TRAIN_INDEX).count()
 
@@ -71,7 +73,7 @@ class IndexSplitterViewTests(APITransactionTestCase):
     def test_create_random_split(self):
         payload = {
             "description": "Random index splitting",
-            "indices": [{"name": TEST_INDEX}],
+            "indices": [{"name": self.test_index_name}],
             "train_index": INDEX_SPLITTING_TRAIN_INDEX,
             "test_index": INDEX_SPLITTING_TEST_INDEX,
             "distribution": "random",
@@ -89,7 +91,7 @@ class IndexSplitterViewTests(APITransactionTestCase):
 
         sleep(5)
 
-        original_count = ElasticSearcher(indices=TEST_INDEX).count()
+        original_count = ElasticSearcher(indices=self.test_index_name).count()
         test_count = ElasticSearcher(indices=INDEX_SPLITTING_TEST_INDEX).count()
         train_count = ElasticSearcher(indices=INDEX_SPLITTING_TRAIN_INDEX).count()
 
@@ -102,7 +104,7 @@ class IndexSplitterViewTests(APITransactionTestCase):
     def test_create_original_split(self):
         payload = {
             "description": "Original index splitting",
-            "indices": [{"name": TEST_INDEX}],
+            "indices": [{"name": self.test_index_name}],
             "train_index": INDEX_SPLITTING_TRAIN_INDEX,
             "test_index": INDEX_SPLITTING_TEST_INDEX,
             "distribution": "original",
@@ -121,7 +123,7 @@ class IndexSplitterViewTests(APITransactionTestCase):
 
         sleep(5)
 
-        original_distribution = ElasticAggregator(indices=TEST_INDEX).get_fact_values_distribution(self.FACT)
+        original_distribution = ElasticAggregator(indices=self.test_index_name).get_fact_values_distribution(self.FACT)
         test_distribution = ElasticAggregator(indices=INDEX_SPLITTING_TEST_INDEX).get_fact_values_distribution(self.FACT)
         train_distribution = ElasticAggregator(indices=INDEX_SPLITTING_TRAIN_INDEX).get_fact_values_distribution(self.FACT)
 
@@ -135,7 +137,7 @@ class IndexSplitterViewTests(APITransactionTestCase):
     def test_create_equal_split(self):
         payload = {
             "description": "Original index splitting",
-            "indices": [{"name": TEST_INDEX}],
+            "indices": [{"name": self.test_index_name}],
             "train_index": INDEX_SPLITTING_TRAIN_INDEX,
             "test_index": INDEX_SPLITTING_TEST_INDEX,
             "distribution": "equal",
@@ -154,7 +156,7 @@ class IndexSplitterViewTests(APITransactionTestCase):
 
         sleep(5)
 
-        original_distribution = ElasticAggregator(indices=TEST_INDEX).get_fact_values_distribution(self.FACT)
+        original_distribution = ElasticAggregator(indices=self.test_index_name).get_fact_values_distribution(self.FACT)
         test_distribution = ElasticAggregator(indices=INDEX_SPLITTING_TEST_INDEX).get_fact_values_distribution(self.FACT)
         train_distribution = ElasticAggregator(indices=INDEX_SPLITTING_TRAIN_INDEX).get_fact_values_distribution(self.FACT)
 
@@ -173,7 +175,7 @@ class IndexSplitterViewTests(APITransactionTestCase):
         custom_distribution = {"FUBAR": 10, "bar": 15}
         payload = {
             "description": "Original index splitting",
-            "indices": [{"name": TEST_INDEX}],
+            "indices": [{"name": self.test_index_name}],
             "train_index": INDEX_SPLITTING_TRAIN_INDEX,
             "test_index": INDEX_SPLITTING_TEST_INDEX,
             "distribution": "custom",
@@ -192,7 +194,7 @@ class IndexSplitterViewTests(APITransactionTestCase):
 
         sleep(5)
 
-        original_distribution = ElasticAggregator(indices=TEST_INDEX).get_fact_values_distribution(self.FACT)
+        original_distribution = ElasticAggregator(indices=self.test_index_name).get_fact_values_distribution(self.FACT)
         test_distribution = ElasticAggregator(indices=INDEX_SPLITTING_TEST_INDEX).get_fact_values_distribution(self.FACT)
         train_distribution = ElasticAggregator(indices=INDEX_SPLITTING_TRAIN_INDEX).get_fact_values_distribution(self.FACT)
 
@@ -210,7 +212,7 @@ class IndexSplitterViewTests(APITransactionTestCase):
     def test_create_original_split_fact_value_given(self):
         payload = {
             "description": "Original index splitting",
-            "indices": [{"name": TEST_INDEX}],
+            "indices": [{"name": self.test_index_name}],
             "train_index": INDEX_SPLITTING_TRAIN_INDEX,
             "test_index": INDEX_SPLITTING_TEST_INDEX,
             "distribution": "original",
@@ -226,7 +228,7 @@ class IndexSplitterViewTests(APITransactionTestCase):
 
         sleep(5)
 
-        original_distribution = ElasticAggregator(indices=TEST_INDEX).get_fact_values_distribution(self.FACT)
+        original_distribution = ElasticAggregator(indices=self.test_index_name).get_fact_values_distribution(self.FACT)
         test_distribution = ElasticAggregator(indices=INDEX_SPLITTING_TEST_INDEX).get_fact_values_distribution(self.FACT)
         train_distribution = ElasticAggregator(indices=INDEX_SPLITTING_TRAIN_INDEX).get_fact_values_distribution(self.FACT)
 
@@ -237,10 +239,11 @@ class IndexSplitterViewTests(APITransactionTestCase):
                 self.assertTrue(self.is_between_limits(test_distribution[label], quant, 0.2))
                 self.assertTrue(self.is_between_limits(train_distribution[label], quant, 0.8))
 
+
     def test_query_given(self):
         payload = {
             "description": "Original index splitting",
-            "indices": [{"name": TEST_INDEX}],
+            "indices": [{"name": self.test_index_name}],
             "train_index": INDEX_SPLITTING_TRAIN_INDEX,
             "test_index": INDEX_SPLITTING_TEST_INDEX,
             "distribution": "original",
@@ -253,7 +256,7 @@ class IndexSplitterViewTests(APITransactionTestCase):
         response = self.client.post(self.url, data=payload, format="json")
         print_output('test_query_given:response.data', response.data)
 
-        original_distribution = ElasticAggregator(indices=TEST_INDEX).get_fact_values_distribution(self.FACT)
+        original_distribution = ElasticAggregator(indices=self.test_index_name).get_fact_values_distribution(self.FACT)
         test_distribution = ElasticAggregator(indices=INDEX_SPLITTING_TEST_INDEX).get_fact_values_distribution(self.FACT)
         train_distribution = ElasticAggregator(indices=INDEX_SPLITTING_TRAIN_INDEX).get_fact_values_distribution(self.FACT)
 
@@ -264,10 +267,12 @@ class IndexSplitterViewTests(APITransactionTestCase):
         self.assertTrue("foo" not in train_distribution and "foo" not in test_distribution)
         self.assertTrue("FUBAR" not in train_distribution and "FUBAR" not in test_distribution)
 
+
     def tearDown(self):
-        res = ElasticCore().delete_index(INDEX_SPLITTING_TEST_INDEX)
+        self.ec.delete_index(index=self.test_index_name, ignore=[400, 404])
+        res = self.ec.delete_index(INDEX_SPLITTING_TEST_INDEX)
         print_output('attempt to delete test index:', res)
-        res = ElasticCore().delete_index(INDEX_SPLITTING_TRAIN_INDEX)
+        res = self.ec.delete_index(INDEX_SPLITTING_TRAIN_INDEX)
         print_output('attempt to delete train index:', res)
 
 

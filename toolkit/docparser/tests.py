@@ -9,13 +9,16 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from toolkit.core.project.models import Project
-from toolkit.test_settings import TEST_INDEX, VERSION_NAMESPACE
+from toolkit.elastic.tools.core import ElasticCore
+from toolkit.helper_functions import reindex_test_dataset
+from toolkit.test_settings import VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
 class TestDocparserAPIView(APITestCase):
 
     def setUp(self) -> None:
+        self.test_index_name = reindex_test_dataset()
         self.user = create_test_user('Owner', 'my@email.com', 'pw')
         self.unauthorized_user = create_test_user('unauthorized', 'my@email.com', 'pw')
         self.file_name = "d41d8cd98f00b204e9800998ecf8427e.txt"
@@ -28,6 +31,11 @@ class TestDocparserAPIView(APITestCase):
         self.client.login(username='Owner', password='pw')
         self._basic_pipeline_functionality()
         self.file_path = self._get_file_path()
+        self.ec = ElasticCore()
+
+
+    def tearDown(self) -> None:
+        self.ec.delete_index(index=self.test_index_name, ignore=[400, 404])
 
 
     def _get_file_path(self):
@@ -40,7 +48,7 @@ class TestDocparserAPIView(APITestCase):
         payload = {
             "file": self.file,
             "project_id": self.project.pk,
-            "indices": [TEST_INDEX],
+            "indices": [self.test_index_name],
             "file_name": self.file_name
         }
         response = self.client.post(url, data=payload)
@@ -59,7 +67,7 @@ class TestDocparserAPIView(APITestCase):
         payload = {
             "file": self.file,
             "project_id": self.project.pk,
-            "indices": [TEST_INDEX]
+            "indices": [self.test_index_name]
         }
         response = self.client.post(url, data=payload)
         print_output("test_being_rejected_without_login:response.data", response.data)
@@ -74,7 +82,7 @@ class TestDocparserAPIView(APITestCase):
         payload = {
             "file": self.file,
             "project_id": self.unauth_project.pk,
-            "indices": [TEST_INDEX]
+            "indices": [self.test_index_name]
         }
         response = self.client.post(url, data=payload)
         print_output("test_being_rejected_with_wrong_project_id:response.data", response.data)
@@ -84,7 +92,7 @@ class TestDocparserAPIView(APITestCase):
     def test_indices_being_added_into_the_project(self):
         project = Project.objects.get(pk=self.project.pk)
         indices = project.indices.all()
-        added_index = indices.filter(name=TEST_INDEX)
+        added_index = indices.filter(name=self.test_index_name)
         self.assertTrue(added_index.count() == 1)
         print_output("test_indices_being_added_into_the_project", True)
 

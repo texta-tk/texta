@@ -1,20 +1,18 @@
-import json
 from unittest import skipIf
 
 from django.test import override_settings
-from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.test_settings import *
-from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
+from toolkit.tools.utils_for_tests import create_test_user, project_creation
 
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
 class FaceAnalyzerViewTests(APITransactionTestCase):
 
     def setUp(self):
-        ''' user needs to be admin, because of changed indices permissions '''
+        """ User needs to be admin, because of changed indices permissions """
         self.default_password = 'pw'
         self.default_username = 'indexOwner'
         self.user = create_test_user(self.default_username, 'my@email.com', self.default_password)

@@ -8,9 +8,10 @@ from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
 from toolkit.elastic.tools.core import ElasticCore
+from toolkit.helper_functions import reindex_test_dataset
 from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup
 from toolkit.settings import TEXTA_TAGS_KEY
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_INTEGER_FIELD, VERSION_NAMESPACE
+from toolkit.test_settings import TEST_FIELD, TEST_INTEGER_FIELD, VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -29,7 +30,7 @@ class RegexGroupTaggerTests(APITransactionTestCase):
 
     def _set_up_project(self):
         self.user = create_test_user('tg_user', 'my@email.com', 'pw')
-        self.project = project_creation("RegexGroupTaggerTestProject", TEST_INDEX, self.user)
+        self.project = project_creation("RegexGroupTaggerTestProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
         self.client.login(username='tg_user', password='pw')
 
@@ -52,8 +53,13 @@ class RegexGroupTaggerTests(APITransactionTestCase):
         return ids
 
 
-    def setUp(self) -> None:
+    def tearDown(self) -> None:
+        from toolkit.elastic.tools.core import ElasticCore
+        ElasticCore().delete_index(index=self.test_index_name, ignore=[400, 404])
 
+
+    def setUp(self) -> None:
+        self.test_index_name = reindex_test_dataset()
         self._set_up_project()
         self.tagger_group_list_url = reverse(f"{VERSION_NAMESPACE}:regex_tagger_group-list", kwargs={"project_pk": self.project.pk})
         self.tagger_list_url = reverse(f"{VERSION_NAMESPACE}:regex_tagger-list", kwargs={"project_pk": self.project.pk})
@@ -91,6 +97,7 @@ class RegexGroupTaggerTests(APITransactionTestCase):
             matches.append(tag["str_val"])
         self.assertTrue("politsei" in matches)
         self.assertTrue("tuletõrje" in matches)
+
 
     def test_regex_tagger_group_tag_text_empty(self):
         url = reverse(f"{VERSION_NAMESPACE}:regex_tagger_group-tag-text",
@@ -134,9 +141,9 @@ class RegexGroupTaggerTests(APITransactionTestCase):
             ("hate", ["pederast", "debiilik"])
         ))
         url = reverse(f"{VERSION_NAMESPACE}:regex_tagger_group-apply-tagger-group", kwargs={"project_pk": self.project.pk, "pk": tg_id})
-        response = self.client.post(url, {"description": "Test Run", "fields": [TEST_FIELD], "indices": [{"name": TEST_INDEX}]})
+        response = self.client.post(url, {"description": "Test Run", "fields": [TEST_FIELD], "indices": [{"name": self.test_index_name}]})
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
-        s = elasticsearch_dsl.Search(index=TEST_INDEX, using=ec.es)
+        s = elasticsearch_dsl.Search(index=self.test_index_name, using=ec.es)
         has_group_fact = False
         for hit in s.scan():
             facts = hit.to_dict().get("texta_facts", [])

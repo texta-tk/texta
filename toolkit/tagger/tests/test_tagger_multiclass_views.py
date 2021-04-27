@@ -1,8 +1,5 @@
 import json
-import os
-import pathlib
 import uuid
-from io import BytesIO
 from time import sleep
 from typing import List
 
@@ -10,23 +7,13 @@ from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
+from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.tools.core import ElasticCore
-
-from toolkit.core.task.models import Task
-from toolkit.settings import RELATIVE_MODELS_PATH
+from toolkit.helper_functions import reindex_test_dataset
 from toolkit.tagger.models import Tagger
-from toolkit.test_settings import (TEST_FIELD,
-                                   TEST_FIELD_CHOICE,
-                                   TEST_FACT_NAME,
-                                   TEST_INDEX,
-                                   TEST_QUERY,
-                                   TEST_EMPTY_QUERY,
-                                   TEST_VERSION_PREFIX,
-                                   TEST_KEEP_PLOT_FILES,
-                                   TEST_TAGGER_MULTICLASS
-                                   )
+from toolkit.test_settings import (TEST_EMPTY_QUERY, TEST_FACT_NAME, TEST_FIELD, TEST_FIELD_CHOICE, TEST_KEEP_PLOT_FILES, TEST_QUERY, TEST_TAGGER_MULTICLASS, TEST_VERSION_PREFIX)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
@@ -36,8 +23,9 @@ class TaggerViewTests(APITransactionTestCase):
 
     def setUp(self):
         # Owner of the project
+        self.test_index_name = reindex_test_dataset()
         self.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
-        self.project = project_creation("taggerTestProject", TEST_INDEX, self.user)
+        self.project = project_creation("taggerTestProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
         self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/taggers/'
         self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
@@ -61,7 +49,7 @@ class TaggerViewTests(APITransactionTestCase):
 
         self.reindex_payload = {
             "description": "test index for applying multiclass taggers",
-            "indices": [TEST_INDEX],
+            "indices": [self.test_index_name],
             "query": json.dumps(TEST_QUERY),
             "new_index": self.test_index_copy,
             "fields": [TEST_FIELD]
@@ -102,7 +90,9 @@ class TaggerViewTests(APITransactionTestCase):
 
     def tearDown(self) -> None:
         Tagger.objects.all().delete()
-        res = ElasticCore().delete_index(self.test_index_copy)
+        ec = ElasticCore()
+        res = ec.delete_index(self.test_index_copy)
+        ec.delete_index(index=self.test_index_name, ignore=[400, 404])
         print_output(f"Delete apply_multiclass_taggers test index {self.test_index_copy}", res)
 
 

@@ -8,8 +8,9 @@ from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
 from toolkit.elastic.tools.core import ElasticCore
+from toolkit.helper_functions import reindex_test_dataset
 from toolkit.tagger.models import Tagger
-from toolkit.test_settings import (TEST_FIELD, TEST_INDEX, TEST_QUERY, VERSION_NAMESPACE)
+from toolkit.test_settings import (TEST_FIELD, TEST_QUERY, VERSION_NAMESPACE)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -27,14 +28,16 @@ class TaggerSnowballStemmerTests(APITransactionTestCase):
 
     def setUp(self):
         # Owner of the project
+        self.test_index_name = reindex_test_dataset()
         self.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
-        self.project = project_creation("taggerTestProject", TEST_INDEX, self.user)
+        self.project = project_creation("taggerTestProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
         self.client.login(username='taggerOwner', password='pw')
 
 
     def tearDown(self) -> None:
         Tagger.objects.all().delete()
+        ElasticCore().delete_index(index=self.test_index_name, ignore=[400, 404])
 
 
     def _apply_lang_detect_to_index(self):
