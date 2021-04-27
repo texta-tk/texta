@@ -12,10 +12,11 @@ from rest_framework.test import APITransactionTestCase
 from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.tools.aggregator import ElasticAggregator
-from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.elastic.tools.core import ElasticCore
+from toolkit.elastic.tools.searcher import ElasticSearcher
+from toolkit.helper_functions import reindex_test_dataset
 from toolkit.tagger.models import Tagger, TaggerGroup
-from toolkit.test_settings import (TEST_FACT_NAME, TEST_FIELD, TEST_FIELD_CHOICE, TEST_INDEX, TEST_KEEP_PLOT_FILES, TEST_QUERY, TEST_TAGGER_GROUP, TEST_VERSION_PREFIX, VERSION_NAMESPACE)
+from toolkit.test_settings import (TEST_FACT_NAME, TEST_FIELD, TEST_FIELD_CHOICE, TEST_KEEP_PLOT_FILES, TEST_QUERY, TEST_TAGGER_GROUP, TEST_VERSION_PREFIX, VERSION_NAMESPACE)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
@@ -24,8 +25,9 @@ class TaggerGroupViewTests(APITransactionTestCase):
 
     def setUp(self):
         # Owner of the project
+        self.test_index_name = reindex_test_dataset()
         self.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
-        self.project = project_creation("taggerGroupTestProject", TEST_INDEX, self.user)
+        self.project = project_creation("taggerGroupTestProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
         self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/tagger_groups/'
         self.test_tagger_group_id = None
@@ -42,7 +44,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
 
         self.reindex_payload = {
             "description": "test index for applying tagger group",
-            "indices": [TEST_INDEX],
+            "indices": [self.test_index_name],
             "query": json.dumps(TEST_QUERY),
             "new_index": self.test_index_copy,
             "fields": [TEST_FIELD]
@@ -62,6 +64,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
         resp = self.client.post(import_url, data={'file': open(file_path, "rb")}).json()
         print_output("Importing test model:", resp)
         return resp["id"]
+
 
     def test_run(self):
         self.run_create_and_delete_tagger_group_removes_related_children_models_plots()
@@ -88,7 +91,9 @@ class TaggerGroupViewTests(APITransactionTestCase):
 
 
     def tearDown(self) -> None:
-        res = ElasticCore().delete_index(self.test_index_copy)
+        ec = ElasticCore()
+        res = ec.delete_index(self.test_index_copy)
+        ec.delete_index(index=self.test_index_name, ignore=[400, 404])
         print_output(f"Delete apply_taggers test index {self.test_index_copy}", res)
 
 
@@ -157,7 +162,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
                 "feature_selector": "SVM Feature Selector",
                 "maximum_sample_size": 500,
                 "negative_multiplier": 1.0,
-                "indices": [{"name": TEST_INDEX}],
+                "indices": [{"name": self.test_index_name}],
                 "stop_words": ["asdfghjkl"]
             }
         }
@@ -183,7 +188,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
                 "feature_selector": "SVM Feature Selector",
                 "maximum_sample_size": 500,
                 "negative_multiplier": 1.0,
-                "indices": [{"name": TEST_INDEX}]
+                "indices": [{"name": self.test_index_name}]
             }
         }
         response = self.client.post(self.url, payload, format='json')
@@ -220,7 +225,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
     def run_tag_random_doc(self):
         """Tests the endpoint for the tag_random_doc action"""
         payload = {
-            "indices": [{"name": TEST_INDEX}]
+            "indices": [{"name": self.test_index_name}]
         }
         url = f'{self.url}{self.test_tagger_group_id}/tag_random_doc/'
         response = self.client.post(url, format="json", data=payload)
@@ -367,7 +372,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
                 "feature_selector": "SVM Feature Selector",
                 "maximum_sample_size": 500,
                 "negative_multiplier": 1.0,
-                "indices": [{"name": TEST_INDEX}]
+                "indices": [{"name": self.test_index_name}]
             }
         }
 
@@ -434,7 +439,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
 
         # Tests the endpoint for the tag_random_doc action"""
         url = f'{self.url}{tg.pk}/tag_random_doc/'
-        response = self.client.post(url, format="json", data={"indices": [{"name": TEST_INDEX}]})
+        response = self.client.post(url, format="json", data={"indices": [{"name": self.test_index_name}]})
         print_output('test_tag_random_doc_group:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, dict))

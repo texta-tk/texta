@@ -2,34 +2,29 @@ import json
 import uuid
 from io import BytesIO
 from time import sleep
-from django.urls import reverse
+
 from django.test import override_settings
-
+from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase, APITransactionTestCase
+from rest_framework.test import APITransactionTestCase
 
+from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.tools.core import ElasticCore
-from toolkit.core.task.models import Task
+from toolkit.helper_functions import reindex_test_dataset
 from toolkit.regex_tagger.models import RegexTagger
-
-from toolkit.test_settings import (
-    TEST_FIELD,
-    TEST_INDEX,
-    TEST_INTEGER_FIELD,
-    TEST_VERSION_PREFIX,
-    VERSION_NAMESPACE,
-    TEST_QUERY
-)
+from toolkit.test_settings import (TEST_FIELD, TEST_INTEGER_FIELD, TEST_QUERY, TEST_VERSION_PREFIX, VERSION_NAMESPACE)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
+
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
 class RegexTaggerViewTests(APITransactionTestCase):
 
     def setUp(self):
+        self.test_index_name = reindex_test_dataset()
         self.user = create_test_user('user', 'my@email.com', 'pw')
-        self.project = project_creation("RegexTaggerTestProject", TEST_INDEX, self.user)
+        self.project = project_creation("RegexTaggerTestProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
         self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/regex_taggers/'
 
@@ -60,7 +55,7 @@ class RegexTaggerViewTests(APITransactionTestCase):
 
         self.reindex_payload = {
             "description": "test index for applying taggers",
-            "indices": [TEST_INDEX],
+            "indices": [self.test_index_name],
             "query": json.dumps(TEST_QUERY),
             "new_index": self.test_index_copy,
             "fields": [TEST_FIELD]
@@ -71,7 +66,9 @@ class RegexTaggerViewTests(APITransactionTestCase):
 
 
     def tearDown(self) -> None:
-        res = ElasticCore().delete_index(self.test_index_copy)
+        ec = ElasticCore()
+        res = ec.delete_index(self.test_index_copy)
+        ec.delete_index(index=self.test_index_name, ignore=[400, 404])
         print_output(f"Delete [Regex Tagger] apply_taggers test index {self.test_index_copy}", res)
 
 
@@ -170,7 +167,7 @@ class RegexTaggerViewTests(APITransactionTestCase):
 
     def run_test_regex_tagger_tag_random_doc(self):
         url = reverse(f"{VERSION_NAMESPACE}:regex_tagger-tag-random-doc", kwargs={"project_pk": self.project.pk, "pk": self.police})
-        response = self.client.post(url, {"indices": [{"name": TEST_INDEX}], "fields": [TEST_FIELD]}, format="json")
+        response = self.client.post(url, {"indices": [{"name": self.test_index_name}], "fields": [TEST_FIELD]}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         self.assertTrue("tagger_id" in response.data)
         self.assertTrue("tag" in response.data)
@@ -349,7 +346,6 @@ class RegexTaggerViewTests(APITransactionTestCase):
 
     def run_test_apply_tagger_to_index(self):
         """Tests applying tagger to index using apply_to_index endpoint."""
-
 
         # Make sure reindexer task has finished
         while self.reindexer_object.task.status != Task.STATUS_COMPLETED:

@@ -6,8 +6,10 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
+from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.document import ElasticDocument
-from toolkit.test_settings import (TEST_FIELD, TEST_INDEX, VERSION_NAMESPACE)
+from toolkit.helper_functions import reindex_test_dataset
+from toolkit.test_settings import (TEST_FIELD, VERSION_NAMESPACE)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 
@@ -38,12 +40,13 @@ class TopicAnalyzerTests(APITransactionTestCase):
 
     def setUpTestData(self):
         # Owner of the project
+        self.test_index_name = reindex_test_dataset()
         self.user = create_test_user('user', 'my@email.com', 'pw')
         self.admin_user = create_test_user("admin", "", "pw")
         self.admin_user.is_superuser = True
         self.admin_user.save()
 
-        self.project = project_creation("projectAnalyzerProject", TEST_INDEX, self.user)
+        self.project = project_creation("projectAnalyzerProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
         self.project.users.add(self.admin_user)
         self.clustering_url = reverse(f"{VERSION_NAMESPACE}:clustering-list", kwargs={"project_pk": self.project.pk})
@@ -57,6 +60,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
 
     def tearDown(self) -> None:
         ClusteringResult.objects.all().delete()
+        ElasticCore().delete_index(index=self.test_index_name, ignore=[400, 404])
 
 
     def test_access_to_detail_page(self):
@@ -74,7 +78,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
             "description": "TopicCluster",
             "fields": [TEST_FIELD],
             "vectorizer": "TfIdf Vectorizer",
-            "indices": [{"name": TEST_INDEX}]
+            "indices": [{"name": self.test_index_name}]
         }
         response = self.client.post(self.clustering_url, format="json", data=payload)
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)

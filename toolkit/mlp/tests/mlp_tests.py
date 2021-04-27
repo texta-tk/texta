@@ -8,6 +8,7 @@ from rest_framework.test import APITestCase, APITransactionTestCase
 
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.searcher import ElasticSearcher
+from toolkit.helper_functions import reindex_test_dataset
 from toolkit.test_settings import (TEST_FIELD, TEST_INDEX, VERSION_NAMESPACE)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
@@ -138,19 +139,18 @@ class MLPDocsTests(APITestCase):
 @override_settings(CELERY_ALWAYS_EAGER=True)
 class MLPIndexProcessing(APITransactionTestCase):
 
-
     def setUp(self):
-        self.TEST_INDEX = TEST_INDEX + "_mlp"
+        self.test_index_name = reindex_test_dataset()
         self.ec = ElasticCore()
         self.user = create_test_user('mlpUser', 'my@email.com', 'pw')
-        self.project = project_creation("mlpTestProject", self.TEST_INDEX, self.user)
+        self.project = project_creation("mlpTestProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
         self.client.login(username='mlpUser', password='pw')
         self.url = reverse(f"{VERSION_NAMESPACE}:mlp_index-list", kwargs={"project_pk": self.project.pk})
 
 
     def tearDown(self) -> None:
-        self.ec.es.indices.delete(DOCTYPE_INDEX_NAME, ignore=[400, 404])
+        self.ec.delete_index(self.test_index_name, ignore=[400, 404])
 
 
     def test_index_processing(self):
@@ -165,7 +165,7 @@ class MLPIndexProcessing(APITransactionTestCase):
 
         # Check if MLP was applied to the documents properly.
         mlp_field = f"{TEST_FIELD}_mlp"
-        s = ElasticSearcher(indices=[self.TEST_INDEX], output=ElasticSearcher.OUT_DOC, query=payload["query"])
+        s = ElasticSearcher(indices=[self.test_index_name], output=ElasticSearcher.OUT_DOC, query=payload["query"])
         for hit in s:
             if TEST_FIELD in hit:
                 self.assertTrue(f"{TEST_FIELD}_mlp.lemmas" in hit)

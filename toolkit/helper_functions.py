@@ -1,18 +1,20 @@
 import hashlib
+import json
 import os
 import pathlib
 import re
-import json
-import psutil
+import uuid
 from functools import partial
 from typing import List
 
+import elasticsearch_dsl
+import psutil
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.views.static import serve
 from django.db import connections
-
+from django.views.static import serve
 from rest_framework import serializers
+
 
 def avoid_db_timeout(func):
     def inner_wrapper(*args, **kwargs):
@@ -154,6 +156,7 @@ def download_bert_requirements(model_directory: str, supported_models: List[str]
     errors, failed_models = BertTagger.download_pretrained_models(bert_models=supported_models, save_dir=model_directory, cache_dir=cache_directory, logger=logger, num_labels=num_labels)
     return (errors, failed_models)
 
+
 def download_nltk_resources(data_directory: str):
     """ Download NLTK resources.
     """
@@ -163,6 +166,7 @@ def download_nltk_resources(data_directory: str):
     if not os.path.exists(punkt_tokenizers_dir) or not os.listdir(punkt_tokenizers_dir):
         nltk.download("punkt", download_dir=data_directory)
     nltk.data.path.append(data_directory)
+
 
 def get_downloaded_bert_models(model_directory: str) -> List[str]:
     """ Retrieve list of downloaded pretrained BERT models.
@@ -209,15 +213,15 @@ def load_stop_words(stop_words_string: str) -> List[str]:
     return stop_words
 
 
-def calculate_memory_buffer(memory_buffer: str = "", ratio: float = 0.5, unit: str="gb"):
+def calculate_memory_buffer(memory_buffer: str = "", ratio: float = 0.5, unit: str = "gb"):
     """
     Calculate memory buffer based on available memory and given ratio
     if the buffer isn't specified, otherwise return the buffer.
     """
-    unit_map = {"gb": 1024**3, "mb": 1024**2, "kb": 1024**1, "b": 1024**0}
+    unit_map = {"gb": 1024 ** 3, "mb": 1024 ** 2, "kb": 1024 ** 1, "b": 1024 ** 0}
     if not memory_buffer:
         available_memory = psutil.virtual_memory().available / unit_map[unit]
-        memory_buffer = available_memory*ratio
+        memory_buffer = available_memory * ratio
     return float(memory_buffer)
 
 
@@ -227,3 +231,37 @@ def parse_bool_env(env_name: str, default: bool):
         return True
     else:
         return False
+
+
+def reindex_test_dataset(query: dict = None, hex_size=20) -> str:
+    """
+    Reindexes the master test dataset into isolated pieces.
+    :param query: Query you want to limit the reindex to.
+    :param hex_size: How many random characters should there be in the new indexes name.
+    :return: Name of the newly generated index.
+    """
+    from toolkit.elastic.tools.core import ElasticCore
+    from toolkit.test_settings import TEST_INDEX
+    ec = ElasticCore()
+    new_test_index_name = f"ttk_test_{uuid.uuid4().hex[:hex_size]}"
+    ec.create_index(index=new_test_index_name)
+    ec.add_texta_facts_mapping(new_test_index_name)
+    from_scan = elasticsearch_dsl.Search() if query is None else elasticsearch_dsl.Search.from_dict(query)
+    from_scan = from_scan.index(TEST_INDEX).using(ec.es)
+    from_scan = from_scan.scan()
+
+
+    def doc_actions(generator):
+        for document in generator:
+            yield {
+                "_index": new_test_index_name,
+                "_type": "_doc",
+                "_source": document.to_dict(),
+                "retry_on_conflict": 3
+            }
+
+
+    actions = doc_actions(from_scan)
+    from elasticsearch.helpers import bulk
+    bulk(actions=actions, client=ec.es, refresh="wait_for")
+    return new_test_index_name

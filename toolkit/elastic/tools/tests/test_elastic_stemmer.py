@@ -1,14 +1,9 @@
-import json
-
 from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
 from toolkit.test_settings import TEST_VERSION_PREFIX
-
-
-from toolkit.core.task.models import Task
-from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
+from toolkit.tools.utils_for_tests import create_test_user, print_output
 
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
@@ -18,17 +13,6 @@ class ElasticStemmerViewTests(APITransactionTestCase):
         self.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
         self.client.login(username='taggerOwner', password='pw')
         self.url = f'{TEST_VERSION_PREFIX}/snowball/'
-
-
-    #def test_stem_estonian(self):
-    #    payload = {
-    #        "text": "Autoriteetidega.",
-    #        "language": "estonian",
-    #    }
-    #    response = self.client.post(self.url, payload)
-    #    print_output('test_snowball_estonian:response.data', response.data)
-    #    self.assertEqual(response.status_code, status.HTTP_200_OK)
-    #    assert response.data["text"].lower() == "autoriteeti"
 
 
     def test_stem_english(self):

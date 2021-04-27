@@ -7,8 +7,9 @@ from rest_framework.test import APITransactionTestCase
 
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.searcher import ElasticSearcher
+from toolkit.helper_functions import reindex_test_dataset
 from toolkit.settings import NAN_LANGUAGE_TOKEN_KEY
-from toolkit.test_settings import (TEST_FIELD, TEST_INDEX)
+from toolkit.test_settings import (TEST_FIELD)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -16,12 +17,18 @@ from toolkit.tools.utils_for_tests import create_test_user, print_output, projec
 class ApplyLangViewsTests(APITransactionTestCase):
 
     def setUp(self) -> None:
+        self.test_index_name = reindex_test_dataset()
         self.user = create_test_user('langDetectUser', 'my@email.com', 'pw')
         self.non_project_user = create_test_user('langDetectUserThatIsNotInProject', 'my@email.com', 'pw')
-        self.project = project_creation("langDetectProject", TEST_INDEX, self.user)
+        self.project = project_creation("langDetectProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
         self.client.login(username='langDetectUser', password='pw')
         self.url = reverse("v2:lang_index-list", kwargs={"project_pk": self.project.pk})
+
+
+    def tearDown(self) -> None:
+        from toolkit.elastic.tools.core import ElasticCore
+        ElasticCore().delete_index(index=self.test_index_name, ignore=[400, 404])
 
 
     def test_unauthenticated_project_access(self):
@@ -50,7 +57,7 @@ class ApplyLangViewsTests(APITransactionTestCase):
         response = self.client.post(self.url, data=payload, format="json")
         print_output("test_applying_lang_detect_with_query:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
-        s = ElasticSearcher(indices=[TEST_INDEX], output=ElasticSearcher.OUT_DOC, query=json.loads(payload["query"]))
+        s = ElasticSearcher(indices=[self.test_index_name], output=ElasticSearcher.OUT_DOC, query=json.loads(payload["query"]))
         for hit in s:
             if TEST_FIELD in hit:
                 self.assertTrue(f"{mlp_field}.language.detected" in hit)
@@ -84,7 +91,7 @@ class ApplyLangViewsTests(APITransactionTestCase):
         ec = ElasticCore()
         query_string = 159784984949
         document_id = "test_that_lang_detect_enters_nan_token_on_bogus_fields"
-        ec.es.index(index=TEST_INDEX, id=document_id, body={TEST_FIELD: query_string}, refresh="wait_for")
+        ec.es.index(index=self.test_index_name, id=document_id, body={TEST_FIELD: query_string}, refresh="wait_for")
 
         payload = {
             "description": "TestingIndexProcessing",
@@ -95,10 +102,10 @@ class ApplyLangViewsTests(APITransactionTestCase):
         print_output("test_that_lang_detect_enters_nan_token_on_bogus_fields:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
 
-        s = ElasticSearcher(indices=[TEST_INDEX], output=ElasticSearcher.OUT_DOC, query=json.loads(payload["query"]))
+        s = ElasticSearcher(indices=[self.test_index_name], output=ElasticSearcher.OUT_DOC, query=json.loads(payload["query"]))
         for hit in s:
             self.assertTrue(hit[f"{TEST_FIELD}_mlp.language.detected"] == NAN_LANGUAGE_TOKEN_KEY)
             break
 
         # Clean up the document from the index.
-        ec.es.delete(index=TEST_INDEX, id=document_id, refresh="wait_for")
+        ec.es.delete(index=self.test_index_name, id=document_id, refresh="wait_for")

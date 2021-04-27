@@ -1,8 +1,3 @@
-import json
-import os
-import pathlib
-from io import BytesIO
-from time import sleep
 from typing import List
 
 from django.test import override_settings
@@ -10,16 +5,10 @@ from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
 from toolkit.core.task.models import Task
-from toolkit.settings import RELATIVE_MODELS_PATH
+from toolkit.elastic.tools.core import ElasticCore
+from toolkit.helper_functions import reindex_test_dataset
 from toolkit.tagger.models import Tagger
-from toolkit.test_settings import (TEST_FIELD,
-                                   TEST_FIELD_UNLEMMATIZED_CHOICE,
-                                   TEST_FACT_NAME,
-                                   TEST_INDEX,
-                                   TEST_VERSION_PREFIX,
-                                   TEST_KEEP_PLOT_FILES,
-                                   TEST_QUERY
-                                   )
+from toolkit.test_settings import (TEST_FIELD_UNLEMMATIZED_CHOICE, TEST_KEEP_PLOT_FILES, TEST_VERSION_PREFIX)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
@@ -29,8 +18,9 @@ class TaggerViewTests(APITransactionTestCase):
 
     def setUp(self):
         # Owner of the project
+        self.test_index_name = reindex_test_dataset()
         self.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
-        self.project = project_creation("taggerTestProject", TEST_INDEX, self.user)
+        self.project = project_creation("taggerTestProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
         self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/taggers/'
         self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
@@ -41,8 +31,8 @@ class TaggerViewTests(APITransactionTestCase):
         self.classifier_opts = ('Logistic Regression',)
 
         self.snowball_languages = (
-            #'english',
-            #'finnish',
+            # 'english',
+            # 'finnish',
             'estonian',
         )
 
@@ -68,6 +58,7 @@ class TaggerViewTests(APITransactionTestCase):
 
     def tearDown(self) -> None:
         Tagger.objects.all().delete()
+        ElasticCore().delete_index(index=self.test_index_name, ignore=[400, 404])
 
 
     def run_create_snowball_tagger_training_and_task_signal(self):
@@ -118,7 +109,6 @@ class TaggerViewTests(APITransactionTestCase):
                 self.assertTrue('features' in response.data)
                 # Check if any features listed
                 self.assertTrue(len(response.data['features']) > 0)
-
 
 
     def run_snowball_tag_text(self, test_tagger_ids: List[int]):

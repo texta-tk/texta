@@ -15,9 +15,10 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.tools.core import ElasticCore
+from toolkit.helper_functions import reindex_test_dataset
 from toolkit.settings import RELATIVE_MODELS_PATH
 from toolkit.tagger.models import Tagger
-from toolkit.test_settings import (TEST_FIELD, TEST_FIELD_CHOICE, TEST_INDEX, TEST_KEEP_PLOT_FILES, TEST_MATCH_TEXT, TEST_QUERY, TEST_TAGGER_BINARY, TEST_VERSION_PREFIX, VERSION_NAMESPACE)
+from toolkit.test_settings import (TEST_FIELD, TEST_FIELD_CHOICE, TEST_KEEP_PLOT_FILES, TEST_MATCH_TEXT, TEST_QUERY, TEST_TAGGER_BINARY, TEST_VERSION_PREFIX, VERSION_NAMESPACE)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
@@ -26,8 +27,9 @@ class TaggerViewTests(APITransactionTestCase):
 
     def setUp(self):
         # Owner of the project
+        self.test_index_name = reindex_test_dataset()
         self.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
-        self.project = project_creation("taggerTestProject", TEST_INDEX, self.user)
+        self.project = project_creation("taggerTestProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
         self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/taggers/'
         self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
@@ -52,7 +54,7 @@ class TaggerViewTests(APITransactionTestCase):
 
         self.reindex_payload = {
             "description": "test index for applying taggers",
-            "indices": [TEST_INDEX],
+            "indices": [self.test_index_name],
             "query": json.dumps(TEST_QUERY),
             "new_index": self.test_index_copy,
             "fields": [TEST_FIELD]
@@ -143,7 +145,9 @@ class TaggerViewTests(APITransactionTestCase):
 
     def tearDown(self) -> None:
         Tagger.objects.all().delete()
-        res = ElasticCore().delete_index(self.test_index_copy)
+        ec = ElasticCore()
+        res = ec.delete_index(self.test_index_copy)
+        ec.delete_index(index=self.test_index_name, ignore=[400, 404])
         print_output(f"Delete apply_taggers test index {self.test_index_copy}", res)
 
 
@@ -157,7 +161,7 @@ class TaggerViewTests(APITransactionTestCase):
                     "description": "TestTagger",
                     "query": json.dumps(TEST_QUERY),
                     "fields": TEST_FIELD_CHOICE,
-                    "indices": [{"name": TEST_INDEX}],
+                    "indices": [{"name": self.test_index_name}],
                     "lemmatize": lemmatize,
                     "vectorizer": vectorizer_opt,
                     "classifier": classifier_opt,
@@ -191,7 +195,7 @@ class TaggerViewTests(APITransactionTestCase):
         payload = {
             "description": "TestTagger",
             "query": json.dumps(TEST_QUERY),
-            "indices": [{"name": TEST_INDEX}],
+            "indices": [{"name": self.test_index_name}],
             "fields": ["randomgibberishhhhhhhhhh"],
             "vectorizer": self.vectorizer_opts[0],
             "classifier": self.classifier_opts[0],
@@ -212,7 +216,7 @@ class TaggerViewTests(APITransactionTestCase):
             "description": "TestTagger",
             "query": json.dumps(TEST_QUERY),
             "fields": TEST_FIELD_CHOICE,
-            "indices": [{"name": TEST_INDEX}],
+            "indices": [{"name": self.test_index_name}],
             "vectorizer": "Hashing Vectorizer",
             "classifier": "Logistic Regression",
             "maximum_sample_size": 500,
@@ -241,7 +245,7 @@ class TaggerViewTests(APITransactionTestCase):
             "description": "TestTagger",
             "query": json.dumps(TEST_QUERY),
             "fields": [],
-            "indices": [{"name": TEST_INDEX}],
+            "indices": [{"name": self.test_index_name}],
             "vectorizer": "Hashing Vectorizer",
             "classifier": "Logistic Regression",
             "maximum_sample_size": 500,
@@ -258,7 +262,7 @@ class TaggerViewTests(APITransactionTestCase):
             "description": "PutTagger",
             "query": json.dumps(TEST_QUERY),
             "fields": TEST_FIELD_CHOICE,
-            "indices": [{"name": TEST_INDEX}],
+            "indices": [{"name": self.test_index_name}],
             "vectorizer": 'Hashing Vectorizer',
             "classifier": 'Logistic Regression',
             "maximum_sample_size": 1000,
@@ -356,7 +360,7 @@ class TaggerViewTests(APITransactionTestCase):
         """Tests the endpoint for the tag_random_doc action"""
         for test_tagger_id in self.test_tagger_ids:
             payload = {
-                "indices": [{"name": TEST_INDEX}]
+                "indices": [{"name": self.test_index_name}]
             }
             url = f'{self.url}{test_tagger_id}/tag_random_doc/'
             response = self.client.post(url, format="json", data=payload)

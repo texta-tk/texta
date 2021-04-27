@@ -1,28 +1,20 @@
-import pathlib
-import os
 import json
-import uuid
-import numpy as np
-
-from django.test import override_settings
+import pathlib
 from io import BytesIO
+from time import sleep
+from typing import List
+
+import numpy as np
+from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
-from time import sleep
-
 from toolkit.core.task.models import Task
 from toolkit.elastic.tools.query import Query
-from toolkit.helper_functions import set_core_setting, get_core_setting
-from toolkit.evaluator.models import Evaluator as EvaluatorObject
 from toolkit.evaluator import choices
-
-from toolkit.test_settings import (
-    TEST_INDEX_EVALUATOR,
-    TEST_VERSION_PREFIX,
-    TEST_KEEP_PLOT_FILES,
-)
-
+from toolkit.evaluator.models import Evaluator as EvaluatorObject
+from toolkit.helper_functions import set_core_setting
+from toolkit.test_settings import (TEST_INDEX_EVALUATOR, TEST_KEEP_PLOT_FILES, TEST_VERSION_PREFIX)
 from toolkit.tools.utils_for_tests import (
     create_test_user,
     print_output,
@@ -30,7 +22,6 @@ from toolkit.tools.utils_for_tests import (
     remove_file
 )
 
-from typing import List
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
 class EvaluatorObjectViewTests(APITransactionTestCase):
@@ -69,6 +60,11 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
         self.client.login(username="EvaluatorOwner", password="pw")
 
 
+    def tearDown(self) -> None:
+        from toolkit.elastic.tools.core import ElasticCore
+        ElasticCore().delete_index(index=TEST_INDEX_EVALUATOR, ignore=[400, 404])
+
+
     def test(self):
 
         self.run_test_invalid_fact_name()
@@ -83,7 +79,6 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
 
         self.run_test_multilabel_evaluation_with_scoring_after_each_scroll(add_individual_results=True)
         self.run_test_multilabel_evaluation_with_scoring_after_each_scroll(add_individual_results=False)
-
 
         self.run_test_individual_results_enabled(self.memory_optimized_multilabel_evaluators.values())
         self.run_test_individual_results_enabled(self.multilabel_evaluators.values())
@@ -249,7 +244,7 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
 
         # Test filtering by precision and accuracy
         payload = {
-            "metric_restrictions":{
+            "metric_restrictions": {
                 "precision": {"min_score": 0.57},
                 "accuracy": {"min_score": 0.84}
             }
@@ -284,7 +279,6 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
         self.add_cleanup_files(evaluator_id)
 
 
-
     def run_test_individual_results_view_invalid_input_multilabel(self, evaluator_id: int):
         """ Test individual_results endpoint for multilabel evaluators with invalid input. """
         evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
@@ -296,7 +290,7 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
             {"metric_restrictions": {"asd": {"max_score": 0.5}}},
             {"metric_restrictions": {"precision": 0}},
             {"metric_restrictions": {"precision": {"asd": 8}}},
-            {"metric_restrictions": {"precision": {"min_score":18}}},
+            {"metric_restrictions": {"precision": {"min_score": 18}}},
             {"metric_restrictions": ["asd"]}
         ]
 
@@ -309,7 +303,6 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
             self.add_cleanup_files(evaluator_id)
-
 
 
     def run_test_filtered_average_view_binary(self, evaluator_id: int):
@@ -413,7 +406,6 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
         """
 
         for evaluator_id in evaluator_ids:
-
             evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
 
             individual_results = json.loads(evaluator_object.individual_results)
@@ -445,9 +437,9 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
 
         expected_scores = {
             "weighted": {"accuracy": 0.66, "precision": 0.68, "recall": 0.66, "f1_score": 0.67},
-            "micro"   : {"accuracy": 0.66, "precision": 0.66, "recall": 0.66, "f1_score": 0.66},
-            "macro"   : {"accuracy": 0.66, "precision": 0.49, "recall": 0.49, "f1_score": 0.49},
-            "binary"  : {"accuracy": 0.66, "precision": 0.18, "recall": 0.21, "f1_score": 0.19}
+            "micro": {"accuracy": 0.66, "precision": 0.66, "recall": 0.66, "f1_score": 0.66},
+            "macro": {"accuracy": 0.66, "precision": 0.49, "recall": 0.49, "f1_score": 0.49},
+            "binary": {"accuracy": 0.66, "precision": 0.18, "recall": 0.21, "f1_score": 0.19}
         }
 
         for avg_function in self.binary_avg_functions:
@@ -537,9 +529,9 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
 
         expected_scores = {
             "weighted": {"accuracy": 0, "precision": 0.57, "recall": 0.67, "f1_score": 0.62},
-            "micro"   : {"accuracy": 0, "precision": 0.57, "recall": 0.67, "f1_score": 0.62},
-            "macro"   : {"accuracy": 0, "precision": 0.57, "recall": 0.67, "f1_score": 0.62},
-            "samples" : {"accuracy": 0, "precision": 0.55, "recall": 0.73, "f1_score": 0.61}
+            "micro": {"accuracy": 0, "precision": 0.57, "recall": 0.67, "f1_score": 0.62},
+            "macro": {"accuracy": 0, "precision": 0.57, "recall": 0.67, "f1_score": 0.62},
+            "samples": {"accuracy": 0, "precision": 0.55, "recall": 0.73, "f1_score": 0.61}
         }
 
         for avg_function in self.multilabel_avg_functions:
@@ -702,7 +694,6 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
         # Check that the sizes of individual labels are the same
         self.assertEqual(len(json.loads(evaluator_object.individual_results)), len(json.loads(imported_evaluator_object.individual_results)))
 
-
         self.add_cleanup_files(evaluator_id)
         self.add_cleanup_files(imported_evaluator_id)
 
@@ -712,7 +703,6 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
 
         evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
         resources = evaluator_object.get_resource_paths()
-
 
         url = f"{self.url}{evaluator_id}/"
         response = self.client.delete(url, format="json")

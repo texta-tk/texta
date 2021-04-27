@@ -7,10 +7,12 @@ from django.test import TransactionTestCase, override_settings
 from rest_framework import status
 
 from toolkit.core.task.models import Task
+from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
+from toolkit.helper_functions import reindex_test_dataset
 from toolkit.settings import RELATIVE_MODELS_PATH
-from toolkit.test_settings import TEST_FIELD_CHOICE, TEST_INDEX, TEST_VERSION_PREFIX
+from toolkit.test_settings import TEST_FIELD_CHOICE, TEST_VERSION_PREFIX
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -18,8 +20,9 @@ from toolkit.tools.utils_for_tests import create_test_user, print_output, projec
 class EmbeddingViewTests(TransactionTestCase):
 
     def setUp(self):
+        self.test_index_name = reindex_test_dataset()
         self.user = create_test_user('embeddingOwner', 'my@email.com', 'pw')
-        self.project = project_creation("embeddingTestProject", TEST_INDEX, self.user)
+        self.project = project_creation("embeddingTestProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
 
         self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/embeddings/'
@@ -42,6 +45,7 @@ class EmbeddingViewTests(TransactionTestCase):
 
     def tearDown(self):
         Embedding.objects.all().delete()
+        ElasticCore().delete_index(index=self.test_index_name, ignore=[400, 404])
 
 
     def run_create_default_embedding_training_and_task_signal(self):
@@ -246,7 +250,7 @@ class EmbeddingViewTests(TransactionTestCase):
             "max_vocab": 10000,
             "min_freq": 5,
             "num_dimensions": 100,
-            "indices": [{"name": TEST_INDEX}]
+            "indices": [{"name": self.test_index_name}]
         }
 
         response = self.client.post(self.url, json.dumps(payload), content_type='application/json')

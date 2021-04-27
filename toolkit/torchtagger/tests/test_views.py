@@ -12,7 +12,8 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.tools.core import ElasticCore
-from toolkit.test_settings import (TEST_FACT_NAME, TEST_FIELD_CHOICE, TEST_INDEX, TEST_KEEP_PLOT_FILES, TEST_QUERY, TEST_TORCH_TAGGER_BINARY_CPU, TEST_TORCH_TAGGER_BINARY_GPU, TEST_TORCH_TAGGER_MULTICLASS_GPU, TEST_VERSION_PREFIX)
+from toolkit.helper_functions import reindex_test_dataset
+from toolkit.test_settings import (TEST_FACT_NAME, TEST_FIELD_CHOICE, TEST_KEEP_PLOT_FILES, TEST_QUERY, TEST_TORCH_TAGGER_BINARY_CPU, TEST_TORCH_TAGGER_BINARY_GPU, TEST_TORCH_TAGGER_MULTICLASS_GPU, TEST_VERSION_PREFIX)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 from toolkit.torchtagger.models import TorchTagger
 from toolkit.torchtagger.torch_models.models import TORCH_MODELS
@@ -22,8 +23,9 @@ from toolkit.torchtagger.torch_models.models import TORCH_MODELS
 class TorchTaggerViewTests(APITransactionTestCase):
     def setUp(self):
         # Owner of the project
+        self.test_index_name = reindex_test_dataset()
         self.user = create_test_user('torchTaggerOwner', 'my@email.com', 'pw')
-        self.project = project_creation('torchTaggerTestProject', TEST_INDEX, self.user)
+        self.project = project_creation('torchTaggerTestProject', self.test_index_name, self.user)
         self.project.users.add(self.user)
         self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/torchtaggers/'
         self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
@@ -46,7 +48,7 @@ class TorchTaggerViewTests(APITransactionTestCase):
 
         self.reindex_payload = {
             "description": "test index for applying taggers",
-            "indices": [TEST_INDEX],
+            "indices": [self.test_index_name],
             "query": json.dumps(TEST_QUERY),
             "new_index": self.test_index_copy,
             "fields": TEST_FIELD_CHOICE
@@ -59,7 +61,7 @@ class TorchTaggerViewTests(APITransactionTestCase):
         self.test_imported_multiclass_gpu_tagger_id = self.import_test_model(TEST_TORCH_TAGGER_MULTICLASS_GPU)
 
         self.test_imported_binary_cpu_tagger_id = self.import_test_model(TEST_TORCH_TAGGER_BINARY_CPU)
-
+        self.ec = ElasticCore()
 
     def import_test_model(self, file_path: str):
         """Import models for testing."""
@@ -72,7 +74,8 @@ class TorchTaggerViewTests(APITransactionTestCase):
 
 
     def tearDown(self) -> None:
-        res = ElasticCore().delete_index(self.test_index_copy)
+        res = self.ec.delete_index(self.test_index_copy)
+        self.ec.delete_index(index=self.test_index_name, ignore=[400, 404])
         print_output(f"Delete apply_torch_taggers test index {self.test_index_copy}", res)
 
 
@@ -251,7 +254,7 @@ class TorchTaggerViewTests(APITransactionTestCase):
     def run_tag_random_doc(self):
         """Tests the endpoint for the tag_random_doc action"""
         payload = {
-            "indices": [{"name": TEST_INDEX}]
+            "indices": [{"name": self.test_index_name}]
         }
         url = f'{self.url}{self.test_tagger_id}/tag_random_doc/'
         response = self.client.post(url, format="json", data=payload)
@@ -328,7 +331,7 @@ class TorchTaggerViewTests(APITransactionTestCase):
         # Tests the endpoint for the tag_random_doc action"""
         url = f'{self.url}{torchtagger.pk}/tag_random_doc/'
         payload = {
-            "indices": [{"name": TEST_INDEX}]
+            "indices": [{"name": self.test_index_name}]
         }
         response = self.client.post(url, format='json', data=payload)
         print_output('test_torchtagger_tag_random_doc_after_import:response.data', response.data)

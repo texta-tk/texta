@@ -1,6 +1,6 @@
-import pathlib
-import os
 import json
+import os
+import pathlib
 import uuid
 from io import BytesIO
 from time import sleep
@@ -8,38 +8,26 @@ from time import sleep
 from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
+from texta_bert_tagger.tagger import BertTagger
 
+from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
+from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.tools.core import ElasticCore
-
-from toolkit.core.task.models import Task
-
-from toolkit.test_settings import (
-    TEST_FACT_NAME,
-    TEST_FIELD_CHOICE,
-    TEST_INDEX,
-    TEST_VERSION_PREFIX,
-    TEST_KEEP_PLOT_FILES,
-    TEST_BERT_MODEL,
-    TEST_QUERY,
-    TEST_BERT_TAGGER_MULTICLASS_GPU,
-    TEST_BERT_TAGGER_BINARY_GPU,
-    TEST_BERT_TAGGER_BINARY_CPU
-    )
+from toolkit.helper_functions import download_bert_requirements, get_downloaded_bert_models, reindex_test_dataset
+from toolkit.settings import ALLOW_BERT_MODEL_DOWNLOADS, BERT_CACHE_DIR, BERT_PRETRAINED_MODEL_DIRECTORY
+from toolkit.test_settings import (TEST_BERT_MODEL, TEST_BERT_TAGGER_BINARY_CPU, TEST_BERT_TAGGER_BINARY_GPU, TEST_BERT_TAGGER_MULTICLASS_GPU, TEST_FACT_NAME, TEST_FIELD_CHOICE, TEST_KEEP_PLOT_FILES, TEST_QUERY, TEST_VERSION_PREFIX)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file, remove_folder
-from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
-from texta_bert_tagger.tagger import BertTagger
 
-from toolkit.helper_functions import get_downloaded_bert_models, download_bert_requirements
-from toolkit.settings import BERT_PRETRAINED_MODEL_DIRECTORY, ALLOW_BERT_MODEL_DOWNLOADS, BERT_CACHE_DIR
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
 class BertTaggerObjectViewTests(APITransactionTestCase):
     def setUp(self):
         # Owner of the project
+        self.test_index_name = reindex_test_dataset()
         self.user = create_test_user('BertTaggerOwner', 'my@email.com', 'pw')
-        self.project = project_creation("BertTaggerTestProject", TEST_INDEX, self.user)
+        self.project = project_creation("BertTaggerTestProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
         self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/bert_taggers/'
         self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
@@ -52,7 +40,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         # Check if TEST_BERT_MODEL is already downloaded
         available_models = get_downloaded_bert_models(BERT_PRETRAINED_MODEL_DIRECTORY)
         self.test_model_existed = True if TEST_BERT_MODEL in available_models else False
-        download_bert_requirements(BERT_PRETRAINED_MODEL_DIRECTORY, [TEST_BERT_MODEL], cache_directory=BERT_CACHE_DIR, num_labels = 2)
+        download_bert_requirements(BERT_PRETRAINED_MODEL_DIRECTORY, [TEST_BERT_MODEL], cache_directory=BERT_CACHE_DIR, num_labels=2)
 
         # new fact name and value used when applying tagger to index
         self.new_fact_name = "TEST_BERT_TAGGER_NAME"
@@ -66,7 +54,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         self.reindex_payload = {
             "description": "test index for applying taggers",
-            "indices": [TEST_INDEX],
+            "indices": [self.test_index_name],
             "query": json.dumps(TEST_QUERY),
             "new_index": self.test_index_copy,
             "fields": TEST_FIELD_CHOICE
@@ -79,7 +67,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.test_imported_multiclass_gpu_tagger_id = self.import_test_model(TEST_BERT_TAGGER_MULTICLASS_GPU)
 
         self.test_imported_binary_cpu_tagger_id = self.import_test_model(TEST_BERT_TAGGER_BINARY_CPU)
-
+        self.ec = ElasticCore()
 
     def import_test_model(self, file_path: str):
         """Import fine-tuned models for testing."""
@@ -114,7 +102,8 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
 
     def tearDown(self) -> None:
-        res = ElasticCore().delete_index(self.test_index_copy)
+        res = self.ec.delete_index(self.test_index_copy)
+        self.ec.delete_index(index=self.test_index_name, ignore=[400, 404])
         print_output(f"Delete apply_bert_taggers test index {self.test_index_copy}", res)
 
 
@@ -137,7 +126,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
             "description": "TestBertTaggerObjectTraining",
             "fact_name": TEST_FACT_NAME,
             "fields": TEST_FIELD_CHOICE,
-            "indices": [{"name": TEST_INDEX}],
+            "indices": [{"name": self.test_index_name}],
             "maximum_sample_size": 500,
             "num_epochs": 2,
             "max_length": 15,
@@ -151,7 +140,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         # Give the tagger some time to finish training
         sleep(5)
         tagger_id = response.data['id']
-        self.test_multiclass_tagger_id  = tagger_id
+        self.test_multiclass_tagger_id = tagger_id
         response = self.client.get(f'{self.url}{tagger_id}/')
         print_output('test_multiclass_bert_tagger_has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
@@ -165,7 +154,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
             "description": "TestBalancedBertTaggerObjectTraining",
             "fact_name": TEST_FACT_NAME,
             "fields": TEST_FIELD_CHOICE,
-            "indices": [{"name": TEST_INDEX}],
+            "indices": [{"name": self.test_index_name}],
             "maximum_sample_size": 500,
             "num_epochs": 2,
             "max_length": 15,
@@ -182,7 +171,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         # Give the tagger some time to finish training
         sleep(5)
         tagger_id = response.data['id']
-        self.test_multiclass_tagger_id  = tagger_id
+        self.test_multiclass_tagger_id = tagger_id
         response = self.client.get(f'{self.url}{tagger_id}/')
         print_output('test_balanced_multiclass_bert_tagger_has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
@@ -203,7 +192,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
             "fields": TEST_FIELD_CHOICE,
             "query": json.dumps(TEST_QUERY),
             "maximum_sample_size": 500,
-            "indices": [{"name": TEST_INDEX}],
+            "indices": [{"name": self.test_index_name}],
             "num_epochs": 2,
             "max_length": 15,
             "bert_model": TEST_BERT_MODEL
@@ -279,7 +268,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         """Tests the endpoint for the tag_random_doc action"""
         # Tag with specified fields
         payload = {
-            "indices": [{"name": TEST_INDEX}],
+            "indices": [{"name": self.test_index_name}],
             "fields": TEST_FIELD_CHOICE
         }
         url = f'{self.url}{self.test_tagger_id}/tag_random_doc/'
@@ -296,7 +285,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         # Tag with unspecified fields
         payload = {
-            "indices": [{"name": TEST_INDEX}]
+            "indices": [{"name": self.test_index_name}]
         }
         url = f'{self.url}{self.test_tagger_id}/tag_random_doc/'
         response = self.client.post(url, format="json", data=payload)
@@ -320,7 +309,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         # Check if response is a list
         self.assertTrue(isinstance(response.data, list))
         # Check if first report is not empty
-        self.assertTrue(len(response.data[0])>0)
+        self.assertTrue(len(response.data[0]) > 0)
 
 
     def run_bert_epoch_reports_post(self):
@@ -381,7 +370,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
     def run_bert_model_export_import(self):
         """Tests endpoint for model export and import"""
-        #test_tagger_id = self.test_tagger_id
+        # test_tagger_id = self.test_tagger_id
 
         # retrieve model zip
         url = f'{self.url}{self.test_tagger_id}/export_model/'
@@ -397,7 +386,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         bert_tagger = BertTaggerObject.objects.get(pk=response.data["id"])
         tagger_id = response.data['id']
 
-
         # Check if the models and plot files exist.
         resources = bert_tagger.get_resource_paths()
         for path in resources.values():
@@ -407,7 +395,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         # Tests the endpoint for the tag_random_doc action"""
         url = f'{self.url}{bert_tagger.pk}/tag_random_doc/'
         random_doc_payload = {
-            "indices": [{"name": TEST_INDEX}],
+            "indices": [{"name": self.test_index_name}],
             "fields": TEST_FIELD_CHOICE
         }
         response = self.client.post(url, data=random_doc_payload, format="json")

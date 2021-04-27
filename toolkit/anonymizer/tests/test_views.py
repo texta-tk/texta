@@ -3,7 +3,8 @@ from io import BytesIO
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from toolkit.test_settings import TEST_INDEX, TEST_VERSION_PREFIX
+from toolkit.helper_functions import reindex_test_dataset
+from toolkit.test_settings import TEST_VERSION_PREFIX
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -11,8 +12,9 @@ class AnonymizerViewTests(APITestCase):
 
     @classmethod
     def setUpTestData(cls):
+        cls.test_index_name = reindex_test_dataset()
         cls.user = create_test_user('user', 'my@email.com', 'pw')
-        cls.project = project_creation("AnonymizerTestProject", TEST_INDEX, cls.user)
+        cls.project = project_creation("AnonymizerTestProject", cls.test_index_name, cls.user)
         cls.project.users.add(cls.user)
         cls.url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/anonymizers/'
 
@@ -21,6 +23,11 @@ class AnonymizerViewTests(APITestCase):
 
     def setUp(self):
         self.client.login(username='user', password='pw')
+
+
+    def tearDown(self) -> None:
+        from toolkit.elastic.tools.core import ElasticCore
+        ElasticCore().delete_index(index=self.test_index_name, ignore=[400, 404])
 
 
     def test(self):
@@ -32,7 +39,7 @@ class AnonymizerViewTests(APITestCase):
 
 
     def run_test_anonymizer_create(self):
-        '''Tests Anonymizer creation.'''
+        """Tests Anonymizer creation."""
         payload = {
             "description": "TestAnonymizer"
         }
@@ -48,7 +55,7 @@ class AnonymizerViewTests(APITestCase):
 
 
     def run_test_anonymizer_anonymize_text(self):
-        '''Tests Anonymizer text anonymization.'''
+        """Tests Anonymizer text anonymization."""
         anonymizer_url = f'{self.url}{self.anonymizer_id}/anonymize_text/'
 
         ### test invalid input format
@@ -60,7 +67,6 @@ class AnonymizerViewTests(APITestCase):
         response = self.client.post(anonymizer_url, invalid_payload)
         print_output('test_anonymizer_anonymize_text_invalid_input:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
 
         ###test anonymizing text
         payload = {
@@ -74,7 +80,7 @@ class AnonymizerViewTests(APITestCase):
 
 
     def run_test_anonymizer_anonymize_texts(self):
-        '''Tests Anonymizer multiple texts anonymization.'''
+        """Tests Anonymizer multiple texts anonymization."""
         anonymizer_url = f'{self.url}{self.anonymizer_id}/anonymize_texts/'
 
         ### test invalid input format
@@ -103,7 +109,7 @@ class AnonymizerViewTests(APITestCase):
 
 
     def run_test_anonymizer_export_import(self):
-        '''Tests Anonymizer export and import.'''
+        """Tests Anonymizer export and import."""
         export_url = f'{self.url}{self.anonymizer_id}/export_model/'
         # get model zip
         response = self.client.get(export_url)

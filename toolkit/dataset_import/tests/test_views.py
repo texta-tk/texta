@@ -70,6 +70,7 @@ class DatasetImportViewTests(APITransactionTestCase):
 
     def tearDown(self):
         # delete created indices
+        ec = ElasticCore()
         for index in self.created_indices:
-            delete_response = ElasticCore().delete_index(index)
+            delete_response = ec.delete_index(index)
             print_output("Remove index:response", delete_response)
