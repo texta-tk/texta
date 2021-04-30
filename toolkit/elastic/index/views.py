@@ -1,8 +1,11 @@
+import logging
+from typing import Optional
+
+import elasticsearch_dsl
 import rest_framework.filters as drf_filters
 from django.db import transaction
 from django.http import JsonResponse
 from django_filters import rest_framework as filters
-from elasticsearch_dsl import Mapping
 from rest_auth import views
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
@@ -11,12 +14,12 @@ from rest_framework.response import Response
 from toolkit.elastic.exceptions import ElasticIndexAlreadyExists
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import (
-    AddMappingToIndexSerializer,
     AddTextaFactsMapping,
     IndexBulkDeleteSerializer, IndexSerializer,
 )
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.permissions.project_permissions import IsSuperUser
+from toolkit.settings import ERROR_LOGGER, TEXTA_TAGS_KEY
 
 
 class IndicesFilter(filters.FilterSet):
@@ -65,6 +68,38 @@ class IndexViewSet(mixins.CreateModelMixin,
     )
 
 
+    def _resolve_cluster_differences(self, mapping_dict: dict) -> Optional[dict]:
+        # Trying to support ES6 and ES7 mapping structure.
+        has_properties = True if "properties" in mapping_dict else False
+        if has_properties:
+            return mapping_dict
+        # In this case, the mapping is a a plain dictionary because no fields exist.
+        else:
+            for key in mapping_dict.keys():
+                if "properties" in mapping_dict[key]:
+                    return mapping_dict[key]
+
+
+    def _check_for_facts(self, index_mappings: dict, index_name: str):
+        m = elasticsearch_dsl.Mapping()
+        mapping_dict = index_mappings[index_name]["mappings"]
+        mapping_dict = self._resolve_cluster_differences(mapping_dict)
+        if mapping_dict:
+            try:
+                m._update_from_dict(mapping_dict)
+            except Exception as e:
+                logging.getLogger(ERROR_LOGGER).exception(e)
+                return False
+        else:
+            return False
+
+        try:
+            has_texta_facts = isinstance(m[TEXTA_TAGS_KEY], elasticsearch_dsl.Nested)
+            return has_texta_facts
+        except KeyError:
+            return False
+
+
     def list(self, request, *args, **kwargs):
         ec = ElasticCore()
         ec.syncher()
@@ -72,6 +107,7 @@ class IndexViewSet(mixins.CreateModelMixin,
 
         data = response.data  # Get the paginated and sorted queryset results.
         open_indices = [index for index in data if index["is_open"]]
+        mappings = ec.es.indices.get_mapping()
 
         # Doing a stats request with no indices causes trouble.
         if open_indices:
@@ -82,10 +118,11 @@ class IndexViewSet(mixins.CreateModelMixin,
                 name = index["name"]
                 is_open = index["is_open"]
                 if is_open:
-                    index.update(**stats[name])
+                    has_texta_facts_mapping = self._check_for_facts(index_mappings=mappings, index_name=name)
+                    index.update(**stats[name], has_validated_facts=has_texta_facts_mapping)
                 else:
                     # For the sake of courtesy on the front-end, make closed indices values zero.
-                    index.update(size=0, doc_count=0)
+                    index.update(size=0, doc_count=0, has_validated_facts=False)
 
         return response
 
@@ -95,10 +132,12 @@ class IndexViewSet(mixins.CreateModelMixin,
         response = super(IndexViewSet, self).retrieve(*args, *kwargs)
         if response.data["is_open"]:
             index_name = response.data["name"]
+            mapping = ec.es.indices.get_mapping(index_name)
+            has_validated_facts = self._check_for_facts(mapping, index_name)
             stats = ec.get_index_stats()
-            response.data.update(**stats[index_name])
+            response.data.update(**stats[index_name], has_validated_facts=has_validated_facts)
         else:
-            response.data.update(size=0, doc_count=0)
+            response.data.update(size=0, doc_count=0, has_validated_facts=False)
 
         return response
 
@@ -115,17 +154,20 @@ class IndexViewSet(mixins.CreateModelMixin,
         if es.check_if_indices_exist([index]):
             # Even if the index already exists, create the index object just in case
             index, is_created = Index.objects.get_or_create(name=index)
-            if is_created: index.is_open = is_open
+            if is_created:
+                index.is_open = is_open
             index.save()
             raise ElasticIndexAlreadyExists()
 
         else:
             index, is_created = Index.objects.get_or_create(name=index)
-            if is_created: index.is_open = is_open
+            if is_created:
+                index.is_open = is_open
             index.save()
 
             es.create_index(index=index)
-            if not is_open: es.close_index(index)
+            if not is_open:
+                es.close_index(index)
             return Response({"message": f"Added index {index} into Elasticsearch!"}, status=status.HTTP_201_CREATED)
 
 
@@ -193,19 +235,3 @@ class IndexViewSet(mixins.CreateModelMixin,
             return Response({"message": f"Added the Texta Facts mapping for: {index.name}"})
         else:
             return Response({"message": f"Index {index.name} is closed, could not add the mapping!"}, status=status.HTTP_400_BAD_REQUEST)
-
-
-    # TODO Return to this part.
-    @action(detail=True, methods=["post"], serializer_class=AddMappingToIndexSerializer)
-    def add_mapping(self, request, pk=None, project_pk=None):
-        serializer: AddMappingToIndexSerializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        model: Index = self.get_object()
-        mapping = serializer.validated_data["mappings"]
-
-        m = Mapping(model.name)
-        for field_name, elastic_type in mapping.items():
-            m.field(field_name, elastic_type)
-
-        m.save(index=model.name, using=ElasticCore().es)
-        return Response(True)

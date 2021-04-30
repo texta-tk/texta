@@ -129,7 +129,7 @@ class ElasticCore:
         Since we're not using the destroy views, no actual deletion/creation operations
         will be done on the Elasticsearch cluster.
 
-        Put this into a separate function to make using it
+        Put this into a separate function to make use of it.
         """
         from toolkit.elastic.index.models import Index
         with transaction.atomic():
