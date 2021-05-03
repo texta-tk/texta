@@ -1,7 +1,5 @@
-import logging
 from typing import Optional
 
-import elasticsearch_dsl
 import rest_framework.filters as drf_filters
 from django.db import transaction
 from django.http import JsonResponse
@@ -19,7 +17,7 @@ from toolkit.elastic.index.serializers import (
 )
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.permissions.project_permissions import IsSuperUser
-from toolkit.settings import ERROR_LOGGER, TEXTA_TAGS_KEY
+from toolkit.settings import TEXTA_TAGS_KEY
 
 
 class IndicesFilter(filters.FilterSet):
@@ -81,22 +79,20 @@ class IndexViewSet(mixins.CreateModelMixin,
 
 
     def _check_for_facts(self, index_mappings: dict, index_name: str):
-        m = elasticsearch_dsl.Mapping()
         mapping_dict = index_mappings[index_name]["mappings"]
         mapping_dict = self._resolve_cluster_differences(mapping_dict)
+
+        # In case there are no fields inside the mapping because it's a freshly
+        # created index.
         if mapping_dict:
-            try:
-                m._update_from_dict(mapping_dict)
-            except Exception as e:
-                logging.getLogger(ERROR_LOGGER).exception(e)
+            properties = mapping_dict["properties"]
+            facts = properties.get(TEXTA_TAGS_KEY, {})
+            typing = facts.get("type", None)
+            if typing == "nested":
+                return True
+            else:
                 return False
         else:
-            return False
-
-        try:
-            has_texta_facts = isinstance(m[TEXTA_TAGS_KEY], elasticsearch_dsl.Nested)
-            return has_texta_facts
-        except KeyError:
             return False
 
 
