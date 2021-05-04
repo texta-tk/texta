@@ -69,6 +69,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
     def test_run(self):
         self.run_create_and_delete_tagger_group_removes_related_children_models_plots()
         self.run_create_tagger_group_training_and_task_signal()
+        self.run_create_balanced_tagger_group_training_and_task_signal()
         self.run_tag_text(self.test_tagger_group_id)
         self.run_tag_doc()
         self.run_tag_random_doc()
@@ -173,6 +174,33 @@ class TaggerGroupViewTests(APITransactionTestCase):
         # add tagger to be tested
         created_tagger_group = TaggerGroup.objects.get(id=response.data['id'])
         self.test_tagger_group_id = created_tagger_group.pk
+        self.__cleanup_tagger_groups(created_tagger_group)
+
+
+    def run_create_balanced_tagger_group_training_and_task_signal(self):
+        """Tests the endpoint for a new balanced Tagger Group, and if a new Task gets created via the signal"""
+        payload = {
+            "description": "TestTaggerGroup",
+            "minimum_sample_size": 50,
+            "fact_name": TEST_FACT_NAME,
+            "tagger": {
+                "fields": TEST_FIELD_CHOICE,
+                "vectorizer": "Hashing Vectorizer",
+                "classifier": "LinearSVC",
+                "feature_selector": "SVM Feature Selector",
+                "maximum_sample_size": 500,
+                "negative_multiplier": 1.0,
+                "indices": [{"name": self.test_index_name}],
+                "stop_words": ["asdfghjkl"],
+                "balanced": True
+            }
+        }
+        response = self.client.post(self.url, payload, format='json')
+        # Check if TaggerGroup gets created
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        print_output('test_create_balanced_tagger_group_training_and_task_signal:response.data', response.data)
+        # add tagger to be tested
+        created_tagger_group = TaggerGroup.objects.get(id=response.data['id'])
         self.__cleanup_tagger_groups(created_tagger_group)
 
 
@@ -457,5 +485,10 @@ class TaggerGroupViewTests(APITransactionTestCase):
             tagger_url = reverse(f"{VERSION_NAMESPACE}:tagger-detail", kwargs={"project_pk": self.project.pk, "pk": tagger.pk})
             response = self.client.get(tagger_url)
             self.assertTrue(response.status_code == status.HTTP_200_OK)
-            self.assertTrue(tg.description in response.data["tagger_groups"])
+            self.assertTrue("description" in response.data["tagger_groups"][0])
+            self.assertTrue("id" in response.data["tagger_groups"][0])
+            self.assertTrue("fact_name" in response.data["tagger_groups"][0])
+            self.assertTrue(tg.description == response.data["tagger_groups"][0]["description"])
+            self.assertTrue(tg.pk ==  response.data["tagger_groups"][0]["id"])
+            self.assertTrue(tg.fact_name == response.data["tagger_groups"][0]["fact_name"])
             self.add_cleanup_files(tagger.id)

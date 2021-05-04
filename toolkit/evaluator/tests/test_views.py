@@ -96,6 +96,7 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
         self.run_export_import(self.multilabel_evaluators["macro"])
 
         self.run_patch(self.binary_evaluators["macro"])
+        self.run_reevaluate(self.binary_evaluators["macro"])
 
         self.run_delete(self.binary_evaluators["macro"])
 
@@ -696,6 +697,15 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
 
         self.add_cleanup_files(evaluator_id)
         self.add_cleanup_files(imported_evaluator_id)
+
+
+    def run_reevaluate(self, evaluator_id: int):
+        """Tests endpoint for re-evaluation."""
+        url = f"{self.url}{evaluator_id}/reevaluate/"
+        payload = {}
+        response = self.client.post(url, payload, format="json")
+        print_output(f"evaluator:run_reevaluate:response.data", response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
     def run_delete(self, evaluator_id: int):

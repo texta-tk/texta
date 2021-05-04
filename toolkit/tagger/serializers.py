@@ -190,9 +190,7 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
 
 
     def get_tagger_groups(self, value: Tagger):
-        tgs = TaggerGroup.objects.filter(taggers__project_id=value.project.pk, taggers__id=value.pk)
-        descriptions = [tgs.description for tgs in tgs]
-        return descriptions
+        return json.loads(value.tagger_groups)
 
 
 class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):

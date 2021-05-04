@@ -20,10 +20,11 @@ from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, D
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
+from toolkit.evaluator import choices
 from toolkit.evaluator.models import Evaluator as EvaluatorObject
 from toolkit.evaluator.serializers import EvaluatorSerializer, IndividualResultsSerializer, FilteredAverageSerializer
 from toolkit.evaluator.tasks import evaluate_tags_task, filter_results, filter_and_average_results
-from toolkit.evaluator import choices
+from toolkit.helper_functions import get_indices_from_object
 
 from toolkit.view_constants import BulkDelete
 
@@ -89,6 +90,18 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
         return Response({"success": "Evaluator instance deleted, plot file removed"}, status=status.HTTP_204_NO_CONTENT)
 
 
+    @action(detail=True, methods=["post"])
+    def reevaluate(self, request, pk=None, project_pk=None):
+        """Starts re-evaluation task for the Evaluator model."""
+        evaluator = self.get_object()
+        es_timeout = evaluator.es_timeout
+        scroll_size = evaluator.scroll_size
+        query = json.loads(evaluator.query)
+        indices = get_indices_from_object(evaluator)
+        evaluate_tags_task.apply_async(args=(evaluator.pk, indices, query, es_timeout, scroll_size), queue=CELERY_LONG_TERM_TASK_QUEUE)
+        return Response({"success": "Re-evaluation task created"}, status=status.HTTP_200_OK)
+
+
     @action(detail=True, methods=["get", "post"], serializer_class = FilteredAverageSerializer)
     def filtered_average(self, request, pk=None, project_pk=None):
         """Return average scores of (optionally filtered) individual results."""
@@ -120,43 +133,47 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
         return Response(avg_scores, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=["post"], serializer_class = IndividualResultsSerializer)
+    @action(detail=True, methods=["post", "get"], serializer_class = IndividualResultsSerializer)
     def individual_results(self, request, pk=None, project_pk=None):
         """Retrieve individual scores for multilabel tags."""
         evaluator_object: EvaluatorObject = self.get_object()
 
         if evaluator_object.evaluation_type in ["binary"]:
-            return Response("This operation is applicable only for multilabel evaluators.", status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            return Response("This operation is applicable only for multilabel/multiclass evaluators.", status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
         binary_results = json.loads(evaluator_object.individual_results)
 
-        serializer = IndividualResultsSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        max_count = serializer.validated_data["max_count"]
-        min_count = serializer.validated_data["min_count"]
-        order_by = serializer.validated_data["order_by"]
-        order_desc = serializer.validated_data["order_desc"]
-        metric_restrictions = serializer.validated_data["metric_restrictions"]
-
-
-        if not metric_restrictions:
-            metric_restrictions = {}
-
-        if isinstance(metric_restrictions, str):
-            metric_restrictions = json.loads(metric_restrictions)
-
-        filtered_results = filter_results(binary_results, min_count=min_count, max_count=max_count, metric_restrictions=metric_restrictions)
-
-        if order_by == "alphabetic":
-            filtered_results = OrderedDict(sorted(filtered_results.items(), key=lambda x: x[0], reverse=order_desc))
+        if request.method == "GET":
+            results = binary_results
 
         else:
-            filtered_results = OrderedDict(sorted(filtered_results.items(), key=lambda x: x[1][order_by], reverse=order_desc))
+            serializer = IndividualResultsSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
 
-        filtered_bin_results = {"total": len(filtered_results), "filtered_results": filtered_results}
+            max_count = serializer.validated_data["max_count"]
+            min_count = serializer.validated_data["min_count"]
+            order_by = serializer.validated_data["order_by"]
+            order_desc = serializer.validated_data["order_desc"]
+            metric_restrictions = serializer.validated_data["metric_restrictions"]
 
-        return Response(filtered_bin_results, status=status.HTTP_200_OK)
+
+            if not metric_restrictions:
+                metric_restrictions = {}
+
+            if isinstance(metric_restrictions, str):
+                metric_restrictions = json.loads(metric_restrictions)
+
+            filtered_results = filter_results(binary_results, min_count=min_count, max_count=max_count, metric_restrictions=metric_restrictions)
+
+            if order_by == "alphabetic":
+                filtered_results = OrderedDict(sorted(filtered_results.items(), key=lambda x: x[0], reverse=order_desc))
+
+            else:
+                filtered_results = OrderedDict(sorted(filtered_results.items(), key=lambda x: x[1][order_by], reverse=order_desc))
+
+            results = {"total": len(filtered_results), "filtered_results": filtered_results}
+
+        return Response(results, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=["get"])
