@@ -13,7 +13,7 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.tools.query import Query
 from toolkit.evaluator import choices
 from toolkit.evaluator.models import Evaluator as EvaluatorObject
-from toolkit.helper_functions import set_core_setting
+from toolkit.helper_functions import reindex_test_dataset, set_core_setting
 from toolkit.test_settings import (TEST_INDEX_EVALUATOR, TEST_KEEP_PLOT_FILES, TEST_VERSION_PREFIX)
 from toolkit.tools.utils_for_tests import (
     create_test_user,
@@ -27,8 +27,9 @@ from toolkit.tools.utils_for_tests import (
 class EvaluatorObjectViewTests(APITransactionTestCase):
     def setUp(self):
         # Owner of the project
+        self.test_index = reindex_test_dataset(from_index=TEST_INDEX_EVALUATOR)
         self.user = create_test_user("EvaluatorOwner", "my@email.com", "pw")
-        self.project = project_creation("EvaluatorTestProject", TEST_INDEX_EVALUATOR, self.user)
+        self.project = project_creation("EvaluatorTestProject", self.test_index, self.user)
         self.project.users.add(self.user)
         self.url = f"{TEST_VERSION_PREFIX}/projects/{self.project.id}/evaluators/"
         self.project_url = f"{TEST_VERSION_PREFIX}/projects/{self.project.id}"
@@ -62,7 +63,7 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
 
     def tearDown(self) -> None:
         from toolkit.elastic.tools.core import ElasticCore
-        ElasticCore().delete_index(index=TEST_INDEX_EVALUATOR, ignore=[400, 404])
+        ElasticCore().delete_index(index=self.test_index, ignore=[400, 404])
 
 
     def test(self):
@@ -142,7 +143,7 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
         ]
         main_payload = {
             "description": "Test invalid fact name",
-            "indices": [{"name": TEST_INDEX_EVALUATOR}]
+            "indices": [{"name": self.test_index}]
         }
         for invalid_payload in invalid_payloads:
             payload = {**main_payload, **invalid_payload}
@@ -168,7 +169,7 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
         ]
         main_payload = {
             "description": "Test invalid fact name",
-            "indices": [{"name": TEST_INDEX_EVALUATOR}],
+            "indices": [{"name": self.test_index}],
             "true_fact": self.true_fact_name,
             "predicted_fact": self.pred_fact_name
         }
@@ -187,7 +188,7 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
 
         main_payload = {
             "description": "Test invalid fact name",
-            "indices": [{"name": TEST_INDEX_EVALUATOR}],
+            "indices": [{"name": self.test_index}],
             "true_fact": self.true_fact_name,
             "predicted_fact": self.pred_fact_name,
         }
@@ -425,7 +426,7 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
 
         main_payload = {
             "description": "Test binary evaluation",
-            "indices": [{"name": TEST_INDEX_EVALUATOR}],
+            "indices": [{"name": self.test_index}],
             "true_fact": self.true_fact_name,
             "predicted_fact": self.pred_fact_name,
             "true_fact_value": self.true_fact_value,
@@ -491,7 +492,7 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
         """ Test if running the evaluation with query works. """
         payload = {
             "description": "Test evaluation with query",
-            "indices": [{"name": TEST_INDEX_EVALUATOR}],
+            "indices": [{"name": self.test_index}],
             "true_fact": self.true_fact_name,
             "predicted_fact": self.pred_fact_name,
             "scroll_size": 500,
@@ -520,7 +521,7 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
 
         main_payload = {
             "description": "Test multilabel evaluation",
-            "indices": [{"name": TEST_INDEX_EVALUATOR}],
+            "indices": [{"name": self.test_index}],
             "true_fact": self.true_fact_name,
             "predicted_fact": self.pred_fact_name,
             "scroll_size": 500,
@@ -592,7 +593,7 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
 
         main_payload = {
             "description": "Test Multilabel Evaluator",
-            "indices": [{"name": TEST_INDEX_EVALUATOR}],
+            "indices": [{"name": self.test_index}],
             "true_fact": self.true_fact_name,
             "predicted_fact": self.pred_fact_name,
             "scroll_size": 500,

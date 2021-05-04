@@ -5,7 +5,7 @@ import pathlib
 import re
 import uuid
 from functools import partial
-from typing import List
+from typing import List, Optional
 
 import elasticsearch_dsl
 import psutil
@@ -233,21 +233,26 @@ def parse_bool_env(env_name: str, default: bool):
         return False
 
 
-def reindex_test_dataset(query: dict = None, hex_size=20) -> str:
+def reindex_test_dataset(query: dict = None, from_index: Optional[str] = None, hex_size=20) -> str:
     """
     Reindexes the master test dataset into isolated pieces.
+    :param from_index: Index from which to reindex.
     :param query: Query you want to limit the reindex to.
     :param hex_size: How many random characters should there be in the new indexes name.
     :return: Name of the newly generated index.
     """
     from toolkit.elastic.tools.core import ElasticCore
     from toolkit.test_settings import TEST_INDEX
+
+    from_index = from_index if from_index else TEST_INDEX
+
     ec = ElasticCore()
     new_test_index_name = f"ttk_test_{uuid.uuid4().hex[:hex_size]}"
     ec.create_index(index=new_test_index_name)
     ec.add_texta_facts_mapping(new_test_index_name)
+
     from_scan = elasticsearch_dsl.Search() if query is None else elasticsearch_dsl.Search.from_dict(query)
-    from_scan = from_scan.index(TEST_INDEX).using(ec.es)
+    from_scan = from_scan.index(from_index).using(ec.es)
     from_scan = from_scan.scan()
 
 
