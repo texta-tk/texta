@@ -34,7 +34,69 @@ from toolkit.tools.plots import create_confusion_plot
 from typing import List, Union, Dict, Tuple
 
 SCORES_NAN_MARKER = -1
-#kk
+MISSING_TRUE_LABEL = "Missing from true labels"
+MISSING_PRED_LABEL = "Missing from pred labels"
+
+
+def are_empty_rows_and_cols(array: np.array, indx: int):
+    """ Checks if the row and column at index `indx` in 2-dimensional array are consisting of zeros."""
+    if not array[indx,:].any() and not array[:,indx].any():
+        return True
+    return False
+
+
+def delete_empty_cols(true_labels: np.array, pred_labels: np.array, classes: List[Union[str, int]]) -> Tuple[np.array, np.array]:
+    """ Deletes empty columns corresponding to missing pred/true labels from true and predicted label arrays."""
+    if MISSING_PRED_LABEL in classes and MISSING_TRUE_LABEL in classes:
+        missing_pred_label_indx = classes.index(MISSING_PRED_LABEL)
+        missing_true_label_indx = classes.index(MISSING_TRUE_LABEL)
+        indices = [missing_pred_label_indx, missing_true_label_indx]
+        indices_to_del = []
+
+        for indx in indices:
+            if not true_labels[:, indx].any() and not pred_labels[:, indx].any():
+                indices_to_del.append(indx)
+        if indices_to_del:
+            # Delete empty cols
+            true_labels = np.delete(true_labels, indices_to_del, axis=1)
+            pred_labels = np.delete(pred_labels, indices_to_del, axis=1)
+
+    return (true_labels, pred_labels)
+
+
+def delete_empty_rows_and_cols(confusion: np.array, classes: List[Union[str, int]]) -> Tuple[np.array, List[Union[str, int]]]:
+    """ Deletes empty columns and rows corresponding to missing pred/true labels from a confusion matrix."""
+    if MISSING_PRED_LABEL in classes and MISSING_TRUE_LABEL in classes:
+        missing_pred_label_indx = classes.index(MISSING_PRED_LABEL)
+        missing_true_label_indx = classes.index(MISSING_TRUE_LABEL)
+
+        indices_to_del = []
+        if are_empty_rows_and_cols(confusion, missing_pred_label_indx):
+            indices_to_del.append(missing_pred_label_indx)
+            classes = [c for c in classes if c != MISSING_PRED_LABEL]
+
+        if are_empty_rows_and_cols(confusion, missing_true_label_indx):
+            indices_to_del.append(missing_true_label_indx)
+            classes = [c for c in classes if c != MISSING_TRUE_LABEL]
+
+        # Delete empty rows
+        confusion = np.delete(confusion, indices_to_del, axis=0)
+
+        # Delete empty cols
+        confusion = np.delete(confusion, indices_to_del, axis=1)
+    return (confusion, classes)
+
+
+def remove_not_found(binary_results: dict) -> dict:
+    """ Removes labels not present in the data (necessary for removing missing true and pred labels, if they don't exist)"""
+    cleaned_results = {}
+    for label, label_scores in list(binary_results.items()):
+        for metric in ["precision", "recall", "f1_score"]:
+            if label_scores[metric] > -1:
+                cleaned_results[label] = label_scores
+                break
+    return cleaned_results
+
 
 def filter_results(binary_results: dict, min_count: int, max_count: int, metric_restrictions: json) -> json:
     """ Filter multilabel scores based on label count and metric scores restrictions. """
@@ -153,6 +215,7 @@ def get_scores(true_labels: List[Union[str, int]], pred_labels: List[Union[str, 
     if len(classes) > 2:
         # Binarize multilabel results
         mlb = MultiLabelBinarizer(classes=classes)
+
         true_labels = mlb.fit_transform(true_labels).astype("int8")
         pred_labels = mlb.fit_transform(pred_labels).astype("int8")
 
@@ -179,6 +242,9 @@ def get_scores(true_labels: List[Union[str, int]], pred_labels: List[Union[str, 
     # Convert the labels to numpy array for the usage of np.any()
     true_labels = np.array(true_labels)
     pred_labels = np.array(pred_labels)
+
+    # Delete empty columns corresponding to missing true/pred labels
+    true_labels, pred_labels = delete_empty_cols(true_labels, pred_labels, classes)
 
     # If bot true labels and pred labels contain only zeoros,
     # add nan marker as a marker to ignore these scores while calculating averages
@@ -211,7 +277,7 @@ def update_scores(scores_buffer: dict, batch_scores: dict) -> dict:
     Return updated buffer.
     """
 
-    # Convert confusion matrix from list to nupy array so that
+    # Convert confusion matrix from list to numpy array so that
     # the new matrix can be added to it
     if "confusion_matrix" in scores_buffer:
         scores_buffer["confusion_matrix"] = np.array(scores_buffer["confusion_matrix"])
@@ -255,6 +321,7 @@ def scroll_and_score(generator: ElasticSearcher, evaluator_object: Evaluator, tr
 
     true_labels = []
     pred_labels = []
+    ks = 0
 
     # Store intermediate results
     scores = {}
@@ -289,6 +356,14 @@ def scroll_and_score(generator: ElasticSearcher, evaluator_object: Evaluator, tr
 
             # Multilabel evaluation
             else:
+                # If true fact value is not present, add an indicator for it
+                if not true_fact_values and pred_fact_values:
+                    true_fact_values = [MISSING_TRUE_LABEL]
+
+                # If pred fact value is not present, add an indicator for it
+                elif not pred_fact_values and true_fact_values:
+                    pred_fact_values = [MISSING_PRED_LABEL]
+
                 true_labels.append(true_fact_values)
                 pred_labels.append(pred_fact_values)
 
@@ -371,6 +446,7 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
             pred_set = {pred_fact_value, "other"}
 
             classes = ["other", true_fact_value]
+            n_total_classes = len(classes)
 
         # Multilabel/multiclass
         else:
@@ -388,9 +464,16 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
             pred_set = set(pred_fact_values)
 
             classes = list(true_set.union(pred_set))
+            n_total_classes = len(classes)
+
+            # Add dummy classes for missing labels
+            classes.extend([MISSING_TRUE_LABEL, MISSING_PRED_LABEL])
+
 
             ## Set the evaluation type in the model
             evaluator_object.evaluation_type = "multilabel"
+
+        classes.sort(key=lambda x: x[0].lower())
 
         # Get number of documents in the query to estimate memory imprint
         n_docs = searcher.count()
@@ -418,7 +501,7 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
         evaluator_object.document_count = n_docs
         evaluator_object.n_true_classes = len(true_set)
         evaluator_object.n_predicted_classes = len(pred_set)
-        evaluator_object.n_total_classes = len(classes)
+        evaluator_object.n_total_classes = n_total_classes
         evaluator_object.scores_imprecise = scores_imprecise
         evaluator_object.score_after_scroll = score_after_scroll
         evaluator_object.save()
@@ -439,8 +522,15 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
         for conn in connections.all():
             conn.close_if_unusable_or_obsolete()
 
-        # Generate confusion matrix plot and save it
+        confusion = scores["confusion_matrix"]
+        confusion = np.asarray(confusion, dtype="int64")
 
+        # Delete empty rows and columns corresponding to missing pred/true labels from the confusion matrix
+        confusion, classes = delete_empty_rows_and_cols(confusion, classes)
+
+        scores["confusion_matrix"] = confusion.tolist()
+
+        # Generate confusion matrix plot and save it
         image_name = f"{secrets.token_hex(15)}.png"
         evaluator_object.plot.save(image_name, create_confusion_plot(scores["confusion_matrix"], classes), save=False)
         image_path = pathlib.Path(MEDIA_URL) / image_name
@@ -453,7 +543,7 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
         evaluator_object.accuracy = scores["accuracy"]
         evaluator_object.confusion_matrix = json.dumps(scores["confusion_matrix"])
 
-        evaluator_object.individual_results = json.dumps(bin_scores)
+        evaluator_object.individual_results = json.dumps(remove_not_found(bin_scores))
 
 
         evaluator_object.save()

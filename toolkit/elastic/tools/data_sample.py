@@ -19,6 +19,7 @@ from ..exceptions import InvalidDataSampleError
 from ...tools.show_progress import ShowProgress
 
 
+
 class InvalidDataSampleError(Exception):
     """Raised on invalid Data Sample"""
     pass
@@ -64,6 +65,7 @@ class DataSample:
         self.balance = balance
         self.use_sentence_shuffle = use_sentence_shuffle
         self.balance_to_max_limit = balance_to_max_limit
+        self.class_display_name = None # used for logging messages related to taggers in tagger groups
         self.max_class_size = self._get_max_class_size()
         self.class_names, self.queries = self._prepare_class_names_with_queries()
         self.ignore_ids = set()
@@ -88,13 +90,38 @@ class DataSample:
         self.is_binary = True if len(self.data) == 2 else False
 
 
+    def _get_fact_name(self):
+        """ Returns fact name if it's present in
+            a) Tagger object or
+            b) Tagger Group object related to the Tagger object.
+        """
+        fact_name = None
+        # if fact name is present in the tagger object
+        if self.tagger_object.fact_name:
+            fact_name = self.tagger_object.fact_name
+
+        # if fact_name is present in tagger group related to the tagger object
+        else:
+            try:
+                tagger_groups = json.loads(self.tagger_object.tagger_groups)
+                fact_names = [tg.get("fact_name") for tg in tagger_groups]
+                if fact_names:
+                    fact_name = fact_names[0]
+            # If tagger group doesn't exist in the object (e.g. Bert, Torch)
+            except:
+                pass
+        return fact_name
+
+
     def _get_max_class_size(self) -> int:
         """Aggregates over values of the selected fact and returns the size of the largest class."""
-        max_class_size = None
-        if self.tagger_object.fact_name:
+        max_class_size = 0
+        fact_name = self._get_fact_name()
+
+        if fact_name:
             es_aggregator = ElasticAggregator(indices=self.indices)
-            facts = es_aggregator.get_fact_values_distribution(fact_name=self.tagger_object.fact_name, fact_name_size=10, fact_value_size=10)
-            logging.getLogger(INFO_LOGGER).info(f"The most frequent class: {facts}")
+            facts = es_aggregator.get_fact_values_distribution(fact_name=fact_name, fact_name_size=10, fact_value_size=10)
+            logging.getLogger(INFO_LOGGER).info(f"Class frequencies: {facts}")
             max_class_size = max(facts.values())
         return max_class_size
 
@@ -200,6 +227,7 @@ class DataSample:
             class_names = ['true']
             # if fact name not present, use query provided
             queries = [query]
+
         return class_names, queries
 
 
@@ -212,12 +240,31 @@ class DataSample:
         return tag_values
 
 
+    def _set_class_display_name(self, class_name: str):
+        """ Sets a class display name for logger messages as a plain class name ("true")
+        is uniformative for taggers related to a Tagger Group.
+        """
+        try:
+            tagger_groups = json.loads(self.tagger_object.tagger_groups)
+        # If tagger group doesn't exist in the object (e.g. Bert, Torch)
+        except:
+            tagger_groups = []
+
+        if tagger_groups:
+            self.class_display_name = self.tagger_object.description
+        else:
+            self.class_display_name = class_name
+
+
     def _get_samples_for_classes(self):
         """Returns samples for each class as a dict."""
         samples = {}
         for i, class_name in enumerate(self.class_names):
             self.show_progress.update_step(f"scrolling sample for {class_name}")
             self.show_progress.update_view(0)
+
+            self._set_class_display_name(class_name)
+
             samples[class_name] = self._get_class_sample(self.queries[i], class_name)
         # if only one class, add negatives automatically
         # add negatives as additional class if asked
@@ -297,14 +344,14 @@ class DataSample:
 
         if len(positive_sample) < n_samples:
             n = n_samples - len(positive_sample)
-            logging.getLogger(INFO_LOGGER).info(f"Adding {n} examples for class {class_name}")
+            logging.getLogger(INFO_LOGGER).info(f"Adding {n} examples for class {self.class_display_name}")
 
             # Generate the required amount of additional documents by sampling with replacements
             additions = list(np.random.choice(positive_sample, size=n, replace=True))
 
             # If sentence shuffling is enabled, shuffle the sentences in the additional documents
             if self.use_sentence_shuffle:
-                logging.getLogger(INFO_LOGGER).info(f"Shuffling sentences in additional examples of class {class_name}")
+                logging.getLogger(INFO_LOGGER).info(f"Shuffling sentences in additional examples of class {self.class_display_name}")
                 additions = [self._shuffle_content(doc, self.field_data) for doc in additions]
             positive_sample.extend(additions)
             shuffle(positive_sample)
@@ -320,7 +367,7 @@ class DataSample:
         if class_name in self.feedback:
             limit = limit - len(self.feedback[class_name])
 
-        logging.getLogger(INFO_LOGGER).info(f"Collecting examples for class {class_name} (max limit = {limit})...")
+        logging.getLogger(INFO_LOGGER).info(f"Collecting examples for class {self.class_display_name} (max limit = {limit})...")
         # iterator for retrieving positive sample by query
         positive_sample_iterator = ElasticSearcher(
             query=query,
@@ -339,7 +386,7 @@ class DataSample:
             del doc["_id"]
             positive_sample.append(doc)
 
-        logging.getLogger(INFO_LOGGER).info(f"Found {len(positive_sample)} examples for {class_name}...")
+        logging.getLogger(INFO_LOGGER).info(f"Found {len(positive_sample)} examples for {self.class_display_name}...")
 
         # If class balancing is enabled, modify number of required samples
         if self.balance:

@@ -46,6 +46,16 @@ def create_tagger_batch(tagger_group_id, taggers_to_create):
         if embedding_id:
             tagger_data["embedding"] = Embedding.objects.get(pk=embedding_id)
 
+        tagger_group_info = [
+            {
+                "description": tagger_group_object.description,
+                "id": tagger_group_id,
+                "fact_name": tagger_group_object.fact_name
+            }
+        ]
+
+        tagger_data["tagger_groups"] = json.dumps(tagger_group_info)
+
         created_tagger = Tagger.objects.create(
             **tagger_data,
             author=tagger_group_object.author,
