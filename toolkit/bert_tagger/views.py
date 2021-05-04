@@ -1,42 +1,31 @@
 import json
-import os
 import logging
+import os
 
 import rest_framework.filters as drf_filters
+from django.db import transaction
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
-from django.db import transaction
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from texta_tools.text_processor import TextProcessor
-from texta_bert_tagger.tagger import BertTagger
-
-from toolkit.core.task.models import Task
+from toolkit.bert_tagger import choices
+from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
+from toolkit.bert_tagger.serializers import (ApplyTaggerSerializer, BertDownloaderSerializer, BertTagTextSerializer, BertTaggerSerializer, EpochReportSerializer, TagRandomDocSerializer)
+from toolkit.bert_tagger.tasks import apply_tagger, apply_tagger_to_index, train_bert_tagger
 from toolkit.core.project.models import Project
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.feedback import Feedback
+from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
+from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.searcher import ElasticSearcher
-from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, DownloadingModelsNotAllowedError, InvalidModelIdentifierError
+from toolkit.exceptions import DownloadingModelsNotAllowedError, InvalidModelIdentifierError, NonExistantModelError, ProjectValidationFailed
 from toolkit.helper_functions import add_finite_url_to_feedback, download_bert_requirements, get_downloaded_bert_models
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ALLOW_BERT_MODEL_DOWNLOADS, BERT_PRETRAINED_MODEL_DIRECTORY, INFO_LOGGER, BERT_CACHE_DIR
-from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
-from toolkit.bert_tagger.serializers import (
-    TagRandomDocSerializer,
-    BertTaggerSerializer,
-    BertTagTextSerializer,
-    EpochReportSerializer,
-    BertDownloaderSerializer,
-    ApplyTaggerSerializer
-)
-
-from toolkit.bert_tagger.tasks import train_bert_tagger, apply_tagger, apply_tagger_to_index
+from toolkit.settings import ALLOW_BERT_MODEL_DOWNLOADS, BERT_CACHE_DIR, BERT_PRETRAINED_MODEL_DIRECTORY, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER
 from toolkit.view_constants import BulkDelete, FeedbackModelView
-from toolkit.bert_tagger import choices
+
 
 class BertTaggerFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
@@ -119,7 +108,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         """Returns prediction for a random document in Elasticsearch."""
 
         # get tagger object
-        tagger_object = self.get_object()
+        tagger_object: BertTaggerObject = self.get_object()
 
         # check if tagger exists
         if not tagger_object.model:
@@ -128,9 +117,8 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         serializer = TagRandomDocSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        project_object = Project.objects.get(pk=project_pk)
         indices = [index["name"] for index in serializer.validated_data["indices"]]
-        indices = project_object.get_available_or_all_project_indices(indices)
+        indices = tagger_object.get_available_or_all_indices(indices)
 
         # retrieve tagger fields
         # if user specified fields, use them
@@ -138,8 +126,9 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             tagger_fields = serializer.validated_data["fields"]
         else:
             tagger_fields = json.loads(tagger_object.fields)
-        if not ElasticCore().check_if_indices_exist(tagger_object.project.get_indices()):
-            raise ProjectValidationFailed(detail=f'One or more index from {list(tagger_object.project.get_indices())} do not exist')
+
+        if not ElasticCore().check_if_indices_exist(indices):
+            raise ProjectValidationFailed(detail=f'One or more index from {list(indices)} do not exist')
 
         # retrieve random document
         random_doc = ElasticSearcher(indices=indices).random_documents(size=1)[0]
@@ -171,7 +160,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         return Response(prediction, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post','get'], serializer_class=EpochReportSerializer)
+    @action(detail=True, methods=['post', 'get'], serializer_class=EpochReportSerializer)
     def epoch_reports(self, request, pk=None, project_pk=None):
         """Retrieve epoch reports"""
         tagger_object: BertTaggerObject = self.get_object()
@@ -199,7 +188,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
         bert_model = serializer.validated_data['bert_model']
         if ALLOW_BERT_MODEL_DOWNLOADS:
-            errors, failed_models = download_bert_requirements(BERT_PRETRAINED_MODEL_DIRECTORY, [bert_model], cache_directory = BERT_CACHE_DIR, logger = logging.getLogger(INFO_LOGGER))
+            errors, failed_models = download_bert_requirements(BERT_PRETRAINED_MODEL_DIRECTORY, [bert_model], cache_directory=BERT_CACHE_DIR, logger=logging.getLogger(INFO_LOGGER))
             if failed_models:
                 error_msg = f"Failed downloading model: {failed_models[0]}. Make sure to use the correct model identifier listed in https://huggingface.co/models."
                 raise InvalidModelIdentifierError(error_msg)
@@ -231,7 +220,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
             project = Project.objects.get(pk=project_pk)
             indices = [index["name"] for index in serializer.validated_data["indices"]]
-            #indices = project.get_available_or_all_project_indices(indices)
+            # indices = project.get_available_or_all_project_indices(indices)
 
             fields = serializer.validated_data["fields"]
             fact_name = serializer.validated_data["new_fact_name"]

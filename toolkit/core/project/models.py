@@ -48,16 +48,12 @@ class Project(models.Model):
         otherwise it will return ONLY open indices.
         """
         if indices:
-            legit_indices = self.indices.filter(name__in=indices, is_open=True)
-            if not legit_indices:
+            indices = self.indices.filter(name__in=indices, is_open=True)
+            if not indices:
                 raise ValidationError(f"Inserted indices {indices} are not available to you.")
-
-            indices = [index.name for index in legit_indices]
-            indices = list(set(indices))  # Leave only unique names just in case.
-            return indices
-
         else:
             indices = self.indices.all()
-            indices = [index.name for index in indices]
-            indices = list(set(indices))  # Leave only unique names just in case.
-            return indices
+
+        indices = [index.name for index in indices]
+        indices = list(set(indices))  # Leave only unique names just in case.
+        return indices
