@@ -2,6 +2,7 @@ from django.conf.urls import url
 from django.urls import include, path
 from rest_framework_nested import routers
 
+from toolkit.summarizer.urls import router as summarizer_router
 from toolkit.anonymizer.urls import router as anonymizer_router
 from toolkit.bert_tagger.urls import router as bert_tagger_router
 from toolkit.evaluator.urls import router as evaluator_router
@@ -34,6 +35,7 @@ from toolkit.elastic.face_analyzer.views import FaceAnalyzerViewSet
 from toolkit.embedding.urls import embedding_router
 from toolkit.mlp.urls import mlp_router
 from toolkit.mlp.views import MLPListProcessor, MlpDocsProcessor
+from toolkit.summarizer.views import SummarizerSummarize
 from toolkit.regex_tagger.urls import router as regex_tagger_router
 from toolkit.tagger.urls import router as tagger_router
 from toolkit.tools.swagger import schema_view
@@ -59,6 +61,7 @@ project_router.registry.extend(regex_tagger_router.registry)
 project_router.registry.extend(anonymizer_router.registry)
 project_router.registry.extend(bert_tagger_router.registry)
 project_router.registry.extend(evaluator_router.registry)
+project_router.registry.extend(summarizer_router.registry)
 
 # elastic resources
 project_router.register('elastic/dataset_imports', DatasetImportViewSet, basename='dataset_import')
@@ -91,6 +94,8 @@ urlpatterns = [
     # mlp
     path("mlp/texts/", MLPListProcessor.as_view(), name="mlp_texts"),
     path("mlp/docs/", MlpDocsProcessor.as_view(), name="mlp_docs"),
+    # summarizer
+    path("summarizer/summarize", SummarizerSummarize.as_view(), name="summarizer_summarize"),
     # routers
     url(r'^', include(router.urls)),
     path("elastic/", include(index_router.urls), name="elastic_index"),
