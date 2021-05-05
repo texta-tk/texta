@@ -199,7 +199,7 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     description = serializers.CharField(help_text=f'Description for the Tagger Group.')
     minimum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, help_text=f'Minimum number of documents required to train a model. Default: {choices.DEFAULT_MIN_SAMPLE_SIZE}')
     fact_name = serializers.CharField(default=choices.DEFAULT_TAGGER_GROUP_FACT_NAME, help_text=f'Fact name used to filter tags (fact values). Default: {choices.DEFAULT_TAGGER_GROUP_FACT_NAME}')
-    tagger = TaggerSerializer(write_only=True, remove_fields=['description', 'query', 'fact_name'])
+    tagger = TaggerSerializer(write_only=True, remove_fields=['description', 'query', 'fact_name', 'minimum_sample_size'])
     num_tags = serializers.IntegerField(read_only=True)
     tagger_status = serializers.SerializerMethodField()
     tagger_statistics = serializers.SerializerMethodField()
