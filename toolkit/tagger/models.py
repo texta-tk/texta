@@ -43,6 +43,7 @@ class Tagger(models.Model):
     classifier = models.CharField(default=choices.DEFAULT_CLASSIFIER, max_length=MAX_DESC_LEN)
     negative_multiplier = models.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER, blank=True)
     maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, blank=True)
+    minimum_sample_size = models.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, blank=True)
     score_threshold = models.FloatField(default=choices.DEFAULT_SCORE_THRESHOLD, blank=True)
     snowball_language = models.CharField(choices=get_snowball_choices(), default=DEFAULT_SNOWBALL_LANGUAGE, null=True, max_length=MAX_DESC_LEN)
     detect_lang = models.BooleanField(default=False)
