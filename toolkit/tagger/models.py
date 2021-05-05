@@ -6,6 +6,7 @@ import pathlib
 import secrets
 import tempfile
 import zipfile
+from typing import List
 
 from django.contrib.auth.models import User
 from django.core import serializers
@@ -65,6 +66,23 @@ class Tagger(models.Model):
     balance = models.BooleanField(default=choices.DEFAULT_BALANCE)
     balance_to_max_limit = models.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT)
 
+
+    def get_available_or_all_indices(self, indices: List[str] = None) -> List[str]:
+        """
+        Used in views where the user can select the indices they wish to use.
+        Returns a list of index names from the ones that are in the project
+        and in the indices parameter or all of the indices if it's None or empty.
+        """
+        if indices:
+            indices = self.indices.filter(name__in=indices, is_open=True)
+            if not indices:
+                indices = self.project.indices.all()
+        else:
+            indices = self.indices.all()
+
+        indices = [index.name for index in indices]
+        indices = list(set(indices))  # Leave only unique names just in case.
+        return indices
 
 
     def get_indices(self):
