@@ -67,6 +67,10 @@ class MLPWorkerSerializer(serializers.ModelSerializer, FieldValidationSerializer
         return data
 
 
+class LangDetectSerializer(serializers.Serializer):
+    text = serializers.CharField()
+
+
 class ApplyLangOnIndicesSerializer(serializers.ModelSerializer, FieldValidationSerializer):
     description = serializers.CharField()
     indices = IndexSerializer(many=True, default=[])

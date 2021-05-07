@@ -9,7 +9,7 @@ from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.settings import NAN_LANGUAGE_TOKEN_KEY
-from toolkit.test_settings import (TEST_FIELD)
+from toolkit.test_settings import (TEST_FIELD, VERSION_NAMESPACE)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -109,3 +109,56 @@ class ApplyLangViewsTests(APITransactionTestCase):
 
         # Clean up the document from the index.
         ec.es.delete(index=self.test_index_name, id=document_id, refresh="wait_for")
+
+
+class TestLangDetectView(APITransactionTestCase):
+
+    def setUp(self) -> None:
+        self.normal_user = create_test_user('langDetectUser', 'my@email.com', 'pw')
+        self.admin_user = create_test_user("langDetectAdmin", 'my@email.com', 'pw', superuser=True)
+        self.client.login(username='langDetectUser', password='pw')
+        self.text = "Kohus peatas põlevkiviõlitehase ehituse"
+        self.url = reverse(f"{VERSION_NAMESPACE}:mlp_detect_lang")
+
+
+    def test_normal_endpoint(self):
+        response = self.client.post(self.url, data={"text": self.text}, format="json")
+        print_output("test_normal_endpoint:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        self.assertTrue(response.data["language"] == "estonian")
+
+
+    def test_faulty_text_content(self):
+        smiley_face = ":)"
+        response = self.client.post(self.url, data={"text": smiley_face}, format="json")
+        print_output("test_faulty_text_content:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+
+
+    def test_that_unlogged_users_get_403(self):
+        self.client.logout()
+        response = self.client.post(self.url, data={"text": self.text}, format="json")
+        print_output("test_that_unlogged_users_get_403:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)
+
+
+    def test_that_normal_users_have_access(self):
+        self.client.logout()
+        self.client.login(username="langDetectAdmin", password='pw')
+        response = self.client.post(self.url, data={"text": self.text}, format="json")
+        print_output("test_that_normal_users_have_access:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        self.assertTrue(response.data["language"] == "estonian")
+
+
+    def test_blank_user_input(self):
+        response = self.client.post(self.url, data={"text": ""}, format="json")
+        print_output("test_blank_user_input:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+
+
+    def test_that_unsupported_snowball_lang_gets_long_as_null(self):
+        response = self.client.post(self.url, data={"text": "音読み"}, format="json")
+        print_output("test_that_unsupported_snowball_lang_gets_long_as_null:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        self.assertTrue(response.data["language"] is None)
