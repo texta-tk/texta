@@ -32,7 +32,7 @@ from toolkit.elastic.snowball.views import SnowballProcessor
 from toolkit.elastic.face_analyzer.views import FaceAnalyzerViewSet
 from toolkit.embedding.urls import embedding_router
 from toolkit.mlp.urls import mlp_router
-from toolkit.mlp.views import MLPListProcessor, MlpDocsProcessor
+from toolkit.mlp.views import LangDetectView, MLPListProcessor, MlpDocsProcessor
 from toolkit.summarizer.views import SummarizerSummarize
 from toolkit.regex_tagger.urls import router as regex_tagger_router
 from toolkit.tagger.urls import router as tagger_router
@@ -63,7 +63,6 @@ project_router.registry.extend(bert_tagger_router.registry)
 project_router.registry.extend(evaluator_router.registry)
 project_router.registry.extend(summarizer_router.registry)
 
-
 # TODO Look for putting this into a better place.
 project_router.register(r'clustering', TopicAnalyzerViewset, basename='clustering')
 clustering_router = routers.NestedSimpleRouter(project_router, r'clustering', lookup='clustering')
@@ -86,14 +85,15 @@ urlpatterns = [
     path("task/", TaskAPIView.as_view(), name="task_api"),
     # elastic stemmer
     path("snowball/", SnowballProcessor.as_view(), name="snowball"),
-    
-    
+
+
     # face analyzer
-    #path("projects/<int:pk>/face_analyzer/", FaceAnalyzerView.as_view(), name="face_analyzer"),
-    
+    # path("projects/<int:pk>/face_analyzer/", FaceAnalyzerView.as_view(), name="face_analyzer"),
+
     # mlp
     path("mlp/texts/", MLPListProcessor.as_view(), name="mlp_texts"),
     path("mlp/docs/", MlpDocsProcessor.as_view(), name="mlp_docs"),
+    path("mlp/detect_lang/", LangDetectView.as_view(), name="mlp_detect_lang"),
     url(r'^get_indices', ElasticGetIndices.as_view(), name="get_indices_for_project_creation"),
 
     # summarizer
