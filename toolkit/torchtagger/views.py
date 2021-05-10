@@ -2,23 +2,17 @@ import json
 import os
 
 import rest_framework.filters as drf_filters
-from django.http import HttpResponse
 from django.db import transaction
+from django.http import HttpResponse
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.core.task.models import Task
-
-from texta_torch_tagger.tagger import TorchTagger
-from texta_tools.text_processor import TextProcessor
-from texta_tools.embedding import W2VEmbedding
-
 from toolkit.core.project.models import Project
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.feedback import Feedback
+from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
+from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed
 from toolkit.helper_functions import add_finite_url_to_feedback
@@ -26,11 +20,11 @@ from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.tagger.serializers import TaggerTagTextSerializer
-from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
-from toolkit.torchtagger.serializers import TagRandomDocSerializer, TorchTaggerSerializer, EpochReportSerializer, ApplyTaggerSerializer
-from toolkit.torchtagger.tasks import train_torchtagger, apply_tagger, apply_tagger_to_index
-from toolkit.view_constants import BulkDelete, FeedbackModelView
 from toolkit.torchtagger import choices
+from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
+from toolkit.torchtagger.serializers import ApplyTaggerSerializer, EpochReportSerializer, TagRandomDocSerializer, TorchTaggerSerializer
+from toolkit.torchtagger.tasks import apply_tagger, apply_tagger_to_index, train_torchtagger
+from toolkit.view_constants import BulkDelete, FeedbackModelView
 
 
 class TorchTaggerFilter(filters.FilterSet):
@@ -109,7 +103,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         return Response({"id": tagger_id, "message": "Successfully imported model and associated files."}, status=status.HTTP_201_CREATED)
 
 
-    @action(detail=True, methods=['post','get'], serializer_class=EpochReportSerializer)
+    @action(detail=True, methods=['post', 'get'], serializer_class=EpochReportSerializer)
     def epoch_reports(self, request, pk=None, project_pk=None):
         """Retrieve epoch reports"""
         tagger_object: BertTaggerObject = self.get_object()
@@ -142,14 +136,13 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         serializer = TagRandomDocSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        project_object = Project.objects.get(pk=project_pk)
         indices = [index["name"] for index in serializer.validated_data["indices"]]
-        indices = project_object.get_available_or_all_project_indices(indices)
+        indices = tagger_object.get_available_or_all_indices(indices)
 
         # retrieve tagger fields
         tagger_fields = json.loads(tagger_object.fields)
-        if not ElasticCore().check_if_indices_exist(tagger_object.project.get_indices()):
-            raise ProjectValidationFailed(detail=f'One or more index from {list(tagger_object.project.get_indices())} do not exist')
+        if not ElasticCore().check_if_indices_exist(indices):
+            raise ProjectValidationFailed(detail=f'One or more index from {list(indices)} do not exist')
 
         # retrieve random document
         random_doc = ElasticSearcher(indices=indices).random_documents(size=1)[0]
@@ -196,7 +189,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
             project = Project.objects.get(pk=project_pk)
             indices = [index["name"] for index in serializer.validated_data["indices"]]
-            #indices = project.get_available_or_all_project_indices(indices)
+            # indices = project.get_available_or_all_project_indices(indices)
 
             fields = serializer.validated_data["fields"]
             fact_name = serializer.validated_data["new_fact_name"]

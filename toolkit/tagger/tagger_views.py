@@ -1,7 +1,8 @@
-from celery import group
 import json
 import os
+
 import rest_framework.filters as drf_filters
+from celery import group
 from django.db import transaction
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
@@ -10,37 +11,27 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from texta_tagger.tagger import Tagger as TextTagger
 
+from toolkit.core.health.utils import get_redis_status
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
-from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.index.models import Index
+from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, SerializerNotValid
 from toolkit.helper_functions import add_finite_url_to_feedback, load_stop_words
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import (
-    GeneralTextSerializer,
     ProjectResourceImportModelSerializer)
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE
 from toolkit.tagger.models import Tagger
-from toolkit.tagger.serializers import (
-    TagRandomDocSerializer,
-    TaggerListFeaturesSerializer,
-    TaggerSerializer,
-    TaggerTagDocumentSerializer,
-    TaggerTagTextSerializer,
-    TaggerMultiTagSerializer,
-    ApplyTaggerSerializer,
-    StopWordSerializer
-    )
-from toolkit.tagger.tasks import apply_tagger, save_tagger_results, start_tagger_task, train_tagger_task, apply_tagger_to_index
+from toolkit.tagger.serializers import (ApplyTaggerSerializer, StopWordSerializer, TagRandomDocSerializer, TaggerListFeaturesSerializer, TaggerMultiTagSerializer, TaggerSerializer, TaggerTagDocumentSerializer, TaggerTagTextSerializer)
+from toolkit.tagger.tasks import apply_tagger, apply_tagger_to_index, save_tagger_results, start_tagger_task, train_tagger_task
 from toolkit.tagger.validators import validate_input_document
+from toolkit.tools.lemmatizer import CeleryLemmatizer
 from toolkit.view_constants import (
     BulkDelete,
     FeedbackModelView,
 )
-from toolkit.tools.lemmatizer import CeleryLemmatizer
-from toolkit.core.health.utils import get_redis_status
 
 
 class TaggerFilter(filters.FilterSet):
@@ -161,7 +152,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
             if not overwrite_existing:
                 # Add previous stopwords to the new ones
-                new_stop_words+=existing_stop_words
+                new_stop_words += existing_stop_words
 
             # Remove duplicates
             new_stop_words = list(set(new_stop_words))
@@ -280,14 +271,13 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         serializer = TagRandomDocSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        project_object = Project.objects.get(pk=project_pk)
         indices = [index["name"] for index in serializer.validated_data["indices"]]
-        indices = project_object.get_available_or_all_project_indices(indices)
+        indices = tagger_object.get_available_or_all_indices(indices)
 
         # retrieve tagger fields
         tagger_fields = json.loads(tagger_object.fields)
-        if not ElasticCore().check_if_indices_exist(tagger_object.project.get_indices()):
-            return Response({'error': f'One or more index from {list(tagger_object.project.get_indices())} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        if not ElasticCore().check_if_indices_exist(indices):
+            return Response({'error': f'One or more index from {list(indices)} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
         # retrieve random document
         random_doc = ElasticSearcher(indices=indices).random_documents(size=1)[0]

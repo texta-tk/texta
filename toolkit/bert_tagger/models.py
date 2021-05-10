@@ -12,15 +12,14 @@ from django.core import serializers
 from django.db import models, transaction
 from django.dispatch import receiver
 from django.http import HttpResponse
-from rest_framework.exceptions import ValidationError
 
+from toolkit.bert_tagger import choices
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
-from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH, BERT_PRETRAINED_MODEL_DIRECTORY, BERT_FINETUNED_MODEL_DIRECTORY
-from toolkit.bert_tagger import choices
+from toolkit.settings import BASE_DIR, BERT_FINETUNED_MODEL_DIRECTORY, CELERY_LONG_TERM_TASK_QUEUE
 
 
 class BertTagger(models.Model):
@@ -37,7 +36,6 @@ class BertTagger(models.Model):
     fact_name = models.CharField(max_length=MAX_DESC_LEN, null=True)
     minimum_sample_size = models.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE)
     negative_multiplier = models.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER)
-    split_ratio = models.FloatField(default=choices.DEFAULT_TRAINING_SPLIT)
     num_examples = models.TextField(default=json.dumps({}), null=True)
 
     # BERT params

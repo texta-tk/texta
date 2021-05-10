@@ -274,7 +274,8 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
             raise NonExistantModelError()
 
         # retrieve tagger fields from the first object
-        tagger_fields = json.loads(hybrid_tagger_object.taggers.first().fields)
+        first_tagger = hybrid_tagger_object.taggers.first()
+        tagger_fields = json.loads(first_tagger.fields)
         # error if redis not available
 
         if not get_redis_status()['alive']:
@@ -283,12 +284,11 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         serializer = TagRandomDocSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        project_object = Project.objects.get(pk=project_pk)
         indices = [index["name"] for index in serializer.validated_data["indices"]]
-        indices = project_object.get_available_or_all_project_indices(indices)
+        indices = first_tagger.get_available_or_all_indices(indices)
 
         if not ElasticCore().check_if_indices_exist(indices):
-            return Response({'error': f'One or more index from {list(hybrid_tagger_object.project.get_indices())} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': f'One or more index from {list(indices)} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
         # retrieve random document
         random_doc = ElasticSearcher(indices=indices).random_documents(size=1)[0]
