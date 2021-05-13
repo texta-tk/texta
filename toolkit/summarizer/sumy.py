@@ -1,3 +1,4 @@
+import re
 import ast
 import logging
 from typing import List
@@ -20,7 +21,7 @@ class SumyTokenizer:
 
     @staticmethod
     def to_sentences(text):
-        return filter(bool, text.split("."))
+        return filter(bool, re.split(r'(?<=\.) ', text))
 
     @staticmethod
     def to_words(sentence):
@@ -138,7 +139,7 @@ class Sumy:
 
                     summary = [sent._text for sent in summarization]
                     summary = "\n".join(summary)
-                    summaries[name] = summary
+                    summaries[doc_path + "_" + name] = summary
 
                 stack.append(summaries)
 
