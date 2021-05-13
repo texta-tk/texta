@@ -15,7 +15,7 @@ class SummarizerSummarizeSerializer(serializers.Serializer):
         choices=DefaultSummarizerValues.SUPPORTED_ALGORITHMS,
         default=["lexrank"]
     )
-    ratio = serializers.DecimalField(max_digits=2, decimal_places=1, default=0.2)
+    ratio = serializers.DecimalField(max_digits=2, decimal_places=1, default=0.2, max_value=1.0)
 
 
 class SummarizerIndexSerializer(FieldParseSerializer, serializers.ModelSerializer):
@@ -30,7 +30,7 @@ class SummarizerIndexSerializer(FieldParseSerializer, serializers.ModelSerialize
         default=["lexrank"]
     )
     fields = serializers.ListField(child=serializers.CharField(), required=True)
-    ratio = serializers.DecimalField(max_digits=2, decimal_places=1, default=0.2)
+    ratio = serializers.DecimalField(max_digits=2, decimal_places=1, default=0.2, max_value=1.0)
 
     class Meta:
         model = Summarizer
