@@ -435,7 +435,9 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             'num_index_splitters': proj.indexsplitter_set.count(),
             'num_evaluators': proj.evaluator_set.count(),
             'num_lang_detectors': proj.applylangworker_set.count(),
-            'num_summarizers': proj.summarizer_set.count()
+            'num_summarizers': proj.summarizer_set.count(),
+            'num_search_query_taggers': proj.searchquerytagger_set.count(),
+            'num_search_fields_taggers': proj.searchfieldstagger_set.count()
         }
 
         return Response(response, status=status.HTTP_200_OK)
