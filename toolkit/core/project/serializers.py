@@ -87,7 +87,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
     users = serializers.HyperlinkedRelatedField(many=True, view_name='user-detail', queryset=User.objects.all(), )
     author_username = serializers.CharField(source='author.username', read_only=True)
     resources = serializers.SerializerMethodField()
-    resource_counts = serializers.SerializerMethodField()
+    resource_count = serializers.SerializerMethodField()
 
 
     def update(self, instance, validated_data):
@@ -138,7 +138,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Project
-        fields = ('url', 'id', 'title', 'author_username', 'users', 'indices', 'resources', 'resource_counts',)
+        fields = ('url', 'id', 'title', 'author_username', 'users', 'indices', 'resources', 'resource_count',)
         read_only_fields = ('author_username', 'resources',)
 
 
@@ -214,9 +214,8 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
         return resource_dict
 
 
-    def get_resource_counts(self, obj):
-        return obj.get_resource_counts()
-
+    def get_resource_count(self, obj):
+        return {"resource_count": sum(obj.get_resource_counts().values())}
 
 
 class ProjectSuggestFactValuesSerializer(serializers.Serializer):
