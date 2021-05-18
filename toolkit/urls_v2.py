@@ -2,10 +2,8 @@ from django.conf.urls import url
 from django.urls import include, path
 from rest_framework_nested import routers
 
-from toolkit.summarizer.urls import router as summarizer_router
 from toolkit.anonymizer.urls import router as anonymizer_router
 from toolkit.bert_tagger.urls import router as bert_tagger_router
-from toolkit.evaluator.urls import router as evaluator_router
 from toolkit.core.core_variable.views import CoreVariableViewSet
 from toolkit.core.health.views import HealthView
 from toolkit.core.project.views import (
@@ -26,18 +24,20 @@ from toolkit.core.user_profile import views as profile_views
 from toolkit.dataset_import.views import DatasetImportViewSet
 from toolkit.docparser.views import DocparserView
 from toolkit.elastic.document_importer.views import DocumentImportView, DocumentInstanceView, UpdateSplitDocument
-from toolkit.elastic.urls import index_router
+from toolkit.elastic.face_analyzer.views import FaceAnalyzerViewSet
 from toolkit.elastic.index.views import ElasticGetIndices
-from toolkit.elastic.snowball.views import SnowballProcessor
 from toolkit.elastic.index_splitter.views import IndexSplitterViewSet
 from toolkit.elastic.reindexer.views import ReindexerViewSet
-from toolkit.elastic.search_tagger.views import SearchQueryTaggerViewSet, SearchFieldsTaggerViewSet
-from toolkit.elastic.face_analyzer.views import FaceAnalyzerViewSet
+from toolkit.elastic.search_tagger.views import SearchFieldsTaggerViewSet, SearchQueryTaggerViewSet
+from toolkit.elastic.snowball.views import ApplySnowballOnIndices, SnowballProcessor
+from toolkit.elastic.urls import index_router
 from toolkit.embedding.urls import embedding_router
+from toolkit.evaluator.urls import router as evaluator_router
 from toolkit.mlp.urls import mlp_router
 from toolkit.mlp.views import LangDetectView, MLPListProcessor, MlpDocsProcessor
-from toolkit.summarizer.views import SummarizerSummarize
 from toolkit.regex_tagger.urls import router as regex_tagger_router
+from toolkit.summarizer.urls import router as summarizer_router
+from toolkit.summarizer.views import SummarizerSummarize
 from toolkit.tagger.urls import router as tagger_router
 from toolkit.tools.swagger import schema_view
 from toolkit.topic_analyzer.views import ClusterViewSet, TopicAnalyzerViewset
@@ -70,6 +70,7 @@ project_router.register('elastic/face_analyzer', FaceAnalyzerViewSet, basename='
 project_router.register('elastic/reindexer', ReindexerViewSet, basename='reindexer')
 project_router.register('elastic/dataset_imports', DatasetImportViewSet, basename='dataset_import')
 project_router.register('elastic/index_splitter', IndexSplitterViewSet, basename='index_splitter')
+project_router.register('elastic/apply_snowball', ApplySnowballOnIndices, basename='apply_snowball')
 project_router.register('elastic/search_query_tagger', SearchQueryTaggerViewSet, basename='search_query_tagger')
 project_router.register('elastic/search_fields_tagger', SearchFieldsTaggerViewSet, basename='search_fields_tagger')
 

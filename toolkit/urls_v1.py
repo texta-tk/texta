@@ -2,10 +2,8 @@ from django.conf.urls import url
 from django.urls import include, path
 from rest_framework_nested import routers
 
-from toolkit.summarizer.urls import router as summarizer_router
 from toolkit.anonymizer.urls import router as anonymizer_router
 from toolkit.bert_tagger.urls import router as bert_tagger_router
-from toolkit.evaluator.urls import router as evaluator_router
 from toolkit.core.core_variable.views import CoreVariableViewSet
 from toolkit.core.health.views import HealthView
 from toolkit.core.project.views import (
@@ -26,15 +24,18 @@ from toolkit.core.user_profile import views as profile_views
 from toolkit.dataset_import.urls import router as dataset_import_router
 from toolkit.docparser.views import DocparserView
 from toolkit.elastic.document_importer.views import DocumentImportView, DocumentInstanceView, UpdateSplitDocument
-from toolkit.elastic.urls import index_router, reindexer_router, splitter_router, search_tagger_router
-from toolkit.elastic.index.views import ElasticGetIndices
-from toolkit.elastic.snowball.views import SnowballProcessor
 from toolkit.elastic.face_analyzer.views import FaceAnalyzerViewSet
+from toolkit.elastic.index.views import ElasticGetIndices
+from toolkit.elastic.snowball.urls import snowball_router as apply_snowball
+from toolkit.elastic.snowball.views import SnowballProcessor
+from toolkit.elastic.urls import index_router, reindexer_router, search_tagger_router, splitter_router
 from toolkit.embedding.urls import embedding_router
+from toolkit.evaluator.urls import router as evaluator_router
 from toolkit.mlp.urls import mlp_router
 from toolkit.mlp.views import LangDetectView, MLPListProcessor, MlpDocsProcessor
-from toolkit.summarizer.views import SummarizerSummarize
 from toolkit.regex_tagger.urls import router as regex_tagger_router
+from toolkit.summarizer.urls import router as summarizer_router
+from toolkit.summarizer.views import SummarizerSummarize
 from toolkit.tagger.urls import router as tagger_router
 from toolkit.tools.swagger import schema_view
 from toolkit.topic_analyzer.views import ClusterViewSet, TopicAnalyzerViewset
@@ -63,6 +64,7 @@ project_router.registry.extend(anonymizer_router.registry)
 project_router.registry.extend(bert_tagger_router.registry)
 project_router.registry.extend(evaluator_router.registry)
 project_router.registry.extend(summarizer_router.registry)
+project_router.registry.extend(apply_snowball.registry)
 
 # TODO Look for putting this into a better place.
 project_router.register(r'clustering', TopicAnalyzerViewset, basename='clustering')
