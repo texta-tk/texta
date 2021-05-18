@@ -102,6 +102,14 @@ def update_search_fields_generator(generator: ElasticSearcher, ec: ElasticCore, 
                 "_source": {"doc": {"texta_facts": existing_facts}}
             }
 
+@task(name="start_search_query_tagger_worker", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
+def start_search_query_tagger_worker(self, object_id: int):
+    logging.getLogger(INFO_LOGGER).info(f"Starting applying search query tagger on the index for model ID: {object_id}")
+    searchquerytagger_object = SearchQueryTagger.objects.get(pk=object_id)
+    show_progress = ShowProgress(searchquerytagger_object.task, multiplier=1)
+    show_progress.update_step('running search query tagger')
+    show_progress.update_view(0)
+    return object_id
 
 @task(name="apply_search_query_tagger_on_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def apply_search_query_tagger_on_index(object_id: int):
@@ -117,6 +125,8 @@ def apply_search_query_tagger_on_index(object_id: int):
         fields: List[str] = json.loads(search_query_tagger.fields)
         fact_name: List[str] = search_query_tagger.fact_name
         fact_value: List[str] = search_query_tagger.fact_value
+        scroll_timeout = search_query_tagger.es_timeout
+        scroll_size = search_query_tagger.bulk_size
 
         ec = ElasticCore()
         [ec.add_texta_facts_mapping(index) for index in indices]
@@ -128,9 +138,9 @@ def apply_search_query_tagger_on_index(object_id: int):
             field_data=fields + ["texta_facts"],  # Get facts to add upon existing ones.
             query=json.loads(search_query_tagger.query),
             output=ElasticSearcher.OUT_RAW,
-            scroll_timeout="30m",
+            scroll_timeout=f"{scroll_timeout}m",
             callback_progress=progress,
-            scroll_size=100
+            scroll_size=scroll_size
         )
 
         actions = update_search_query_generator(generator=searcher, ec=ec, fields=fields, fact_name=fact_name, fact_value=fact_value, tagger_object=search_query_tagger)
@@ -145,6 +155,22 @@ def apply_search_query_tagger_on_index(object_id: int):
         task_object.update_status(Task.STATUS_FAILED)
         raise e
 
+@task(name="end_search_query_tagger_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
+def end_search_query_tagger_task(self, object_id):
+    logging.getLogger(INFO_LOGGER).info(f"Finished applying search query tagger on the index for model ID: {object_id}")
+    searchquerytagger_object = SearchQueryTagger.objects.get(pk=object_id)
+    searchquerytagger_object.task.complete()
+    return True
+
+@task(name="start_search_fields_tagger_worker", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
+def start_search_fields_tagger_worker(self, object_id: int):
+    logging.getLogger(INFO_LOGGER).info(f"Starting applying search fields tagger on the index for model ID: {object_id}")
+    searchfieldstagger_object = SearchFieldsTagger.objects.get(pk=object_id)
+    show_progress = ShowProgress(searchfieldstagger_object.task, multiplier=1)
+    show_progress.update_step('running search fields tagger')
+    show_progress.update_view(0)
+    return object_id
+
 @task(name="apply_search_fields_tagger_on_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def apply_search_fields_tagger_on_index(object_id: int):
     search_fields_tagger = SearchFieldsTagger.objects.get(pk=object_id)
@@ -158,6 +184,8 @@ def apply_search_fields_tagger_on_index(object_id: int):
         indices: List[str] = search_fields_tagger.get_indices()
         fields: List[str] = json.loads(search_fields_tagger.fields)
         fact_name: List[str] = search_fields_tagger.fact_name
+        scroll_timeout = search_fields_tagger.es_timeout
+        scroll_size = search_fields_tagger.bulk_size
 
         ec = ElasticCore()
         [ec.add_texta_facts_mapping(index) for index in indices]
@@ -167,9 +195,9 @@ def apply_search_fields_tagger_on_index(object_id: int):
             field_data=fields + ["texta_facts"],  # Get facts to add upon existing ones.
             query=json.loads(search_fields_tagger.query),
             output=ElasticSearcher.OUT_RAW,
-            scroll_timeout="30m",
+            scroll_timeout=f"{scroll_timeout}m",
             callback_progress=progress,
-            scroll_size=100
+            scroll_size=scroll_size
         )
 
         actions = update_search_fields_generator(generator=searcher, ec=ec, fields=fields, fact_name=fact_name, tagger_object=search_fields_tagger)
@@ -183,3 +211,10 @@ def apply_search_fields_tagger_on_index(object_id: int):
         task_object.add_error(str(e))
         task_object.update_status(Task.STATUS_FAILED)
         raise e
+
+@task(name="end_search_fields_tagger_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
+def end_search_fields_tagger_task(self, object_id):
+    logging.getLogger(INFO_LOGGER).info(f"Finished applying search fields tagger on the index for model ID: {object_id}")
+    searchfieldstagger_object = SearchFieldsTagger.objects.get(pk=object_id)
+    searchfieldstagger_object.task.complete()
+    return True
