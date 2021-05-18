@@ -4,6 +4,7 @@ from rest_framework import serializers
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.serializer_constants import FieldValidationSerializer
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.settings import REST_FRAMEWORK
 from django.urls import reverse
 
@@ -14,14 +15,16 @@ class SearchQueryTaggerSerializer(serializers.ModelSerializer, FieldValidationSe
     description = serializers.CharField()
     task = TaskSerializer(read_only=True, required=False)
     url = serializers.SerializerMethodField()
-    query = serializers.JSONField(help_text='Query in JSON format', required=True)
+    query = serializers.JSONField(help_text='Query in JSON format', default=EMPTY_QUERY)
     fields = serializers.ListField(child=serializers.CharField(), required=True)
     fact_name = serializers.CharField(required=True)
     fact_value = serializers.CharField(required=True)
+    bulk_size = serializers.IntegerField(min_value=1, default=100)
+    es_timeout = serializers.IntegerField(min_value=1, default=10)
 
     class Meta:
         model = SearchQueryTagger
-        fields = ("id", "url", "author_username", "indices", "description", "task", "query", "fields", "fact_name", "fact_value")
+        fields = ("id", "url", "author_username", "indices", "description", "task", "query", "fields", "fact_name", "fact_value", "bulk_size", "es_timeout")
 
     def get_url(self, obj):
         default_version = REST_FRAMEWORK.get("DEFAULT_VERSION")
@@ -46,13 +49,15 @@ class SearchFieldsTaggerSerializer(serializers.ModelSerializer, FieldValidationS
     description = serializers.CharField()
     task = TaskSerializer(read_only=True, required=False)
     url = serializers.SerializerMethodField()
-    query = serializers.JSONField(help_text='Query in JSON format', required=False)
+    query = serializers.JSONField(help_text='Query in JSON format', default=EMPTY_QUERY)
     fields = serializers.ListField(child=serializers.CharField(), required=True)
     fact_name = serializers.CharField()
+    bulk_size = serializers.IntegerField(min_value=1, default=100)
+    es_timeout = serializers.IntegerField(min_value=1, default=10)
 
     class Meta:
         model = SearchFieldsTagger
-        fields = ("id", "url", "author_username", "indices", "description", "task", "query", "fields", "fact_name")
+        fields = ("id", "url", "author_username", "indices", "description", "task", "query", "fields", "fact_name", "bulk_size", "es_timeout")
 
     def get_url(self, obj):
         default_version = REST_FRAMEWORK.get("DEFAULT_VERSION")
