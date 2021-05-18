@@ -215,7 +215,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
 
 
     def get_resource_count(self, obj):
-        return {"resource_count": sum(obj.get_resource_counts().values())}
+        return sum(obj.get_resource_counts().values())
 
 
 class ProjectSuggestFactValuesSerializer(serializers.Serializer):
