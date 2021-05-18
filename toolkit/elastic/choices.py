@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from toolkit.settings import ELASTIC_CLUSTER_VERSION, INFO_LOGGER
 
@@ -32,6 +33,12 @@ ES6_SNOWBALL_MAPPING = {
 
 ES7_SNOWBALL_MAPPING = {"ar": "arabic", "et": "estonian"}
 DEFAULT_SNOWBALL_LANGUAGE = None
+
+
+def map_iso_to_snowball(iso_code: str) -> Optional[str]:
+    mapping = {**ES7_SNOWBALL_MAPPING, **ES7_SNOWBALL_MAPPING}
+    language = mapping.get(iso_code, None)
+    return language
 
 
 def get_snowball_choices():

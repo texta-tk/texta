@@ -23,6 +23,7 @@ INDEX_SPLITTING_TEST_INDEX = "splitting_test"
 INDEX_SPLITTING_TRAIN_INDEX = "splitting_train"
 
 TEST_FIELD = "comment_content_lemmas"
+TEST_NESTED_FIELDS = "comment_content_clean.text"
 TEST_FIELD_CHOICE = [TEST_FIELD]
 TEST_FIELD_UNLEMMATIZED = "comment_content"
 TEST_FIELD_UNLEMMATIZED_CHOICE = [TEST_FIELD_UNLEMMATIZED]
