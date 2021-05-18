@@ -5,7 +5,7 @@ data/models/*
 data/media/*
 .vscode/*
 data-volumes/*
-data_external/*
+data/external/*
 data/log/*
 static
 .idea
