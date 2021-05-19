@@ -2,6 +2,7 @@ import re
 import ast
 import logging
 from typing import List
+from pelecanus import PelicanJson
 from sumy.nlp.stemmers import null_stemmer
 from sumy.parsers.plaintext import PlaintextParser
 from texta_tools.text_processor import StopWords
@@ -89,7 +90,10 @@ class Sumy:
         summarizers = self.get_summarizers(summarizer_names)
 
         stack = []
-        ratio_count = SumyTokenizer().sentences_ratio(text, float(ratio))
+        if float(ratio) <= 1:
+            ratio_count = SumyTokenizer().sentences_ratio(text, float(ratio))
+        else:
+            ratio_count = ratio
         parser = PlaintextParser.from_string(text, SumyTokenizer())
 
         summaries = {}
@@ -125,9 +129,16 @@ class Sumy:
         algorithm = ast.literal_eval(algorithm)
         summarizers = self.get_summarizers(algorithm)
         for document in docs:
+            wrapper = PelicanJson(document)
             for doc_path in doc_paths:
-                ratio_count = SumyTokenizer().sentences_ratio(document[doc_path], float(ratio))
-                parser = PlaintextParser.from_string(document[doc_path], SumyTokenizer())
+                doc_path_as_list = doc_path.split(".")
+                content = wrapper.safe_get_nested_value(doc_path_as_list, default=[])
+                if content and isinstance(content, str):
+                    ratio_count = SumyTokenizer().sentences_ratio(content, float(ratio))
+                    parser = PlaintextParser.from_string(content, SumyTokenizer())
+                else:
+                    ratio_count = SumyTokenizer().sentences_ratio(document[doc_path], float(ratio))
+                    parser = PlaintextParser.from_string(document[doc_path], SumyTokenizer())
 
                 summaries = {}
                 for name, summarizer in summarizers.items():
