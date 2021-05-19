@@ -17,7 +17,7 @@ class Summarizer(models.Model):
     indices = models.ManyToManyField(Index)
     fields = models.TextField(default=json.dumps([]))
     algorithm = models.TextField(default=json.dumps([]))
-    ratio = models.DecimalField(max_digits=2, decimal_places=1)
+    ratio = models.DecimalField(max_digits=3, decimal_places=1)
 
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
