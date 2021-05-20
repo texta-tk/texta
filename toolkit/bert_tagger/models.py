@@ -212,6 +212,7 @@ class BertTagger(models.Model):
         return tagger
 
 
+
     def apply_loaded_tagger(self, tagger: TextBertTagger, tagger_input: Union[str, Dict], input_type: str = "text", feedback: bool=False):
         """Apply loaded BERT tagger to doc or text."""
         # tag doc or text
@@ -221,7 +222,7 @@ class BertTagger(models.Model):
             tagger_result = tagger.tag_text(tagger_input)
         # reform output
         prediction = {
-            'probability': tagger_result['probability'],
+            'probability': float(tagger_result['probability']),
             'tagger_id': self.id,
             'result': tagger_result['prediction']
         }
@@ -233,6 +234,7 @@ class BertTagger(models.Model):
             feedback_url = f'/projects/{project_pk}/bert_taggers/{self.pk}/feedback/'
             prediction['feedback'] = {'id': feedback_id, 'url': feedback_url}
         return prediction
+
 
 
 @receiver(models.signals.post_delete, sender=BertTagger)
