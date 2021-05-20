@@ -1,28 +1,22 @@
 import json
 import logging
+from random import shuffle
+from typing import List, Optional
+
 import numpy as np
 from nltk.tokenize import sent_tokenize
-from typing import List, Optional
-from random import sample, shuffle
-from toolkit.settings import INFO_LOGGER
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_tools.text_processor import TextProcessor
+
 from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.tools.feedback import Feedback
 from toolkit.elastic.tools.query import Query
 from toolkit.elastic.tools.searcher import ElasticSearcher
+from toolkit.settings import INFO_LOGGER
 from toolkit.tools.lemmatizer import ElasticLemmatizer
-from texta_tools.text_processor import TextProcessor
-from copy import deepcopy
 from .core import ElasticCore
 from ..choices import ES6_SNOWBALL_MAPPING, ES7_SNOWBALL_MAPPING
 from ..exceptions import InvalidDataSampleError
 from ...tools.show_progress import ShowProgress
-
-
-
-class InvalidDataSampleError(Exception):
-    """Raised on invalid Data Sample"""
-    pass
 
 
 class DataSample:
@@ -56,8 +50,7 @@ class DataSample:
         self.tagger_object = model_object
         self.show_progress = show_progress
         self.indices = indices
-        self.field_data = field_data
-        self.fields_with_language = [f"{field}_mlp.language.detected" for field in field_data] + field_data
+        self.field_data = self._resolve_fields(field_data)
         self.join_fields = join_fields
         self.text_processor = text_processor
         self.add_negative_sample = add_negative_sample
@@ -65,11 +58,10 @@ class DataSample:
         self.balance = balance
         self.use_sentence_shuffle = use_sentence_shuffle
         self.balance_to_max_limit = balance_to_max_limit
-        self.class_display_name = None # used for logging messages related to taggers in tagger groups
+        self.class_display_name = None  # used for logging messages related to taggers in tagger groups
         self.max_class_size = self._get_max_class_size()
         self.class_names, self.queries = self._prepare_class_names_with_queries()
         self.ignore_ids = set()
-
 
         # retrive feedback
         self.feedback = self._get_feedback()
@@ -88,6 +80,23 @@ class DataSample:
         self._validate()
 
         self.is_binary = True if len(self.data) == 2 else False
+
+
+    def _resolve_fields(self, field_data: List[str]) -> List[str]:
+        """
+        Function to resolve the names of the fields that you want to exclusively fetch from
+        Elasticsearch. In case of normal Taggers, getting the language field is for the sake
+        of automatically detecting the language of choice for when the user wishes to apply
+        Snowball stemming.
+
+        :param field_data: List of strings containing the dot-separated names of fields.
+        :return: List of fields to fetch from Elasticsearch.
+        """
+        if not hasattr(self.tagger_object, "snowball_language"):
+            return field_data
+        else:
+            field_data_field = [f"{field}_mlp.language.detected" for field in field_data] + field_data
+            return field_data_field
 
 
     def _get_fact_name(self):
@@ -276,6 +285,7 @@ class DataSample:
             samples['false'] = self._get_negatives(size)
         return samples
 
+
     @staticmethod
     def _extract_content(doc: dict, field: str) -> str:
         """Extracts content from a potentially nested field."""
@@ -307,7 +317,7 @@ class DataSample:
             depth = len(subfields)
             for i, subfield in enumerate(subfields):
                 # If reached to the deepest level, add content
-                if i+1 == depth:
+                if i + 1 == depth:
                     branch[subfield] = content
                 else:
                     branch = branch[subfield]
@@ -363,7 +373,6 @@ class DataSample:
         # limit the docs according to max sample size & feedback size
         limit = int(self.tagger_object.maximum_sample_size)
 
-
         if class_name in self.feedback:
             limit = limit - len(self.feedback[class_name])
 
@@ -372,7 +381,7 @@ class DataSample:
         positive_sample_iterator = ElasticSearcher(
             query=query,
             indices=self.indices,
-            field_data=self.fields_with_language,
+            field_data=self.field_data,
             output=ElasticSearcher.OUT_DOC_WITH_ID,
             callback_progress=self.show_progress,
             scroll_limit=limit,
@@ -432,11 +441,11 @@ class DataSample:
         # iterator for retrieving negative examples
         negative_sample_iterator = ElasticSearcher(
             indices=self.indices,
-            field_data=self.fields_with_language,
+            field_data=self.field_data,
             output=ElasticSearcher.OUT_DOC,
             callback_progress=self.show_progress,
             text_processor=self.text_processor,
-            scroll_limit=size * int(self.tagger_object.negative_multiplier),
+            scroll_limit=int(size * float(self.tagger_object.negative_multiplier)),
             ignore_ids=self.ignore_ids,
         )
         # iterator to list
