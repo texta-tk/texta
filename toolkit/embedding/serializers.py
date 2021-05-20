@@ -29,7 +29,7 @@ class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSeri
     )
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
     url = serializers.SerializerMethodField()
-    embedding_type = serializers.ChoiceField(choices=choices.EMBEDDING_CHOICES, default=choices.EMBEDDING_CHOICES[0])
+    embedding_type = serializers.ChoiceField(choices=choices.EMBEDDING_CHOICES, default=choices.EMBEDDING_CHOICES[0][0])
 
 
     class Meta:

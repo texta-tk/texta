@@ -9,7 +9,7 @@ from rest_framework.test import APITransactionTestCase
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.helper_functions import reindex_test_dataset
-from toolkit.test_settings import (TEST_FIELD, VERSION_NAMESPACE)
+from toolkit.test_settings import (TEST_FIELD, TEST_VERSION_PREFIX, VERSION_NAMESPACE)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 
@@ -24,22 +24,13 @@ class TopicAnalyzerTests(APITransactionTestCase):
 
 
     def _train_topic_cluster(self):
-        payload = {
-            "description": "TopicCluster",
-            "fields": [TEST_FIELD],
-            "vectorizer": "TfIdf Vectorizer",
-            "document_limit": 500,
-            "num_topics": 50,
-            "num_cluster": 10
-        }
-        response = self.client.post(self.clustering_url, format="json", data=payload)
+        response = self.client.post(self.clustering_url, format="json", data=self.payload)
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
         print_output("_train_topic_cluster", 201)
         return response.data["id"]
 
 
-    def setUpTestData(self):
-        # Owner of the project
+    def setUp(self):
         self.test_index_name = reindex_test_dataset()
         self.user = create_test_user('user', 'my@email.com', 'pw')
         self.admin_user = create_test_user("admin", "", "pw")
@@ -50,10 +41,15 @@ class TopicAnalyzerTests(APITransactionTestCase):
         self.project.users.add(self.user)
         self.project.users.add(self.admin_user)
         self.clustering_url = reverse(f"{VERSION_NAMESPACE}:clustering-list", kwargs={"project_pk": self.project.pk})
+        self.payload = {
+            "description": "TopicCluster",
+            "fields": [TEST_FIELD],
+            "vectorizer": "TfIdf Vectorizer",
+            "document_limit": 500,
+            "num_topics": 50,
+            "num_cluster": 10
+        }
 
-
-    def setUp(self):
-        self.setUpTestData()
         self.client.login(username='user', password='pw')
         self.clustering_id = self._train_topic_cluster()
 
@@ -68,6 +64,28 @@ class TopicAnalyzerTests(APITransactionTestCase):
         response = self.client.get(url)
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         print_output("test_access_to_detail_page", 200)
+
+
+    def test_training_cluster_with_embedding(self):
+        # Payload for training embedding
+        payload = {
+            "description": "TestEmbedding",
+            "fields": [TEST_FIELD],
+            "indices": [{"name": self.test_index_name}],
+            "max_vocab": 10000,
+            "min_freq": 5,
+            "num_dimensions": 300
+        }
+        embeddings_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/embeddings/'
+        response = self.client.post(embeddings_url, payload, format='json')
+        self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+        print_output("test_training_cluster_with_embedding:response.data", response.data)
+
+        # Train the actual cluster.
+        payload = {**self.payload, "embedding": response.data["id"]}
+        response = self.client.post(self.clustering_url, format="json", data=payload)
+        self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+        print_output("_train_topic_cluster", 201)
 
 
     def test_cluster_with_indices_field(self):
