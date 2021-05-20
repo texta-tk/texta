@@ -56,7 +56,7 @@ def perform_data_clustering(clustering_id):
         # load phraser from embedding
         if clustering_model.embedding:
             embedding = clustering_model.embedding.get_embedding()
-            embedding.load_django(embedding)
+            embedding.load_django(clustering_model.embedding)
             phraser = embedding.phraser
         else:
             phraser = None
