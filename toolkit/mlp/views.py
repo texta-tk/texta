@@ -30,7 +30,7 @@ class LangDetectView(APIView):
     it will be null.
     """
     serializer_class = LangDetectSerializer
-    renderer_classes = (BrowsableAPIRenderer, JSONRenderer, HTMLFormRenderer)
+    renderer_classes = (JSONRenderer, BrowsableAPIRenderer, HTMLFormRenderer)
     permission_classes = (permissions.IsAuthenticated,)
 
 
@@ -59,7 +59,7 @@ class LangDetectView(APIView):
 
 class MlpDocsProcessor(APIView):
     serializer_class = MLPDocsSerializer
-    renderer_classes = (BrowsableAPIRenderer, JSONRenderer, HTMLFormRenderer)
+    renderer_classes = (JSONRenderer, BrowsableAPIRenderer, HTMLFormRenderer)
     permission_classes = (permissions.IsAuthenticated,)
 
 
@@ -79,7 +79,7 @@ class MlpDocsProcessor(APIView):
 
 class MLPListProcessor(APIView):
     serializer_class = MLPListSerializer
-    renderer_classes = (BrowsableAPIRenderer, JSONRenderer, HTMLFormRenderer)
+    renderer_classes = (JSONRenderer, BrowsableAPIRenderer, HTMLFormRenderer)
     permission_classes = (permissions.IsAuthenticated,)
 
 
