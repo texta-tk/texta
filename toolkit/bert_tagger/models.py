@@ -5,7 +5,7 @@ import pathlib
 import secrets
 import tempfile
 import zipfile
-from typing import List
+from typing import List, Union, Dict
 
 from django.contrib.auth.models import User
 from django.core import serializers
@@ -13,13 +13,22 @@ from django.db import models, transaction
 from django.dispatch import receiver
 from django.http import HttpResponse
 
+from texta_bert_tagger.tagger import BertTagger as TextBertTagger
+
 from toolkit.bert_tagger import choices
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
-from toolkit.settings import BASE_DIR, BERT_FINETUNED_MODEL_DIRECTORY, CELERY_LONG_TERM_TASK_QUEUE
+from toolkit.settings import (
+    BASE_DIR,
+    BERT_FINETUNED_MODEL_DIRECTORY,
+    CELERY_LONG_TERM_TASK_QUEUE,
+    BERT_PRETRAINED_MODEL_DIRECTORY,
+    BERT_CACHE_DIR
+)
+from toolkit.elastic.tools.feedback import Feedback
 
 
 class BertTagger(models.Model):
@@ -181,6 +190,49 @@ class BertTagger(models.Model):
 
     def get_resource_paths(self):
         return {"plot": self.plot.path, "model": self.model.path}
+
+
+    def load_tagger(self):
+        """Load BERT tagger from disc."""
+        # NB! Saving pretrained models must be disabled!
+        tagger = TextBertTagger(
+            allow_standard_output = choices.DEFAULT_ALLOW_STANDARD_OUTPUT,
+            save_pretrained = False,
+            pretrained_models_dir = BERT_PRETRAINED_MODEL_DIRECTORY,
+            use_gpu = choices.DEFAULT_USE_GPU,
+            #logger = logging.getLogger(INFO_LOGGER),
+            cache_dir = BERT_CACHE_DIR
+        )
+        tagger.load(self.model.path)
+        # use state dict for binary taggers
+        if tagger.config.n_classes == 2:
+            tagger.config.use_state_dict = True
+        else:
+            tagger.config.use_state_dict = False
+        return tagger
+
+
+    def apply_loaded_tagger(self, tagger: TextBertTagger, tagger_input: Union[str, Dict], input_type: str = "text", feedback: bool=False):
+        """Apply loaded BERT tagger to doc or text."""
+        # tag doc or text
+        if input_type == 'doc':
+            tagger_result = tagger.tag_doc(tagger_input)
+        else:
+            tagger_result = tagger.tag_text(tagger_input)
+        # reform output
+        prediction = {
+            'probability': tagger_result['probability'],
+            'tagger_id': self.id,
+            'result': tagger_result['prediction']
+        }
+        # add optional feedback
+        if feedback:
+            project_pk = self.project.pk
+            feedback_object = Feedback(project_pk, model_object=self)
+            feedback_id = feedback_object.store(tagger_input, prediction['result'])
+            feedback_url = f'/projects/{project_pk}/bert_taggers/{self.pk}/feedback/'
+            prediction['feedback'] = {'id': feedback_id, 'url': feedback_url}
+        return prediction
 
 
 @receiver(models.signals.post_delete, sender=BertTagger)

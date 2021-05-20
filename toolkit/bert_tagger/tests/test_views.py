@@ -3,7 +3,7 @@ import os
 import pathlib
 import uuid
 from io import BytesIO
-from time import sleep
+from time import sleep, time
 
 from django.test import override_settings
 from rest_framework import status
@@ -96,6 +96,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.run_apply_binary_tagger_to_index()
         self.run_apply_multiclass_tagger_to_index()
         self.run_apply_tagger_to_index_invalid_input()
+        self.run_bert_tag_text_persistent()
 
         self.add_cleanup_files(self.test_tagger_id)
         self.add_cleanup_folders()
@@ -565,3 +566,22 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertTrue('success' in response.data)
 
         self.add_cleanup_files(self.test_tagger_id)
+
+
+    def run_bert_tag_text_persistent(self):
+        """Tests tag prediction for texts using persistent models."""
+        payload = {
+            "text": "mine kukele, loll",
+            "persistent": True
+        }
+        # First try
+        start_1 = time()
+        response = self.client.post(f'{self.url}{self.test_tagger_id}/tag_text/', payload)
+        end_1 = time()-start_1
+        # Second try
+        start_2 = time()
+        response = self.client.post(f'{self.url}{self.test_tagger_id}/tag_text/', payload)
+        end_2 = time()-start_2
+        # Test if second attempt faster
+        print_output('test_bert_tagger_persistent speed:', (end_1, end_2))
+        assert end_1-end_2 > 0.05
