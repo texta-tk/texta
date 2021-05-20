@@ -51,5 +51,5 @@ class ElasticAuthenticationException(APIException):
 
 
 class InvalidDataSampleError(Exception):
-    """Raised on invalid Data Sample""" 
+    """Raised on invalid Data Sample"""
     pass
