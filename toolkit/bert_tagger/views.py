@@ -25,6 +25,7 @@ from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.settings import ALLOW_BERT_MODEL_DOWNLOADS, BERT_CACHE_DIR, BERT_PRETRAINED_MODEL_DIRECTORY, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER
 from toolkit.view_constants import BulkDelete, FeedbackModelView
+from .tasks import apply_persistent_bert_tagger
 
 
 class BertTaggerFilter(filters.FilterSet):
@@ -155,7 +156,12 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         # apply tagger
         text = serializer.validated_data['text']
         feedback = serializer.validated_data['feedback_enabled']
-        prediction = apply_tagger(tagger_object, text, feedback=feedback)
+        persistent = serializer.validated_data['persistent']
+        # decide whether to store the model in cache
+        if not persistent:
+            prediction = apply_tagger(tagger_object, text, feedback=feedback)
+        else:
+            prediction = apply_persistent_bert_tagger.s(text, tagger_object.pk, feedback=feedback).apply_async().get()
         prediction = add_finite_url_to_feedback(prediction, request)
         return Response(prediction, status=status.HTTP_200_OK)
 

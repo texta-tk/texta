@@ -26,9 +26,9 @@ from toolkit.helper_functions import add_finite_url_to_feedback, get_indices_fro
 from toolkit.mlp.tasks import apply_mlp_on_list
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, MEDIA_URL
 from toolkit.tagger.models import Tagger, TaggerGroup
-from toolkit.tools.lemmatizer import CeleryLemmatizer, ElasticLemmatizer
 from toolkit.tools.plots import create_tagger_plot
 from toolkit.tools.show_progress import ShowProgress
+
 
 
 def create_tagger_batch(tagger_group_id, taggers_to_create):
@@ -310,85 +310,6 @@ def get_tag_candidates(tagger_group_id: int, text: str, ignore_tags: List[str] =
     return tag_candidates
 
 
-def load_tagger(tagger_id: int, lemmatize: bool = False, use_logger: bool = True) -> TextTagger:
-    """Loading tagger model from disc."""
-    if use_logger:
-        logging.getLogger(INFO_LOGGER).info(f"Loading tagger with ID: {tagger_id} with params (lemmatize: {lemmatize})")
-    # get tagger object
-    tagger_object = Tagger.objects.get(pk=tagger_id)
-    # get lemmatizer/stemmer
-    if tagger_object.snowball_language:
-        lemmatizer = ElasticLemmatizer(language=tagger_object.snowball_language)
-    elif lemmatize:
-        lemmatizer = CeleryLemmatizer()
-    else:
-        lemmatizer = None
-    # create text processor object for tagger
-
-    # Load stop words
-    stop_words = load_stop_words(tagger_object.stop_words)
-
-    # load embedding
-    if tagger_object.embedding:
-        embedding = W2VEmbedding()
-        embedding.load_django(tagger_object.embedding)
-    else:
-        embedding = False
-    # load tagger
-    tagger = TextTagger(embedding=embedding, mlp=lemmatizer, custom_stop_words=stop_words)
-    tagger_loaded = tagger.load_django(tagger_object)
-    # check if tagger gets loaded
-    if not tagger_loaded:
-        return None
-    return tagger
-
-
-def apply_loaded_tagger(tagger_object: Tagger, tagger: TextTagger, content: Union[str, Dict[str, str]], input_type: str = "text", feedback: bool = False, use_logger: bool = True):
-    """Applying loaded tagger."""
-    # check input type
-    if input_type == 'doc':
-        if use_logger:
-            logging.getLogger(INFO_LOGGER).info(f"Tagging document with content: {content}!")
-        tagger_result = tagger.tag_doc(content)
-    else:
-        if use_logger:
-            logging.getLogger(INFO_LOGGER).info(f"Tagging text with content: {content}!")
-        tagger_result = tagger.tag_text(content)
-
-    # Result is false if binary tagger's prediction is false, but true otherwise
-    # (for multiclass, the result is always true as one of the classes is always predicted)
-    result = False if tagger_result["prediction"] == "false" else True
-
-    # Use tagger description as tag for binary taggers and tagger prediction as tag for multiclass taggers
-    tag = tagger.description if tagger_result["prediction"] in {"true", "false"} else tagger_result["prediction"]
-
-    if use_logger:
-        logging.getLogger(INFO_LOGGER).info(f"Tagger description: {tagger_object.description}")
-        logging.getLogger(INFO_LOGGER).info(f"Tagger result: {tagger_result['prediction']}")
-
-    tagger_id = tagger_object.pk
-    # create output dict
-    prediction = {
-        'tag': tag,
-        'probability': tagger_result['probability'],
-        'tagger_id': tagger_id,
-        'result': result
-    }
-    # add feedback if asked
-    if feedback:
-        logging.getLogger(INFO_LOGGER).info(f"Adding feedback for Tagger id: {tagger_object.pk}")
-        project_pk = tagger_object.project.pk
-        feedback_object = Feedback(project_pk, model_object=tagger_object)
-        processed_text = tagger.text_processor.process(content)[0]
-        feedback_id = feedback_object.store(processed_text, prediction)
-        feedback_url = f'/projects/{project_pk}/taggers/{tagger_object.pk}/feedback/'
-        prediction['feedback'] = {'id': feedback_id, 'url': feedback_url}
-
-    if use_logger:
-        logging.getLogger(INFO_LOGGER).info(f"Completed task 'apply_tagger' for tagger with ID: {tagger_id}!")
-    return prediction
-
-
 @task(name="apply_tagger", base=BaseTask)
 def apply_tagger(tagger_id: int, content: Union[str, Dict[str, str]], input_type='text', lemmatize=False, feedback=None, use_logger=True):
     """Task for applying tagger to text. Wraps functions load_tagger and apply_loaded_tagger."""
@@ -398,10 +319,10 @@ def apply_tagger(tagger_id: int, content: Union[str, Dict[str, str]], input_type
     tagger_object = Tagger.objects.get(pk=tagger_id)
 
     # Load tagger model from the disc
-    tagger = load_tagger(tagger_id=tagger_id, lemmatize=lemmatize, use_logger=use_logger)
+    tagger = tagger_object.load_tagger(lemmatize=lemmatize)
 
     # Use the loaded model for predicting
-    prediction = apply_loaded_tagger(tagger_object=tagger_object, tagger=tagger, content=content, input_type=input_type, feedback=feedback, use_logger=use_logger)
+    prediction = tagger_object.apply_loaded_tagger(tagger=tagger, content=content, input_type=input_type, feedback=feedback)
 
     return prediction
 
@@ -473,7 +394,7 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
                 text = flat_hit.get(field, None)
                 if text and isinstance(text, str):
                     if object_type == "tagger":
-                        result = apply_loaded_tagger(tagger_object, tagger, text, input_type="text", feedback=None, use_logger=False)
+                        result = tagger_object.apply_loaded_tagger(tagger, text, input_type="text", feedback=None)
                         if result:
                             tags = [result]
                         else:
@@ -512,7 +433,7 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
         tagger = None
         if object_type == "tagger":
             tagger_object = Tagger.objects.get(pk=object_id)
-            tagger = load_tagger(tagger_object.id, lemmatize=object_args["lemmatize"], use_logger=True)
+            tagger = tagger_object.load_tagger(lemmatize=object_args["lemmatize"], use_logger=True)
         else:
             tagger_object = TaggerGroup.objects.get(pk=object_id)
 

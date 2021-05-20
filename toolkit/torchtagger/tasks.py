@@ -101,46 +101,12 @@ def train_torchtagger(tagger_id, testing=False):
         raise
 
 
-def load_tagger(tagger_object: TorchTaggerObject):
-    """Load tagger from disc."""
-    # load embedding & phraser
-    embedding = W2VEmbedding()
-    embedding.load_django(tagger_object.embedding)
-    # retrieve model
-    tagger = TorchTagger(embedding)
-    tagger.load_django(tagger_object)
-    return tagger
-
-
-def apply_loaded_tagger(tagger: TorchTagger, tagger_object: TorchTaggerObject, tagger_input: Union[str, Dict], input_type: str = 'text', feedback: bool = False):
-    """Predict with loaded tagger."""
-    # tag text
-    if input_type == 'doc':
-        tagger_result = tagger.tag_doc(tagger_input)
-    else:
-        tagger_result = tagger.tag_text(tagger_input)
-    # reform output
-    prediction = {
-        'probability': tagger_result['probability'],
-        'tagger_id': tagger_object.id,
-        'result': tagger_result['prediction']
-    }
-    # add optional feedback
-    if feedback:
-        project_pk = tagger_object.project.pk
-        feedback_object = Feedback(project_pk, model_object=tagger_object)
-        feedback_id = feedback_object.store(tagger_input, prediction['result'])
-        feedback_url = f'/projects/{project_pk}/torchtaggers/{tagger_object.pk}/feedback/'
-        prediction['feedback'] = {'id': feedback_id, 'url': feedback_url}
-    return prediction
-
-
 def apply_tagger(tagger_object: TorchTaggerObject, tagger_input: Union[str, Dict], input_type: str = 'text', feedback: bool = False):
     """Load tagger from the disc and predict with it. Wraps function load_tagger and apply_loaded_tagger."""
     # Load tagger
-    tagger = load_tagger(tagger_object)
+    tagger = tagger_object.load_tagger()
     # Predict with the loaded tagger
-    prediction = apply_loaded_tagger(tagger, tagger_object, tagger_input, input_type, feedback)
+    prediction = tagger_object.apply_loaded_tagger(tagger, tagger_input, input_type, feedback)
     return prediction
 
 
@@ -172,7 +138,7 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
                 text = flat_hit.get(field, None)
                 if text and isinstance(text, str):
 
-                    result = apply_loaded_tagger(tagger, tagger_object, text, input_type = "text", feedback = False)
+                    result = tagger_object.apply_loaded_tagger(tagger, text, input_type = "text", feedback = False)
 
                     # If tagger is binary and fact value is not specified by the user, use tagger description as fact value
                     if result["result"] in ["true", "false"]:
@@ -204,7 +170,7 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
     """Apply Torch Tagger to index."""
     try:
         tagger_object = TorchTaggerObject.objects.get(pk=object_id)
-        tagger = load_tagger(tagger_object)
+        tagger = tagger_object.load_tagger()
 
         progress = ShowProgress(tagger_object.task)
 

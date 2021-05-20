@@ -32,6 +32,7 @@ class EpochReportSerializer(serializers.Serializer):
 
 class BertTagTextSerializer(serializers.Serializer):
     text = serializers.CharField()
+    persistent = serializers.BooleanField(default=False)
     feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 
@@ -41,7 +42,6 @@ class TagRandomDocSerializer(serializers.Serializer):
 
 
 class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer):
-
     author_username = serializers.CharField(source='author.username', read_only=True)
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     query = serializers.JSONField(required=False, help_text='Query in JSON format')

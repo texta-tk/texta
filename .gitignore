@@ -1,6 +1,7 @@
 *.pyc
 *.sqlite3
 data/models/*
+data/external/*
 *.rdb
 data/media/*
 .vscode/*

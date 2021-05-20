@@ -9,7 +9,7 @@ from elasticsearch.helpers import streaming_bulk
 from toolkit.core.task.models import Task
 
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
-from toolkit.base_tasks import TransactionAwareTask
+from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.elastic.tools.data_sample import DataSample
 from toolkit.elastic.tools.feedback import Feedback
 from toolkit.elastic.tools.searcher import ElasticSearcher
@@ -28,6 +28,29 @@ from typing import List, Union, Dict
 from nltk.tokenize import sent_tokenize
 from collections import defaultdict
 import numpy as np
+
+# Global object for the worker so tagger models won't get reloaded on each task
+# Essentially an indefinite cache
+PERSISTENT_BERT_TAGGERS = {}
+
+@task(name="apply_persistent_bert_tagger", base=BaseTask)
+def apply_persistent_bert_tagger(tagger_input: Union[str, Dict], tagger_id: int, input_type: str='text', feedback: bool=False):
+    """
+    Task to use Bert models stored in memory for fast re-use.
+    Stores models in dict.
+    """
+    global PERSISTENT_BERT_TAGGERS
+    tagger_object = BertTaggerObject.objects.get(id=tagger_id)
+    try:
+        # load tagger object into cache if not there
+        if tagger_id not in PERSISTENT_BERT_TAGGERS:
+            PERSISTENT_BERT_TAGGERS[tagger_id] = tagger_object.load_tagger()
+        # select loaded tagger from cache
+        loaded_tagger = PERSISTENT_BERT_TAGGERS[tagger_id]
+        return tagger_object.apply_loaded_tagger(loaded_tagger, tagger_input, input_type=input_type, feedback=feedback)
+    except Exception as e:
+        raise
+
 
 @task(name="train_bert_tagger", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def train_bert_tagger(tagger_id, testing=False):
@@ -133,64 +156,12 @@ def train_bert_tagger(tagger_id, testing=False):
         raise
 
 
-def load_tagger(tagger_object: BertTaggerObject) -> BertTagger:
-    """Load BERT tagger from disc."""
-
-    # NB! Saving pretrained models must be disabled!
-    tagger = BertTagger(
-        allow_standard_output = choices.DEFAULT_ALLOW_STANDARD_OUTPUT,
-        save_pretrained = False,
-        pretrained_models_dir = BERT_PRETRAINED_MODEL_DIRECTORY,
-        use_gpu = choices.DEFAULT_USE_GPU,
-        logger = logging.getLogger(INFO_LOGGER),
-        cache_dir = BERT_CACHE_DIR
-    )
-    tagger.load(tagger_object.model.path)
-
-    # use state dict for binary taggers
-    if tagger.config.n_classes == 2:
-        tagger.config.use_state_dict = True
-    else:
-        tagger.config.use_state_dict = False
-    return tagger
-
-
-def apply_loaded_tagger(tagger: BertTagger, tagger_object: BertTaggerObject, tagger_input: Union[str, Dict], input_type: str = "text", feedback: bool=False):
-    """Apply loaded BERT tagger to doc or text."""
-
-    # tag doc or text
-    if input_type == 'doc':
-        tagger_result = tagger.tag_doc(tagger_input)
-    else:
-        tagger_result = tagger.tag_text(tagger_input)
-
-    # reform output
-    prediction = {
-        'probability': tagger_result['probability'],
-        'tagger_id': tagger_object.id,
-        'result': tagger_result['prediction']
-    }
-    # add optional feedback
-    if feedback:
-        project_pk = tagger_object.project.pk
-        feedback_object = Feedback(project_pk, model_object=tagger_object)
-        feedback_id = feedback_object.store(tagger_input, prediction['result'])
-        feedback_url = f'/projects/{project_pk}/bert_taggers/{tagger_object.pk}/feedback/'
-        prediction['feedback'] = {'id': feedback_id, 'url': feedback_url}
-
-    logging.getLogger(INFO_LOGGER).info(f"Prediction: {prediction}")
-    return prediction
-
-
 def apply_tagger(tagger_object: BertTaggerObject, tagger_input: Union[str, Dict], input_type: str='text', feedback: bool=False):
     """ Apply BERT tagger on a text or a document. Wraps functions load_tagger and apply_loaded_tagger."""
-
     # Load tagger
-    tagger = load_tagger(tagger_object)
-
+    tagger = tagger_object.load_tagger()
     # Predict with the loaded tagger
-    prediction = apply_loaded_tagger(tagger, tagger_object, tagger_input, input_type, feedback)
-
+    prediction = tagger_object.apply_loaded_tagger(tagger, tagger_input, input_type, feedback)
     return prediction
 
 
@@ -220,7 +191,7 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
                 text = flat_hit.get(field, None)
                 if text and isinstance(text, str):
 
-                    result = apply_loaded_tagger(tagger, tagger_object, text, input_type = "text", feedback = False)
+                    result = tagger_object.apply_loaded_tagger(tagger, text, input_type = "text", feedback = False)
 
                     # If tagger is binary and fact value is not specified by the user, use tagger description as fact value
                     if result["result"] in ["true", "false"]:
@@ -252,7 +223,7 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
     """Apply BERT Tagger to index."""
     try:
         tagger_object = BertTaggerObject.objects.get(pk=object_id)
-        tagger = load_tagger(tagger_object)
+        tagger = tagger_object.load_tagger()
 
         progress = ShowProgress(tagger_object.task)
 

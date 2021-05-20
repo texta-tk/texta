@@ -1,15 +1,18 @@
 #!/bin/bash
 
 # SET SOME DEFAULT VALUES IF VARIABLES NOT DEFINED
-export TEXTA_SHORT_TASK_WORKERS="${TEXTA_SHORT_TASK_WORKERS:-3}"
-export TEXTA_LONG_TASK_WORKERS="${TEXTA_LONG_TASK_WORKERS:-5}"
+export TEXTA_SHORT_TASK_WORKERS="${TEXTA_SHORT_TASK_WORKERS:-1}"
+export TEXTA_LONG_TASK_WORKERS="${TEXTA_LONG_TASK_WORKERS:-4}"
 export TEXTA_MLP_TASK_WORKERS="${TEXTA_MLP_TASK_WORKERS:-2}"
+
+export TEXTA_SHORT_MAX_TASKS="${TEXTA_SHORT_MAX_TASKS:-100}"
+export TEXTA_LONG_MAX_TASKS="${TEXTA_SHORT_LONG_TASKS:-10}"
+
 export TEXTA_USE_UAA="${TEXTA_USE_UAA:-false}"
 export TEXTA_API_URL="${TEXTA_API_URL:-http://localhost}"
 
 export TEXTA_HOSTED_FILE_FIELD="${TEXTA_HOSTED_FILE_FIELD:-properties.hosted_filepath}"
 sed -i "s#TEXTA_HOSTED_FILE_FIELD_REPLACE#$TEXTA_HOSTED_FILE_FIELD#g" /var/texta-rest/front/main*.js
-
 
 # REST API LOCATION
 sed -i "s#TEXTA_API_URL_REPLACE#$TEXTA_API_URL#g" /var/texta-rest/front/main*.js
@@ -29,6 +32,5 @@ source activate texta-rest && \
 # OWNERSHIP TO WWW-DATA
 chown www-data:www-data -R /var/texta-rest/static/ && chmod 777 -R /var/texta-rest/static/
 chown www-data:www-data -R /var/texta-rest/data/ && chmod 777 -R /var/texta-rest/data/
-chown www-data:www-data -R /var/texta-rest/data_external/ && chmod 777 -R /var/texta-rest/data_external/
 
 exec "$@"
