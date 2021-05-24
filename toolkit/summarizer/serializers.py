@@ -7,6 +7,7 @@ from toolkit.serializer_constants import FieldParseSerializer
 from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.settings import REST_FRAMEWORK
 from django.urls import reverse
+from decimal import *
 
 
 class SummarizerSummarizeSerializer(serializers.Serializer):
@@ -15,7 +16,7 @@ class SummarizerSummarizeSerializer(serializers.Serializer):
         choices=DefaultSummarizerValues.SUPPORTED_ALGORITHMS,
         default=["lexrank"]
     )
-    ratio = serializers.DecimalField(max_digits=3, decimal_places=1, default=0.2, min_value=0.1, max_value=99.9, help_text="Min value 0.1, Max value 99.9 anything above 1.0 will be calculated as sentence count.")
+    ratio = serializers.DecimalField(max_digits=3, decimal_places=1, default=0.2, min_value=Decimal('0.1'), max_value=99.9, help_text="Min value 0.1, Max value 99.9 anything above 1.0 will be calculated as sentence count.")
 
 
 class SummarizerIndexSerializer(FieldParseSerializer, serializers.ModelSerializer):
@@ -30,7 +31,7 @@ class SummarizerIndexSerializer(FieldParseSerializer, serializers.ModelSerialize
         default=["lexrank"]
     )
     fields = serializers.ListField(child=serializers.CharField(), required=True)
-    ratio = serializers.DecimalField(max_digits=3, decimal_places=1, default=0.2, min_value=0.1, max_value=99.9, help_text="Min value 0.1, Max value 99.9 anything above 1.0 will be calculated as sentence count.")
+    ratio = serializers.DecimalField(max_digits=3, decimal_places=1, default=0.2, min_value=Decimal('0.1'), max_value=99.9, help_text="Min value 0.1, Max value 99.9 anything above 1.0 will be calculated as sentence count.")
 
     class Meta:
         model = Summarizer
