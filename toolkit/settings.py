@@ -22,7 +22,7 @@ DEPLOY_KEY = os.getenv("TEXTA_DEPLOY_KEY", 1)
 # ES_URL = get_core_setting("ES_URL")
 
 CORE_SETTINGS = {
-    "TEXTA_ES_URL": os.getenv("TEXTA_ES_URL", "http://localhost:9200"),
+    "TEXTA_ES_URL": os.getenv("TEXTA_ES_URL", "http://elastic-dev.texta.ee:9200"),
     "TEXTA_ES_PREFIX": os.getenv("TEXTA_ES_PREFIX", ""),
     "TEXTA_ES_USERNAME": os.getenv("TEXTA_ES_USER", ""),
     "TEXTA_ES_PASSWORD": os.getenv("TEXTA_ES_PASSWORD", ""),
@@ -115,7 +115,7 @@ USE_UAA = parse_bool_env("TEXTA_USE_UAA", False)
 # UAA server URL
 UAA_URL = os.getenv("TEXTA_UAA_URL", "http://localhost:8080/uaa")
 # Callback URL defined on the UAA server, to which the user will be redirected after logging in on UAA
-UAA_REDIRECT_URI = os.getenv("TEXTA_UAA_REDIRECT_URI", "http://localhost:8000/api/v2/uaa/callback")
+UAA_REDIRECT_URI = os.getenv("TEXTA_UAA_REDIRECT_URI", "http://localhost:8000/api/v1/uaa/callback")
 # TEXTA front URL where the user will be redirected after the redirect_uri
 UAA_FRONT_REDIRECT_URL = os.getenv("TEXTA_UAA_FRONT_REDIRECT_URL", "http://localhost:4200/oauth")
 # OAuth client application (eg texta_toolkit) id and secret.
@@ -265,6 +265,7 @@ CELERY_LONG_TERM_TASK_QUEUE = "long_term_tasks"
 CELERY_SHORT_TERM_TASK_QUEUE = "short_term_tasks"
 CELERY_MLP_TASK_QUEUE = "mlp_queue"
 
+
 CELERY_QUEUES = (
     Queue(CELERY_LONG_TERM_TASK_QUEUE, exchange=CELERY_LONG_TERM_TASK_QUEUE, routing_key=CELERY_LONG_TERM_TASK_QUEUE),
     Queue(CELERY_SHORT_TERM_TASK_QUEUE, exchange=CELERY_SHORT_TERM_TASK_QUEUE, routing_key=CELERY_SHORT_TERM_TASK_QUEUE),
@@ -346,7 +347,7 @@ if not os.path.exists(TEST_DATA_DIR):
 DEFAULT_BERT_MODELS = parse_list_env_headers("TEXTA_BERT_MODELS", ["bert-base-multilingual-cased", "EMBEDDIA/finest-bert", "bert-base-uncased"])
 
 # default MLP languages
-DEFAULT_MLP_LANGUAGE_CODES = parse_list_env_headers("TEXTA_LANGUAGE_CODES", ["et", "en", "ru", "ar"])
+DEFAULT_MLP_LANGUAGE_CODES = parse_list_env_headers("TEXTA_LANGUAGE_CODES", [])
 
 # Logger IDs, used in apps.
 INFO_LOGGER = "info_logger"
