@@ -48,7 +48,7 @@ class ElasticIndexViewTests(APITestCase):
 
 
     def tearDown(self):
-        index_names = ["first_index_duplicate", "same_name_index", "test_closed_sync", "open_index_creation", "closed_index_creation", "open_index_2", "closed_index_2", "bofuun"]
+        index_names = ["first_index_duplicate", "same_name_index", "test_closed_sync", "open_index_creation", "closed_index_creation", "open_index_2", "closed_index_2", "bofuun", "my_new_index"]
         for index in index_names:
             requests.delete(f"{ES_URL}/{index}")
 
@@ -204,6 +204,28 @@ class ElasticIndexViewTests(APITestCase):
         list_view = self.client.get(self.index_url)
         self.assertTrue(list_view.status_code == status.HTTP_200_OK)
 
+    def test_update_existing_index(self):
+        """
+        Create an index and update it.
+        """
+
+        new_index = self.client.post(self.index_url, format="json", data={
+            "name": "my_new_index",
+            "is_open": False
+        })
+        self.assertTrue(new_index.status_code == status.HTTP_201_CREATED)
+
+        pk = Index.objects.last().pk
+        url = f"{self.index_url}{pk}/"
+        new_index_update = self.client.patch(url, format="json", data={
+            "description": "testing",
+            "added_by": "tester",
+            "test": True,
+            "source": "test",
+            "client": "texta",
+            "domain": "emails"
+        })
+        self.assertTrue(new_index_update.status_code == status.HTTP_201_CREATED)
 
     def test_that_index_count_matches_reality(self):
         ec = ElasticCore()

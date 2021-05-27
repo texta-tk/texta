@@ -99,6 +99,7 @@ Toolkit is installed:
 * SKIP_BERT_RESOURCES - If set "True", skips downloading pretrained BERT models. (Default: False).
 * TEXTA_EVALUATOR_MEMORY_BUFFER_GB - The minimum amount of memory that should be left free while using the evaluator,
   unit = GB. (Default = 50% of available_memory)
+* TEXTA_DATASOURCE_CHOICES - Choices for index domain field given as a list ex: [['prefix_name', 'display_name']]. (Default = [["emails", "emails"], ["news articles", "news articles"], ["comments", "comments"], ["court decisions", "court decisions"], ["tweets", "tweets"], ["forum posts", "forum posts"], ["formal documents", "formal documents"], ["other", "other"]])
 
 ## External services
 
