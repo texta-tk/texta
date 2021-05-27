@@ -13,7 +13,7 @@ from toolkit.elastic.exceptions import ElasticIndexAlreadyExists
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import (
     AddTextaFactsMapping,
-    IndexBulkDeleteSerializer, IndexSerializer,
+    IndexBulkDeleteSerializer, IndexSerializer, IndexUpdateSerializer
 )
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.permissions.project_permissions import IsSuperUser
@@ -145,6 +145,12 @@ class IndexViewSet(mixins.CreateModelMixin,
         es = ElasticCore()
         index = data.validated_data["name"]
         is_open = data.validated_data["is_open"]
+        description = data.validated_data["description"]
+        added_by = data.validated_data["added_by"]
+        test = data.validated_data["test"]
+        source = data.validated_data["source"]
+        client = data.validated_data["client"]
+        domain = data.validated_data["domain"]
 
         # Using get_or_create to avoid unique name constraints on creation.
         if es.check_if_indices_exist([index]):
@@ -152,6 +158,12 @@ class IndexViewSet(mixins.CreateModelMixin,
             index, is_created = Index.objects.get_or_create(name=index)
             if is_created:
                 index.is_open = is_open
+                index.description = description
+                index.added_by = added_by
+                index.test = test
+                index.source = source
+                index.client = client
+                index.domain = domain
             index.save()
             raise ElasticIndexAlreadyExists()
 
@@ -159,6 +171,12 @@ class IndexViewSet(mixins.CreateModelMixin,
             index, is_created = Index.objects.get_or_create(name=index)
             if is_created:
                 index.is_open = is_open
+                index.description = description
+                index.added_by = added_by
+                index.test = test
+                index.source = source
+                index.client = client
+                index.domain = domain
             index.save()
 
             es.create_index(index=index)
@@ -166,6 +184,27 @@ class IndexViewSet(mixins.CreateModelMixin,
                 es.close_index(index)
             return Response({"message": f"Added index {index} into Elasticsearch!"}, status=status.HTTP_201_CREATED)
 
+    def partial_update(self, request, pk=None, **kwargs):
+        data = IndexUpdateSerializer(data=request.data, partial=True)
+        data.is_valid(raise_exception=True)
+
+        index = Index.objects.get(pk=pk)
+
+        val_list = [
+            'description',
+            'added_by',
+            'test',
+            'source',
+            'client',
+            'domain'
+        ]
+
+        for v_name in val_list:
+            if v_name in data.validated_data:
+                setattr(index, v_name, data.validated_data[v_name])
+
+        index.save()
+        return Response({"message": f"Updated index {index} into Elasticsearch!"}, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, pk=None, **kwargs):
         with transaction.atomic():

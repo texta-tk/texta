@@ -52,6 +52,21 @@ def parse_list_env_headers(env_key: str, default_value: list) -> list:
     else:
         return default_value
 
+def parse_tuple_env_headers(env_key: str, default_value: tuple) -> tuple:
+    """
+    Function for handling env values that need to be stored as a tuple.
+
+    :param env_key: key of the env value you need to parse.
+    :param default_value: in case the key is missing or false, what tuple value to return
+    """
+
+    data = os.getenv(env_key, None)
+    if data and isinstance(data, str):
+        res = tuple((first, second) for first, second in json.loads(data))
+        return res
+    else:
+        return default_value
+
 
 def add_finite_url_to_feedback(decision_dict, request):
     """
