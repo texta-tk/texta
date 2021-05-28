@@ -10,17 +10,19 @@ from django.urls import reverse
 from django_filters import rest_framework as filters
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from texta_tools.embedding import Phraser
+from texta_tools.text_processor import TextProcessor
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
-from texta_tools.embedding import Phraser
-from texta_tools.text_processor import TextProcessor
+from toolkit.elastic.index.models import Index
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 from toolkit.topic_analyzer.serializers import ClusterSerializer, ClusteringIdsSerializer, ClusteringSerializer, TransferClusterDocumentsSerializer
 from .clustering import ClusterContent
+from .tasks import tag_cluster
 from ..elastic.tools.document import ElasticDocument
-from toolkit.elastic.index.models import Index
 from ..elastic.tools.searcher import ElasticSearcher
 from ..elastic.tools.serializers import ElasticFactSerializer, ElasticMoreLikeThisSerializer
 from ..pagination import PageNumberPaginationDataOnly
@@ -379,25 +381,29 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         return Response(result)
 
 
+    @staticmethod
+    def __handle_clustering_pk(kwargs: dict):
+        """
+        This is necessary because of different key names between v1 and v2.
+        :param kwargs: Kwarg parameters that come from the URI.
+        :return: Proper id of the clustering object.
+        """
+        topic_analyzer_pk = kwargs.get("topic_analyzer_pk", None)
+        if topic_analyzer_pk:
+            return topic_analyzer_pk
+        elif kwargs.get("clustering_pk", None):
+            return kwargs["clustering_pk"]
+        else:
+            raise ValidationError("Could not find the proper clustering_pk value.")
+
+
     @action(detail=True, methods=["post"], serializer_class=ElasticFactSerializer)
     def tag_cluster(self, request, *args, **kwargs):
-        ed = ElasticDocument("_all")  # _all is special elasticsearch syntax for all indices.
         serializer = ElasticFactSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        cluster = Cluster.objects.get(pk=kwargs["pk"])
-        clustering_object = ClusteringResult.objects.get(pk=kwargs["clustering_pk"])
-        indices = clustering_object.get_indices()
-
-        doc_ids = json.loads(cluster.document_ids)
-        ignored_ids = json.loads(clustering_object.ignored_ids)
-
-        ed.add_fact(fact=serializer.validated_data, doc_ids=doc_ids)
-
-        clustering_object.ignored_ids = json.dumps(doc_ids + ignored_ids)
-        clustering_object.save()
-
-        return Response({"message": f"Successfully added fact {serializer.validated_data['fact']} to the documents!"})
+        clustering_pk = ClusterViewSet.__handle_clustering_pk(kwargs)
+        tag_cluster.apply_async(args=[kwargs["pk"], clustering_pk, serializer.validated_data])
+        return Response({"message": f"Successfully started adding fact {serializer.validated_data['fact']} to the documents! This might take a bit depending on the clusters size"})
 
 
 class TopicAnalyzerViewset(viewsets.ModelViewSet, BulkDelete):

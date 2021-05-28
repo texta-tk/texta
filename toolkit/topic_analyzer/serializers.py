@@ -1,17 +1,17 @@
 import json
+import re
 
 from django.urls import reverse
 from rest_framework import serializers
 
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.elastic.tools.aggregator import ElasticAggregator
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.elastic.index.serializers import IndexSerializer
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from toolkit.serializer_constants import FieldParseSerializer
 from toolkit.settings import REST_FRAMEWORK
 from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 from toolkit.topic_analyzer.validators import check_cluster_existence
-import re
 
 
 class TransferClusterDocumentsSerializer(serializers.Serializer):
@@ -51,7 +51,7 @@ class ClusterSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ClusteringSerializer(serializers.ModelSerializer):
+class ClusteringSerializer(serializers.ModelSerializer, FieldParseSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True)
     description = serializers.CharField()
     query = serializers.CharField(help_text='Query in JSON format', default=EMPTY_QUERY)

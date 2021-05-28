@@ -2,17 +2,30 @@ import json
 import logging
 
 from celery.decorators import task
-from django.db import transaction
 from texta_tools.text_processor import TextProcessor
 
-from toolkit.base_tasks import BaseTask
+from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.core.task.models import Task
+from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.elastic.tools.searcher import ElasticSearcher
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE, ERROR_LOGGER
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.topic_analyzer.clustering import ClusterContent, Clustering
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 from toolkit.topic_analyzer.serializers import ClusteringSerializer
+
+
+@task(name="tag_cluster", bind=True, base=TransactionAwareTask, queue=CELERY_SHORT_TERM_TASK_QUEUE)
+def tag_cluster(self, cluster_pk: int, clustering_object_pk: int, fact: dict):
+    ed = ElasticDocument("")
+    cluster = Cluster.objects.get(pk=cluster_pk)
+    clustering_object = ClusteringResult.objects.get(pk=clustering_object_pk)
+    doc_ids = json.loads(cluster.document_ids)
+    ignored_ids = json.loads(clustering_object.ignored_ids)
+    ed.add_fact_to_documents(fact=fact, doc_ids=doc_ids)
+    clustering_object.ignored_ids = json.dumps(doc_ids + ignored_ids)
+    clustering_object.save()
+    return True
 
 
 @task(name="start_clustering_task", base=BaseTask)

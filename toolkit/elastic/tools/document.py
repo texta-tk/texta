@@ -33,37 +33,55 @@ class ElasticDocument:
 
 
     def __does_fact_exist(self, fact: dict, existing_facts: List[dict]):
-        existing = {json.dumps(d, sort_keys=True) for d in existing_facts}
-        checking = json.dumps(fact, sort_keys=True)
+        existing = {json.dumps(d, sort_keys=True, ensure_ascii=True) for d in existing_facts}
+        checking = json.dumps(fact, sort_keys=True, ensure_ascii=True)
         if checking in existing:
             return True
         else:
             return False
 
 
-    @elastic_connection
-    def add_fact(self, fact: dict, doc_ids: List):
-        # Fetch the documents with the bulk function to get the facts,
-        # and to validate that those ids also exist.
-        documents = self.get_bulk(doc_ids=doc_ids, fields=["texta_facts"])
-
+    def _fact_addition_generator(self, documents, fact):
         for document in documents:
             # If there is no texta_facts field in the index, add it.
             if "texta_facts" not in document["_source"]:
                 self.core.add_texta_facts_mapping(document["_index"])
-                document["_source"]["texta_facts"] = [fact]
+                facts = document["_source"].get("texta_facts", [fact])
                 doc_type = document.get("_type", "_doc")
-                self.update(index=document["_index"], doc_type=doc_type, doc_id=document["_id"], doc=document["_source"])
+                yield {
+                    "_op_type": "update",
+                    "retry_on_conflict": 3,
+                    "_index": document["_index"],
+                    "_type": doc_type,
+                    "_id": document["_id"],
+                    "doc": {"texta_facts": facts}
+                }
 
             else:
                 # Avoid sending duplicates.
                 if self.__does_fact_exist(fact, document["_source"]["texta_facts"]):
                     pass
                 else:
-                    document["_source"]["texta_facts"].append(fact)
+                    facts = document["_source"]["texta_facts"]
+                    facts.append(fact)
                     doc_type = document.get("_type", "_doc")
-                    self.update(index=document["_index"], doc_type=doc_type, doc_id=document["_id"], doc=document["_source"])
+                    yield {
+                        "_op_type": "update",
+                        "retry_on_conflict": 3,
+                        "_index": document["_index"],
+                        "_type": doc_type,
+                        "_id": document["_id"],
+                        "doc": {"texta_facts": facts}
+                    }
 
+
+    @elastic_connection
+    def add_fact_to_documents(self, fact: dict, doc_ids: List):
+        # Fetch the documents with the bulk function to get the facts,
+        # and to validate that those ids also exist.
+        documents = self.get_bulk(doc_ids=doc_ids, fields=["texta_facts"])
+        generator = self._fact_addition_generator(documents, fact)
+        self.bulk_update(generator)
         return True
 
 
