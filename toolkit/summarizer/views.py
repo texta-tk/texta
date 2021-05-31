@@ -49,7 +49,7 @@ class SummarizerIndexViewSet(viewsets.ModelViewSet, BulkDelete):
 
 class SummarizerSummarize(APIView):
     serializer_class = SummarizerSummarizeSerializer
-    renderer_classes = (BrowsableAPIRenderer, JSONRenderer, HTMLFormRenderer)
+    renderer_classes = (JSONRenderer, BrowsableAPIRenderer, HTMLFormRenderer)
     permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request):
