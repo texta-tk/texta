@@ -12,7 +12,6 @@ from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-from texta_tools.embedding import Phraser
 from texta_tools.text_processor import TextProcessor
 
 from toolkit.core.project.models import Project
@@ -50,7 +49,8 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
 
 
     def get_queryset(self):
-        return Cluster.objects.filter(clusteringresult__project__pk=self.kwargs["project_pk"], clusteringresult__pk=self.kwargs["clustering_pk"])
+        clustering_pk = ClusterViewSet.__handle_clustering_pk(self.kwargs)
+        return Cluster.objects.filter(clusteringresult__project__pk=self.kwargs["project_pk"], clusteringresult__pk=clustering_pk)
 
 
     def update(self, request, *args, **kwargs):
@@ -125,7 +125,8 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         serializer = ClusteringIdsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        clustering_obj = ClusteringResult.objects.get(pk=kwargs["clustering_pk"])
+        clustering_pk = ClusterViewSet.__handle_clustering_pk(kwargs)
+        clustering_obj = ClusteringResult.objects.get(pk=clustering_pk)
         current_cluster_obj = clustering_obj.cluster_result.get(pk=kwargs["pk"])
         clustering_obj_clusters = clustering_obj.cluster_result.exclude(pk=kwargs["pk"])
 
@@ -183,8 +184,11 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
                 to_add_documents_texts.append({"id": doc_id, "text": text})
 
             if clustering_obj.embedding:
-                phraser = Phraser(embedding_id=clustering_obj.embedding.pk)
-                phraser.load()
+                embedding = clustering_obj.embedding.get_embedding()
+                embedding.load_django(clustering_obj.embedding)
+                phraser = embedding.phraser
+            else:
+                phraser = None
 
         # Save the new list of document ids.
         cluster_documents = json.loads(current_cluster_obj.document_ids)
@@ -208,7 +212,8 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         serializer = TransferClusterDocumentsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        clustering_obj = ClusteringResult.objects.get(pk=kwargs["clustering_pk"])
+        clustering_pk = ClusterViewSet.__handle_clustering_pk(kwargs)
+        clustering_obj = ClusteringResult.objects.get(pk=clustering_pk)
         cluster_obj = clustering_obj.cluster_result.get(pk=kwargs["pk"])
 
         indices = clustering_obj.get_indices()
@@ -254,7 +259,8 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         serializer = ClusteringIdsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        clustering_obj = ClusteringResult.objects.get(pk=kwargs["clustering_pk"])
+        clustering_pk = ClusterViewSet.__handle_clustering_pk(kwargs)
+        clustering_obj = ClusteringResult.objects.get(pk=clustering_pk)
         cluster_obj = clustering_obj.cluster_result.get(pk=kwargs["pk"])
         indices = clustering_obj.get_indices()
         stop_words = json.loads(clustering_obj.stop_words)
@@ -297,8 +303,11 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
                 new_documents.append({"id": doc_id, "text": text})
 
             if clustering_obj.embedding:
-                phraser = Phraser(embedding_id=clustering_obj.embedding.pk)
-                phraser.load()
+                embedding = clustering_obj.embedding.get_embedding()
+                embedding.load_django(clustering_obj.embedding)
+                phraser = embedding.phraser
+            else:
+                phraser = None
 
         # Update the similarity score since the documents were changed.
         cc = ClusterContent(doc_ids=unique_ids, vectors_filepath=clustering_obj.vector_model.path)
@@ -344,7 +353,8 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
 
     @action(detail=True, methods=["post"])
     def ignore_and_delete(self, request, *args, **kwargs):
-        clustering_obj = ClusteringResult.objects.get(pk=kwargs["clustering_pk"])
+        clustering_pk = ClusterViewSet.__handle_clustering_pk(kwargs)
+        clustering_obj = ClusteringResult.objects.get(pk=clustering_pk)
         cluster_obj = Cluster.objects.get(pk=kwargs["pk"])
 
         ignored_ids = json.loads(clustering_obj.ignored_ids)
@@ -362,7 +372,8 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         serializer = ElasticMoreLikeThisSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
-        clustering_object = ClusteringResult.objects.get(pk=kwargs["clustering_pk"])
+        clustering_pk = ClusterViewSet.__handle_clustering_pk(kwargs)
+        clustering_object = ClusteringResult.objects.get(pk=clustering_pk)
         cluster = Cluster.objects.get(pk=kwargs["pk"])
         indices = clustering_object.get_indices()
         doc_ids = json.loads(cluster.document_ids)
@@ -378,7 +389,7 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         es = ElasticSearcher(indices=indices)
         result = es.more_like_this(indices=indices, mlt_fields=fields, like=document_ids, exclude=ignored_ids, flatten=True, **serializer.validated_data)
 
-        return Response(result)
+        return Response(result, status=status.HTTP_200_OK)
 
 
     @staticmethod
@@ -528,6 +539,7 @@ class TopicAnalyzerViewset(viewsets.ModelViewSet, BulkDelete):
         clustering_model = ClusteringResult.objects.get(pk=kwargs["pk"])
         clusters = clustering_model.cluster_result.all()
         default_version = REST_FRAMEWORK.get("DEFAULT_VERSION")
+
         for cluster in clusters:
             if default_version == "v1":
                 relative_url = reverse(f"{default_version}:cluster-detail", kwargs={"pk": cluster.pk, "project_pk": kwargs["project_pk"], "clustering_pk": clustering_model.id})
@@ -547,3 +559,19 @@ class TopicAnalyzerViewset(viewsets.ModelViewSet, BulkDelete):
             )
 
         return Response({"cluster_count": len(container), "clusters": sorted(container, key=lambda x: x["id"], reverse=True)})
+
+
+    @staticmethod
+    def __handle_clustering_pk(kwargs: dict):
+        """
+        This is necessary because of different key names between v1 and v2.
+        :param kwargs: Kwarg parameters that come from the URI.
+        :return: Proper id of the clustering object.
+        """
+        topic_analyzer_pk = kwargs.get("topic_analyzer_pk", None)
+        if topic_analyzer_pk:
+            return topic_analyzer_pk
+        elif kwargs.get("clustering_pk", None):
+            return kwargs["clustering_pk"]
+        else:
+            raise ValidationError("Could not find the proper clustering_pk value.")
