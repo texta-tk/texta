@@ -58,26 +58,28 @@ class Project(models.Model):
         indices = list(set(indices))  # Leave only unique names just in case.
         return indices
 
+
     def get_resource_counts(self):
         proj = self
         return {
-                'num_lexicons': proj.lexicon_set.count(),
-                'num_torchtaggers': proj.torchtagger_set.count(),
-                'num_taggers': proj.tagger_set.count(),
-                'num_tagger_groups': proj.taggergroup_set.count(),
-                'num_embeddings': proj.embedding_set.count(),
-                'num_clusterings': proj.clusteringresult_set.count(),
-                'num_regex_taggers': proj.regextagger_set.count(),
-                'num_regex_tagger_groups': proj.regextaggergroup_set.count(),
-                'num_anonymizers': proj.anonymizer_set.count(),
-                'num_mlp_workers': proj.mlpworker_set.count(),
-                'num_reindexers': proj.reindexer_set.count(),
-                'num_dataset_importers': proj.datasetimport_set.count(),
-                'num_bert_taggers': proj.berttagger_set.count(),
-                'num_index_splitters': proj.indexsplitter_set.count(),
-                'num_evaluators': proj.evaluator_set.count(),
-                'num_lang_detectors': proj.applylangworker_set.count(),
-                'num_summarizers': proj.summarizer_set.count(),
-                'num_search_query_taggers': proj.searchquerytagger_set.count(),
-                'num_search_fields_taggers': proj.searchfieldstagger_set.count()
-            }
+            'num_lexicons': proj.lexicon_set.count(),
+            'num_torchtaggers': proj.torchtagger_set.count(),
+            'num_taggers': proj.tagger_set.count(),
+            'num_tagger_groups': proj.taggergroup_set.count(),
+            'num_embeddings': proj.embedding_set.count(),
+            'num_clusterings': proj.clusteringresult_set.count(),
+            'num_regex_taggers': proj.regextagger_set.count(),
+            'num_regex_tagger_groups': proj.regextaggergroup_set.count(),
+            'num_anonymizers': proj.anonymizer_set.count(),
+            'num_mlp_workers': proj.mlpworker_set.count(),
+            'num_reindexers': proj.reindexer_set.count(),
+            'num_dataset_importers': proj.datasetimport_set.count(),
+            'num_bert_taggers': proj.berttagger_set.count(),
+            'num_index_splitters': proj.indexsplitter_set.count(),
+            'num_evaluators': proj.evaluator_set.count(),
+            'num_lang_detectors': proj.applylangworker_set.count(),
+            'num_summarizers': proj.summarizer_set.count(),
+            'num_search_query_taggers': proj.searchquerytagger_set.count(),
+            'num_search_fields_taggers': proj.searchfieldstagger_set.count(),
+            'num_snowball_stemmers': proj.applystemmerworker_set.count(),
+        }

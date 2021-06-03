@@ -159,7 +159,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
                 'elastic/search_query_tagger',
                 'elastic/search_fields_tagger',
                 'elastic/scroll',
-                'elastic/apply_snowball'
+                'elastic/apply_snowball',
                 'searches',
                 'embeddings',
                 'topic_analyzer',
