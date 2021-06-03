@@ -146,13 +146,15 @@ class ElasticCore:
             # Ensures that changes Elastic-side on the open/closed state are forcefully updated.
             for index in opened:
                 index, is_created = Index.objects.get_or_create(name=index)
-                index.is_open = True
-                index.save()
+                if not index.is_open:
+                    index.is_open = True
+                    index.save()
 
             for index in closed:
                 index, is_created = Index.objects.get_or_create(name=index)
-                index.is_open = False
-                index.save()
+                if index.is_open:
+                    index.is_open = False
+                    index.save()
 
 
     @elastic_connection
