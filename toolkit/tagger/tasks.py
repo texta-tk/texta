@@ -274,6 +274,7 @@ def get_mlp(tagger_group_id: int, text: str, lemmatize: bool = False, use_ner: b
     return text, tags
 
 
+
 def get_tag_candidates(tagger_group_id: int, text: str, ignore_tags: List[str] = [], n_similar_docs: int = 10, max_candidates: int = 10):
     """
     Finds frequent tags from documents similar to input document.
@@ -281,7 +282,7 @@ def get_tag_candidates(tagger_group_id: int, text: str, ignore_tags: List[str] =
     """
     hybrid_tagger_object = TaggerGroup.objects.get(pk=tagger_group_id)
     field_paths = json.loads(hybrid_tagger_object.taggers.first().fields)
-    indices = hybrid_tagger_object.project.get_indices()
+    indices = hybrid_tagger_object.get_indices()
     logging.getLogger(INFO_LOGGER).info(f"[Get Tag Candidates] Selecting from following indices: {indices}.")
     ignore_tags = {tag["tag"]: True for tag in ignore_tags}
     # create query

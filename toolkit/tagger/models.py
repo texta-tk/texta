@@ -370,6 +370,20 @@ class TaggerGroup(models.Model):
         return container
 
 
+    def get_indices(self):
+        # Retrieve project indices for checking if the Tagger Group index still exists
+        project_indices = self.project.get_indices()
+        # Retrieve the indices used for training the Tagger Group
+        tg_indices = [index.name for index in self.taggers.first().indices.all()]
+        # Get indices still present in the project
+        tg_indices_in_project = list(set(tg_indices).intersection(set(project_indices)))
+        # If no indices used for training are present in the current project, return all project indices
+        if not tg_indices_in_project:
+            logging.getLogger(INFO_LOGGER).info(f"[Tagger Group] Indices used for training ({tg_indices}) are not present in the current project. Using all the indices present in the project ({project_indices}).")
+            return project_indices
+        return tg_indices_in_project
+
+
 @receiver(models.signals.pre_delete, sender=TaggerGroup)
 def auto_delete_taggers_of_taggergroup(sender, instance: TaggerGroup, **kwargs):
     """
