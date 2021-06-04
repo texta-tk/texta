@@ -10,12 +10,12 @@ TEXTA_LANGUAGE_CODES=et,en,ru
 TEXTA_DATASOURCE_CHOICES=[["emails", "emails"], ["news articles", "news articles"], ["comments", "comments"], ["court decisions", "court decisions"], ["tweets", "tweets"], ["forum posts", "forum posts"], ["formal documents", "formal documents"], ["other", "other"]]
 
 # DB settings for TK
-#DJANGO_DATABASE_ENGINE=django.db.backends.postgresql
-#DJANGO_DATABASE_NAME=docker
-#DJANGO_DATABASE_USER=docker
-#DJANGO_DATABASE_PASSWORD=docker
-#DJANGO_DATABASE_HOST=texta-postgres
-#DJANGO_DATABASE_PORT=5432
+DJANGO_DATABASE_ENGINE=django.db.backends.mysql
+DJANGO_DATABASE_NAME=docker
+DJANGO_DATABASE_USER=docker
+DJANGO_DATABASE_PASSWORD=docker
+DJANGO_DATABASE_HOST=texta-mariadb
+DJANGO_DATABASE_PORT=3306
 
 # UAA settings for TK
 USE_UAA=False

@@ -25,18 +25,22 @@ services:
       - 6379
     restart: always
   
-  texta-postgres:
-    container_name: texta-postgres
-    image: postgres:11
+  texta-mariadb:
+    container_name: texta-mariadb
+    image: mariadb:10.3.28
     restart: on-failure
     ports:
-      - 5432
+      - 3306
     environment:
-      POSTGRES_DATABASE: docker
-      POSTGRES_USER: docker
-      POSTGRES_PASSWORD: docker
+      MYSQL_ROOT_USER: docker
+      MYSQL_ROOT_PASSWORD: docker
+      MYSQL_PORT: 3306
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: docker
+      MYSQL_USER: docker
+      MYSQL_PASSWORD: docker
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - mariadb-data:/var/lib/mysql
   
   texta-rest:
     container_name: texta-rest
@@ -51,7 +55,7 @@ services:
     volumes:
       - toolkit-data:/var/texta-rest/data
     depends_on:
-      - texta-postgres
+      - texta-mariadb
       - texta-elasticsearch
   
   # texta-rest-gpu:
@@ -79,4 +83,4 @@ services:
 volumes:
   elastic-data:
   toolkit-data:
-  postgres-data:
+  mariadb-data:
