@@ -50,7 +50,6 @@ services:
       - ./docker/conf/env
     volumes:
       - toolkit-data:/var/texta-rest/data
-      - external-data:/var/texta-rest/data_external
     depends_on:
       - texta-postgres
       - texta-elasticsearch
@@ -81,4 +80,3 @@ volumes:
   elastic-data:
   toolkit-data:
   postgres-data:
-  external-data:
