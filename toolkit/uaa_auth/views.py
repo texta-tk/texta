@@ -11,6 +11,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_auth import app_settings
 
+from toolkit.core.user_profile.models import UserProfile
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.settings import UAA_CLIENT_ID, UAA_CLIENT_SECRET, UAA_URL, UAA_FRONT_REDIRECT_URL, UAA_REDIRECT_URI, USE_UAA
 from toolkit.settings import INFO_LOGGER, ERROR_LOGGER
@@ -57,7 +58,8 @@ class UAAView(views.APIView):
                 logging.getLogger(ERROR_LOGGER).exception(e)
                 return Response(f'The id_token is missing the key: {e}', status=status.HTTP_400_BAD_REQUEST)
 
-            serializer = UAAView._auth_uaa_user(user['email'], user['username'], request)
+            serializer, created_user = UAAView._auth_uaa_user(user['email'], user['username'], request)
+            profile = UserProfile.filter(user=created_user).update(scope=user['scope'])
             return HttpResponseRedirect(redirect_to=f'{UAA_FRONT_REDIRECT_URL}/uaa/?access_token={access_token}&refresh_token={refresh_token}')
 
         else:
@@ -87,7 +89,7 @@ class UAAView(views.APIView):
         login(request, user)
         # Serialize the user
         serializer = UserSerializer(user, context={'request': request})
-        return serializer
+        return serializer, user
 
 
 class RefreshUAATokenView(views.APIView):
