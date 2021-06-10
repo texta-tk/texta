@@ -59,7 +59,7 @@ class UAAView(views.APIView):
                 return Response(f'The id_token is missing the key: {e}', status=status.HTTP_400_BAD_REQUEST)
 
             serializer, created_user = UAAView._auth_uaa_user(user['email'], user['username'], request)
-            profile = UserProfile.filter(user=created_user).update(scope=user['scope'])
+            profile = UserProfile.objects.filter(user=created_user).update(scope=user['scope'])
             return HttpResponseRedirect(redirect_to=f'{UAA_FRONT_REDIRECT_URL}/uaa/?access_token={access_token}&refresh_token={refresh_token}')
 
         else:
