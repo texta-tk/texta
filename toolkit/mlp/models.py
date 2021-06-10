@@ -38,6 +38,7 @@ class MLPWorker(models.Model):
         self.task = new_task
         self.save()
 
+        # TODO: Check if the callout for first task in pipe is correct!
         chain = group(apply_mlp_on_es_doc.s(doc_id, self.pk) for doc_id in start_mlp_worker.s(self.pk)()) | end_mlp_task.si(self.pk)
 
         transaction.on_commit(lambda: chain.apply_async(queue=CELERY_LONG_TERM_TASK_QUEUE))
