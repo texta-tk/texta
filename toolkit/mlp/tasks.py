@@ -83,10 +83,16 @@ def start_mlp_worker(self, mlp_id: int):
     for index in indices:
         searcher.core.add_texta_facts_mapping(index=index)
 
-    show_progress.update_step('Applying MLP')
+    docs = list(searcher)
+
+    show_progress.update_step(f'Applying MLP to {len(docs)} documents')
     show_progress.update_view(0)
 
-    return list(searcher)
+    task_object = mlp_object.task
+    task_object.total = len(docs)
+    task_object.save()
+
+    return docs
 
 
 @task(name="apply_mlp_on_es_doc", base=TransactionAwareTask, queue=CELERY_MLP_TASK_QUEUE, bind=True)
@@ -107,7 +113,8 @@ def apply_mlp_on_es_doc(self, document_id: str, mlp_id: int):
         document.update()
         
         print("done")
-        # TODO: showprogress += 1
+        
+        task_object.update_process_iteration(task_object.total, "MLP")
 
         return None
 
@@ -118,7 +125,7 @@ def apply_mlp_on_es_doc(self, document_id: str, mlp_id: int):
         raise e
 
 
-@task(name="end_mlp_task", base=TransactionAwareTask, queue=CELERY_MLP_TASK_QUEUE, bind=True)
+@task(name="end_mlp_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
 def end_mlp_task(self, mlp_id):
     logging.getLogger(INFO_LOGGER).info(f"Finished applying mlp on the index for model ID: {mlp_id}")
     mlp_object = MLPWorker.objects.get(pk=mlp_id)

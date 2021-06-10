@@ -1,7 +1,7 @@
 import json
-
 from django.contrib.auth.models import User
 from django.db import models, transaction
+from celery import group
 
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
@@ -33,13 +33,12 @@ class MLPWorker(models.Model):
 
     def process(self):
         from toolkit.mlp.tasks import apply_mlp_on_es_doc, end_mlp_task, start_mlp_worker
-        from celery import group
 
         new_task = Task.objects.create(mlpworker=self, status='created')
         self.task = new_task
         self.save()
 
-        chain = group(apply_mlp_on_es_doc.s(doc_id, self.pk) for doc_id in start_mlp_worker.s(self.pk)()) | end_mlp_task.s(self.pk)
+        chain = group(apply_mlp_on_es_doc.s(doc_id, self.pk) for doc_id in start_mlp_worker.s(self.pk)()) | end_mlp_task.si(self.pk)
 
         transaction.on_commit(lambda: chain.apply_async(queue=CELERY_LONG_TERM_TASK_QUEUE))
 
