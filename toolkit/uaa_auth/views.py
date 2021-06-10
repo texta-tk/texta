@@ -53,7 +53,7 @@ class UAAView(views.APIView):
                 # Decode the jwt id_token
                 decoded_id_token = jwt.decode(resp_json['id_token'], verify=False)
                 # Get the email and username from the decoded data
-                user = { 'email': decoded_id_token['email'], 'username': decoded_id_token['user_name'] }
+                user = { 'email': decoded_id_token['email'], 'username': decoded_id_token['user_name'], 'scope': decoded_id_token['scope']}
             except KeyError as e:
                 logging.getLogger(ERROR_LOGGER).exception(e)
                 return Response(f'The id_token is missing the key: {e}', status=status.HTTP_400_BAD_REQUEST)
