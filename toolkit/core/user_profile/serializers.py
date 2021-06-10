@@ -7,8 +7,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ('application',)
-        read_only_fields = ('application',)
+        fields = ('application', 'scope',)
+        read_only_fields = ('application', 'scope',)
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
