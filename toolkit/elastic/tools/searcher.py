@@ -21,6 +21,7 @@ class ElasticSearcher:
     OUT_TEXT_WITH_ID = "text_with_id"
     OUT_DOC_WITH_ID = 'doc_with_id'
     OUT_DOC_WITH_TOTAL_HL_AGGS = 'doc_with_total_hl_aggs'
+    OUT_ID = '_id'
 
 
     def __init__(self,
@@ -248,7 +249,7 @@ class ElasticSearcher:
             # iterate through scroll
             while page_size > 0 and scroll_break is False:
                 # process output
-                if self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID, self.OUT_TEXT, self.OUT_TEXT_WITH_ID):
+                if self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID, self.OUT_TEXT, self.OUT_TEXT_WITH_ID, self.OUT_ID):
                     if self.callback_progress:
                         self.callback_progress.update(page_size)
                     for hit in page['hits']['hits']:
@@ -272,7 +273,6 @@ class ElasticSearcher:
                                     else:
                                         yield field
 
-
                             elif self.output == self.OUT_TEXT_WITH_ID:
                                 document = {}
                                 for key, value in parsed_doc.items():
@@ -281,6 +281,9 @@ class ElasticSearcher:
                                         document[key] = processed_field
                                 yield hit["_id"], document
 
+                            # TODO: NEEDS OPTIMIZING ON QUERY STAGE
+                            elif self.output == self.OUT_ID:
+                                yield hit["_id"]
 
                             elif self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID):
                                 if self.text_processor:

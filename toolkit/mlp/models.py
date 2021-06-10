@@ -8,7 +8,7 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
-from toolkit.settings import CELERY_MLP_TASK_QUEUE
+from toolkit.settings import CELERY_MLP_TASK_QUEUE,CELERY_LONG_TERM_TASK_QUEUE
 
 
 class MLPWorker(models.Model):
@@ -32,14 +32,16 @@ class MLPWorker(models.Model):
 
 
     def process(self):
-        from toolkit.mlp.tasks import apply_mlp_on_index, end_mlp_task, start_mlp_worker
+        from toolkit.mlp.tasks import apply_mlp_on_es_doc, end_mlp_task, start_mlp_worker
+        from celery import group
 
         new_task = Task.objects.create(mlpworker=self, status='created')
         self.task = new_task
         self.save()
 
-        chain = start_mlp_worker.s() | apply_mlp_on_index.s() | end_mlp_task.s()
-        transaction.on_commit(lambda: chain.apply_async(args=(self.pk,), queue=CELERY_MLP_TASK_QUEUE))
+        chain = group(apply_mlp_on_es_doc.s(doc_id, self.pk) for doc_id in start_mlp_worker.s(self.pk)()) | end_mlp_task.s(self.pk)
+
+        transaction.on_commit(lambda: chain.apply_async(queue=CELERY_LONG_TERM_TASK_QUEUE))
 
 
 class ApplyLangWorker(models.Model):

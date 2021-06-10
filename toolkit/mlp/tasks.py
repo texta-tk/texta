@@ -7,11 +7,18 @@ from texta_mlp.mlp import MLP
 
 from toolkit.core.task.models import Task
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
-from toolkit.elastic.tools.document import ElasticDocument
+from toolkit.elastic.tools.document import ElasticDocument, ESDoc
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.mlp.helpers import process_lang_actions, process_mlp_actions
 from toolkit.mlp.models import ApplyLangWorker, MLPWorker
-from toolkit.settings import CELERY_MLP_TASK_QUEUE, DEFAULT_MLP_LANGUAGE_CODES, INFO_LOGGER, ERROR_LOGGER, MLP_MODEL_DIRECTORY
+from toolkit.settings import (
+    CELERY_MLP_TASK_QUEUE,
+    CELERY_LONG_TERM_TASK_QUEUE,
+    DEFAULT_MLP_LANGUAGE_CODES,
+    INFO_LOGGER,
+    ERROR_LOGGER,
+    MLP_MODEL_DIRECTORY
+)
 from toolkit.tools.show_progress import ShowProgress
 
 
@@ -47,55 +54,67 @@ def apply_mlp_on_docs(self, docs: List[dict], analyzers: List[str], fields_to_pa
     return response
 
 
-@task(name="start_mlp_worker", base=TransactionAwareTask, queue=CELERY_MLP_TASK_QUEUE, bind=True)
+
+
+@task(name="start_mlp_worker", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
 def start_mlp_worker(self, mlp_id: int):
     logging.getLogger(INFO_LOGGER).info(f"Starting applying mlp on the index for model ID: {mlp_id}")
     mlp_object = MLPWorker.objects.get(pk=mlp_id)
+
     show_progress = ShowProgress(mlp_object.task, multiplier=1)
-    show_progress.update_step('running mlp')
+    show_progress.update_step('Scrolling document IDs')
     show_progress.update_view(0)
-    return mlp_id
 
+    # Get the necessary fields.
+    indices: List[str] = mlp_object.get_indices()
+    analyzers: List[str] = json.loads(mlp_object.analyzers)
 
-@task(name="apply_mlp_on_index", base=TransactionAwareTask, queue=CELERY_MLP_TASK_QUEUE, bind=True)
-def apply_mlp_on_index(self, mlp_id: int):
-    mlp_object = MLPWorker.objects.get(pk=mlp_id)
-    task_object = mlp_object.task
-    try:
-        load_mlp()
-        show_progress = ShowProgress(task_object, multiplier=1)
-        show_progress.update_step('scrolling mlp')
-
-        # Get the necessary fields.
-        indices: List[str] = mlp_object.get_indices()
-        field_data: List[str] = json.loads(mlp_object.fields)
-        analyzers: List[str] = json.loads(mlp_object.analyzers)
-
-        scroll_size = 100
-        searcher = ElasticSearcher(
+    # create searcher object for scrolling ids
+    scroll_size = 100
+    searcher = ElasticSearcher(
             query=json.loads(mlp_object.query),
             indices=indices,
-            field_data=field_data,
-            output=ElasticSearcher.OUT_RAW,
+            output=ElasticSearcher.OUT_ID,
             callback_progress=show_progress,
             scroll_size=scroll_size,
             scroll_timeout="30m"
-        )
+    )
 
-        for index in indices:
-            searcher.core.add_texta_facts_mapping(index=index)
+    for index in indices:
+        searcher.core.add_texta_facts_mapping(index=index)
 
-        actions = process_mlp_actions(searcher, analyzers, field_data, mlp_class=mlp, mlp_id=mlp_id)
+    show_progress.update_step('Applying MLP')
+    show_progress.update_view(0)
 
-        # Send the data towards Elasticsearch
-        ed = ElasticDocument("_all")
-        elastic_response = ed.bulk_update(actions=actions)
-        return mlp_id
+    return list(searcher)
+
+
+@task(name="apply_mlp_on_es_doc", base=TransactionAwareTask, queue=CELERY_MLP_TASK_QUEUE, bind=True)
+def apply_mlp_on_es_doc(self, document_id: str, mlp_id: int):
+    mlp_object = MLPWorker.objects.get(pk=mlp_id)
+    task_object = mlp_object.task
+    
+    indices: List[str] = mlp_object.get_indices()
+    indices_as_string = ",".join(indices)
+    field_data: List[str] = json.loads(mlp_object.fields)
+    analyzers: List[str] = json.loads(mlp_object.analyzers)
+
+    try:
+        load_mlp()
+        
+        document = ESDoc(document_id)
+        document.apply_mlp(mlp, analyzers, field_data)
+        document.update()
+        
+        print("done")
+        # TODO: showprogress += 1
+
+        return None
 
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(e)
-        task_object.add_error(str(e))
-        task_object.update_status(Task.STATUS_FAILED)
+        #task_object.add_error(str(e))
+        #task_object.update_status(Task.STATUS_FAILED)
         raise e
 
 
