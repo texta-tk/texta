@@ -56,6 +56,9 @@ def apply_mlp_on_docs(self, docs: List[dict], analyzers: List[str], fields_to_pa
 
 @task(name="start_mlp_worker", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
 def start_mlp_worker(self, mlp_id: int):
+    """
+    Scrolls the document ID-s and passes them to MLP worker.
+    """
     logging.getLogger(INFO_LOGGER).info(f"Applying mlp on the index for MLP Task ID: {mlp_id}")
     mlp_object = MLPWorker.objects.get(pk=mlp_id)
     # init progress
@@ -86,12 +89,16 @@ def start_mlp_worker(self, mlp_id: int):
     task_object = mlp_object.task
     task_object.total = len(doc_ids)
     task_object.save()
-    # pass document id-s to next task
+    # pass document id-s to the next task
     return doc_ids
 
 
 @task(name="apply_mlp_on_es_doc", base=TransactionAwareTask, queue=CELERY_MLP_TASK_QUEUE, bind=True)
 def apply_mlp_on_es_doc(self, document_id: str, mlp_id: int):
+    """
+    Applies MLP on document retrieved from ES.
+    Updates document in ES.
+    """
     mlp_object = MLPWorker.objects.get(pk=mlp_id)
     task_object = mlp_object.task
     # Get the necessary fields.

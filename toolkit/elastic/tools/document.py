@@ -38,6 +38,9 @@ class ESDocObject:
         }
 
     def apply_mlp(self, mlp: MLP, analyzers: List[str], field_data: List[str]):
+        """
+        Applies MLP to the selected fields and combines the results.
+        """
         document_source = self.document["_source"]
         mlp_processed = mlp.process_docs([document_source], analyzers=analyzers, doc_paths=field_data)[0]
         self.document["_source"] = {**document_source, **mlp_processed}
