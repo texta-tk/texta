@@ -67,15 +67,16 @@ def start_mlp_worker(self, mlp_id: int):
     show_progress.update_view(0)
     # Get the necessary fields.
     indices: List[str] = mlp_object.get_indices()
+    es_scroll_size = mlp_object.es_scroll_size
+    es_timeout = mlp_object.es_timeout
     # create searcher object for scrolling ids
-    scroll_size = 100
     searcher = ElasticSearcher(
             query=json.loads(mlp_object.query),
             indices=indices,
             output=ElasticSearcher.OUT_ID,
             callback_progress=show_progress,
-            scroll_size=scroll_size,
-            scroll_timeout="30m"
+            scroll_size=es_scroll_size,
+            scroll_timeout=f"{es_timeout}m"
     )
     # add texta facts mappings to the indices if needed
     for index in indices:
