@@ -48,6 +48,7 @@ class ElasticLemmatizer:
         lang = self.language if language is None else language
         for text in text_chunks:
             body = {
+                "char_filter": ["html_strip"],
                 "tokenizer": "standard",
                 "text": text,
                 "filter": [{"type": "snowball", "language": lang}]
