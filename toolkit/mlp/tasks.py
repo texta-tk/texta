@@ -70,16 +70,17 @@ def apply_mlp_on_index(self, mlp_id: int):
         indices: List[str] = mlp_object.get_indices()
         field_data: List[str] = json.loads(mlp_object.fields)
         analyzers: List[str] = json.loads(mlp_object.analyzers)
+        es_scroll_size: int = mlp_object.es_scroll_size
+        es_timeout: int = mlp_object.es_timeout
 
-        scroll_size = 100
         searcher = ElasticSearcher(
             query=json.loads(mlp_object.query),
             indices=indices,
             field_data=field_data,
             output=ElasticSearcher.OUT_RAW,
             callback_progress=show_progress,
-            scroll_size=scroll_size,
-            scroll_timeout="30m"
+            scroll_size=es_scroll_size,
+            scroll_timeout=f"{es_timeout}m"
         )
 
         for index in indices:

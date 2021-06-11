@@ -41,11 +41,13 @@ class MLPWorkerSerializer(serializers.ModelSerializer, FieldValidationSerializer
         choices=list(SUPPORTED_ANALYZERS),
         default=["all"]
     )
+    es_scroll_size = serializers.IntegerField(help_text="Scroll size for Elasticsearch (Default: 100)", required=False)
+    es_timeout = serializers.IntegerField(help_text="Scroll timeout in minutes for Elasticsearch (Default: 30)", required=False)
 
 
     class Meta:
         model = MLPWorker
-        fields = ("id", "url", "author_username", "indices", "description", "task", "query", "fields", "analyzers")
+        fields = ("id", "url", "author_username", "indices", "description", "task", "query", "fields", "analyzers", "es_scroll_size", "es_timeout")
 
 
     def get_url(self, obj):
