@@ -268,7 +268,11 @@ class ElasticSearcher:
                         if hit['_id'] not in self.ignore_ids:
                             num_scrolled += 1
                             parsed_doc = self._parse_doc(hit)
-                            if self.output == self.OUT_TEXT:
+
+                            if self.output == self.OUT_ID:
+                                yield hit["_id"]
+
+                            elif self.output == self.OUT_TEXT:
                                 for field in parsed_doc.values():
                                     if self.text_processor:
                                         field = self.text_processor.process(field)
@@ -284,10 +288,6 @@ class ElasticSearcher:
                                         processed_field = self.text_processor.process(value)
                                         document[key] = processed_field
                                 yield hit["_id"], document
-
-                            # TODO: NEEDS OPTIMIZING ON QUERY STAGE
-                            elif self.output == self.OUT_ID:
-                                yield hit["_id"]
 
                             elif self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID):
                                 if self.text_processor:
