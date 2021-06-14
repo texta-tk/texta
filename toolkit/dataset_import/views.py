@@ -1,7 +1,7 @@
 from rest_framework import permissions, viewsets
 
 from toolkit.core.project.models import Project
-from toolkit.permissions.project_permissions import ProjectResourceAllowed
+from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.view_constants import BulkDelete
 from .models import DatasetImport
 from .serializers import DatasetImportSerializer
@@ -11,7 +11,7 @@ class DatasetImportViewSet(viewsets.ModelViewSet, BulkDelete):
     queryset = DatasetImport.objects.all()
     serializer_class = DatasetImportSerializer
     permission_classes = (
-        ProjectResourceAllowed,
+        ProjectAccessInApplicationsAllowed,
         permissions.IsAuthenticated,
     )
 

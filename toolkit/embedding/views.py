@@ -16,7 +16,7 @@ from toolkit.elastic.index.models import Index
 from toolkit.embedding.models import Embedding
 from toolkit.embedding.serializers import EmbeddingPredictSimilarWordsSerializer, EmbeddingSerializer
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, SerializerNotValid
-from toolkit.permissions.project_permissions import ProjectResourceAllowed
+from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import GeneralTextSerializer, ProjectResourceImportModelSerializer
 from toolkit.view_constants import BulkDelete
 
@@ -35,7 +35,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
     queryset = Embedding.objects.all()
     serializer_class = EmbeddingSerializer
     permission_classes = (
-        ProjectResourceAllowed,
+        ProjectAccessInApplicationsAllowed,
         permissions.IsAuthenticated,
     )
 

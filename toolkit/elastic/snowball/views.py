@@ -11,7 +11,7 @@ from toolkit.elastic.choices import get_snowball_choices
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.snowball.models import ApplyStemmerWorker
 from toolkit.elastic.snowball.serializers import ApplySnowballSerializer, SnowballSerializer
-from toolkit.permissions.project_permissions import ProjectResourceAllowed
+from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.tools.lemmatizer import ElasticLemmatizer
 from toolkit.view_constants import BulkDelete
 
@@ -47,7 +47,7 @@ class ApplySnowballOnIndices(viewsets.ModelViewSet, BulkDelete):
     ordering_fields = ('id', 'author__username', 'description', 'detect_lang', 'fields', 'task__time_started', 'task__time_completed', 'task__status')
 
     permission_classes = (
-        ProjectResourceAllowed,
+        ProjectAccessInApplicationsAllowed,
         permissions.IsAuthenticated
     )
 

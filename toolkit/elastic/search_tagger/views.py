@@ -4,7 +4,7 @@ from .serializers import SearchQueryTaggerSerializer, SearchFieldsTaggerSerializ
 from rest_framework import permissions, viewsets
 import rest_framework.filters as drf_filters
 from django_filters import rest_framework as filters
-from toolkit.permissions.project_permissions import ProjectResourceAllowed
+from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from .models import SearchQueryTagger, SearchFieldsTagger
 from django.db import transaction
 from toolkit.core.project.models import Project
@@ -18,7 +18,7 @@ class SearchQueryTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
     'id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'f1_score',
     'precision', 'recall', 'task__status')
     permission_classes = (
-        ProjectResourceAllowed,
+        ProjectAccessInApplicationsAllowed,
         permissions.IsAuthenticated,
     )
 
@@ -50,7 +50,7 @@ class SearchFieldsTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         'id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'f1_score',
         'precision', 'recall', 'task__status')
     permission_classes = (
-        ProjectResourceAllowed,
+        ProjectAccessInApplicationsAllowed,
         permissions.IsAuthenticated,
     )
 

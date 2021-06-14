@@ -19,7 +19,7 @@ class DocumentImporterAPITestCase(APITestCase):
         self.project = project_creation("DocumentImporterAPI", self.test_index_name, self.user)
 
         self.validation_project = project_creation("validation_project", "random_index_name", self.user)
-        self.project.users.add(self.user)
+
         self.document_id = 41489489465
         self.uuid = "adasda-5874856a-das4das98f4"
         self.source = {"hello": "world", "uuid": self.uuid}
@@ -48,6 +48,7 @@ class DocumentImporterAPITestCase(APITestCase):
 
     def test_adding_documents_to_false_project(self):
         url = reverse(f"{VERSION_NAMESPACE}:document_import", kwargs={"pk": self.validation_project.pk})
+        self.validation_project.users.remove(self.user)
         response = self.client.post(url, data={"documents": [self.document]}, format="json")
         self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)
         print_output("test_adding_documents_to_false_project:response.data", response.data)

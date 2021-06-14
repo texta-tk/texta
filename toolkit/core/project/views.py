@@ -4,7 +4,7 @@ import pathlib
 import elasticsearch
 import elasticsearch_dsl
 import rest_framework.filters as drf_filters
-from django.db.models import Count
+from django.contrib.auth.models import User
 from django.urls import reverse
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
@@ -16,9 +16,19 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from toolkit.core.project.models import Project
-from toolkit.core.project.serializers import (CountIndicesSerializer, ExportSearcherResultsSerializer, ProjectDocumentSerializer, ProjectGetFactsSerializer, ProjectGetSpamSerializer, ProjectSearchByQuerySerializer, ProjectSerializer, ProjectSimplifiedSearchSerializer,
-                                              ProjectSuggestFactNamesSerializer,
-                                              ProjectSuggestFactValuesSerializer)
+from toolkit.core.project.serializers import (
+    CountIndicesSerializer,
+    ExportSearcherResultsSerializer,
+    HandleIndicesSerializer, HandleProjectAdministratorsSerializer, HandleUsersSerializer, ProjectDocumentSerializer,
+    ProjectGetFactsSerializer,
+    ProjectGetSpamSerializer,
+    ProjectSearchByQuerySerializer,
+    ProjectSerializer,
+    ProjectSimplifiedSearchSerializer,
+    ProjectSuggestFactNamesSerializer,
+    ProjectSuggestFactValuesSerializer
+)
+from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.tools.core import ElasticCore
@@ -29,14 +39,14 @@ from toolkit.elastic.tools.serializers import ElasticScrollSerializer
 from toolkit.elastic.tools.spam_detector import SpamDetector
 from toolkit.exceptions import InvalidInputDocument, ProjectValidationFailed, SerializerNotValid
 from toolkit.helper_functions import hash_string
-from toolkit.permissions.project_permissions import (ExtraActionResource, IsSuperUser, ProjectAllowed, ProjectResourceAllowed)
+from toolkit.permissions.project_permissions import (AuthorProjAdminSuperadminAllowed, ExtraActionAccessInApplications, OnlySuperadminAllowed, ProjectEditAccessAllowed, ProjectAccessInApplicationsAllowed)
 from toolkit.settings import RELATIVE_PROJECT_DATA_PATH, SEARCHER_FOLDER_KEY
 from toolkit.tools.autocomplete import Autocomplete
 from toolkit.view_constants import FeedbackIndexView
 
 
 class ExportSearchView(APIView):
-    permission_classes = [IsAuthenticated, ProjectResourceAllowed]
+    permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
     def post(self, request, project_pk: int):
@@ -77,7 +87,7 @@ class ExportSearchView(APIView):
 
 
 class ScrollView(APIView):
-    permission_classes = [IsAuthenticated, ProjectResourceAllowed]
+    permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
     def post(self, request, project_pk: int):
@@ -103,7 +113,7 @@ class ScrollView(APIView):
 
 
 class GetSpamView(APIView):
-    permission_classes = [IsAuthenticated, ProjectResourceAllowed]
+    permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
     def post(self, request, project_pk: int):
@@ -131,7 +141,7 @@ class GetSpamView(APIView):
 
 
 class GetFieldsView(APIView):
-    permission_classes = [IsAuthenticated, ProjectResourceAllowed]
+    permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
     def get(self, request, project_pk: int):
@@ -160,7 +170,7 @@ class GetFieldsView(APIView):
 
 
 class GetFactsView(APIView):
-    permission_classes = [IsAuthenticated, ProjectResourceAllowed]
+    permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
     def post(self, request, project_pk: int):
@@ -195,7 +205,7 @@ class GetFactsView(APIView):
 
 
 class GetIndicesView(APIView):
-    permission_classes = [IsAuthenticated, ProjectResourceAllowed]
+    permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
     def get(self, request, project_pk: int):
@@ -207,7 +217,7 @@ class GetIndicesView(APIView):
 
 
 class SearchView(APIView):
-    permission_classes = [IsAuthenticated, ProjectResourceAllowed]
+    permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
     def post(self, request, project_pk: int):
@@ -254,7 +264,7 @@ class SearchView(APIView):
 
 
 class SearchByQueryView(APIView):
-    permission_classes = [IsAuthenticated, ProjectResourceAllowed]
+    permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
     def post(self, request, project_pk: int):
@@ -283,7 +293,7 @@ class SearchByQueryView(APIView):
 
 
 class DocumentView(GenericAPIView):
-    permission_classes = [IsAuthenticated, ProjectResourceAllowed]
+    permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
     def post(self, request, project_pk: int):
@@ -322,7 +332,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
     serializer_class = ProjectSerializer
     permission_classes = (
         permissions.IsAuthenticated,
-        ProjectAllowed,
+        ProjectEditAccessAllowed,
     )
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
@@ -330,26 +340,88 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
     ordering_fields = ('id', 'title', 'users_count', 'indices_count',)
 
 
-    def get_permissions(self):
-        """
-        Disable project creation for non-superusers
-        """
-        if self.action == 'create':
-            permission_classes = [permissions.IsAuthenticated, IsSuperUser]
-        else:
-            permission_classes = self.permission_classes
-        return [permission() for permission in permission_classes]
-
-
     def get_queryset(self):
-        queryset = Project.objects.annotate(users_count=Count('users'), indices_count=Count('indices')).all()
         current_user = self.request.user
         if not current_user.is_superuser:
-            return queryset.filter(users=current_user)
-        return queryset
+            return (Project.objects.filter(users=current_user) | Project.objects.filter(administrators=current_user)).distinct()
+        else:
+            return Project.objects.all()
 
 
-    @action(detail=True, methods=['post'], serializer_class=CountIndicesSerializer, permission_classes=[ExtraActionResource])
+    @action(detail=True, methods=['post'], serializer_class=HandleIndicesSerializer, permission_classes=[OnlySuperadminAllowed])
+    def add_indices(self, request, pk=None, project_pk=None):
+        project: Project = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        indices = [index.name for index in serializer.validated_data["indices"]]
+        ec = ElasticCore()
+        exists = ec.check_if_indices_exist(indices)
+        if exists and indices:
+            for index_name in indices:
+                index, is_created = Index.objects.get_or_create(name=index_name)
+                project.indices.add(index)
+            return Response({"detail": f"Added indices '{str(indices)}' to the project!"})
+        else:
+            raise ValidationError(f"Could not validate indices f'{str(indices)}'")
+
+
+    @action(detail=True, methods=['post'], serializer_class=HandleIndicesSerializer, permission_classes=[AuthorProjAdminSuperadminAllowed])
+    def remove_indices(self, request, pk=None, project_pk=None):
+        project: Project = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        indices_names = [index.name for index in serializer.validated_data["indices"]]
+        ec = ElasticCore()
+        indices = project.indices.filter(name__in=indices_names)
+        project.indices.remove(*indices)
+        return Response({"detail": f"Removed indices '{str(indices_names)}' from the project!"})
+
+
+    @action(detail=True, methods=['post'], serializer_class=HandleUsersSerializer, permission_classes=[AuthorProjAdminSuperadminAllowed])
+    def add_users(self, request, pk=None, project_pk=None):
+        project: Project = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        users_names = serializer.validated_data["users"]
+        users = User.objects.filter(username__in=users_names)
+        project.users.add(*users)
+        return Response({"detail": f"Added users '{str(users_names)}' into the project!"})
+
+
+    @action(detail=True, methods=['post'], serializer_class=HandleUsersSerializer, permission_classes=[AuthorProjAdminSuperadminAllowed])
+    def remove_users(self, request, pk=None, project_pk=None):
+        project: Project = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        users_names = serializer.validated_data["users"]
+        users = User.objects.filter(username__in=users_names)
+        project.users.remove(*users)
+        return Response({"detail": f"Removed users '{str(users_names)}' into the project!"})
+
+
+    @action(detail=True, methods=['post'], serializer_class=HandleProjectAdministratorsSerializer, permission_classes=[AuthorProjAdminSuperadminAllowed])
+    def add_project_admins(self, request, pk=None, project_pk=None):
+        project: Project = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        users_names = serializer.validated_data["project_admins"]
+        users = User.objects.filter(username__in=users_names)
+        project.administrators.add(*users)
+        return Response({"detail": f"Added project administrators '{str(users_names)}' into the project!"})
+
+
+    @action(detail=True, methods=['post'], serializer_class=HandleProjectAdministratorsSerializer, permission_classes=[AuthorProjAdminSuperadminAllowed])
+    def remove_project_admins(self, request, pk=None, project_pk=None):
+        project: Project = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        users_names = serializer.validated_data["project_admins"]
+        users = User.objects.filter(username__in=users_names)
+        project.administrators.remove(*users)
+        return Response({"detail": f"Removed project administrators '{str(users_names)}' into the project!"})
+
+
+    @action(detail=True, methods=['post'], serializer_class=CountIndicesSerializer, permission_classes=[ExtraActionAccessInApplications])
     def count_indices(self, request, pk=None, project_pk=None):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid()
@@ -371,7 +443,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             return Response(0)
 
 
-    @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactValuesSerializer, permission_classes=[ExtraActionResource])
+    @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactValuesSerializer, permission_classes=[ExtraActionAccessInApplications])
     def autocomplete_fact_values(self, request, pk=None, project_pk=None):
         serializer = ProjectSuggestFactValuesSerializer(data=request.data)
         if not serializer.is_valid():
@@ -393,7 +465,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         return Response(fact_values, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactNamesSerializer, permission_classes=[ExtraActionResource])
+    @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactNamesSerializer, permission_classes=[ExtraActionAccessInApplications])
     def autocomplete_fact_names(self, request, pk=None, project_pk=None):
         serializer = ProjectSuggestFactNamesSerializer(data=request.data)
         if not serializer.is_valid():
