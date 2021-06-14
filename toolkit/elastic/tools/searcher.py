@@ -185,7 +185,7 @@ class ElasticSearcher:
 
     def search(self, size=10):
         # by default return all fields
-        source_fields = "*"
+        source_fields = True
         if self.output == self.OUT_ID:
             source_fields = False
         # In case size/from is included in query in pagination, don't overwrite it by passing the size parameter
