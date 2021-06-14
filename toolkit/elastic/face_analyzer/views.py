@@ -15,7 +15,7 @@ from toolkit.elastic.decorators import elastic_connection
 from toolkit.core.project.models import Project
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.core import ElasticCore
-from toolkit.permissions.project_permissions import IsSuperUser, ProjectResourceAllowed
+from toolkit.permissions.project_permissions import IsSuperUser, ProjectAccessInApplicationsAllowed
 from toolkit.tools.common_utils import write_file_to_disk, delete_file
 from toolkit.helper_functions import get_core_setting
 from toolkit.settings import RELATIVE_PROJECT_DATA_PATH
@@ -35,7 +35,7 @@ class FaceAnalyzerViewSet(viewsets.GenericViewSet):
     serializer_class = FaceAnalyzerSerializer
     permission_classes = (
         permissions.IsAuthenticated,
-        ProjectResourceAllowed
+        ProjectAccessInApplicationsAllowed
     )
 
 

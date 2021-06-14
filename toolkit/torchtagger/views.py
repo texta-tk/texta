@@ -16,7 +16,7 @@ from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed
 from toolkit.helper_functions import add_finite_url_to_feedback
-from toolkit.permissions.project_permissions import ProjectResourceAllowed
+from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.tagger.serializers import TaggerTagTextSerializer
@@ -41,7 +41,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
     serializer_class = TorchTaggerSerializer
     permission_classes = (
         permissions.IsAuthenticated,
-        ProjectResourceAllowed,
+        ProjectAccessInApplicationsAllowed,
     )
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)

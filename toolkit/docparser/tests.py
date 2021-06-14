@@ -84,6 +84,7 @@ class TestDocparserAPIView(APITestCase):
             "project_id": self.unauth_project.pk,
             "indices": [self.test_index_name]
         }
+        self.unauth_project.users.remove(self.user)
         response = self.client.post(url, data=payload)
         print_output("test_being_rejected_with_wrong_project_id:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)

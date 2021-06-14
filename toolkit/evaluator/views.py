@@ -17,7 +17,7 @@ from toolkit.elastic.index.models import Index
 
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, DownloadingModelsNotAllowedError, InvalidModelIdentifierError
 
-from toolkit.permissions.project_permissions import ProjectResourceAllowed
+from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.evaluator import choices
@@ -44,7 +44,7 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
     serializer_class = EvaluatorSerializer
     permission_classes = (
         permissions.IsAuthenticated,
-        ProjectResourceAllowed,
+        ProjectAccessInApplicationsAllowed,
     )
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)

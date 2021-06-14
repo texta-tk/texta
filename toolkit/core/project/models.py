@@ -15,6 +15,7 @@ class Project(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
     users = models.ManyToManyField(User, related_name="project_users")
     indices = models.ManyToManyField(Index, default=None)
+    administrators = models.ManyToManyField(User, related_name="administrators")
 
 
     def get_indices(self) -> List[str]:
