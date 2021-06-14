@@ -19,7 +19,7 @@ class MLPWorker(models.Model):
     indices = models.ManyToManyField(Index)
     fields = models.TextField(default=json.dumps([]))
     analyzers = models.TextField(default=json.dumps([]))
-    es_scroll_size = models.IntegerField(default=100)
+    es_scroll_size = models.IntegerField(default=10000)
     es_timeout = models.IntegerField(default=30)
 
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
