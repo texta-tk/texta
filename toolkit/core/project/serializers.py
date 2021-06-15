@@ -118,12 +118,14 @@ class ProjectSerializer(serializers.ModelSerializer):
     resources = serializers.SerializerMethodField()
     resource_count = serializers.SerializerMethodField()
 
-
-    def __validate_read_only_fields(self, data):
-        read_only_fields = ["indices", "users", "administrators"]
-        for field in read_only_fields:
-            if field in data:
-                raise ValidationError(f"Field '{field}' is a read-only field and should be inside the request!")
+    # For whatever reason, it doesn't validate read-only fields, so we do it manually.
+    def validate(self, data):
+        if hasattr(self, 'initial_data'):
+            read_only_keys = ["indices", "users", "administrators"]
+            for key in read_only_keys:
+                if key in self.initial_data:
+                    raise ValidationError(f"Field: '{key}' is a read-only field, please use {key}_write instead!")
+        return data
 
 
     def __enrich_payload_with_orm(self, base, data):
@@ -139,14 +141,12 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
     def to_internal_value(self, data):
-        self.__validate_read_only_fields(data)
         base = super(ProjectSerializer, self).to_internal_value(data)
         base = self.__enrich_payload_with_orm(base, data)
         return base
 
 
     def update(self, instance: Project, validated_data: dict):
-        self.__validate_read_only_fields(validated_data)
         if "title" in validated_data:
             instance.title = validated_data["title"]
             instance.save()
