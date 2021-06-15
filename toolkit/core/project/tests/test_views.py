@@ -249,8 +249,8 @@ class ProjectViewTests(APITestCase):
         self.client.login(username="admin", password="pw")
         response = self.client.post(reverse(f"{VERSION_NAMESPACE}:project-list"), format="json", data={
             "title": "faulty_project",
-            "indices": [TEST_INDEX],
-            "users": [reverse(f"{VERSION_NAMESPACE}:user-detail", args=[self.admin.pk])]
+            "indices_write": [TEST_INDEX],
+            "users_write": [self.admin.username]
         })
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
 
@@ -260,8 +260,8 @@ class ProjectViewTests(APITestCase):
         url = reverse(f"{VERSION_NAMESPACE}:project-list")
         response = self.client.post(url, format="json", data={
             "title": "faulty_project",
-            "indices": [TEST_INDEX],
-            "users": [reverse(f"{VERSION_NAMESPACE}:user-detail", args=[self.user.pk])]
+            "indices_write": [TEST_INDEX],
+            "users_write": [self.user.username]
         })
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
         p = Project.objects.get(pk=response.data["id"])
@@ -274,8 +274,8 @@ class ProjectViewTests(APITestCase):
         self.client.login(username="admin", password="pw")
         response = self.client.post(reverse(f"{VERSION_NAMESPACE}:project-list"), format="json", data={
             "title": "faulty_project",
-            "indices": ["unexisting_index_that_throws_error"],
-            "users": [reverse(f"{VERSION_NAMESPACE}:user-detail", args=[self.admin.pk])]
+            "indices_write": ["unexisting_index_that_throws_error"],
+            "users_write": [self.admin.username]
         })
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
 
@@ -285,7 +285,7 @@ class ProjectViewTests(APITestCase):
         pk = Project.objects.last().pk
         url = reverse(f"{VERSION_NAMESPACE}:project-detail", args=[pk])
         payload = {
-            "indices": ["unexisting_index_that_throws_an_error"]
+            "indices_write": ["unexisting_index_that_throws_an_error"]
         }
         response = self.client.patch(url, data=payload, format="json")
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
@@ -344,7 +344,7 @@ class ProjectViewTests(APITestCase):
 
     def test_that_normal_user_can_not_create_project_with_indices(self):
         url = reverse(f"{VERSION_NAMESPACE}:project-list")
-        payload = {"title": "the holy hand grenade", "indices": [TEST_INDEX]}
+        payload = {"title": "the holy hand grenade", "indices_write": [TEST_INDEX]}
         response = self.client.post(url, data=payload, format="json")
         print_output("test_that_normal_user_can_not_create_project_with_indices:response.data", response.data)
         self.assertTrue(response.status_code, status.HTTP_403_FORBIDDEN)

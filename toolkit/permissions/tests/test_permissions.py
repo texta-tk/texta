@@ -1,12 +1,9 @@
-from rest_framework.test import APITestCase
 from rest_framework import status
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, APITestCase
 
-from toolkit.core.project.models import Project
-from toolkit.tools.utils_for_tests import project_creation
-from toolkit.urls_v1 import project_router
-from toolkit.tools.utils_for_tests import create_test_user, print_output
 from toolkit.test_settings import TEST_INDEX, TEST_VERSION_PREFIX
+from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
+from toolkit.urls_v1 import project_router
 
 
 class ProjectPermissionsTests(APITestCase):
@@ -26,6 +23,7 @@ class ProjectPermissionsTests(APITestCase):
         self.client = APIClient()
         self.project_instance_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/'
 
+
     def test_all(self):
         registered_resources = [resource[0] for resource in project_router.registry if resource[0] != "index"]
         for resource in registered_resources:
@@ -33,7 +31,7 @@ class ProjectPermissionsTests(APITestCase):
             self.run_with_users(self.access_project_resources, resource)
         self.run_with_users(self.access_health)
         self.run_with_users(self.access_project_instance_methods)
-        self.run_with_users(self.update_project_fields)
+
 
     def run_with_users(self, func, resource=None):
         func(self.admin, '1234')
@@ -54,6 +52,7 @@ class ProjectPermissionsTests(APITestCase):
         print_output(f"{username} access health", get_response.status_code)
         self.assertEqual(get_response.status_code, status.HTTP_200_OK)
 
+
     def access_project_resources(self, username, password, SAFE_FORBIDDEN=False):
         url = self.project_resource_url
         self.client.login(username=username, password=password)
@@ -63,44 +62,15 @@ class ProjectPermissionsTests(APITestCase):
             return self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+
     def access_project_instance_methods(self, username, password, SAFE_FORBIDDEN=False, UNSAFE_FORBIDDEN=False):
         '''F, F for owner,admin, F, T for p_user, F, F for non-member.'''
         url = self.project_instance_url
         self.client.login(username=username, password=password)
         get_response = self.client.get(url)
-        responses = {'GET': get_response, 'PUT': self.client.put(url, get_response.data, format='json')}
+        responses = {'GET': get_response}
         self.validate_safe_response(responses['GET'], url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
-        self.validate_unsafe_response(responses['PUT'], url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
 
-    def update_project_fields(self, username, password, SAFE_FORBIDDEN=False, UNSAFE_FORBIDDEN=False):
-        url = self.project_instance_url
-        self.client.login(username=username, password=password)
-        self.update_title_and_indices(url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
-        self.add_user_to_project(url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
-
-    def update_title_and_indices(self, url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN):
-        get_response = self.client.get(url)
-        get_response.data["indices"] = {TEST_INDEX}
-        get_response.data["title"] = "put_title"
-        put_response = self.client.put(url, get_response.data, format='json')
-        self.validate_unsafe_response(put_response, url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
-
-    def add_user_to_project(self, url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN):
-        self.user_to_add = create_test_user(name=f'{username}_added_user', password=self.default_password)
-        # if auth_user can't access the project go straight to validation
-        get_res = self.client.get(url)
-        if SAFE_FORBIDDEN is True and UNSAFE_FORBIDDEN is True:
-            self.validate_unsafe_response(get_res, url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
-        else:
-            users = get_res.data['users']
-            users.append(f'{TEST_VERSION_PREFIX}/users/{self.user_to_add.id}/')
-            payload = {
-                "title": "user_add_test",
-                "users": users
-            }
-            add_response = self.client.put(url, payload, format='json')
-            print_output("user_add: ", add_response.data)
-            self.validate_unsafe_response(add_response, url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
 
     def validate_safe_response(self, response, url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN):
         # admin
@@ -115,6 +85,7 @@ class ProjectPermissionsTests(APITestCase):
         if SAFE_FORBIDDEN is False and UNSAFE_FORBIDDEN is True:
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             print_output(f'{username} access safe methods at: {url}', response.status_code)
+
 
     def validate_unsafe_response(self, response, url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN):
         # admin
