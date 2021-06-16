@@ -297,7 +297,8 @@ class ElasticSearcher:
                         self.callback_progress.update(page_size)
 
                     # filter page by score
-                    page = [doc for doc in page["hits"]["hits"] if doc['_score'] > lowest_allowed_score]
+                    page = [doc for doc in page["hits"]["hits"] if doc['_score'] >= lowest_allowed_score]
+
                     # if score too low, break scroll
                     if not page:
                         scroll_break = True
