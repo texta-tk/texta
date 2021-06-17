@@ -1,14 +1,14 @@
 import json
+
 from django.contrib.auth.models import User
 from django.db import models, transaction
-from celery import group
 
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
-from toolkit.settings import CELERY_MLP_TASK_QUEUE,CELERY_LONG_TERM_TASK_QUEUE
+from toolkit.settings import CELERY_MLP_TASK_QUEUE
 
 
 class MLPWorker(models.Model):
@@ -19,7 +19,7 @@ class MLPWorker(models.Model):
     indices = models.ManyToManyField(Index)
     fields = models.TextField(default=json.dumps([]))
     analyzers = models.TextField(default=json.dumps([]))
-    es_scroll_size = models.IntegerField(default=10000)
+    es_scroll_size = models.IntegerField(default=100)
     es_timeout = models.IntegerField(default=30)
 
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
@@ -34,16 +34,14 @@ class MLPWorker(models.Model):
 
 
     def process(self):
-        from toolkit.mlp.tasks import apply_mlp_on_es_doc, end_mlp_task, start_mlp_worker
+        from toolkit.mlp.tasks import start_mlp_worker
 
         new_task = Task.objects.create(mlpworker=self, status='created')
         self.task = new_task
         self.save()
 
         # TODO: Check if the callout for first task in pipe is correct!
-        chain = group(apply_mlp_on_es_doc.s(doc_id, self.pk) for doc_id in start_mlp_worker.s(self.pk)()) | end_mlp_task.si(self.pk)
-
-        transaction.on_commit(lambda: chain.apply_async(queue=CELERY_LONG_TERM_TASK_QUEUE))
+        transaction.on_commit(lambda: start_mlp_worker.s(self.pk).apply_async(queue=CELERY_MLP_TASK_QUEUE))
 
 
 class ApplyLangWorker(models.Model):
