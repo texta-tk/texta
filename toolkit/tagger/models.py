@@ -27,7 +27,7 @@ from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, RELATIVE_MODELS_PATH
 from toolkit.helper_functions import load_stop_words
-from toolkit.tools.lemmatizer import CeleryLemmatizer, ElasticLemmatizer
+from toolkit.tools.lemmatizer import CeleryLemmatizer, ElasticAnalyzer
 from toolkit.tagger import choices
 from toolkit.elastic.tools.feedback import Feedback
 
@@ -204,7 +204,7 @@ class Tagger(models.Model):
         #    logging.getLogger(INFO_LOGGER).info(f"Loading tagger with ID: {tagger_id} with params (lemmatize: {lemmatize})")
         # get lemmatizer/stemmer
         if self.snowball_language:
-            lemmatizer = ElasticLemmatizer(language=self.snowball_language)
+            lemmatizer = ElasticAnalyzer(language=self.snowball_language)
         elif lemmatize:
             lemmatizer = CeleryLemmatizer()
         else:

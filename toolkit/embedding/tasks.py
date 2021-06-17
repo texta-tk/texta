@@ -7,7 +7,7 @@ from texta_tools.text_processor import TextProcessor
 from toolkit.base_tasks import BaseTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.tools.searcher import ElasticSearcher
-from toolkit.tools.lemmatizer import ElasticLemmatizer
+from toolkit.tools.lemmatizer import ElasticAnalyzer
 from toolkit.embedding.models import Embedding
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 
@@ -32,7 +32,7 @@ def train_embedding(embedding_id):
         snowball_language = embedding_object.snowball_language
         # add stemmer if asked
         if snowball_language:
-            snowball_lemmatizer = ElasticLemmatizer(language=snowball_language)
+            snowball_lemmatizer = ElasticAnalyzer(language=snowball_language)
         else:
             snowball_lemmatizer = None
         # iterator for texts
