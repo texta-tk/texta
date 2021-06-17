@@ -126,6 +126,7 @@ class MLPElasticWorkerViewset(viewsets.ModelViewSet, BulkDelete):
                 project=project,
                 fields=json.dumps(serializer.validated_data["fields"], ensure_ascii=False),
                 analyzers=json.dumps(analyzers),
+                query=json.dumps(serializer.validated_data["query"], ensure_ascii=False)
             )
 
             for index in Index.objects.filter(name__in=indices, is_open=True):
