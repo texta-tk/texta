@@ -205,7 +205,7 @@ class ProjectSerializer(serializers.ModelSerializer):
                 'elastic/search_query_tagger',
                 'elastic/search_fields_tagger',
                 'elastic/scroll',
-                'elastic/apply_snowball',
+                'elastic/apply_analyzers',
                 'searches',
                 'embeddings',
                 'topic_analyzer',
@@ -244,7 +244,7 @@ class ProjectSerializer(serializers.ModelSerializer):
                 'lang_index',
                 'evaluators',
                 'summarizer_index',
-                'apply_snowball'
+                'apply_analyzers'
             )
 
         for resource_name in resources:

@@ -9,10 +9,10 @@ from rest_framework.response import Response
 from toolkit.core.project.models import Project
 from toolkit.elastic.choices import get_snowball_choices
 from toolkit.elastic.index.models import Index
-from toolkit.elastic.snowball.models import ApplyStemmerWorker
-from toolkit.elastic.snowball.serializers import ApplySnowballSerializer, SnowballSerializer
+from toolkit.elastic.analyzers.models import ApplyESAnalyzerWorker
+from toolkit.elastic.analyzers.serializers import ApplyESAnalyzerWorkerSerializer, SnowballSerializer
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
-from toolkit.tools.lemmatizer import ElasticLemmatizer
+from toolkit.tools.lemmatizer import ElasticAnalyzer
 from toolkit.view_constants import BulkDelete
 
 
@@ -28,8 +28,8 @@ class SnowballProcessor(views.APIView):
         text = serializer.validated_data["text"]
         language = serializer.validated_data["language"]
 
-        lemmatizer = ElasticLemmatizer(language=language)
-        lemmatized = lemmatizer.lemmatize(text)
+        lemmatizer = ElasticAnalyzer(language=language)
+        lemmatized = lemmatizer.stem_text(text, language=language)
 
         return Response({"text": lemmatized})
 
@@ -40,8 +40,8 @@ class SnowballProcessor(views.APIView):
         return Response(languages, status=status.HTTP_200_OK)
 
 
-class ApplySnowballOnIndices(viewsets.ModelViewSet, BulkDelete):
-    serializer_class = ApplySnowballSerializer
+class ApplyEsAnalyzerOnIndices(viewsets.ModelViewSet, BulkDelete):
+    serializer_class = ApplyESAnalyzerWorkerSerializer
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     ordering_fields = ('id', 'author__username', 'description', 'detect_lang', 'fields', 'task__time_started', 'task__time_completed', 'task__status')
@@ -53,7 +53,7 @@ class ApplySnowballOnIndices(viewsets.ModelViewSet, BulkDelete):
 
 
     def get_queryset(self):
-        return ApplyStemmerWorker.objects.filter(project=self.kwargs['project_pk'])
+        return ApplyESAnalyzerWorker.objects.filter(project=self.kwargs['project_pk'])
 
 
     def perform_create(self, serializer):
@@ -63,10 +63,11 @@ class ApplySnowballOnIndices(viewsets.ModelViewSet, BulkDelete):
 
         serializer.validated_data.pop("indices")
 
-        worker: ApplyStemmerWorker = serializer.save(
+        worker: ApplyESAnalyzerWorker = serializer.save(
             author=self.request.user,
             project=project,
             fields=json.dumps(serializer.validated_data["fields"], ensure_ascii=False),
+            analyzers=json.dumps(list(serializer.validated_data["analyzers"]))
         )
 
         for index in Index.objects.filter(name__in=indices, is_open=True):

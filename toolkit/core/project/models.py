@@ -82,5 +82,5 @@ class Project(models.Model):
             'num_summarizers': proj.summarizer_set.count(),
             'num_search_query_taggers': proj.searchquerytagger_set.count(),
             'num_search_fields_taggers': proj.searchfieldstagger_set.count(),
-            'num_snowball_stemmers': proj.applystemmerworker_set.count(),
+            'num_elastic_analyzers': proj.applyesanalyzerworker_set.count(),
         }
