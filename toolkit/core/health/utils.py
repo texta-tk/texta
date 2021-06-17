@@ -1,13 +1,12 @@
 import logging
 import os
-import redis
-import torch
-
 from urllib.parse import urlparse
 
+import redis
+import torch
 from celery.task.control import inspect
+from pynvml import nvmlDeviceGetHandleByIndex, nvmlDeviceGetMemoryInfo, nvmlInit
 from rest_framework import exceptions
-from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetMemoryInfo
 
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.helper_functions import get_core_setting
@@ -31,36 +30,38 @@ def reform_float_info(input_str):
     return float(input_str.replace("gb", "").replace("tb", "").replace("mb", ""))
 
 
-def get_elastic_status(ES_URL=get_core_setting("TEXTA_ES_URL")):
+def get_elastic_status(is_anon=False, ES_URL=get_core_setting("TEXTA_ES_URL")):
     """
     Checks Elasticsearch connection status and version.
     """
-    es_info = {"url": ES_URL, "alive": False}
+    es_info = {"alive": False}
     try:
         es_core = ElasticCore(ES_URL=ES_URL)
         if es_core.connection:
             es_info["alive"] = True
-            es_info["status"] = es_core.es.info()
-            es_info["disk"] = []
-            for node in es_core.es.cat.allocation(format="json"):
-                # ignore unassigned nodes
-                if node["host"]:
-                    node_info = {
-                        "host": node["host"],
-                        "free": reform_float_info(node["disk.avail"]),
-                        "used": reform_float_info(node["disk.used"]),
-                        "total": reform_float_info(node["disk.total"]),
-                        "percent": reform_float_info(node["disk.percent"]),
-                        "unit": "GB"
+            if is_anon is False:
+                es_info["url"] = ES_URL
+                es_info["status"] = es_core.es.info()
+                es_info["disk"] = []
+                for node in es_core.es.cat.allocation(format="json"):
+                    # ignore unassigned nodes
+                    if node["host"]:
+                        node_info = {
+                            "host": node["host"],
+                            "free": reform_float_info(node["disk.avail"]),
+                            "used": reform_float_info(node["disk.used"]),
+                            "total": reform_float_info(node["disk.total"]),
+                            "percent": reform_float_info(node["disk.percent"]),
+                            "unit": "GB"
                         }
-                    es_info["disk"].append(node_info)
+                        es_info["disk"].append(node_info)
 
         return es_info
     except exceptions.ValidationError:
         return es_info
 
 
-def get_redis_status():
+def get_redis_status(is_anon: bool = False):
     """
     Checks status of Redis server.
     """
@@ -70,11 +71,18 @@ def get_redis_status():
         info = r.info()
         redis_status = {
             "alive": True,
-            "version": info["redis_version"],
-            "expired_keys": info["expired_keys"],
-            "used_memory": info["used_memory_human"],
-            "total_memory": info["total_system_memory_human"]
+
         }
+
+        if is_anon is False:
+            redis_status = {
+                **redis_status,
+                "version": info["redis_version"],
+                "expired_keys": info["expired_keys"],
+                "used_memory": info["used_memory_human"],
+                "total_memory": info["total_system_memory_human"]
+            }
+
         return redis_status
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(e)
