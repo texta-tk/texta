@@ -23,7 +23,7 @@ class ApplyLangViewsTests(APITransactionTestCase):
         self.project = project_creation("langDetectProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
         self.client.login(username='langDetectUser', password='pw')
-        self.url = reverse("v2:lang_index-list", kwargs={"project_pk": self.project.pk})
+        self.url = reverse("v1:lang_index-list", kwargs={"project_pk": self.project.pk})
 
 
     def tearDown(self) -> None:
