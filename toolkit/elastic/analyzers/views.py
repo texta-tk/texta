@@ -7,10 +7,10 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
-from toolkit.elastic.choices import get_snowball_choices
-from toolkit.elastic.index.models import Index
 from toolkit.elastic.analyzers.models import ApplyESAnalyzerWorker
 from toolkit.elastic.analyzers.serializers import ApplyESAnalyzerWorkerSerializer, SnowballSerializer
+from toolkit.elastic.choices import get_snowball_choices
+from toolkit.elastic.index.models import Index
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.tools.lemmatizer import ElasticAnalyzer
 from toolkit.view_constants import BulkDelete
@@ -67,7 +67,8 @@ class ApplyEsAnalyzerOnIndices(viewsets.ModelViewSet, BulkDelete):
             author=self.request.user,
             project=project,
             fields=json.dumps(serializer.validated_data["fields"], ensure_ascii=False),
-            analyzers=json.dumps(list(serializer.validated_data["analyzers"]))
+            analyzers=json.dumps(list(serializer.validated_data["analyzers"])),
+            query=json.dumps(serializer.validated_data["query"], ensure_ascii=False)
         )
 
         for index in Index.objects.filter(name__in=indices, is_open=True):

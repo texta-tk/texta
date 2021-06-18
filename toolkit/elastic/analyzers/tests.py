@@ -75,7 +75,7 @@ class ApplyAnalyzersTests(APITransactionTestCase):
 
         self.unauthorized_user = create_test_user('unauthorized', 'my@email.com', 'pw')
 
-        self.list_url = reverse("v2:apply_analyzers-list", kwargs={"project_pk": self.project.pk})
+        self.list_url = reverse(f"{VERSION_NAMESPACE}:apply_analyzers-list", kwargs={"project_pk": self.project.pk})
         self.client.login(username='user', password='pw')
 
 

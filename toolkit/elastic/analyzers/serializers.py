@@ -59,7 +59,7 @@ class ApplyESAnalyzerWorkerSerializer(serializers.ModelSerializer, FieldValidati
         data = super(ApplyESAnalyzerWorkerSerializer, self).to_representation(instance)
         data["query"] = json.loads(instance.query)
         data["fields"] = json.loads(instance.fields)
-        data["analyzers"] = json.loads(instance.fields)
+        data["analyzers"] = json.loads(instance.analyzers)
         return data
 
 
