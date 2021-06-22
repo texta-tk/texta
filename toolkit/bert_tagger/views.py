@@ -21,7 +21,7 @@ from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.exceptions import DownloadingModelsNotAllowedError, InvalidModelIdentifierError, NonExistantModelError, ProjectValidationFailed
 from toolkit.helper_functions import add_finite_url_to_feedback, download_bert_requirements, get_downloaded_bert_models
-from toolkit.permissions.project_permissions import ProjectResourceAllowed
+from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.settings import ALLOW_BERT_MODEL_DOWNLOADS, BERT_CACHE_DIR, BERT_PRETRAINED_MODEL_DIRECTORY, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER
 from toolkit.view_constants import BulkDelete, FeedbackModelView
@@ -42,7 +42,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
     serializer_class = BertTaggerSerializer
     permission_classes = (
         permissions.IsAuthenticated,
-        ProjectResourceAllowed,
+        ProjectAccessInApplicationsAllowed,
     )
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)

@@ -12,7 +12,7 @@ from toolkit.elastic.tools.feedback import Feedback
 from toolkit.elastic.tools.query import Query
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.settings import INFO_LOGGER
-from toolkit.tools.lemmatizer import ElasticLemmatizer
+from toolkit.tools.lemmatizer import ElasticAnalyzer
 from .core import ElasticCore
 from ..choices import ES6_SNOWBALL_MAPPING, ES7_SNOWBALL_MAPPING
 from ..exceptions import InvalidDataSampleError
@@ -161,11 +161,11 @@ class DataSample:
         Stems the texts in data sample using Snowball.
         """
         if snowball_language:
-            lemmatizer = ElasticLemmatizer()
+            lemmatizer = ElasticAnalyzer()
             for cl, examples in self.data.items():
                 processed_examples = []
                 for example_doc in examples:
-                    new_example_doc = {k: lemmatizer.lemmatize(v, language=snowball_language) for k, v in example_doc.items()}
+                    new_example_doc = {k: lemmatizer.stem_text(v, language=snowball_language) for k, v in example_doc.items()}
                     processed_examples.append(new_example_doc)
                 self.data[cl] = processed_examples
 
@@ -174,7 +174,7 @@ class DataSample:
         """
         Stems the texts in data sample using Snowball.
         """
-        lemmatizer = ElasticLemmatizer()
+        lemmatizer = ElasticAnalyzer()
         for cl, examples in self.data.items():
             processed_examples = []
             for example_doc in examples:
@@ -185,7 +185,7 @@ class DataSample:
                         if lang is not None:
                             snowball_language = self.humanize_lang_code(lang)
                             if snowball_language:
-                                example_doc[key] = lemmatizer.lemmatize(example_doc[key], snowball_language)
+                                example_doc[key] = lemmatizer.stem_text(example_doc[key], snowball_language)
                 processed_examples.append(example_doc)
 
             self.data[cl] = processed_examples

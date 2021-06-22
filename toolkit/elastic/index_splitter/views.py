@@ -13,7 +13,7 @@ from toolkit.core.project.models import Project
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.index_splitter.models import IndexSplitter
 from toolkit.elastic.index_splitter.serializers import IndexSplitterSerializer
-from toolkit.permissions.project_permissions import ProjectResourceAllowed
+from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.view_constants import BulkDelete
 
 
@@ -30,7 +30,7 @@ class IndexSplitterViewSet(mixins.CreateModelMixin,
     queryset = IndexSplitter.objects.all()
     serializer_class = IndexSplitterSerializer
     permission_classes = (
-        ProjectResourceAllowed,
+        ProjectAccessInApplicationsAllowed,
         permissions.IsAuthenticated,
     )
 

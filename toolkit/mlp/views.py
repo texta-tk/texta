@@ -18,7 +18,7 @@ from toolkit.mlp.exceptions import CouldNotDetectLanguageException
 from toolkit.mlp.models import ApplyLangWorker, MLPWorker
 from toolkit.mlp.serializers import ApplyLangOnIndicesSerializer, LangDetectSerializer, MLPDocsSerializer, MLPListSerializer, MLPWorkerSerializer
 from toolkit.mlp.tasks import apply_mlp_on_docs, apply_mlp_on_list
-from toolkit.permissions.project_permissions import ProjectResourceAllowed
+from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.settings import CELERY_MLP_TASK_QUEUE
 from toolkit.view_constants import BulkDelete
 
@@ -103,7 +103,7 @@ class MLPElasticWorkerViewset(viewsets.ModelViewSet, BulkDelete):
     ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'task__status')
 
     permission_classes = (
-        ProjectResourceAllowed,
+        ProjectAccessInApplicationsAllowed,
         permissions.IsAuthenticated
     )
 
@@ -126,6 +126,7 @@ class MLPElasticWorkerViewset(viewsets.ModelViewSet, BulkDelete):
                 project=project,
                 fields=json.dumps(serializer.validated_data["fields"], ensure_ascii=False),
                 analyzers=json.dumps(analyzers),
+                query=json.dumps(serializer.validated_data["query"], ensure_ascii=False)
             )
 
             for index in Index.objects.filter(name__in=indices, is_open=True):
@@ -141,7 +142,7 @@ class ApplyLangOnIndices(viewsets.ModelViewSet, BulkDelete):
     ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'task__status')
 
     permission_classes = (
-        ProjectResourceAllowed,
+        ProjectAccessInApplicationsAllowed,
         permissions.IsAuthenticated
     )
 

@@ -42,7 +42,7 @@ class ElasticGetIndices(views.APIView):
         """
         es_core = ElasticCore()
         es_core.syncher()
-        indices = [index.name for index in Index.objects.all()]
+        indices = [{"id": index.id, "name": index.name} for index in Index.objects.all()]
         return JsonResponse(indices, safe=False, status=status.HTTP_200_OK)
 
 

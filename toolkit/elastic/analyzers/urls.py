@@ -4,4 +4,4 @@ from . import views
 
 
 snowball_router = routers.DefaultRouter()
-snowball_router.register('apply_snowball', views.ApplySnowballOnIndices, basename='apply_snowball')
+snowball_router.register('apply_analyzers', views.ApplyEsAnalyzerOnIndices, basename='apply_analyzers')

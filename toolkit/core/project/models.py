@@ -15,6 +15,7 @@ class Project(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
     users = models.ManyToManyField(User, related_name="project_users")
     indices = models.ManyToManyField(Index, default=None)
+    administrators = models.ManyToManyField(User, related_name="administrators")
 
 
     def get_indices(self) -> List[str]:
@@ -81,5 +82,5 @@ class Project(models.Model):
             'num_summarizers': proj.summarizer_set.count(),
             'num_search_query_taggers': proj.searchquerytagger_set.count(),
             'num_search_fields_taggers': proj.searchfieldstagger_set.count(),
-            'num_snowball_stemmers': proj.applystemmerworker_set.count(),
+            'num_elastic_analyzers': proj.applyesanalyzerworker_set.count(),
         }
