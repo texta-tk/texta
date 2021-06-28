@@ -23,7 +23,7 @@ class ApplyLangViewsTests(APITransactionTestCase):
         self.project = project_creation("langDetectProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
         self.client.login(username='langDetectUser', password='pw')
-        self.url = reverse("v2:lang_index-list", kwargs={"project_pk": self.project.pk})
+        self.url = reverse("v1:lang_index-list", kwargs={"project_pk": self.project.pk})
 
 
     def tearDown(self) -> None:
@@ -36,14 +36,14 @@ class ApplyLangViewsTests(APITransactionTestCase):
         self.client.login(username="langDetectUserThatIsNotInProject", password="pw")
         response = self.client.get(self.url)
         print_output("test_unauthenticated_project_access:response.data", response.data)
-        self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)
+        self.assertTrue(response.status_code in (status.HTTP_403_FORBIDDEN, status.HTTP_401_UNAUTHORIZED))
 
 
     def test_unauthenticated_view_access(self):
         self.client.logout()
         response = self.client.get(self.url)
         print_output("test_unauthenticated_view_access:response.data", response.data)
-        self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)
+        self.assertTrue(response.status_code in (status.HTTP_403_FORBIDDEN, status.HTTP_401_UNAUTHORIZED))
 
 
     def test_applying_lang_detect_with_query(self):
@@ -139,7 +139,7 @@ class TestLangDetectView(APITransactionTestCase):
         self.client.logout()
         response = self.client.post(self.url, data={"text": self.text}, format="json")
         print_output("test_that_unlogged_users_get_403:response.data", response.data)
-        self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)
+        self.assertTrue(response.status_code in (status.HTTP_403_FORBIDDEN, status.HTTP_401_UNAUTHORIZED))
 
 
     def test_that_normal_users_have_access(self):

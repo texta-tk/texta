@@ -21,6 +21,7 @@ class ElasticSearcher:
     OUT_TEXT_WITH_ID = "text_with_id"
     OUT_DOC_WITH_ID = 'doc_with_id'
     OUT_DOC_WITH_TOTAL_HL_AGGS = 'doc_with_total_hl_aggs'
+    OUT_ID = '_id'
 
 
     def __init__(self,
@@ -183,11 +184,15 @@ class ElasticSearcher:
 
 
     def search(self, size=10):
+        # by default return all fields
+        source_fields = True
+        if self.output == self.OUT_ID:
+            source_fields = False
         # In case size/from is included in query in pagination, don't overwrite it by passing the size parameter
         if 'size' in self.query:
-            response = self.core.es.search(index=self.indices, body=self.query, timeout=self.timeout)
+            response = self.core.es.search(index=self.indices, body=self.query, timeout=self.timeout, _source=source_fields)
         else:
-            response = self.core.es.search(index=self.indices, body=self.query, size=size, timeout=self.timeout)
+            response = self.core.es.search(index=self.indices, body=self.query, size=size, timeout=self.timeout, _source=source_fields)
         if self.output == self.OUT_DOC:
             hits = [self._parse_doc(doc) for doc in response['hits']['hits']]
             return hits
@@ -248,7 +253,7 @@ class ElasticSearcher:
             # iterate through scroll
             while page_size > 0 and scroll_break is False:
                 # process output
-                if self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID, self.OUT_TEXT, self.OUT_TEXT_WITH_ID):
+                if self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID, self.OUT_TEXT, self.OUT_TEXT_WITH_ID, self.OUT_ID):
                     if self.callback_progress:
                         self.callback_progress.update(page_size)
                     for hit in page['hits']['hits']:
@@ -263,7 +268,11 @@ class ElasticSearcher:
                         if hit['_id'] not in self.ignore_ids:
                             num_scrolled += 1
                             parsed_doc = self._parse_doc(hit)
-                            if self.output == self.OUT_TEXT:
+
+                            if self.output == self.OUT_ID:
+                                yield hit["_id"]
+
+                            elif self.output == self.OUT_TEXT:
                                 for field in parsed_doc.values():
                                     if self.text_processor:
                                         field = self.text_processor.process(field)
@@ -272,7 +281,6 @@ class ElasticSearcher:
                                     else:
                                         yield field
 
-
                             elif self.output == self.OUT_TEXT_WITH_ID:
                                 document = {}
                                 for key, value in parsed_doc.items():
@@ -280,7 +288,6 @@ class ElasticSearcher:
                                         processed_field = self.text_processor.process(value)
                                         document[key] = processed_field
                                 yield hit["_id"], document
-
 
                             elif self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID):
                                 if self.text_processor:

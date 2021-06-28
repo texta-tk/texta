@@ -34,14 +34,13 @@ class MLPWorker(models.Model):
 
 
     def process(self):
-        from toolkit.mlp.tasks import apply_mlp_on_index, end_mlp_task, start_mlp_worker
+        from toolkit.mlp.tasks import start_mlp_worker
 
         new_task = Task.objects.create(mlpworker=self, status='created')
         self.task = new_task
         self.save()
 
-        chain = start_mlp_worker.s() | apply_mlp_on_index.s() | end_mlp_task.s()
-        transaction.on_commit(lambda: chain.apply_async(args=(self.pk,), queue=CELERY_MLP_TASK_QUEUE))
+        transaction.on_commit(lambda: start_mlp_worker.s(self.pk).apply_async(queue=CELERY_MLP_TASK_QUEUE))
 
 
 class ApplyLangWorker(models.Model):
