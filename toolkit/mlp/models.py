@@ -40,7 +40,6 @@ class MLPWorker(models.Model):
         self.task = new_task
         self.save()
 
-        # TODO: Check if the callout for first task in pipe is correct!
         transaction.on_commit(lambda: start_mlp_worker.s(self.pk).apply_async(queue=CELERY_MLP_TASK_QUEUE))
 
 

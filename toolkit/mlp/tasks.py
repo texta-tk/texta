@@ -120,7 +120,7 @@ def start_mlp_worker(self, mlp_id: int):
     task_object.save()
 
     # pass document id-s to the next task
-    chain = group(apply_mlp_on_es_doc.s(document_id=doc_id, mlp_id=mlp_id) for doc_id in doc_ids) | end_mlp_task.s()
+    chain = group(apply_mlp_on_es_doc.s(document_id=doc_id, mlp_id=mlp_id) for doc_id in doc_ids) | end_mlp_task.si(mlp_id)
     chain.delay()
     return True
 
