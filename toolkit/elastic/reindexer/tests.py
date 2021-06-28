@@ -2,10 +2,12 @@ import json
 from time import sleep
 
 from django.test import override_settings
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
 from toolkit.core.task.models import Task
+from toolkit.elastic.index.models import Index
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.searcher import ElasticSearcher
@@ -168,16 +170,20 @@ class ReindexerViewTests(APITransactionTestCase):
         url = f'{TEST_VERSION_PREFIX}/projects/{project.id}/'
         check = self.client.get(url, format='json')
         if response.status_code == 201:
-            assert new_index in check.data['indices']
+            assert new_index in [index["name"] for index in check.data['indices']]
             print_output('Re-indexed index added to project', check.data)
-            check.data['indices'].remove(new_index)
-            remove_response = self.client.put(url, check.data, format='json')
+            index_pk = Index.objects.get(name=new_index).pk
+            remove_index_url = reverse(f"{VERSION_NAMESPACE}:project-remove-indices", kwargs={"pk": self.project.pk})
+            remove_response = self.client.post(remove_index_url, {"indices": [index_pk]}, format='json')
             print_output("Re-indexed index removed from project", remove_response.status_code)
             self.delete_reindexing_task(project, response)
+
         if response.status_code == 400:
             print_output('Re-indexed index not added to project', check.data)
-        assert new_index not in check.data['indices']
-        # log in with project user again
+
+        check = self.client.get(url, format='json')
+        assert new_index not in [index["name"] for index in check.data['indices']]
+        # Log in with project user again
         self.client.login(username=self.default_username, password=self.default_password)
 
 

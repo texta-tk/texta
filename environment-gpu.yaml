@@ -20,7 +20,7 @@ dependencies:
   - uwsgi
   - nginx
   - supervisor
-  - psycopg2
+  - psycopg2<2.9
   - mysqlclient
   - pip:
       - django==2.*

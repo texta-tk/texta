@@ -14,7 +14,7 @@ from toolkit.elastic.document_importer.serializers import InsertDocumentsSeriali
 from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.searcher import ElasticSearcher
-from toolkit.permissions.project_permissions import ProjectAllowed
+from toolkit.permissions.project_permissions import ProjectEditAccessAllowed
 from toolkit.serializer_constants import EmptySerializer
 from toolkit.settings import DEPLOY_KEY
 
@@ -30,7 +30,7 @@ def validate_index_and_project_perms(request, pk, index):
 
 class DocumentImportView(GenericAPIView):
     serializer_class = InsertDocumentsSerializer
-    permission_classes = (ProjectAllowed, permissions.IsAuthenticated)
+    permission_classes = (ProjectEditAccessAllowed, permissions.IsAuthenticated)
 
 
     @staticmethod
@@ -163,7 +163,7 @@ class DocumentInstanceView(GenericAPIView):
 
 class UpdateSplitDocument(GenericAPIView):
     serializer_class = UpdateSplitDocumentSerializer
-    permission_classes = (ProjectAllowed, permissions.IsAuthenticated)
+    permission_classes = (ProjectEditAccessAllowed, permissions.IsAuthenticated)
 
 
     def _get_split_documents_by_id(self, id_field, id_value, text_field):

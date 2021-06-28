@@ -285,3 +285,10 @@ def reindex_test_dataset(query: dict = None, from_index: Optional[str] = None, h
     from elasticsearch.helpers import bulk
     bulk(actions=actions, client=ec.es, refresh="wait_for")
     return new_test_index_name
+
+
+def wrap_in_list(item):
+    if isinstance(item, list):
+        return item
+    else:
+        return [item]

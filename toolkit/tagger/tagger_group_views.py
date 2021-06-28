@@ -18,7 +18,7 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, SerializerNotValid
-from toolkit.permissions.project_permissions import ProjectResourceAllowed
+from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER
 from toolkit.tagger.models import TaggerGroup
@@ -49,7 +49,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
     serializer_class = TaggerGroupSerializer
     permission_classes = (
         permissions.IsAuthenticated,
-        ProjectResourceAllowed,
+        ProjectAccessInApplicationsAllowed,
     )
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)

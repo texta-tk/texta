@@ -25,14 +25,14 @@ from ..elastic.tools.document import ElasticDocument
 from ..elastic.tools.searcher import ElasticSearcher
 from ..elastic.tools.serializers import ElasticFactSerializer, ElasticMoreLikeThisSerializer
 from ..pagination import PageNumberPaginationDataOnly
-from ..permissions.project_permissions import ProjectResourceAllowed
+from ..permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from ..settings import REST_FRAMEWORK
 from ..view_constants import BulkDelete
 
 
 class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     serializer_class = ClusterSerializer
-    permission_classes = [permissions.IsAuthenticated, ProjectResourceAllowed]
+    permission_classes = [permissions.IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
 
@@ -419,7 +419,7 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
 
 class TopicAnalyzerViewset(viewsets.ModelViewSet, BulkDelete):
     serializer_class = ClusteringSerializer
-    permission_classes = [permissions.IsAuthenticated, ProjectResourceAllowed]
+    permission_classes = [permissions.IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     pagination_class = PageNumberPaginationDataOnly
