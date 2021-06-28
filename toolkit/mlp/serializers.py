@@ -41,8 +41,8 @@ class MLPWorkerSerializer(serializers.ModelSerializer, FieldValidationSerializer
         choices=list(SUPPORTED_ANALYZERS),
         default=["all"]
     )
-    es_scroll_size = serializers.IntegerField(help_text="Scroll size for Elasticsearch (Default: 100)", default=100, required=False)
-    es_timeout = serializers.IntegerField(help_text="Scroll timeout in minutes for Elasticsearch (Default: 30)", default=30, required=False)
+    es_scroll_size = serializers.IntegerField(help_text="Scroll size for Elasticsearch (Default: 10000)", default=10000, required=False)
+    es_timeout = serializers.IntegerField(help_text="Scroll timeout in minutes for Elasticsearch (Default: 60)", default=60, required=False)
 
 
     class Meta:
