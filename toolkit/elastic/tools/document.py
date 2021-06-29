@@ -46,6 +46,13 @@ class ESDocObject:
         self.document["_source"] = {**document_source, **mlp_processed}
         return True
 
+    def add_field(self, field_name, field_content):
+        """
+        Adds field to document source.
+        """
+        self.document["_source"][field_name] = field_content
+        return True
+
     @elastic_connection
     def update(self, retry_on_conflict=3):
         """

@@ -59,27 +59,36 @@ def apply_mlp_on_es_doc(self, document_id, mlp_id):
     task_object = mlp_object.task
     # Get the necessary fields.
     indices: List[str] = mlp_object.get_indices()
-    # TODO: Check if this mechanism is valid
     indices_as_string = ",".join(indices)
     field_data: List[str] = json.loads(mlp_object.fields)
     analyzers: List[str] = json.loads(mlp_object.analyzers)
+
+    # retrieve document from ES
+    document = ESDocObject(document_id, indices_as_string)
+
+    # Apply MLP
     try:
         load_mlp()
-        # retrieve document from ES
-        document = ESDocObject(document_id, indices_as_string)
-        # apply MLP
         document.apply_mlp(mlp, analyzers, field_data)
-        # send new doc to ES
-        document.update()
-        # update progress
-        task_object.update_process_iteration(task_object.total, "MLP")
-        logging.getLogger(INFO_LOGGER).info(f"Processed & updated document for MLP Task ID: {mlp_id}")
-        return True
+        logging.getLogger(INFO_LOGGER).info(f"Processed document for MLP Task ID: {mlp_id}")
+
     except Exception as e:
+        # in case MLP fails, add error to document
         err_msg = f"{e}; Document ID: {document_id}"
         logging.getLogger(ERROR_LOGGER).exception(err_msg)
-        task_object.add_error(err_msg)
-        raise e
+        document.add_field("mlp_error", str(e))
+
+    # Update document in ES
+    try:
+        document.update()
+        logging.getLogger(INFO_LOGGER).info(f"Updated document for MLP Task ID: {mlp_id}")
+    except Exception as e:
+        err_msg = f"{e}; Document ID: {document_id}"
+        logging.getLogger(ERROR_LOGGER).exception(err_msg)     
+
+    # Update progress
+    task_object.update_process_iteration(task_object.total, "MLP")
+    return True
 
 
 @task(name="start_mlp_worker", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
