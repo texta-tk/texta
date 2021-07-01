@@ -17,7 +17,7 @@ class Index(models.Model):
     source = models.CharField(max_length=255, default="")
     client = models.CharField(max_length=255, default="")
     domain = models.CharField(max_length=255, default="")
-    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    created_at = models.DateTimeField(null=True)
 
     def __str__(self):
         return self.name

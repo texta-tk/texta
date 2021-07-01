@@ -18,6 +18,7 @@ from toolkit.elastic.index.serializers import (
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.permissions.project_permissions import IsSuperUser
 from toolkit.settings import TEXTA_TAGS_KEY
+from datetime import datetime
 
 
 class IndicesFilter(filters.FilterSet):
@@ -156,7 +157,9 @@ class IndexViewSet(mixins.CreateModelMixin,
         if es.check_if_indices_exist([index]):
             # Even if the index already exists, create the index object just in case
             index, is_created = Index.objects.get_or_create(name=index)
+
             if is_created:
+                utc_time = es.get_index_creation_date(index)
                 index.is_open = is_open
                 index.description = description
                 index.added_by = added_by
@@ -164,12 +167,18 @@ class IndexViewSet(mixins.CreateModelMixin,
                 index.source = source
                 index.client = client
                 index.domain = domain
+                index.created_at = utc_time
             index.save()
             raise ElasticIndexAlreadyExists()
 
         else:
+            es.create_index(index=index)
+            if not is_open:
+                es.close_index(index)
+
             index, is_created = Index.objects.get_or_create(name=index)
             if is_created:
+                utc_time = es.get_index_creation_date(index)
                 index.is_open = is_open
                 index.description = description
                 index.added_by = added_by
@@ -177,11 +186,9 @@ class IndexViewSet(mixins.CreateModelMixin,
                 index.source = source
                 index.client = client
                 index.domain = domain
+                index.created_at = utc_time
             index.save()
 
-            es.create_index(index=index)
-            if not is_open:
-                es.close_index(index)
             return Response({"message": f"Added index {index} into Elasticsearch!"}, status=status.HTTP_201_CREATED)
 
     def partial_update(self, request, pk=None, **kwargs):
