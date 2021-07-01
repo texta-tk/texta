@@ -352,6 +352,9 @@ DEFAULT_MLP_LANGUAGE_CODES = parse_list_env_headers("TEXTA_LANGUAGE_CODES", [])
 # default DS choices
 DEFAULT_TEXTA_DATASOURCE_CHOICES = parse_tuple_env_headers("TEXTA_DATASOURCE_CHOICES", [('emails', 'emails'), ('news articles', 'news articles'), ('comments', 'comments'), ('court decisions', 'court decisions'), ('tweets', 'tweets'), ('forum posts', 'forum posts'), ('formal documents', 'formal documents'), ('other', 'other')])
 
+# default DS choices
+DEFAULT_TEXTA_DATASOURCE_CHOICES = parse_tuple_env_headers("TEXTA_DATASOURCE_CHOICES", [('emails', 'emails'), ('news articles', 'news articles'), ('comments', 'comments'), ('court decisions', 'court decisions'), ('tweets', 'tweets'), ('forum posts', 'forum posts'), ('formal documents', 'formal documents'), ('other', 'other')])
+
 # Logger IDs, used in apps.
 INFO_LOGGER = "info_logger"
 ERROR_LOGGER = "error_logger"
