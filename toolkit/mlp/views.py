@@ -117,7 +117,7 @@ class MLPElasticWorkerViewset(viewsets.ModelViewSet, BulkDelete):
 
 
     def get_queryset(self):
-        return MLPWorker.objects.filter(project=self.kwargs['project_pk'])
+        return MLPWorker.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
 
     def perform_create(self, serializer):
@@ -156,7 +156,7 @@ class ApplyLangOnIndices(viewsets.ModelViewSet, BulkDelete):
 
 
     def get_queryset(self):
-        return ApplyLangWorker.objects.filter(project=self.kwargs['project_pk'])
+        return ApplyLangWorker.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
 
     def perform_create(self, serializer):

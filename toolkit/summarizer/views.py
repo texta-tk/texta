@@ -27,7 +27,7 @@ class SummarizerIndexViewSet(viewsets.ModelViewSet, BulkDelete):
     )
 
     def get_queryset(self):
-        return Summarizer.objects.filter(project=self.kwargs['project_pk'])
+        return Summarizer.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
     def perform_create(self, serializer):
         with transaction.atomic():

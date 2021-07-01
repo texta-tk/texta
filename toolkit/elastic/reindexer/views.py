@@ -58,7 +58,7 @@ class ReindexerViewSet(mixins.CreateModelMixin,
 
 
     def get_queryset(self):
-        return Reindexer.objects.filter(project=self.kwargs['project_pk'])
+        return Reindexer.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
 
     def perform_create(self, serializer):

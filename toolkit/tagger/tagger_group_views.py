@@ -58,7 +58,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
 
     def get_queryset(self):
-        return TaggerGroup.objects.filter(project=self.kwargs['project_pk'])
+        return TaggerGroup.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
 
     def create(self, request, *args, **kwargs):

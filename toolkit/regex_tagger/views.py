@@ -48,7 +48,7 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
 
 
     def get_queryset(self):
-        return RegexTagger.objects.filter(project=self.kwargs['project_pk'])
+        return RegexTagger.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
 
     def perform_create(self, serializer: RegexTaggerSerializer):
@@ -325,7 +325,7 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
 
 
     def get_queryset(self):
-        return RegexTaggerGroup.objects.filter(project=self.kwargs['project_pk'])
+        return RegexTaggerGroup.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
 
     def perform_update(self, serializer: RegexTaggerGroupSerializer):

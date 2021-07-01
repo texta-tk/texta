@@ -35,7 +35,7 @@ class LexiconViewSet(viewsets.ModelViewSet):
 
 
     def get_queryset(self):
-        return Lexicon.objects.filter(project=self.kwargs['project_pk'])
+        return Lexicon.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
 
     def create(self, request, *args, **kwargs):
