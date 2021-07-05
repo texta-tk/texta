@@ -2,16 +2,14 @@ from rest_framework import serializers
 
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choices
-from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.embedding import choices
 from toolkit.embedding.models import Embedding
-from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
+from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer
 
 
-class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
+class EmbeddingSerializer(serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin, FieldParseSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True)
     task = TaskSerializer(read_only=True)
-    indices = IndexSerializer(many=True, default=[])
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     snowball_language = serializers.ChoiceField(choices=get_snowball_choices(), default=DEFAULT_SNOWBALL_LANGUAGE, help_text=f'Uses Snowball stemmer with specified language to normalize the texts. Default: {DEFAULT_SNOWBALL_LANGUAGE}')
     max_documents = serializers.IntegerField(default=choices.DEFAULT_MAX_DOCUMENTS)

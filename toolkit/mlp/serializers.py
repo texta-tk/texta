@@ -6,9 +6,9 @@ from texta_mlp.mlp import SUPPORTED_ANALYZERS
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.elastic.index.serializers import IndexSerializer
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.mlp.models import ApplyLangWorker, MLPWorker
-from toolkit.serializer_constants import FieldValidationSerializer
+from toolkit.serializer_constants import FieldValidationSerializer, IndicesSerializerMixin
 from toolkit.settings import REST_FRAMEWORK
 
 
@@ -29,19 +29,18 @@ class MLPDocsSerializer(serializers.Serializer):
     )
 
 
-class MLPWorkerSerializer(serializers.ModelSerializer, FieldValidationSerializer):
-    indices = IndexSerializer(many=True, default=[])
+class MLPWorkerSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldValidationSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True, required=False)
     description = serializers.CharField()
     task = TaskSerializer(read_only=True, required=False)
     url = serializers.SerializerMethodField()
-    query = serializers.JSONField(help_text='Query in JSON format', required=False)
+    query = serializers.JSONField(help_text='Query in JSON format', required=False, default=json.dumps(EMPTY_QUERY))
     fields = serializers.ListField(child=serializers.CharField(), required=True, allow_empty=False, help_text="Which fields to apply the MLP on.")
     analyzers = serializers.MultipleChoiceField(
         choices=list(SUPPORTED_ANALYZERS),
         default=["all"]
     )
-    es_scroll_size = serializers.IntegerField(help_text="Scroll size for Elasticsearch (Default: 10000)", default=10000, required=False)
+    es_scroll_size = serializers.IntegerField(help_text="Scroll size for Elasticsearch (Default: 100)", default=100, required=False)
     es_timeout = serializers.IntegerField(help_text="Scroll timeout in minutes for Elasticsearch (Default: 60)", default=60, required=False)
 
 
@@ -73,9 +72,8 @@ class LangDetectSerializer(serializers.Serializer):
     text = serializers.CharField()
 
 
-class ApplyLangOnIndicesSerializer(serializers.ModelSerializer, FieldValidationSerializer):
+class ApplyLangOnIndicesSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldValidationSerializer):
     description = serializers.CharField()
-    indices = IndexSerializer(many=True, default=[])
     author_username = serializers.CharField(source='author.username', read_only=True, required=False)
     task = TaskSerializer(read_only=True, required=False)
     url = serializers.SerializerMethodField()

@@ -1,13 +1,14 @@
 import json
+from decimal import *
+
+from django.urls import reverse
 from rest_framework import serializers
+
+from toolkit.core.task.serializers import TaskSerializer
+from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin
+from toolkit.settings import REST_FRAMEWORK
 from .models import Summarizer
 from .values import DefaultSummarizerValues
-from toolkit.core.task.serializers import TaskSerializer
-from toolkit.serializer_constants import FieldParseSerializer
-from toolkit.elastic.index.serializers import IndexSerializer
-from toolkit.settings import REST_FRAMEWORK
-from django.urls import reverse
-from decimal import *
 
 
 class SummarizerSummarizeSerializer(serializers.Serializer):
@@ -19,8 +20,7 @@ class SummarizerSummarizeSerializer(serializers.Serializer):
     ratio = serializers.DecimalField(max_digits=3, decimal_places=1, default=0.2, min_value=Decimal('0.1'), max_value=99.9, help_text="Min value 0.1, Max value 99.9 anything above 1.0 will be calculated as sentence count.")
 
 
-class SummarizerIndexSerializer(FieldParseSerializer, serializers.ModelSerializer):
-    indices = IndexSerializer(many=True, default=[])
+class SummarizerIndexSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin):
     author_username = serializers.CharField(source='author.username', read_only=True, required=False)
     description = serializers.CharField()
     task = TaskSerializer(read_only=True, required=False)
@@ -33,10 +33,12 @@ class SummarizerIndexSerializer(FieldParseSerializer, serializers.ModelSerialize
     fields = serializers.ListField(child=serializers.CharField(), required=True)
     ratio = serializers.DecimalField(max_digits=3, decimal_places=1, default=0.2, min_value=Decimal('0.1'), max_value=99.9, help_text="Min value 0.1, Max value 99.9 anything above 1.0 will be calculated as sentence count.")
 
+
     class Meta:
         model = Summarizer
         fields = ("id", "url", "author_username", "indices", "description", "task", "query", "fields", "algorithm", "ratio")
         fields_to_parse = ['fields']
+
 
     def get_url(self, obj):
         default_version = REST_FRAMEWORK.get("DEFAULT_VERSION")
@@ -47,6 +49,7 @@ class SummarizerIndexSerializer(FieldParseSerializer, serializers.ModelSerialize
             return url
         else:
             return None
+
 
     def to_representation(self, instance: Summarizer):
         data = super(SummarizerIndexSerializer, self).to_representation(instance)

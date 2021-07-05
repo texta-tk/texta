@@ -5,9 +5,8 @@ from django.urls import reverse
 from rest_framework import serializers
 
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
-from toolkit.serializer_constants import FieldParseSerializer
+from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin
 from toolkit.settings import REST_FRAMEWORK
 from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
@@ -51,7 +50,7 @@ class ClusterSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ClusteringSerializer(serializers.ModelSerializer, FieldParseSerializer):
+class ClusteringSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin):
     author_username = serializers.CharField(source='author.username', read_only=True)
     description = serializers.CharField()
     query = serializers.CharField(help_text='Query in JSON format', default=EMPTY_QUERY)
@@ -66,7 +65,6 @@ class ClusteringSerializer(serializers.ModelSerializer, FieldParseSerializer):
 
     stop_words = serializers.ListField(default=[], allow_empty=True, help_text='List of custom stop words to be removed from documents before clustering.')
     document_limit = serializers.IntegerField(default=100, min_value=1, max_value=10000, help_text='Number of documents retrieved from indices.')
-    indices = IndexSerializer(many=True, default=[], help_text="From which Elasticsearch indices to pull documents from.")
     ignored_ids = serializers.ListField(default=[], help_text="List of Elasticsearch document ids to ignore from the clustering process.")
     significant_words_filter = serializers.CharField(help_text='Regex to filter out desired words.', default="[0-9]+")
 
@@ -88,16 +86,6 @@ class ClusteringSerializer(serializers.ModelSerializer, FieldParseSerializer):
             return None
 
 
-    def to_representation(self, instance):
-        data = super(ClusteringSerializer, self).to_representation(instance)
-        data["stop_words"] = json.loads(instance.stop_words)
-        data["ignored_ids"] = json.loads(instance.ignored_ids)
-        data["fields"] = json.loads(instance.fields)
-        data["display_fields"] = json.loads(instance.display_fields)
-        data["query"] = json.loads(instance.query)
-        return data
-
-
     def validate_significant_words_filter(self, regex):
         try:
             re.compile(regex)
@@ -113,3 +101,4 @@ class ClusteringSerializer(serializers.ModelSerializer, FieldParseSerializer):
             "vectorizer", "num_dims", "use_lsi", "num_topics", "significant_words_filter", "display_fields",
             "stop_words", "ignored_ids", "fields", "embedding", "document_limit", "task"
         ]
+        fields_to_parse = ("fields", "query", "display_fields", "ignored_ids", "stop_words")

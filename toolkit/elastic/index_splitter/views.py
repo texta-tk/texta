@@ -1,13 +1,8 @@
 import json
 
 import rest_framework.filters as drf_filters
-from django.db import transaction
-from django.http import JsonResponse
 from django_filters import rest_framework as filters
-from rest_auth import views
-from rest_framework import mixins, permissions, status, viewsets
-from rest_framework.decorators import action
-from rest_framework.response import Response
+from rest_framework import mixins, permissions, viewsets
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.index.models import Index
@@ -60,7 +55,8 @@ class IndexSplitterViewSet(mixins.CreateModelMixin,
 
         self.update_project_indices(serializer, project_obj)
         splitter_model.start_task()
-        
+
+
     def update_project_indices(self, serializer, project_obj):
         ''' add new_index included in the request to the relevant project object '''
         train_ix_name = serializer.validated_data['train_index']

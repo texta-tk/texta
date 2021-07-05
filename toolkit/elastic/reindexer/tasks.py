@@ -1,24 +1,23 @@
 import json
 import logging
-from collections import defaultdict
 
 from celery.decorators import task
 
-from toolkit.base_tasks import BaseTask, TransactionAwareTask
+from toolkit.base_tasks import BaseTask
 from toolkit.core.task.models import Task
+from toolkit.elastic.index.models import Index
+from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.document import ElasticDocument
-from toolkit.elastic.reindexer.models import Reindexer
-from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.elastic.tools.mapping_tools import update_field_types, update_mapping
-from toolkit.tools.show_progress import ShowProgress
+from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.settings import ERROR_LOGGER, INFO_LOGGER
+from toolkit.tools.show_progress import ShowProgress
 
 
 """ TODOs:
     unique name problem and testing it.
 """
-
 
 # TODO: add this to reindex task params
 FLATTEN_DOC = False
@@ -112,6 +111,7 @@ def reindex_task(reindexer_task_id):
         logging.getLogger(INFO_LOGGER).info("Creating new index.")
         # create new_index
         create_index_res = ElasticCore().create_index(new_index, updated_schema)
+        Index.objects.get_or_create(name=new_index)
 
         logging.getLogger(INFO_LOGGER).info("Indexing documents.")
         # set new_index name as mapping name, perhaps make it customizable in the future

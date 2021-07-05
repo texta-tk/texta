@@ -2,11 +2,10 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
-from toolkit.elastic.index.serializers import IndexSerializer
+from toolkit.serializer_constants import IndicesSerializerMixin
 
 
-class ElasticMoreLikeThisSerializer(serializers.Serializer):
-    indices = IndexSerializer(many=True, default=[])
+class ElasticMoreLikeThisSerializer(IndicesSerializerMixin):
     fields = serializers.ListField(required=True, help_text="List of strings of the fields you wish to use for analysis.")
     like = serializers.ListField(child=serializers.DictField(), required=True, help_text="List of document metas (_id, _index, _type) which is used as a baseline for fetching similar documents")
     min_term_freq = serializers.IntegerField(default=1, help_text="The minimum term frequency below which the terms will be ignored from the input document. Default: 1")
@@ -40,6 +39,7 @@ class ElasticScrollSerializer(serializers.Serializer):
     documents_size = serializers.IntegerField(min_value=1, max_value=1500, default=300, help_text="How many documents should be returned in the response. Max is 1500.")
     fields = serializers.ListField(default=["*"], help_text="List of field names you wish to be return by Elasticsearch.")
     with_meta = serializers.BooleanField(default=False, help_text="Whether to return raw Elasticsearch hits or remove the metadata from the documents.")
+
 
     # Change what is returned to serializer_instance.validated_data
     def to_internal_value(self, data):

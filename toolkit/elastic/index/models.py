@@ -19,5 +19,24 @@ class Index(models.Model):
     domain = models.CharField(max_length=255, default="")
     created_at = models.DateTimeField(null=True)
 
+
     def __str__(self):
         return self.name
+
+
+    @staticmethod
+    def check_and_create(indices: str):
+        from toolkit.elastic.tools.core import ElasticCore
+        ec = ElasticCore()
+
+        if isinstance(indices, list):
+            indices = indices
+        elif isinstance(indices, str):
+            indices = indices.split(",")
+
+        for index in indices:
+            does_exist = ec.check_if_indices_exist([index])
+            if does_exist:
+                Index.objects.get_or_create(name=index)
+            else:
+                Index.objects.filter(name=index).delete()

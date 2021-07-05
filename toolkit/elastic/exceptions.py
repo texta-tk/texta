@@ -50,6 +50,14 @@ class ElasticAuthenticationException(APIException):
     default_code = "auth_failed"
 
 
-class InvalidDataSampleError(Exception):
+class NoIndexExists(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = "Index does not exist inside Elasticsearch!"
+    default_code = "index_doesnt_exist"
+
+
+class InvalidDataSampleError(APIException):
     """Raised on invalid Data Sample"""
-    pass
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = "Class in data sample has no examples! Please check your data!"
+    default_code = "no_samples"

@@ -1,16 +1,17 @@
 import json
-from .models import SearchQueryTagger, SearchFieldsTagger
+
+from django.urls import reverse
 from rest_framework import serializers
+
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.elastic.index.serializers import IndexSerializer
-from toolkit.serializer_constants import FieldValidationSerializer
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from toolkit.serializer_constants import FieldValidationSerializer, IndicesSerializerMixin
 from toolkit.settings import REST_FRAMEWORK
-from django.urls import reverse
+from .models import SearchFieldsTagger, SearchQueryTagger
 
 
-class SearchQueryTaggerSerializer(serializers.ModelSerializer, FieldValidationSerializer):
-    indices = IndexSerializer(many=True, default=[])
+class SearchQueryTaggerSerializer(serializers.ModelSerializer, FieldValidationSerializer, IndicesSerializerMixin):
     author_username = serializers.CharField(source='author.username', read_only=True, required=False)
     description = serializers.CharField()
     task = TaskSerializer(read_only=True, required=False)
@@ -22,9 +23,11 @@ class SearchQueryTaggerSerializer(serializers.ModelSerializer, FieldValidationSe
     bulk_size = serializers.IntegerField(min_value=1, default=100)
     es_timeout = serializers.IntegerField(min_value=1, default=10)
 
+
     class Meta:
         model = SearchQueryTagger
         fields = ("id", "url", "author_username", "indices", "description", "task", "query", "fields", "fact_name", "fact_value", "bulk_size", "es_timeout")
+
 
     def get_url(self, obj):
         default_version = REST_FRAMEWORK.get("DEFAULT_VERSION")
@@ -36,6 +39,7 @@ class SearchQueryTaggerSerializer(serializers.ModelSerializer, FieldValidationSe
         else:
             return None
 
+
     def to_representation(self, instance: SearchQueryTagger):
         data = super(SearchQueryTaggerSerializer, self).to_representation(instance)
         data["fields"] = json.loads(instance.fields)
@@ -43,8 +47,7 @@ class SearchQueryTaggerSerializer(serializers.ModelSerializer, FieldValidationSe
         return data
 
 
-class SearchFieldsTaggerSerializer(serializers.ModelSerializer, FieldValidationSerializer):
-    indices = IndexSerializer(many=True, default=[])
+class SearchFieldsTaggerSerializer(serializers.ModelSerializer, FieldValidationSerializer, IndicesSerializerMixin):
     author_username = serializers.CharField(source='author.username', read_only=True, required=False)
     description = serializers.CharField()
     task = TaskSerializer(read_only=True, required=False)
@@ -55,9 +58,11 @@ class SearchFieldsTaggerSerializer(serializers.ModelSerializer, FieldValidationS
     bulk_size = serializers.IntegerField(min_value=1, default=100)
     es_timeout = serializers.IntegerField(min_value=1, default=10)
 
+
     class Meta:
         model = SearchFieldsTagger
         fields = ("id", "url", "author_username", "indices", "description", "task", "query", "fields", "fact_name", "bulk_size", "es_timeout")
+
 
     def get_url(self, obj):
         default_version = REST_FRAMEWORK.get("DEFAULT_VERSION")
@@ -68,6 +73,7 @@ class SearchFieldsTaggerSerializer(serializers.ModelSerializer, FieldValidationS
             return url
         else:
             return None
+
 
     def to_representation(self, instance: SearchFieldsTagger):
         data = super(SearchFieldsTaggerSerializer, self).to_representation(instance)

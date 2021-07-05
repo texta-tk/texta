@@ -2,10 +2,7 @@ import json
 
 import rest_framework.filters as drf_filters
 from django_filters import rest_framework as filters
-from rest_auth import views
-from rest_framework import mixins, permissions, status, viewsets
-from rest_framework.decorators import action
-from rest_framework.response import Response
+from rest_framework import mixins, permissions, viewsets
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.index.models import Index

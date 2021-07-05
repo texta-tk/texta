@@ -6,18 +6,16 @@ from rest_framework.exceptions import ValidationError
 
 from .models import ApplyESAnalyzerWorker
 from ..choices import DEFAULT_ELASTIC_TOKENIZER, DEFAULT_SNOWBALL_LANGUAGE, ELASTIC_TOKENIZERS, get_snowball_choices
-from ..index.serializers import IndexSerializer
 from ..tools.searcher import EMPTY_QUERY
 from ...core.task.serializers import TaskSerializer
-from ...serializer_constants import FieldValidationSerializer
+from ...serializer_constants import FieldValidationSerializer, IndicesSerializerMixin
 
 
-class ApplyESAnalyzerWorkerSerializer(serializers.ModelSerializer, FieldValidationSerializer):
+class ApplyESAnalyzerWorkerSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldValidationSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True, required=False)
 
     query = serializers.JSONField(help_text='Query in JSON format', default=json.dumps(EMPTY_QUERY))
     fields = serializers.ListField(child=serializers.CharField(), required=False, allow_empty=False, help_text="Which field to stem.")
-    indices = IndexSerializer(many=True, default=[])
     url = serializers.SerializerMethodField()
 
     analyzers = serializers.MultipleChoiceField(allow_blank=False, choices=(("stemmer", "stemmer"), ("tokenizer", "tokenizer")))
