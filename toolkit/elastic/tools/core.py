@@ -1,10 +1,10 @@
 import collections
+from datetime import datetime
 from typing import List, Tuple
 
 import elasticsearch
 import elasticsearch_dsl
 import requests
-from django.db import transaction
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Keyword, Long, Mapping, Nested
 from rest_framework.exceptions import ValidationError
@@ -12,7 +12,6 @@ from rest_framework.exceptions import ValidationError
 from toolkit.elastic.decorators import elastic_connection
 from toolkit.helper_functions import get_core_setting
 from toolkit.settings import ES_CONNECTION_PARAMETERS
-from datetime import datetime
 
 
 class ElasticCore:
@@ -91,6 +90,7 @@ class ElasticCore:
         """
         return self.es.indices.delete(index=index, ignore=ignore)
 
+
     @elastic_connection
     def get_index_creation_date(self, index):
         es_index_settings = self.get_index_settings(index)
@@ -100,13 +100,16 @@ class ElasticCore:
             utc_time = datetime.utcfromtimestamp(unix_timestamp).isoformat()
         return utc_time
 
+
     @elastic_connection
     def get_index_settings(self, index):
         return self.es.indices.get_settings(index=index)
 
+
     @elastic_connection
     def get_settings(self):
         return self.es.indices.get_settings()
+
 
     @elastic_connection
     def get_mapping(self, index):
@@ -149,41 +152,41 @@ class ElasticCore:
         Put this into a separate function to make use of it.
         """
         from toolkit.elastic.index.models import Index
-        with transaction.atomic():
-            opened, closed = self.get_indices()
 
-            # Delete the parts that exist in the toolkit but not in Elasticsearch.
-            es_set = {index for index in opened + closed}
-            tk_set = {index.name for index in Index.objects.all()}
-            for index in tk_set:
-                if index not in es_set:
-                    Index.objects.get(name=index).delete()
+        opened, closed = self.get_indices()
 
-            # Create an Index object if it doesn't exist.
-            # Ensures that changes Elastic-side on the open/closed state are forcefully updated.
-            es_settings = self.get_settings()
-            utc_time = datetime.utcfromtimestamp(0).isoformat()
-            for index in opened:
-                index, is_created = Index.objects.get_or_create(name=index)
-                if str(index) in es_settings:
-                    unix_timestamp = int(es_settings[str(index)]['settings']['index']['creation_date']) / 1000
-                    utc_time = datetime.utcfromtimestamp(unix_timestamp).isoformat()
-                index.created_at = utc_time
+        # Delete the parts that exist in the toolkit but not in Elasticsearch.
+        es_set = {index for index in opened + closed}
+        tk_set = {index.name for index in Index.objects.all()}
+        for index in tk_set:
+            if index not in es_set:
+                Index.objects.get(name=index).delete()
+
+        # Create an Index object if it doesn't exist.
+        # Ensures that changes Elastic-side on the open/closed state are forcefully updated.
+        es_settings = self.get_settings()
+        utc_time = datetime.utcfromtimestamp(0).isoformat()
+        for index in opened:
+            index, is_created = Index.objects.get_or_create(name=index)
+            if str(index) in es_settings:
+                unix_timestamp = int(es_settings[str(index)]['settings']['index']['creation_date']) / 1000
+                utc_time = datetime.utcfromtimestamp(unix_timestamp).isoformat()
+            index.created_at = utc_time
+            index.save()
+            if not index.is_open:
+                index.is_open = True
                 index.save()
-                if not index.is_open:
-                    index.is_open = True
-                    index.save()
 
-            for index in closed:
-                index, is_created = Index.objects.get_or_create(name=index)
-                if str(index) in es_settings:
-                    unix_timestamp = int(es_settings[str(index)]['settings']['index']['creation_date']) / 1000
-                    utc_time = datetime.utcfromtimestamp(unix_timestamp).isoformat()
-                index.created_at = utc_time
+        for index in closed:
+            index, is_created = Index.objects.get_or_create(name=index)
+            if str(index) in es_settings:
+                unix_timestamp = int(es_settings[str(index)]['settings']['index']['creation_date']) / 1000
+                utc_time = datetime.utcfromtimestamp(unix_timestamp).isoformat()
+            index.created_at = utc_time
+            index.save()
+            if index.is_open:
+                index.is_open = False
                 index.save()
-                if index.is_open:
-                    index.is_open = False
-                    index.save()
 
 
     @elastic_connection

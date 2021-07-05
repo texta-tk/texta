@@ -92,7 +92,6 @@ class DocumentImportView(GenericAPIView):
     def post(self, request, pk: int):
         # Synchronize indices between Toolkit and Elastic
         ed = ElasticDocument(index=None)
-        ed.core.syncher()
 
         # Validate payload and project permissions.
         serializer: InsertDocumentsSerializer = self.get_serializer(data=request.data)
@@ -105,6 +104,7 @@ class DocumentImportView(GenericAPIView):
         documents = serializer.validated_data["documents"]
         split_fields = serializer.validated_data["split_text_in_fields"]
         indices = project.get_indices()
+
         correct_actions, failed_actions, missing_actions = self._split_documents_per_index(indices, documents)
         missing_actions, index_name, has_new_index = self._normalize_missing_index_values(missing_actions, project.pk)
         split_actions = self._split_text(correct_actions + missing_actions, split_fields)

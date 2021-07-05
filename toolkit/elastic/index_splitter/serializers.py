@@ -1,14 +1,12 @@
-from typing import List
 import json
 
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.elastic.tools.core import ElasticCore
+from toolkit.elastic.choices import LABEL_DISTRIBUTION
 from toolkit.elastic.index_splitter.models import IndexSplitter
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.validators import (
     check_for_banned_beginning_chars,
     check_for_colons,
@@ -16,18 +14,14 @@ from toolkit.elastic.validators import (
     check_for_upper_case,
     check_for_wildcards
 )
-from toolkit.elastic.index.serializers import IndexSerializer
-from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
-from toolkit.settings import REST_FRAMEWORK
-from toolkit.elastic.choices import LABEL_DISTRIBUTION
+from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer
 
 
-class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
+class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True)
     url = serializers.SerializerMethodField()
     scroll_size = serializers.IntegerField(min_value=0, max_value=10000, required=False)
     description = serializers.CharField(help_text='Description of the task.', required=True, allow_blank=False)
-    indices = IndexSerializer(many=True, default=[], help_text=f'Indices that are used to create train and test indices.')
     query = serializers.JSONField(help_text='Query used to filter the indices. Defaults to an empty query.', required=False)
     train_index = serializers.CharField(help_text='Name of the train index.', allow_blank=False, required=True,
                                         validators=[

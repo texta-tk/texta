@@ -2,6 +2,7 @@ import logging
 import os
 import pathlib
 import warnings
+from datetime import timedelta
 
 import environ
 from corsheaders.defaults import default_headers
@@ -288,6 +289,14 @@ CELERY_QUEUES = (
 CELERY_DEFAULT_QUEUE = 'short_term_tasks'
 CELERY_DEFAULT_EXCHANGE = 'short_term_tasks'
 CELERY_DEFAULT_ROUTING_KEY = 'short_term_tasks'
+
+CELERYBEAT_SCHEDULE = {
+    'sync_indices_in_elasticsearch': {
+        'task': 'sync_indices_in_elasticsearch',
+        'schedule': timedelta(minutes=1),
+        'options': {"queue": CELERY_DEFAULT_QUEUE}
+    }
+}
 
 ### DATA DIRECTORIES
 

@@ -15,6 +15,9 @@ for path in pathlib.Path("toolkit/elastic/").rglob("*"):
     if path.is_dir():
         app.autodiscover_tasks([f"toolkit.elastic.{path.name}"])
 
+# Discover all the periodic tasks for maintenance.
+app.autodiscover_tasks(['toolkit.beat_tasks'])
+
 
 @app.task(bind=True)
 def debug_task(self):
