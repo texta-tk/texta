@@ -6,7 +6,7 @@ import warnings
 from corsheaders.defaults import default_headers
 from kombu import Exchange, Queue
 
-from .helper_functions import download_bert_requirements, download_mlp_requirements, parse_bool_env, parse_list_env_headers, parse_tuple_env_headers, download_nltk_resources
+from .helper_functions import download_bert_requirements, download_mlp_requirements, download_nltk_resources, parse_bool_env, parse_list_env_headers, parse_tuple_env_headers
 from .logging_settings import setup_logging
 
 
@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     "toolkit.docparser",
     "toolkit.evaluator",
     "toolkit.summarizer",
+    "toolkit.celery_management",
     # TEXTA Extension Apps
     # "docscraper",
     # THIRD PARTY
@@ -265,7 +266,6 @@ CELERY_LONG_TERM_TASK_QUEUE = "long_term_tasks"
 CELERY_SHORT_TERM_TASK_QUEUE = "short_term_tasks"
 CELERY_MLP_TASK_QUEUE = "mlp_queue"
 
-
 CELERY_QUEUES = (
     Queue(CELERY_LONG_TERM_TASK_QUEUE, exchange=CELERY_LONG_TERM_TASK_QUEUE, routing_key=CELERY_LONG_TERM_TASK_QUEUE),
     Queue(CELERY_SHORT_TERM_TASK_QUEUE, exchange=CELERY_SHORT_TERM_TASK_QUEUE, routing_key=CELERY_SHORT_TERM_TASK_QUEUE),
@@ -350,10 +350,12 @@ DEFAULT_BERT_MODELS = parse_list_env_headers("TEXTA_BERT_MODELS", ["bert-base-mu
 DEFAULT_MLP_LANGUAGE_CODES = parse_list_env_headers("TEXTA_LANGUAGE_CODES", [])
 
 # default DS choices
-DEFAULT_TEXTA_DATASOURCE_CHOICES = parse_tuple_env_headers("TEXTA_DATASOURCE_CHOICES", [('emails', 'emails'), ('news articles', 'news articles'), ('comments', 'comments'), ('court decisions', 'court decisions'), ('tweets', 'tweets'), ('forum posts', 'forum posts'), ('formal documents', 'formal documents'), ('other', 'other')])
+DEFAULT_TEXTA_DATASOURCE_CHOICES = parse_tuple_env_headers("TEXTA_DATASOURCE_CHOICES",
+                                                           [('emails', 'emails'), ('news articles', 'news articles'), ('comments', 'comments'), ('court decisions', 'court decisions'), ('tweets', 'tweets'), ('forum posts', 'forum posts'), ('formal documents', 'formal documents'), ('other', 'other')])
 
 # default DS choices
-DEFAULT_TEXTA_DATASOURCE_CHOICES = parse_tuple_env_headers("TEXTA_DATASOURCE_CHOICES", [('emails', 'emails'), ('news articles', 'news articles'), ('comments', 'comments'), ('court decisions', 'court decisions'), ('tweets', 'tweets'), ('forum posts', 'forum posts'), ('formal documents', 'formal documents'), ('other', 'other')])
+DEFAULT_TEXTA_DATASOURCE_CHOICES = parse_tuple_env_headers("TEXTA_DATASOURCE_CHOICES",
+                                                           [('emails', 'emails'), ('news articles', 'news articles'), ('comments', 'comments'), ('court decisions', 'court decisions'), ('tweets', 'tweets'), ('forum posts', 'forum posts'), ('formal documents', 'formal documents'), ('other', 'other')])
 
 # Logger IDs, used in apps.
 INFO_LOGGER = "info_logger"
