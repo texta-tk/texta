@@ -52,7 +52,7 @@ def parse_list_env_headers(env_key: str, default_value: list) -> list:
     else:
         return default_value
 
-def parse_tuple_env_headers(env_key: str, default_value: tuple) -> tuple:
+def parse_tuple_env_headers(env_key: str, default_value) -> tuple:
     """
     Function for handling env values that need to be stored as a tuple.
 
@@ -292,3 +292,9 @@ def wrap_in_list(item):
         return item
     else:
         return [item]
+
+def prepare_mandatory_directories(*directories):
+    for directory_path in directories:
+        path = pathlib.Path(directory_path)
+        if not path.exists():
+            path.mkdir(parents=True, exist_ok=True)
