@@ -4,7 +4,7 @@ from rest_framework_nested import routers
 
 from toolkit.anonymizer.urls import router as anonymizer_router
 from toolkit.bert_tagger.urls import router as bert_tagger_router
-from toolkit.celery_management.views import CeleryStats, PurgeTasks, QueueStats
+from toolkit.celery_management.views import CeleryQueueCount, CeleryStats, PurgeTasks, QueueDetailStats
 from toolkit.core.core_variable.views import CoreVariableViewSet
 from toolkit.core.health.views import HealthView
 from toolkit.core.project.views import (
@@ -127,7 +127,8 @@ urlpatterns = [
 
     # Celery resources
     path('celery/queue/purge_tasks/', PurgeTasks.as_view(), name="purge_tasks"),
-    path('celery/queue/stats/', QueueStats.as_view(), name="queue_stats"),
+    path('celery/queue/stats/', QueueDetailStats.as_view(), name="queue_stats"),
+    path('celery/queue/count_tasks/', CeleryQueueCount.as_view(), name="count_tasks"),
     path('celery/stats/', CeleryStats.as_view(), name="celery_stats"),
 
     # UAA OAuth 2.0
