@@ -7,7 +7,7 @@ from toolkit.embedding.models import Embedding
 from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer
 
 
-class EmbeddingSerializer(serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin, FieldParseSerializer):
+class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin):
     author_username = serializers.CharField(source='author.username', read_only=True)
     task = TaskSerializer(read_only=True)
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')

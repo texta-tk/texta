@@ -6,7 +6,6 @@ from rest_framework.exceptions import APIException
 from rest_framework.renderers import BrowsableAPIRenderer, HTMLFormRenderer, JSONRenderer
 from rest_framework.response import Response
 
-from toolkit.celery_management.serializers import QueueStatsSerializer
 from toolkit.serializer_constants import EmptySerializer
 from toolkit.settings import ERROR_LOGGER
 
@@ -36,7 +35,7 @@ class QueueStats(views.APIView):
     """
     Returns common stats about queues like how many tasks are active, scheduled or reserved.
     """
-    serializer_class = QueueStatsSerializer
+    serializer_class = EmptySerializer
     renderer_classes = (JSONRenderer, BrowsableAPIRenderer, HTMLFormRenderer)
     permission_classes = (permissions.IsAdminUser,)
 
@@ -44,13 +43,43 @@ class QueueStats(views.APIView):
     def post(self, request):
         try:
             from toolkit.taskman import app
-            serializer = QueueStatsSerializer(data=request.data)
-            serializer.is_valid(raise_exception=False)
+
+            response = {}
+            inspector = app.control.inspect()
+            methods = ["active", "reserved", "scheduled"]
+            for method in methods:
+                method_function = getattr(inspector, method)
+                result = method_function()
+                if result:
+                    response[method] = result
+
+            message = {"detail": "Nothing to report on, is the connection correct?"}
+
+            if not response:
+                return Response(message, status=status.HTTP_404_NOT_FOUND)
+
+            return Response(response, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logging.getLogger(ERROR_LOGGER).exception(e)
+            raise APIException(str(e))
+
+
+class CeleryStats(views.APIView):
+    """
+    Returns common stats about queues like how many tasks are active, scheduled or reserved.
+    """
+    serializer_class = EmptySerializer
+    renderer_classes = (JSONRenderer, BrowsableAPIRenderer, HTMLFormRenderer)
+    permission_classes = (permissions.IsAdminUser,)
+
+
+    def post(self, request):
+        try:
+            from toolkit.taskman import app
 
             inspector = app.control.inspect()
-            method_name = serializer.validated_data["method"]
-            method_function = getattr(inspector, method_name)
-            response = method_function()
+            response = inspector.stats()
             message = {"detail": "Nothing to report on, is the connection correct?"}
 
             if not response:
