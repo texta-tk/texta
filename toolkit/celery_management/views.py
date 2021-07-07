@@ -6,6 +6,7 @@ from rest_framework.exceptions import APIException
 from rest_framework.renderers import BrowsableAPIRenderer, HTMLFormRenderer, JSONRenderer
 from rest_framework.response import Response
 
+from toolkit.permissions.project_permissions import IsSuperUser
 from toolkit.serializer_constants import EmptySerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE, ERROR_LOGGER
 
@@ -17,7 +18,7 @@ class PurgeTasks(views.APIView):
     """
     serializer_class = EmptySerializer
     renderer_classes = (JSONRenderer, BrowsableAPIRenderer, HTMLFormRenderer)
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (IsSuperUser,)
 
 
     def post(self, request):
@@ -37,7 +38,7 @@ class QueueDetailStats(views.APIView):
     """
     serializer_class = EmptySerializer
     renderer_classes = (JSONRenderer, BrowsableAPIRenderer, HTMLFormRenderer)
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (IsSuperUser,)
 
 
     def post(self, request):
@@ -67,11 +68,12 @@ class QueueDetailStats(views.APIView):
 
 class CeleryStats(views.APIView):
     """
-    Returns common stats about queues like how many tasks are active, scheduled or reserved.
+    Returns information about the Celery instances themselves, like how many processes
+    are running, total task counts etc.
     """
     serializer_class = EmptySerializer
     renderer_classes = (JSONRenderer, BrowsableAPIRenderer, HTMLFormRenderer)
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (IsSuperUser,)
 
 
     def post(self, request):
@@ -134,7 +136,7 @@ class CeleryQueueCount(views.APIView):
             container = self._return_base()
             methods = ["active", "reserved", "scheduled"]
             inspector = app.control.inspect()
-            
+
             for method in methods:
                 inspect_function_body = getattr(inspector, method)
                 inspect_result = inspect_function_body()
