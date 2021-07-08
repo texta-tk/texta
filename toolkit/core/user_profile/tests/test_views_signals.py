@@ -89,3 +89,12 @@ class UserProfileSignalsAndViewsTests(APITestCase):
         self.client.login(username="user", password="pw")
         response = self.client.delete(self.admin_url)
         self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)
+
+
+    def test_that_making_a_normal_user_a_superusers_adds_the_is_staff_flag(self):
+        self.client.login(username="admin", password="1234")
+        response = self.client.patch(self.user_url, data={"is_superuser": True}, format="json")
+        print_output("test_that_making_a_normal_user_a_superusers_adds_the_is_staff_flag:response.data", response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        user = User.objects.get(username="user")
+        self.assertEqual(user.is_staff, True)
