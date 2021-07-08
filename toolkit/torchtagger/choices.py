@@ -1,4 +1,4 @@
-from .torch_models.models import TORCH_MODELS
+from texta_torch_tagger.tagger import TORCH_MODELS
 
 DEFAULT_MAX_SAMPLE_SIZE = 100000
 DEFAULT_MIN_SAMPLE_SIZE = 50
