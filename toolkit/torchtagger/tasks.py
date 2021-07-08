@@ -64,7 +64,7 @@ def train_torchtagger(tagger_id, testing=False):
             model_arch=tagger_object.model_architecture
         )
         # train tagger and get result statistics
-        report = tagger.train(data_sample.data, num_epochs=int(tagger_object.num_epochs))
+        report = tagger.train(data_sample.data, num_epochs=int(tagger_object.num_epochs), pos_label=tagger_object.pos_label)
         # close all db connections
         for conn in connections.all():
             conn.close_if_unusable_or_obsolete()

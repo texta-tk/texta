@@ -30,8 +30,16 @@ TEST_FIELD_UNLEMMATIZED_CHOICE = [TEST_FIELD_UNLEMMATIZED]
 TEST_INTEGER_FIELD = "client_ip"
 TEST_FACT_NAME = "TEEMA"
 TEST_MATCH_TEXT = "loll"
+TEST_VALUE_1 = "foo"
+TEST_VALUE_2 = "bar"
+TEST_VALUE_3 = "FUBAR"
+TEST_POS_LABEL = TEST_VALUE_1
 TEST_QUERY = {"query": {"match": {TEST_FIELD: {"query": TEST_MATCH_TEXT}}}}
 TEST_EMPTY_QUERY = {"query": {"match_all": {}}}
+
+TEST_BIN_FACT_QUERY = {"query": {"bool": {"must": [{"bool": {"must": []}},{"bool": {"should": [{"bool": {"must": {"nested": {"query": {"bool": {"must": [{"match": {"texta_facts.fact": TEST_FACT_NAME}},{"match": {"texta_facts.str_val": TEST_VALUE_1}}]}},"path": "texta_facts","inner_hits": {"size": 100, "name": "FACT_1"}}}}},{"bool": {"must": {"nested": {"query": {"bool": {"must": [{"match": {"texta_facts.fact": TEST_FACT_NAME}},{"match": {"texta_facts.str_val": TEST_VALUE_2}}]}},"path": "texta_facts","inner_hits": {"size": 100, "name": "FACT_2"}}}}}]}},{"bool": {"must": []}},{"bool": {"must_not": [{"bool": {"must": {"nested": {"query": {"bool": {"must": [{"match": {"texta_facts.fact": TEST_FACT_NAME}},{"match": {"texta_facts.str_val": TEST_VALUE_3}}]}},"path": "texta_facts","inner_hits": {"size": 100, "name": "FACT_3"}}}}}]}}],"filter": [],"must_not": [],"should": [],"minimum_should_match": 0}}}
+
+
 
 TEST_DATASETS = (
     os.path.join(TEST_DATA_DIR, "import_test_data.csv"),

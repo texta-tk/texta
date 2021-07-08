@@ -15,10 +15,36 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.tools.core import ElasticCore
-from toolkit.helper_functions import download_bert_requirements, get_downloaded_bert_models, reindex_test_dataset
-from toolkit.settings import ALLOW_BERT_MODEL_DOWNLOADS, BERT_CACHE_DIR, BERT_PRETRAINED_MODEL_DIRECTORY
-from toolkit.test_settings import (TEST_BERT_MODEL, TEST_BERT_TAGGER_BINARY_CPU, TEST_BERT_TAGGER_BINARY_GPU, TEST_BERT_TAGGER_MULTICLASS_GPU, TEST_FACT_NAME, TEST_FIELD_CHOICE, TEST_KEEP_PLOT_FILES, TEST_QUERY, TEST_VERSION_PREFIX)
-from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file, remove_folder
+from toolkit.helper_functions import (
+    download_bert_requirements,
+    get_downloaded_bert_models,
+    reindex_test_dataset
+)
+from toolkit.settings import (
+    ALLOW_BERT_MODEL_DOWNLOADS,
+    BERT_CACHE_DIR,
+    BERT_PRETRAINED_MODEL_DIRECTORY
+)
+from toolkit.test_settings import (
+    TEST_BERT_MODEL,
+    TEST_BERT_TAGGER_BINARY_CPU,
+    TEST_BERT_TAGGER_BINARY_GPU,
+    TEST_BERT_TAGGER_MULTICLASS_GPU,
+    TEST_BIN_FACT_QUERY,
+    TEST_FACT_NAME,
+    TEST_FIELD_CHOICE,
+    TEST_KEEP_PLOT_FILES,
+    TEST_POS_LABEL,
+    TEST_QUERY,
+    TEST_VERSION_PREFIX
+)
+from toolkit.tools.utils_for_tests import(
+    create_test_user,
+    print_output,
+    project_creation,
+    remove_file,
+    remove_folder
+)
 
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
@@ -82,6 +108,10 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
     def test(self):
         self.run_train_multiclass_bert_tagger_using_fact_name()
         self.run_train_balanced_multiclass_bert_tagger_using_fact_name()
+        self.run_train_bert_tagger_from_checkpoint_model_bin2bin()
+        self.run_train_bert_tagger_from_checkpoint_model_bin2mc()
+        self.run_train_binary_multiclass_bert_tagger_using_fact_name()
+        self.run_train_binary_multiclass_bert_tagger_using_fact_name_invalid_payload()
         self.run_train_bert_tagger_using_query()
         self.run_bert_tag_text()
         self.run_bert_tag_with_imported_gpu_model()
@@ -147,6 +177,75 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
         self.add_cleanup_files(tagger_id)
+
+
+    def run_train_binary_multiclass_bert_tagger_using_fact_name(self):
+        """Tests BertTagger training with binary facts."""
+        payload = {
+            "description": "Test Bert Tagger training binary multiclass",
+            "fact_name": TEST_FACT_NAME,
+            "fields": TEST_FIELD_CHOICE,
+            "pos_label": TEST_POS_LABEL,
+            "query": json.dumps(TEST_BIN_FACT_QUERY),
+            "indices": [{"name": self.test_index_name}],
+            "maximum_sample_size": 50,
+            "num_epochs": 1,
+            "max_length": 15,
+            "bert_model": TEST_BERT_MODEL
+        }
+        response = self.client.post(self.url, payload, format='json')
+
+        print_output('test_run_train_binary_multiclass_bert_tagger_using_fact_name:response.data', response.data)
+        # Check if BertTagger gets created
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # Give the tagger some time to finish training
+        sleep(5)
+        tagger_id = response.data['id']
+        response = self.client.get(f'{self.url}{tagger_id}/')
+        print_output('test_binary_multiclass_bert_tagger_has_stats:response.data', response.data)
+        for score in ['f1_score', 'precision', 'recall', 'accuracy']:
+            self.assertTrue(isinstance(response.data[score], float))
+        self.add_cleanup_files(tagger_id)
+
+
+    def run_train_binary_multiclass_bert_tagger_using_fact_name_invalid_payload(self):
+        """Tests BertTagger training with binary facts."""
+        # Pos label is undefined by the user
+        invalid_payload_1 = {
+            "description": "Test Bert Tagger training binary multiclass invalid",
+            "fact_name": TEST_FACT_NAME,
+            "fields": TEST_FIELD_CHOICE,
+            "query": json.dumps(TEST_BIN_FACT_QUERY),
+            "indices": [{"name": self.test_index_name}],
+            "maximum_sample_size": 50,
+            "num_epochs": 1,
+            "max_length": 15,
+            "bert_model": TEST_BERT_MODEL
+        }
+        response = self.client.post(self.url, invalid_payload_1, format='json')
+
+        print_output('test_run_train_binary_multiclass_bert_tagger_using_fact_name_missing_pos_label:response.data', response.data)
+        # Check if creating the BertTagger fails with status code 400
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # The pos label the user has inserted is not present in the data
+        invalid_payload_2 = {
+            "description": "Test Bert Tagger training binary multiclass invalid",
+            "fact_name": TEST_FACT_NAME,
+            "pos_label": "invalid_fact_val",
+            "fields": TEST_FIELD_CHOICE,
+            "query": json.dumps(TEST_BIN_FACT_QUERY),
+            "indices": [{"name": self.test_index_name}],
+            "maximum_sample_size": 50,
+            "num_epochs": 1,
+            "max_length": 15,
+            "bert_model": TEST_BERT_MODEL
+        }
+        response = self.client.post(self.url, invalid_payload_2, format='json')
+
+        print_output('test_run_train_binary_multiclass_bert_tagger_using_fact_name_invalid_pos_label:response.data', response.data)
+        # Check if creating the BertTagger fails with status code 400
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
     def run_train_balanced_multiclass_bert_tagger_using_fact_name(self):
@@ -215,6 +314,68 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         # set trained tagger as active tagger
         self.test_tagger_id = tagger_id
+        self.add_cleanup_files(tagger_id)
+
+
+    def run_train_bert_tagger_from_checkpoint_model_bin2bin(self):
+        """Tests training BertTagger from a checkpoint."""
+        payload = {
+            "description": "Test training binary BertTagger from checkpoint",
+            "fields": TEST_FIELD_CHOICE,
+            "query": json.dumps(TEST_QUERY),
+            "maximum_sample_size": 500,
+            "indices": [{"name": self.test_index_name}],
+            "num_epochs": 2,
+            "max_length": 12,
+            "bert_model": TEST_BERT_MODEL,
+            "checkpoint_model": self.test_tagger_id
+        }
+
+        print_output(f"training binary bert tagger from checkpoint with payload: ", payload)
+        response = self.client.post(self.url, payload, format='json')
+        print_output('test_train_bert_tagger_from_checkpoint_model_bin2bin:POST:response.data', response.data)
+
+        # Check if BertTagger gets created
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # Give the tagger some time to finish training
+        sleep(5)
+        tagger_id = response.data['id']
+        response = self.client.get(f'{self.url}{tagger_id}/')
+        print_output('test_train_bert_tagger_from_checkpoint_model_bin2bin:GET:response.data', response.data)
+        for score in ['f1_score', 'precision', 'recall', 'accuracy']:
+            self.assertTrue(isinstance(response.data[score], float))
+
+        self.add_cleanup_files(tagger_id)
+
+
+    def run_train_bert_tagger_from_checkpoint_model_bin2mc(self):
+        """Tests training BertTagger from a checkpoint."""
+        payload = {
+            "description": "Test training multiclass BertTagger from checkpoint",
+            "fields": TEST_FIELD_CHOICE,
+            "fact_name": TEST_FACT_NAME,
+            "maximum_sample_size": 500,
+            "indices": [{"name": self.test_index_name}],
+            "num_epochs": 2,
+            "max_length": 12,
+            "bert_model": TEST_BERT_MODEL,
+            "checkpoint_model": self.test_tagger_id
+        }
+
+        print_output(f"training multiclass bert tagger from checkpoint with payload: ", payload)
+        response = self.client.post(self.url, payload, format='json')
+        print_output('test_train_bert_tagger_from_checkpoint_model_bin2mc:POST:response.data', response.data)
+
+        # Check if BertTagger gets created
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # Give the tagger some time to finish training
+        sleep(5)
+        tagger_id = response.data['id']
+        response = self.client.get(f'{self.url}{tagger_id}/')
+        print_output('test_train_bert_tagger_from_checkpoint_model_bin2mc:GET:response.data', response.data)
+        for score in ['f1_score', 'precision', 'recall', 'accuracy']:
+            self.assertTrue(isinstance(response.data[score], float))
+
         self.add_cleanup_files(tagger_id)
 
 

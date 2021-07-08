@@ -37,12 +37,15 @@ class BertTagger(models.Model):
 
     description = models.CharField(max_length=MAX_DESC_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     fields = models.TextField(default=json.dumps([]))
     indices = models.ManyToManyField(Index, default=None)
 
+    checkpoint_model = models.ForeignKey("self", null=True, on_delete=models.SET_NULL, default=None)
+
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     fact_name = models.CharField(max_length=MAX_DESC_LEN, null=True)
+    pos_label = models.CharField(max_length=MAX_DESC_LEN, null=True, default="", blank=True)
     minimum_sample_size = models.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE)
     negative_multiplier = models.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER)
     num_examples = models.TextField(default=json.dumps({}), null=True)

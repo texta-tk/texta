@@ -165,6 +165,7 @@ def train_tagger_task(tagger_id: int):
             vectorizer=tagger_object.vectorizer)
         tagger.train(
             data_sample.data,
+            pos_label=tagger_object.pos_label,
             field_list=field_data,
             scoring=scoring_function
         )

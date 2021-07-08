@@ -57,9 +57,21 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
         serializer.validated_data.pop("indices")
 
+        serializer_query = serializer.validated_data.get("query")
+
+
+        if isinstance(serializer_query, str):
+            # If query is passed as JSON string to the serializer
+            query = serializer_query
+        else:
+            # If query is passed as raw JSON to the serializer
+            query = json.dumps(serializer_query)
+
+
         tagger: BertTaggerObject = serializer.save(
             author=self.request.user,
             project=project,
+            query=query,
             fields=json.dumps(serializer.validated_data['fields']),
             **kwargs
         )
