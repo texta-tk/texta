@@ -23,6 +23,7 @@ class UaaAuthentication(authentication.BaseAuthentication):
     keyword = 'Bearer'
 
 
+    # TODO Revisit this place on how to handle logouts from UAA and TK side.
     def authenticate(self, request):
         auth = get_authorization_header(request).split()
 
@@ -35,7 +36,7 @@ class UaaAuthentication(authentication.BaseAuthentication):
         elif len(auth) > 2:
             msg = _('Invalid bearer header. Token string should not contain spaces.')
             raise exceptions.AuthenticationFailed(msg)
-        
+
         # Validate if token has expired
         username, email, resp_json = self._validate_token(auth[1].decode(), request)
         try:
@@ -43,7 +44,7 @@ class UaaAuthentication(authentication.BaseAuthentication):
         except User.DoesNotExist:
             logging.getLogger(INFO_LOGGER).info(f"UaaAuthentication didn't find a matching user (OAuth tokens possibly expired) - username: {username} | email: {email} | resp_json: {resp_json}")
             raise exceptions.AuthenticationFailed(resp_json)
-            
+
         return (user, None)
 
 

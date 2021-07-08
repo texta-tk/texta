@@ -1,3 +1,5 @@
+import json
+
 import requests
 import logging
 import jwt
@@ -7,6 +9,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 
 from rest_framework import status, views
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_auth import app_settings
@@ -22,11 +25,73 @@ HEADERS = {
     'Accept': 'application/json',
 }
 
+
 class UAAView(views.APIView):
     # Remove authentication classes to not get a 401 error on an expired token
     # See https://github.com/encode/django-rest-framework/issues/2383
     authentication_classes = []
     permission_classes = [AllowAny]
+
+
+    def _decode_jit_token(self, jit_token):
+        try:
+            # Decode the jwt id_token
+            decoded_id_token = jwt.decode(jit_token, verify=False)
+            # Get the email and username from the decoded data
+            user = {"user_id": decoded_id_token["user_id"], 'email': decoded_id_token['email'], 'username': decoded_id_token['user_name'], 'scope': decoded_id_token['scope']}
+            return user
+        except KeyError as e:
+            logging.getLogger(ERROR_LOGGER).exception(e)
+            return Response(f'The id_token is missing the key: {e}', status=status.HTTP_400_BAD_REQUEST)
+
+
+    def _get_access_token(self, code: str):
+        body = {
+            'client_id': UAA_CLIENT_ID,
+            'client_secret': UAA_CLIENT_SECRET,
+            'grant_type': 'authorization_code',
+            'code': code,
+            'token_format': 'opaque',
+            'redirect_uri': UAA_REDIRECT_URI
+        }
+        token_url = f'{UAA_URL}/oauth/token'
+        # Make a request to the oauth/token endpoint to retrieve the access_token and user info
+        return requests.post(token_url, headers=HEADERS, data=body)
+
+
+    @staticmethod
+    def _update_user_and_profile(user_profile, scope, request):
+        # Get or create the user
+        username = user_profile["userName"]
+        emails = [email["value"] for email in user_profile["emails"]]
+        email = emails[0] if emails else ""
+        name_dict = user_profile.get("name", {})
+        first_name = name_dict.get("givenName", None)
+        last_name = name_dict.get("familyName", None)
+
+        user, is_created = User.objects.get_or_create(username=username)
+        if first_name: user.profile.first_name = first_name
+        if last_name: user.profile.last_name = last_name
+        if scope: user.profile.scope = json.dumps(scope, ensure_ascii=False)
+        if email: user.email = email
+
+        user.profile.is_uaa_account = True
+
+        user.profile.save()
+        user.save()
+
+
+    def sign_in_with_user(self, user, request):
+        login(request, user)
+
+
+    @staticmethod
+    def _get_uaa_user_profile(user_id, access_token):
+        response = requests.get(f"{UAA_URL}/Users/{user_id}", headers={"Authorization": f"Bearer {access_token}"})
+        if response.ok:
+            return response.json()
+        else:
+            raise ValidationError("Could not fetch user details from UAA, is your token still valid!?")
 
 
     def get(self, request):
@@ -45,21 +110,19 @@ class UAAView(views.APIView):
             if resp.status_code != 200:
                 logging.getLogger(INFO_LOGGER).info(f"UAAView _get_access_token returned status {resp.status_code}!")
                 return Response(f"UAAView _get_access_token returned status {resp.status_code}!", status=status.HTTP_400_BAD_REQUEST)
+
             # get response json
             resp_json = resp.json()
             access_token = resp_json['access_token']
             refresh_token = resp_json['refresh_token']
-            try:
-                # Decode the jwt id_token
-                decoded_id_token = jwt.decode(resp_json['id_token'], verify=False)
-                # Get the email and username from the decoded data
-                user = { 'email': decoded_id_token['email'], 'username': decoded_id_token['user_name'], 'scope': decoded_id_token['scope']}
-            except KeyError as e:
-                logging.getLogger(ERROR_LOGGER).exception(e)
-                return Response(f'The id_token is missing the key: {e}', status=status.HTTP_400_BAD_REQUEST)
 
-            serializer, created_user = UAAView._auth_uaa_user(user['email'], user['username'], request)
-            profile = UserProfile.objects.filter(user=created_user).update(scope=user['scope'])
+            jit_user_info = self._decode_jit_token(resp_json['id_token'])
+            scope = jit_user_info['scope']
+            user_id = jit_user_info['user_id']
+
+            uaa_user_profile = UAAView._get_uaa_user_profile(user_id, access_token)
+
+            UAAView._update_user_and_profile(uaa_user_profile, scope, request)
             return HttpResponseRedirect(redirect_to=f'{UAA_FRONT_REDIRECT_URL}/uaa/?access_token={access_token}&refresh_token={refresh_token}')
 
         else:
@@ -68,39 +131,16 @@ class UAAView(views.APIView):
             return Response({'invalid_parameters': request.query_params}, status=status.HTTP_400_BAD_REQUEST)
 
 
-    def _get_access_token(self, code: str):
-        body = {
-            'client_id': UAA_CLIENT_ID,
-            'client_secret': UAA_CLIENT_SECRET,
-            'grant_type': 'authorization_code',
-            'code': code,
-            'token_format': 'opaque',
-            'redirect_uri': UAA_REDIRECT_URI
-        }
-        token_url = f'{UAA_URL}/oauth/token'
-        # Make a request to the oauth/token endpoint to retrieve the access_token and user info
-        return requests.post(token_url, headers=HEADERS, data=body)
-
-
-    def _auth_uaa_user(email, username, request):
-        # Get or create the user
-        user, created = User.objects.get_or_create(username=username, email=email)
-        # Log in the user
-        login(request, user)
-        # Serialize the user
-        serializer = UserSerializer(user, context={'request': request})
-        return serializer, user
-
-
 class RefreshUAATokenView(views.APIView):
     # Remove authentication classes to not get a 401 error on an expired token
     # See https://github.com/encode/django-rest-framework/issues/2383
     authentication_classes = []
     permission_classes = [AllowAny]
 
+
     def post(self, request):
         """OAuth 2.0 Endpoint for refreshing the access_token using refresh_token."""
-        if not USE_UAA:        
+        if not USE_UAA:
             logging.getLogger(INFO_LOGGER).info(f"Tried to access RefreshUAATokenView, but UAA is disabled as the value of USE_UAA is {USE_UAA}")
             return Response('Authentication with UAA is not enabled.', status=status.HTTP_400_BAD_REQUEST)
         # get & check refresh token
@@ -116,6 +156,7 @@ class RefreshUAATokenView(views.APIView):
         return Response(resp.json(), status=status.HTTP_200_OK)
 
 
+    @staticmethod
     def _refresh(refresh_token):
         body = {
             'client_id': UAA_CLIENT_ID,
