@@ -525,8 +525,9 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
         confusion = scores["confusion_matrix"]
         confusion = np.asarray(confusion, dtype="int64")
 
-        # Delete empty rows and columns corresponding to missing pred/true labels from the confusion matrix
-        confusion, classes = delete_empty_rows_and_cols(confusion, classes)
+        if len(classes) <=  choices.DEFAULT_MAX_CONFUSION_CLASSES:
+            # Delete empty rows and columns corresponding to missing pred/true labels from the confusion matrix
+            confusion, classes = delete_empty_rows_and_cols(confusion, classes)
 
         scores["confusion_matrix"] = confusion.tolist()
 
