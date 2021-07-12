@@ -1,15 +1,14 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
+
 from .models import UserProfile
-from ...serializer_constants import FieldParseSerializer
 
 
-class ProfileSerializer(FieldParseSerializer, serializers.ModelSerializer):
+class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ('first_name', 'last_name', 'application', 'scope',)
-        read_only_fields = ('application', 'scope',)
-        fields_to_parse = ("scope",)
+        fields = ('first_name', 'last_name', 'application',)
+        read_only_fields = ('application',)
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):

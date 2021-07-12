@@ -1,23 +1,19 @@
 import json
-
-import requests
 import logging
+from typing import List
+
 import jwt
-
-from django.http import HttpResponseRedirect
-from django.contrib.auth import authenticate, login
+import requests
+from django.contrib.auth import login
 from django.contrib.auth.models import User
-
+from django.http import HttpResponseRedirect
 from rest_framework import status, views
+from rest_framework.authtoken.models import Token
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_auth import app_settings
 
-from toolkit.core.user_profile.models import UserProfile
-from toolkit.core.user_profile.serializers import UserSerializer
-from toolkit.settings import UAA_CLIENT_ID, UAA_CLIENT_SECRET, UAA_URL, UAA_FRONT_REDIRECT_URL, UAA_REDIRECT_URI, USE_UAA
-from toolkit.settings import INFO_LOGGER, ERROR_LOGGER
+from toolkit.settings import ERROR_LOGGER, INFO_LOGGER, UAA_CLIENT_ID, UAA_CLIENT_SECRET, UAA_FRONT_REDIRECT_URL, UAA_REDIRECT_URI, UAA_URL, USE_UAA
 
 
 HEADERS = {
@@ -60,7 +56,7 @@ class UAAView(views.APIView):
 
 
     @staticmethod
-    def _update_user_and_profile(user_profile, scope, request):
+    def _update_user_and_profile(user_profile: dict, scope: List[str], token: str, user_id: str, request):
         # Get or create the user
         username = user_profile["userName"]
         emails = [email["value"] for email in user_profile["emails"]]
@@ -70,17 +66,25 @@ class UAAView(views.APIView):
         last_name = name_dict.get("familyName", None)
 
         user, is_created = User.objects.get_or_create(username=username)
+        user.profile.uaa_account_id = user_id
+        user.profile.is_uaa_account = True
+
         if first_name: user.profile.first_name = first_name
         if last_name: user.profile.last_name = last_name
         if scope: user.profile.scope = json.dumps(scope, ensure_ascii=False)
         if email: user.email = email
 
-        user.profile.is_uaa_account = True
-
         user.profile.save()
         user.save()
 
+        # Delete existing once since we can't change it because the key
+        # is also the primary key.
+        Token.objects.filter(user=user).delete()
+        Token.objects.create(user=user, key=token)
+        return user
 
+
+    # TODO Rethink on whether this is the best approach for this.
     def sign_in_with_user(self, user, request):
         login(request, user)
 
@@ -122,7 +126,8 @@ class UAAView(views.APIView):
 
             uaa_user_profile = UAAView._get_uaa_user_profile(user_id, access_token)
 
-            UAAView._update_user_and_profile(uaa_user_profile, scope, request)
+            user = UAAView._update_user_and_profile(uaa_user_profile, scope, access_token, user_id, request)
+            self.sign_in_with_user(user, request)
             return HttpResponseRedirect(redirect_to=f'{UAA_FRONT_REDIRECT_URL}/uaa/?access_token={access_token}&refresh_token={refresh_token}')
 
         else:

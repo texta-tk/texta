@@ -26,8 +26,9 @@ from toolkit.core.project.serializers import (
     ProjectSerializer,
     ProjectSimplifiedSearchSerializer,
     ProjectSuggestFactNamesSerializer,
-    ProjectSuggestFactValuesSerializer
+    ProjectSuggestFactValuesSerializer, UaaGroupIdSerializer
 )
+from toolkit.core.project.uaa_helpers import create_django_users, get_texta_groups_user_belongs_to, get_uaa_user_and_token, get_users_inside_uaa_group, validate_uaa_setup
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.elastic.tools.aggregator import ElasticAggregator
@@ -39,7 +40,8 @@ from toolkit.elastic.tools.serializers import ElasticScrollSerializer
 from toolkit.elastic.tools.spam_detector import SpamDetector
 from toolkit.exceptions import InvalidInputDocument, ProjectValidationFailed, SerializerNotValid
 from toolkit.helper_functions import hash_string
-from toolkit.permissions.project_permissions import (AuthorProjAdminSuperadminAllowed, ExtraActionAccessInApplications, OnlySuperadminAllowed, ProjectEditAccessAllowed, ProjectAccessInApplicationsAllowed)
+from toolkit.permissions.project_permissions import (AuthorProjAdminSuperadminAllowed, ExtraActionAccessInApplications, OnlySuperadminAllowed, ProjectAccessInApplicationsAllowed, ProjectEditAccessAllowed)
+from toolkit.serializer_constants import EmptySerializer
 from toolkit.settings import RELATIVE_PROJECT_DATA_PATH, SEARCHER_FOLDER_KEY
 from toolkit.tools.autocomplete import Autocomplete
 from toolkit.view_constants import FeedbackIndexView
@@ -441,6 +443,26 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             return Response(count)
         else:
             return Response(0)
+
+
+    @action(detail=True, methods=['post'], serializer_class=EmptySerializer, permission_classes=[IsAuthenticated])
+    def get_user_uaa_scopes(self, request, pk=None, project_pk=None):
+        validate_uaa_setup()
+        user, bearer_token = get_uaa_user_and_token(request)
+        response = get_texta_groups_user_belongs_to(bearer_token, user=user)
+        return Response(response)
+
+
+    @action(detail=True, methods=['post'], serializer_class=UaaGroupIdSerializer, permission_classes=[IsAuthenticated])
+    def pull_uaa_scope_users_into_project(self, request, pk=None, project_pk=None):
+        serializer: UaaGroupIdSerializer = self.get_serializer(data=request.data)
+        project = self.get_object()
+        serializer.is_valid(raise_exception=True)
+        group_id = serializer.validated_data["group_id"]
+        request_user, bearer_token = get_uaa_user_and_token(request)
+        uaa_users = get_users_inside_uaa_group(bearer_token, group_id=group_id)
+        added_count = create_django_users(uaa_users, project)
+        return Response({"detail": f"Added {added_count} users to the project!"})
 
 
     @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactValuesSerializer, permission_classes=[ExtraActionAccessInApplications])

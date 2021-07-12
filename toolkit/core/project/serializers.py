@@ -291,3 +291,7 @@ class ProjectGetSpamSerializer(serializers.Serializer):
     aggregation_size = serializers.IntegerField(min_value=1, max_value=10000, default=10, help_text="Number of how many items should be returned per aggregation.")
     min_doc_count = serializers.IntegerField(min_value=1, default=10, help_text="Number to set the minimum document matches that are returned.")
     common_feature_fields = serializers.ListField(child=serializers.CharField(), help_text="Elasticsearch field names to match common patterns.")
+
+
+class UaaGroupIdSerializer(serializers.Serializer):
+    group_id = serializers.CharField(required=True, help_text="Unique identifier of a group inside UAA.")
