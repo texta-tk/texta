@@ -206,15 +206,15 @@ class DocumentImporterAPITestCase(APITestCase):
         self.assertTrue("page" not in document["_source"])
 
 
-    def test_updating_split_documents(self):
-        url = reverse(f"{VERSION_NAMESPACE}:update_split_document", kwargs={"pk": self.project.pk, "index": self.test_index_name})
-        payload = {"id_field": "uuid", "id_value": self.uuid, "text_field": "hello", "content": "hell"}
-        response = self.client.patch(url, data=payload, format="json")
-        print_output("test_updating_split_documents:response.data", response.data)
-        self.assertTrue(response.status_code == status.HTTP_200_OK)
-
-        query = Search().query(Q("term", **{"uuid.keyword": self.uuid})).to_dict()
-        hits = self.ec.es.search(index="*", body=query)
-        hits = hits["hits"]["hits"]
-        document = hits[0]["_source"]
-        self.assertTrue(document["hello"] == "hell")
+    # def test_updating_split_documents(self):
+    #     url = reverse(f"{VERSION_NAMESPACE}:update_split_document", kwargs={"pk": self.project.pk, "index": self.test_index_name})
+    #     payload = {"id_field": "uuid", "id_value": self.uuid, "text_field": "hello", "content": "hell"}
+    #     response = self.client.patch(url, data=payload, format="json")
+    #     print_output("test_updating_split_documents:response.data", response.data)
+    #     self.assertTrue(response.status_code == status.HTTP_200_OK)
+    #
+    #     query = Search().query(Q("term", **{"uuid.keyword": self.uuid})).to_dict()
+    #     hits = self.ec.es.search(index="*", body=query)
+    #     hits = hits["hits"]["hits"]
+    #     document = hits[0]["_source"]
+    #     self.assertTrue(document["hello"] == "hell")
