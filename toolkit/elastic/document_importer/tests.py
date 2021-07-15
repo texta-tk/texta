@@ -1,4 +1,7 @@
 # Create your tests here.
+import random
+import uuid
+
 from django.urls import reverse
 from elasticsearch import NotFoundError
 from elasticsearch_dsl import Q, Search
@@ -20,11 +23,13 @@ class DocumentImporterAPITestCase(APITestCase):
 
         self.validation_project = project_creation("validation_project", "random_index_name", self.user)
 
-        self.document_id = 41489489465
-        self.uuid = "adasda-5874856a-das4das98f4"
+        self.document_id = random.randint(10000000, 90000000)
+        self.uuid = uuid.uuid1()
         self.source = {"hello": "world", "uuid": self.uuid}
         self.document = {"_index": self.test_index_name, "_id": self.document_id, "_source": self.source}
 
+        self.target_field_random_key = uuid.uuid1()
+        self.target_field = f"{self.target_field_random_key}_court_case"
         self.ec = ElasticCore()
 
         self.client.login(username='first_user', password='pw')
@@ -36,13 +41,13 @@ class DocumentImporterAPITestCase(APITestCase):
         response = self.client.post(url, data={"documents": [self.document], "split_text_in_fields": []}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         document = self.ec.es.get(id=self.document_id, index=self.test_index_name)
-        self.assertTrue(document["_source"])
         print_output("_check_inserting_documents:response.data", response.data)
+        self.assertTrue(document["_source"])
 
 
     def tearDown(self) -> None:
         self.ec.delete_index(index=self.test_index_name, ignore=[400, 404])
-        query = Search().query(Q("exists", field="court_case")).to_dict()
+        query = Search().query(Q("exists", field=self.target_field)).to_dict()
         self.ec.es.delete_by_query(index="*", body=query, wait_for_completion=True)
 
 
@@ -134,11 +139,11 @@ class DocumentImporterAPITestCase(APITestCase):
             url,
             format="json",
             data={
-                "split_text_in_fields": ["court_case"],
+                "split_text_in_fields": [self.target_field],
                 "documents": [{
                     "_index": self.test_index_name,
                     "_source": {
-                        "court_case": "Paradna on kohtu alla antud kokkuleppe alusel selles, et tema, 25.10.2003 kell 00.30 koos,...",
+                        self.target_field: "Paradna on kohtu alla antud kokkuleppe alusel selles, et tema, 25.10.2003 kell 00.30 koos,...",
                         "uuid": uuid
                     }
                 }]},
@@ -162,7 +167,7 @@ class DocumentImporterAPITestCase(APITestCase):
                 "documents": [{
                     "_index": self.test_index_name,
                     "_source": {
-                        "court_case": "Paradna on kohtu alla antud kokkuleppe alusel selles, et tema, 25.10.2003 kell 00.30 koos,...",
+                        self.target_field: "Paradna on kohtu alla antud kokkuleppe alusel selles, et tema, 25.10.2003 kell 00.30 koos,...",
                         "uuid": uuid
                     }
                 }]},
@@ -187,7 +192,7 @@ class DocumentImporterAPITestCase(APITestCase):
                 "documents": [{
                     "_index": self.test_index_name,
                     "_source": {
-                        "court_case": "Paradna on kohtu alla antud kokkuleppe alusel selles, et tema, 25.10.2003 kell 00.30 koos,...",
+                        self.target_field: "Paradna on kohtu alla antud kokkuleppe alusel selles, et tema, 25.10.2003 kell 00.30 koos,...",
                         "uuid": uuid
                     }
                 }]},
