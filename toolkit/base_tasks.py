@@ -1,4 +1,5 @@
 import celery
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
 from toolkit.tools.logger import Logger
@@ -10,6 +11,7 @@ class BaseTask(celery.Task):
 
     def on_failure(self, exc, task_id, args, kwargs, einfo):
         Logger().error(f'Celery Task {task_id} failed', exc_info=exc)
+        super(BaseTask, self).on_failure(exc, task_id, args, kwargs, einfo)
 
 
 class TransactionAwareTask(BaseTask):
@@ -35,3 +37,27 @@ class TransactionAwareTask(BaseTask):
             transaction.on_commit(
                 lambda: super(TransactionAwareTask, self).apply_async(
                     *args, **kwargs))
+
+
+# TODO Make this into something more generic.
+# Only logs the error message instead of the whole Traceback.
+# At the moment only useable with MLPWorker.
+class QuietTransactionAwareTask(TransactionAwareTask):
+    exception_cache = set()
+
+
+    def on_failure(self, exc, task_id, args, kwargs, einfo):
+
+        # Deleting the MLP Worker Object is used to stop the task.
+        # However, the default behavior is to log out every exception and every document in MLP produces it.
+        # So we keep a count of which MLP worker id's we've seen so far, log out the first instance of failure
+        # and ignore the rest.
+        if isinstance(exc, ObjectDoesNotExist):
+            mlp_id = kwargs.get("mlp_id", None)
+            if mlp_id and mlp_id not in self.exception_cache:
+                self.exception_cache.add(mlp_id)
+                Logger().error(f'Celery Task {task_id} with kwargs {kwargs} failed with "{str(exc)}"! User deletion/cancellation likely, ignoring upcoming duplicate exceptions.')
+                super(BaseTask, self).on_failure(exc, task_id, args, kwargs, einfo)
+        else:
+            Logger().error(f'Celery Task {task_id} failed with "{str(exc)}"!')
+            super(BaseTask, self).on_failure(exc, task_id, args, kwargs, einfo)
