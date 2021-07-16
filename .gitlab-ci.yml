@@ -49,6 +49,8 @@ TestBack:
   script:
     - sh wait-for-uaa.sh
     - python manage.py test
+  except:
+    - tags
 
 
 BuildTestImage:
@@ -62,7 +64,6 @@ BuildTestImage:
     - docker push docker.texta.ee/texta/texta-rest/test:latest
   only:
     - master
-    - tags
 
 
 TestAndBuildFront:
@@ -73,7 +74,6 @@ TestAndBuildFront:
     strategy: depend
   only:
     - master
-    - tags
 
 BuildFinalImage:
   # Builds final image with new front
