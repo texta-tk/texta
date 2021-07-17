@@ -21,7 +21,7 @@ class ElasticSearcher:
     OUT_TEXT_WITH_ID = "text_with_id"
     OUT_DOC_WITH_ID = 'doc_with_id'
     OUT_DOC_WITH_TOTAL_HL_AGGS = 'doc_with_total_hl_aggs'
-    OUT_ID = '_id'
+    OUT_META = 'out_meta'
 
 
     def __init__(self,
@@ -186,7 +186,7 @@ class ElasticSearcher:
     def search(self, size=10):
         # by default return all fields
         source_fields = True
-        if self.output == self.OUT_ID:
+        if self.output == self.OUT_META:
             source_fields = False
         # In case size/from is included in query in pagination, don't overwrite it by passing the size parameter
         if 'size' in self.query:
@@ -253,7 +253,7 @@ class ElasticSearcher:
             # iterate through scroll
             while page_size > 0 and scroll_break is False:
                 # process output
-                if self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID, self.OUT_TEXT, self.OUT_TEXT_WITH_ID, self.OUT_ID):
+                if self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID, self.OUT_TEXT, self.OUT_TEXT_WITH_ID, self.OUT_META):
                     if self.callback_progress:
                         self.callback_progress.update(page_size)
                     for hit in page['hits']['hits']:
@@ -269,8 +269,8 @@ class ElasticSearcher:
                             num_scrolled += 1
                             parsed_doc = self._parse_doc(hit)
 
-                            if self.output == self.OUT_ID:
-                                yield hit["_id"]
+                            if self.output == self.OUT_META:
+                                yield hit
 
                             elif self.output == self.OUT_TEXT:
                                 for field in parsed_doc.values():

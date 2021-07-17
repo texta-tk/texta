@@ -6,7 +6,7 @@ from celery import group
 from celery.decorators import task
 from texta_mlp.mlp import MLP
 
-from toolkit.base_tasks import BaseTask, TransactionAwareTask
+from toolkit.base_tasks import BaseTask, QuietTransactionAwareTask, TransactionAwareTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.tools.document import ESDocObject, ElasticDocument
 from toolkit.elastic.tools.searcher import ElasticSearcher
@@ -48,43 +48,68 @@ def apply_mlp_on_docs(self, docs: List[dict], analyzers: List[str], fields_to_pa
     return response
 
 
-@task(name="apply_mlp_on_es_doc", base=TransactionAwareTask, queue=CELERY_MLP_TASK_QUEUE, bind=True)
-def apply_mlp_on_es_doc(self, document_id, mlp_id):
+def get_mlp_object(mlp_id: int):
     """
-    Applies MLP on document retrieved from ES.
-    Updates document in ES.
+    This will fail when pulling a MLP task object which doesn't
+    exist anymore, like when the users wants to cancel the task.
+    :param mlp_id: Primary Key of the MLPWorker database table.
+    :return: ORM of the MLPWorker object.
     """
-
     mlp_object = MLPWorker.objects.get(pk=mlp_id)
-    task_object = mlp_object.task
-    # Get the necessary fields.
-    indices: List[str] = mlp_object.get_indices()
-    indices_as_string = ",".join(indices)
-    field_data: List[str] = json.loads(mlp_object.fields)
-    analyzers: List[str] = json.loads(mlp_object.analyzers)
+    return mlp_object
 
-    # retrieve document from ES
-    document = ESDocObject(document_id, indices_as_string)
 
+def apply_mlp_on_document(document: ESDocObject, analyzers: List[str], field_data: List[str], mlp_id: int, document_id: str):
     # Apply MLP
     try:
         load_mlp()
         document.apply_mlp(mlp, analyzers, field_data)
         logging.getLogger(INFO_LOGGER).info(f"Processed document for MLP Task ID: {mlp_id}")
+        return document
 
     except Exception as e:
-        # in case MLP fails, add error to document
+        # In case MLP fails, add error to document
         err_msg = f"{e}; Document ID: {document_id}"
-        logging.getLogger(ERROR_LOGGER).exception(err_msg)
+        logging.getLogger(ERROR_LOGGER).error(err_msg)
         document.add_field("mlp_error", str(e))
+        return document
 
-    # Update document in ES
+
+def update_document_in_es(document: ESDocObject, mlp_id: int, document_id: str):
+    """
+    Updates the document inside Elasticsearch, either with the MLP results or the
+    error messages.
+
+    :param document: Wrapper for the Elasticsearch document.
+    :param mlp_id: Primary Key value for the MLPWorker object.
+    :param document_id: Elasticsearch document id by which the document is retrieved.
+    """
     try:
         document.update()
         logging.getLogger(INFO_LOGGER).info(f"Updated document for MLP Task ID: {mlp_id}")
     except Exception as e:
         err_msg = f"{e}; Document ID: {document_id}"
-        logging.getLogger(ERROR_LOGGER).exception(err_msg)     
+        logging.getLogger(ERROR_LOGGER).exception(err_msg)
+
+
+@task(name="apply_mlp_on_es_doc", base=QuietTransactionAwareTask, queue=CELERY_MLP_TASK_QUEUE, bind=True)
+def apply_mlp_on_es_doc(self, index: str, document_id: str, mlp_id: int):
+    """
+    Applies MLP on document retrieved from ES.
+    Updates document in ES.
+    """
+    mlp_object = get_mlp_object(mlp_id)
+
+    task_object = mlp_object.task
+    # Get the necessary fields.
+    field_data: List[str] = json.loads(mlp_object.fields)
+    analyzers: List[str] = json.loads(mlp_object.analyzers)
+
+    # retrieve document from ES
+    document = ESDocObject(document_id, index)
+    document = apply_mlp_on_document(document, analyzers, field_data, mlp_id, document_id)
+
+    update_document_in_es(document, mlp_id, document_id)
 
     # Update progress
     task_object.update_process_iteration(task_object.total, "MLP")
@@ -110,7 +135,7 @@ def start_mlp_worker(self, mlp_id: int):
     searcher = ElasticSearcher(
         query=json.loads(mlp_object.query),
         indices=indices,
-        output=ElasticSearcher.OUT_ID,
+        output=ElasticSearcher.OUT_META,
         callback_progress=show_progress,
         scroll_size=es_scroll_size,
         scroll_timeout=f"{es_timeout}m"
@@ -119,17 +144,17 @@ def start_mlp_worker(self, mlp_id: int):
     for index in indices:
         searcher.core.add_texta_facts_mapping(index=index)
     # list the id-s from generator
-    doc_ids = list(searcher)
+    doc_metas = list(searcher)
     # update progress
-    show_progress.update_step(f'Applying MLP to {len(doc_ids)} documents')
+    show_progress.update_step(f'Applying MLP to {len(doc_metas)} documents')
     show_progress.update_view(0)
     # update total doc count
     task_object = mlp_object.task
-    task_object.total = len(doc_ids)
+    task_object.total = len(doc_metas)
     task_object.save()
 
     # pass document id-s to the next task
-    chain = group(apply_mlp_on_es_doc.s(document_id=doc_id, mlp_id=mlp_id) for doc_id in doc_ids) | end_mlp_task.si(mlp_id)
+    chain = group(apply_mlp_on_es_doc.s(index=doc_meta["_index"], document_id=doc_meta["_id"], mlp_id=mlp_id) for doc_meta in doc_metas) | end_mlp_task.si(mlp_id)
     chain.delay()
     return True
 

@@ -18,11 +18,13 @@ class ESDocObject:
     An object connected to ES document. Retrieves the document from ES on init.
     """
 
-    def __init__(self, document_id, index):
+
+    def __init__(self, document_id, index: str):
         self.core = ElasticCore()
         self.document_id = document_id
         self.index = index
         self.document = self.get()
+
 
     @elastic_connection
     def get(self):
@@ -37,6 +39,7 @@ class ESDocObject:
             "_source": document["_source"]
         }
 
+
     def apply_mlp(self, mlp: MLP, analyzers: List[str], field_data: List[str]):
         """
         Applies MLP to the selected fields and combines the results.
@@ -46,12 +49,14 @@ class ESDocObject:
         self.document["_source"] = {**document_source, **mlp_processed}
         return True
 
+
     def add_field(self, field_name, field_content):
         """
         Adds field to document source.
         """
         self.document["_source"][field_name] = field_content
         return True
+
 
     @elastic_connection
     def update(self, retry_on_conflict=3):
@@ -67,6 +72,7 @@ class ESDocObject:
             retry_on_conflict=retry_on_conflict
         )
 
+
     @elastic_connection
     def delete(self):
         """
@@ -75,14 +81,12 @@ class ESDocObject:
         return self.core.es.delete(index=self.index, id=self.document_id)
 
 
-
-
-### This class should be modified for bulk operations etc
-
+# This class should be modified for bulk operations etc
 class ElasticDocument:
     """
     Everything related to managing documents in Elasticsearch
     """
+
 
     def __init__(self, index):
         self.core = ElasticCore()
