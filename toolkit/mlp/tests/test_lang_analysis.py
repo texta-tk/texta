@@ -65,6 +65,19 @@ class ApplyLangViewsTests(APITransactionTestCase):
                 self.assertTrue(lang_value == "et")
 
 
+    def test_applying_lang_detect_with_raw_query(self):
+        mlp_field = f"{TEST_FIELD}_mlp"
+        query_string = "inimene"
+        payload = {
+            "description": "TestingIndexProcessing",
+            "field": TEST_FIELD,
+            "query": {'query': {'match': {'comment_content_lemmas': query_string}}}
+        }
+        response = self.client.post(self.url, data=payload, format="json")
+        print_output("test_applying_lang_detect_with_raw_query:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+
+
     def test_applying_lang_detect_with_faulty_field_path(self):
         payload = {
             "description": "TestingIndexProcessing",
@@ -83,6 +96,26 @@ class ApplyLangViewsTests(APITransactionTestCase):
         }
         response = self.client.post(self.url, data=payload, format="json")
         print_output("test_with_non_existing_indices_in_payload:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+
+
+    def test_with_invalid_queries(self):
+        payload = {
+            "description": "TestingIndexProcessing",
+            "field": TEST_FIELD,
+            "query": "foo"
+        }
+        response = self.client.post(self.url, data=payload, format="json")
+        print_output("test_with_invalid_queries_v1:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+
+        payload = {
+            "description": "TestingIndexProcessing",
+            "field": TEST_FIELD,
+            "query": json.dumps("foo")
+        }
+        response = self.client.post(self.url, data=payload, format="json")
+        print_output("test_with_invalid_queries_v2:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
 
 

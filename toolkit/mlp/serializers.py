@@ -1,5 +1,5 @@
 import json
-
+from typing import Union
 from django.urls import reverse
 from rest_framework import serializers
 from texta_mlp.mlp import SUPPORTED_ANALYZERS
@@ -77,7 +77,7 @@ class ApplyLangOnIndicesSerializer(serializers.ModelSerializer, IndicesSerialize
     author_username = serializers.CharField(source='author.username', read_only=True, required=False)
     task = TaskSerializer(read_only=True, required=False)
     url = serializers.SerializerMethodField()
-    query = serializers.JSONField(help_text='Query in JSON format', required=False)
+    query = serializers.JSONField(help_text='Query in JSON format', required=False, default=json.dumps(EMPTY_QUERY))
     field = serializers.CharField(required=True, allow_blank=False)
 
 
@@ -93,6 +93,25 @@ class ApplyLangOnIndicesSerializer(serializers.ModelSerializer, IndicesSerialize
         if not value or not set([value]).issubset(project_fields):
             raise serializers.ValidationError(f'Entered fields not in current project fields: {project_fields}')
         return value
+
+
+    def validate_query(self, query: Union[str, dict]):
+        """
+        Check if the query is formatted correctly and store it as JSON string,
+        if it is passed as a JSON dict.
+        """
+        if not isinstance(query, dict):
+            try:
+                query = json.loads(query)
+            except:
+                raise serializers.ValidationError(f"Incorrect query: '{query}'. Query should be formatted as a JSON dict or a JSON string.")
+            # If loaded query is not JSON dict, raise ValidatioNError
+            if not isinstance(query, dict):
+                raise serializers.ValidationError(f"Incorrect query: '{query}'. Query should contain a JSON dict.")
+
+        # Ensure that the query is stored as a JSON string
+        query = json.dumps(query)
+        return query
 
 
     class Meta:
