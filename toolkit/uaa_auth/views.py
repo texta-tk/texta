@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect
 from rest_framework import status, views
 from rest_framework.authtoken.models import Token
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import APIException, ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
@@ -52,7 +52,12 @@ class UAAView(views.APIView):
         }
         token_url = f'{UAA_URL}/oauth/token'
         # Make a request to the oauth/token endpoint to retrieve the access_token and user info
-        return requests.post(token_url, headers=HEADERS, data=body)
+        response = requests.post(token_url, headers=HEADERS, data=body)
+        if response.ok:
+            return response.json(), response.status_code
+        else:
+            logging.getLogger(ERROR_LOGGER).error(response.content)
+            raise APIException("Could not fetch the UAA access token!", code=response.status_code)
 
 
     @staticmethod
@@ -109,19 +114,18 @@ class UAAView(views.APIView):
 
         code = request.query_params.get('code', None)
         if code:
-            resp = self._get_access_token(code)
+            resp, status_code = self._get_access_token(code)
             # On error, send a 400 resp with the error with the json contents
-            if resp.status_code != 200:
+            if status_code != 200:
                 logging.getLogger(INFO_LOGGER).info(f"UAAView _get_access_token returned status {resp.status_code}!")
                 return Response(f"UAAView _get_access_token returned status {resp.status_code}!", status=status.HTTP_400_BAD_REQUEST)
 
             # get response json
-            resp_json = resp.json()
-            access_token = resp_json['access_token']
-            refresh_token = resp_json['refresh_token']
+            access_token = resp['access_token']
+            refresh_token = resp['refresh_token']
 
-            jit_user_info = self._decode_jit_token(resp_json['id_token'])
-            scope = jit_user_info['scope']
+            jit_user_info = self._decode_jit_token(resp['id_token'])
+            scope = resp['scope']
             user_id = jit_user_info['user_id']
 
             uaa_user_profile = UAAView._get_uaa_user_profile(user_id, access_token)

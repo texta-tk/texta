@@ -41,11 +41,11 @@ class UaaAuthentication(authentication.BaseAuthentication):
         username, email, resp_json = self._validate_token(auth[1].decode(), request)
         try:
             user = User.objects.get(username=username, email=email)
+            return (user, None)
+
         except User.DoesNotExist:
             logging.getLogger(INFO_LOGGER).info(f"UaaAuthentication didn't find a matching user (OAuth tokens possibly expired) - username: {username} | email: {email} | resp_json: {resp_json}")
             raise exceptions.AuthenticationFailed(resp_json)
-
-        return (user, None)
 
 
     def _validate_token(self, bearer_token: str, request):

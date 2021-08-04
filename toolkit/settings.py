@@ -112,6 +112,7 @@ CORS_ALLOW_ALL_ORIGINS = parse_bool_env("TEXTA_CORS_ALLOW_ALL_ORIGINS", False)
 
 # CF UAA OAUTH OPTIONS
 USE_UAA = parse_bool_env("TEXTA_USE_UAA", False)
+UAA_SCOPES = os.getenv("TEXTA_UAA_SCOPES", "openid texta.*")
 # UAA server URL
 UAA_URL = os.getenv("TEXTA_UAA_URL", "http://localhost:8080/uaa")
 # Callback URL defined on the UAA server, to which the user will be redirected after logging in on UAA
