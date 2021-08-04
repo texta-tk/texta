@@ -13,7 +13,18 @@ from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.tagger.models import Tagger
-from toolkit.test_settings import (TEST_EMPTY_QUERY, TEST_FACT_NAME, TEST_FIELD, TEST_FIELD_CHOICE, TEST_KEEP_PLOT_FILES, TEST_QUERY, TEST_TAGGER_MULTICLASS, TEST_VERSION_PREFIX)
+from toolkit.test_settings import (
+    TEST_BIN_FACT_QUERY,
+    TEST_EMPTY_QUERY,
+    TEST_FACT_NAME,
+    TEST_FIELD,
+    TEST_FIELD_CHOICE,
+    TEST_KEEP_PLOT_FILES,
+    TEST_POS_LABEL,
+    TEST_QUERY,
+    TEST_TAGGER_MULTICLASS,
+    TEST_VERSION_PREFIX
+)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
@@ -74,6 +85,9 @@ class TaggerViewTests(APITransactionTestCase):
     def test_run(self):
         self.run_create_multiclass_tagger_training_and_task_signal()
         self.run_create_balanced_multiclass_tagger_training_and_task_signal()
+        self.run_create_multiclass_tagger_with_insufficient_number_of_examples()
+        self.run_create_binary_multiclass_tagger_training_and_task_signal()
+        self.run_create_binary_multiclass_tagger_training_and_task_signal_invalid_payload()
         self.run_multiclass_tag_text(self.test_tagger_ids)
         self.run_apply_multiclass_tagger_to_index()
         self.run_apply_mutliclass_tagger_to_index_invalid_input()
@@ -131,6 +145,120 @@ class TaggerViewTests(APITransactionTestCase):
                 self.assertTrue(created_tagger.task is not None)
                 # Check if Tagger gets trained and completed
                 self.assertEqual(created_tagger.task.status, Task.STATUS_COMPLETED)
+
+
+    def run_create_multiclass_tagger_with_insufficient_number_of_examples(self):
+        """Tests the endpoint for a new multiclass Tagger with insufficient number of examples."""
+        # run test for multiclass training
+        # run test for each vectorizer & classifier option
+        vectorizer_opt = self.vectorizer_opts[0]
+        classifier_opt = self.classifier_opts[0]
+
+        # Pos label is undefined by the user
+        invalid_payload = {
+            "description": "TestBinaryTaggerMultiClass",
+            "fields": TEST_FIELD_CHOICE,
+            "fact_name": TEST_FACT_NAME,
+            "query": json.dumps(TEST_EMPTY_QUERY),
+            "vectorizer": vectorizer_opt,
+            "classifier": classifier_opt,
+            "maximum_sample_size": 2000,
+            "minimum_sample_size": 1000,
+            "negative_multiplier": 1.0,
+            "score_threshold": 0.1,
+        }
+
+        response = self.client.post(self.url, invalid_payload, format='json')
+        print_output('test_create_multiclass_tagger_with_insufficient_number_of_examples:response.data', response.data)
+        # Check if creating the Tagger fails with status code 400
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+    def run_create_binary_multiclass_tagger_training_and_task_signal(self):
+        """Tests the endpoint for a new binary multiclass Tagger, and if a new Task gets created via the signal"""
+        # run test for multiclass training
+        # run test for each vectorizer & classifier option
+        vectorizer_opt = self.vectorizer_opts[0]
+        classifier_opt = self.classifier_opts[0]
+        payload = {
+            "description": "TestBinaryTaggerMultiClass",
+            "fields": TEST_FIELD_CHOICE,
+            "fact_name": TEST_FACT_NAME,
+            "query": json.dumps(TEST_BIN_FACT_QUERY),
+            "vectorizer": vectorizer_opt,
+            "classifier": classifier_opt,
+            "maximum_sample_size": 150,
+            "negative_multiplier": 1.0,
+            "score_threshold": 0.1,
+            "pos_label": TEST_POS_LABEL,
+        }
+        # procees to analyze result
+        response = self.client.post(self.url, payload, format='json')
+        print_output('test_create_binary_multiclass_tagger_training_and_task_signal:response.data', response.data)
+        # Check if Tagger gets created
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        created_tagger = Tagger.objects.get(id=response.data['id'])
+
+        # Check if not errors
+        self.assertEqual(created_tagger.task.errors, '[]')
+        # Remove tagger files after test is done
+        self.add_cleanup_files(created_tagger.id)
+        # Check if Task gets created via a signal
+        self.assertTrue(created_tagger.task is not None)
+        # Check if Tagger gets trained and completed
+        self.assertEqual(created_tagger.task.status, Task.STATUS_COMPLETED)
+
+        # Test if each class has correct number of examples
+        num_examples = json.loads(created_tagger.num_examples)
+        print_output('test_balanced_tagger_num_examples_correct:num_examples', num_examples)
+        for class_size in num_examples.values():
+            self.assertTrue(class_size, payload["maximum_sample_size"])
+
+
+    def run_create_binary_multiclass_tagger_training_and_task_signal_invalid_payload(self):
+        """Tests the endpoint for a new binary multiclass Tagger with invalid payload."""
+        # run test for multiclass training
+        # run test for each vectorizer & classifier option
+        vectorizer_opt = self.vectorizer_opts[0]
+        classifier_opt = self.classifier_opts[0]
+
+        # Pos label is undefined by the user
+        invalid_payload_1 = {
+            "description": "TestBinaryTaggerMultiClassMissingPosLabel",
+            "fields": TEST_FIELD_CHOICE,
+            "fact_name": TEST_FACT_NAME,
+            "query": json.dumps(TEST_BIN_FACT_QUERY),
+            "vectorizer": vectorizer_opt,
+            "classifier": classifier_opt,
+            "maximum_sample_size": 150,
+            "negative_multiplier": 1.0,
+            "score_threshold": 0.1,
+        }
+
+        response = self.client.post(self.url, invalid_payload_1, format='json')
+        print_output('test_create_binary_multiclass_tagger_training_and_task_signal_missing_pos_label:response.data', response.data)
+        # Check if creating the Tagger fails with status code 400
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+        # The inserted pos label is not present in the data
+        invalid_payload_2 = {
+            "description": "TestBinaryTaggerMultiClassIncorrectPosLabel",
+            "fields": TEST_FIELD_CHOICE,
+            "fact_name": TEST_FACT_NAME,
+            "query": json.dumps(TEST_BIN_FACT_QUERY),
+            "vectorizer": vectorizer_opt,
+            "classifier": classifier_opt,
+            "maximum_sample_size": 150,
+            "negative_multiplier": 1.0,
+            "score_threshold": 0.1,
+            "pos_label": "invalid_fact_val"
+        }
+        # procees to analyze result
+        response = self.client.post(self.url, invalid_payload_2, format='json')
+        print_output('test_create_binary_multiclass_tagger_training_and_task_signal_invalid_pos_label:response.data', response.data)
+        # Check if creating the Tagger fails with status code 400
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
     def run_create_balanced_multiclass_tagger_training_and_task_signal(self):

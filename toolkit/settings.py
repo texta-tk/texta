@@ -2,17 +2,30 @@ import logging
 import os
 import pathlib
 import warnings
+from datetime import timedelta
 
+import environ
 from corsheaders.defaults import default_headers
 from kombu import Exchange, Queue
 
-from .helper_functions import download_bert_requirements, download_mlp_requirements, parse_bool_env, parse_list_env_headers, parse_tuple_env_headers, download_nltk_resources
+from .helper_functions import download_bert_requirements, download_mlp_requirements, download_nltk_resources, parse_bool_env, parse_list_env_headers, parse_tuple_env_headers, prepare_mandatory_directories
 from .logging_settings import setup_logging
 
 
+# Ignore Python Warning base class
+warnings.simplefilter(action="ignore", category=Warning)
+
+env_file_path = os.getenv("TEXTA_ENV_FILE", None)
+if env_file_path:
+    environ.Env.read_env(env_file=env_file_path)
+
+env = environ.Env()
+
 # Used in cases where multiple Toolkit instances share resources like Elasticsearch or DB.
 # Helps differentiate them when creating static index names.
-DEPLOY_KEY = os.getenv("TEXTA_DEPLOY_KEY", 1)
+DEPLOY_KEY = env.int("TEXTA_DEPLOY_KEY", default=1)
+
+SEARCHER_FOLDER_KEY = "searcher"
 
 ### CORE SETTINGS ###
 # NOTE: THESE ARE INITIAL VARIABLES IMPORTED FROM THE ENVIRONMENT
@@ -22,11 +35,11 @@ DEPLOY_KEY = os.getenv("TEXTA_DEPLOY_KEY", 1)
 # ES_URL = get_core_setting("ES_URL")
 
 CORE_SETTINGS = {
-    "TEXTA_ES_URL": os.getenv("TEXTA_ES_URL", "http://elastic-dev.texta.ee:9200"),
-    "TEXTA_ES_PREFIX": os.getenv("TEXTA_ES_PREFIX", ""),
-    "TEXTA_ES_USERNAME": os.getenv("TEXTA_ES_USER", ""),
-    "TEXTA_ES_PASSWORD": os.getenv("TEXTA_ES_PASSWORD", ""),
-    "TEXTA_EVALUATOR_MEMORY_BUFFER_GB": os.getenv("TEXTA_EVALUATOR_MEMORY_BUFFER_GB", "")
+    "TEXTA_ES_URL": env("TEXTA_ES_URL", default="http://elastic-dev.texta.ee:9200"),
+    "TEXTA_ES_PREFIX": env("TEXTA_ES_PREFIX", default=""),
+    "TEXTA_ES_USERNAME": env("TEXTA_ES_USER", default=""),
+    "TEXTA_ES_PASSWORD": env("TEXTA_ES_PASSWORD", default=""),
+    "TEXTA_EVALUATOR_MEMORY_BUFFER_GB": env("TEXTA_EVALUATOR_MEMORY_BUFFER_GB", default="")
 }
 ### END OF CORE SETTINGS ###
 
@@ -38,13 +51,13 @@ TEXTA_TAGS_KEY = "texta_facts"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("TEXTA_SECRET_KEY", "eqr9sjz-&baah&c%ejkaorp)a1$q63y0%*a^&fv=y$(bbe5+(b")
+SECRET_KEY = env("TEXTA_SECRET_KEY", default="eqr9sjz-&baah&c%ejkaorp)a1$q63y0%*a^&fv=y$(bbe5+(b")
 # SECURITY WARNING: don"t run with debug turned on in production!
-DEBUG = parse_bool_env("TEXTA_DEBUG", True)
+DEBUG = env.bool("TEXTA_DEBUG", default=True)
 # ALLOWED HOSTS
-ALLOWED_HOSTS = parse_list_env_headers("TEXTA_ALLOWED_HOSTS", ["*"])
+ALLOWED_HOSTS = env.list("TEXTA_ALLOWED_HOSTS", default=["*"])
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv("TEXTA_MAX_UPLOAD", 1024 * 1024 * 1024))
+DATA_UPLOAD_MAX_MEMORY_SIZE = env.int("TEXTA_MAX_UPLOAD", default=1024 * 1024 * 1024)
 
 NAN_LANGUAGE_TOKEN_KEY = "UNK"
 
@@ -78,6 +91,7 @@ INSTALLED_APPS = [
     "toolkit.docparser",
     "toolkit.evaluator",
     "toolkit.summarizer",
+    "toolkit.celery_management",
     # TEXTA Extension Apps
     # "docscraper",
     # THIRD PARTY
@@ -107,21 +121,21 @@ CSRF_COOKIE_NAME = "XSRF-TOKEN"
 CORS_ORIGIN_WHITELIST = ["http://localhost:4200", 'https://law-test-8795b.web.app']
 CSRF_TRUSTED_ORIGINS = ["localhost"]
 CORS_ALLOW_HEADERS = list(default_headers) + ["x-xsrf-token"]
-CORS_ALLOW_CREDENTIALS = parse_bool_env("TEXTA_CORS_ALLOW_CREDENTIALS", True)
-CORS_ALLOW_ALL_ORIGINS = parse_bool_env("TEXTA_CORS_ALLOW_ALL_ORIGINS", False)
+CORS_ALLOW_CREDENTIALS = env.bool("TEXTA_CORS_ALLOW_CREDENTIALS", default=True)
+CORS_ALLOW_ALL_ORIGINS = env.bool("TEXTA_CORS_ALLOW_ALL_ORIGINS", default=False)
 
 # CF UAA OAUTH OPTIONS
-USE_UAA = parse_bool_env("TEXTA_USE_UAA", False)
-UAA_SCOPES = os.getenv("TEXTA_UAA_SCOPES", "openid texta.*")
+USE_UAA = env.bool("TEXTA_USE_UAA", default=False)
+UAA_SCOPES = env.str("TEXTA_UAA_SCOPES", default="openid texta.*")
 # UAA server URL
-UAA_URL = os.getenv("TEXTA_UAA_URL", "http://localhost:8080/uaa")
+UAA_URL = env("TEXTA_UAA_URL", default="http://localhost:8080/uaa")
 # Callback URL defined on the UAA server, to which the user will be redirected after logging in on UAA
-UAA_REDIRECT_URI = os.getenv("TEXTA_UAA_REDIRECT_URI", "http://localhost:8000/api/v1/uaa/callback")
+UAA_REDIRECT_URI = env("TEXTA_UAA_REDIRECT_URI", default="http://localhost:8000/api/v1/uaa/callback")
 # TEXTA front URL where the user will be redirected after the redirect_uri
-UAA_FRONT_REDIRECT_URL = os.getenv("TEXTA_UAA_FRONT_REDIRECT_URL", "http://localhost:4200/oauth")
+UAA_FRONT_REDIRECT_URL = env("TEXTA_UAA_FRONT_REDIRECT_URL", default="http://localhost:4200/oauth")
 # OAuth client application (eg texta_toolkit) id and secret.
-UAA_CLIENT_ID = os.getenv("TEXTA_UAA_CLIENT_ID", "login")
-UAA_CLIENT_SECRET = os.getenv("TEXTA_UAA_CLIENT_SECRET", "loginsecret")
+UAA_CLIENT_ID = env("TEXTA_UAA_CLIENT_ID", default="login")
+UAA_CLIENT_SECRET = env("TEXTA_UAA_CLIENT_SECRET", default="loginsecret")
 # For reference:
 # https://docs.cloudfoundry.org/concepts/architecture/uaa.html
 # https://docs.cloudfoundry.org/api/uaa/version/74.24.0/index.html
@@ -169,7 +183,7 @@ MIDDLEWARE = [
 ]
 
 # we can optionally disable csrf for testing purposes
-USE_CSRF = parse_bool_env("TEXTA_USE_CSRF", False)
+USE_CSRF = env.bool("TEXTA_USE_CSRF", default=False)
 if USE_CSRF:
     MIDDLEWARE.append("django.middleware.csrf.CsrfViewMiddleware")
 else:
@@ -198,13 +212,13 @@ WSGI_APPLICATION = "toolkit.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": os.getenv("DJANGO_DATABASE_ENGINE", "django.db.backends.sqlite3"),
-        "NAME": os.getenv("DJANGO_DATABASE_NAME", os.path.join(BASE_DIR, "data", "db.sqlite3")),
-        "USER": os.getenv("DJANGO_DATABASE_USER", ""),  # Not used with sqlite3.
-        "PASSWORD": os.getenv("DJANGO_DATABASE_PASSWORD", ""),  # Not used with sqlite3.
-        "HOST": os.getenv("DJANGO_DATABASE_HOST", ""),
+        "ENGINE": env("DJANGO_DATABASE_ENGINE", default="django.db.backends.sqlite3"),
+        "NAME": env("DJANGO_DATABASE_NAME", default=os.path.join(BASE_DIR, "data", "db.sqlite3")),
+        "USER": env("DJANGO_DATABASE_USER", default=""),  # Not used with sqlite3.
+        "PASSWORD": env("DJANGO_DATABASE_PASSWORD", default=""),  # Not used with sqlite3.
+        "HOST": env("DJANGO_DATABASE_HOST", default=""),
         # Set to empty string for localhost. Not used with sqlite3.
-        "PORT": os.getenv("DJANGO_DATABASE_PORT", ""),
+        "PORT": env("DJANGO_DATABASE_PORT", default=""),
         # Set to empty string for default. Not used with sqlite3.
         "BACKUP_COUNT": 5,
     }
@@ -239,33 +253,32 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
-ELASTIC_CLUSTER_VERSION = int(os.getenv("TEXTA_ELASTIC_VERSION", "7"))
+ELASTIC_CLUSTER_VERSION = env.int("TEXTA_ELASTIC_VERSION", default=7)
 
 # OTHER ELASTICSEARCH OPTIONS
 ES_CONNECTION_PARAMETERS = {
-    "use_ssl": parse_bool_env("TEXTA_ES_USE_SSL", False),
-    "verify_certs": parse_bool_env("TEXTA_ES_VERIFY_CERTS", False),
-    "ca_certs": os.getenv("TEXTA_ES_CA_CERT_PATH", None),
-    "client_cert": os.getenv("TEXTA_ES_CLIENT_CERT_PATH", None),
-    "client_key": os.getenv("TEXTA_ES_CLIENT_KEY_PATH", None),
-    "timeout": int(os.getenv("TEXTA_ES_TIMEOUT")) if os.getenv("TEXTA_ES_TIMEOUT", None) else 60,
-    "sniff_on_start": parse_bool_env("TEXTA_ES_SNIFF_ON_START", True),
-    "sniff_on_connection_fail": parse_bool_env("TEXTA_ES_SNIFF_ON_FAIL", True)
+    "use_ssl": env.bool("TEXTA_ES_USE_SSL", default=False),
+    "verify_certs": env.bool("TEXTA_ES_VERIFY_CERTS", default=False),
+    "ca_certs": env("TEXTA_ES_CA_CERT_PATH", default=None),
+    "client_cert": env("TEXTA_ES_CLIENT_CERT_PATH", default=None),
+    "client_key": env("TEXTA_ES_CLIENT_KEY_PATH", default=None),
+    "timeout": env.int("TEXTA_ES_TIMEOUT", default=60),
+    "sniff_on_start": env.bool("TEXTA_ES_SNIFF_ON_START", default=True),
+    "sniff_on_connection_fail": env.bool("TEXTA_ES_SNIFF_ON_FAIL", default=True)
 }
 
 # CELERY
-BROKER_URL = os.getenv('TEXTA_REDIS_URL', 'redis://localhost:6379')
+BROKER_URL = env('TEXTA_REDIS_URL', default='redis://localhost:6379')
 CELERY_RESULT_BACKEND = BROKER_URL
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERYD_PREFETCH_MULTIPLIER = 1
-CELERY_ALWAYS_EAGER = parse_bool_env("TEXTA_CELERY_ALWAYS_EAGER", False)
+CELERY_ALWAYS_EAGER = env.bool("TEXTA_CELERY_ALWAYS_EAGER", default=False)
 CELERY_LONG_TERM_TASK_QUEUE = "long_term_tasks"
 CELERY_SHORT_TERM_TASK_QUEUE = "short_term_tasks"
 CELERY_MLP_TASK_QUEUE = "mlp_queue"
-
 
 CELERY_QUEUES = (
     Queue(CELERY_LONG_TERM_TASK_QUEUE, exchange=CELERY_LONG_TERM_TASK_QUEUE, routing_key=CELERY_LONG_TERM_TASK_QUEUE),
@@ -278,80 +291,65 @@ CELERY_DEFAULT_QUEUE = 'short_term_tasks'
 CELERY_DEFAULT_EXCHANGE = 'short_term_tasks'
 CELERY_DEFAULT_ROUTING_KEY = 'short_term_tasks'
 
+CELERYBEAT_SCHEDULE = {
+    'sync_indices_in_elasticsearch': {
+        'task': 'sync_indices_in_elasticsearch',
+        'schedule': timedelta(minutes=1),
+        'options': {"queue": CELERY_DEFAULT_QUEUE}
+    }
+}
+
 ### DATA DIRECTORIES
 
 # data dir for files generated by TK
-DATA_DIR = os.getenv("TEXTA_DATA_DIR", os.path.join(BASE_DIR, "data"))
+DATA_DIR = env("TEXTA_DATA_DIR", default=os.path.join(BASE_DIR, "data"))
 # base dir for 3rd party models (e.g. MLP or BERT)
 # defaults to "external" in data dir
-EXTERNAL_DATA_DIR = os.getenv("TEXTA_EXTERNAL_DATA_DIR", os.path.join(DATA_DIR, "external"))
+EXTERNAL_DATA_DIR = env("TEXTA_EXTERNAL_DATA_DIR", default=os.path.join(DATA_DIR, "external"))
 # cache folder for BERT
 CACHE_DIR_DEFAULT = os.path.join(EXTERNAL_DATA_DIR, ".cache")
-CACHE_DIR = os.getenv("TEXTA_CACHE_DIR", CACHE_DIR_DEFAULT)
+CACHE_DIR = env("TEXTA_CACHE_DIR", default=CACHE_DIR_DEFAULT)
 BERT_CACHE_DIR = os.path.join(CACHE_DIR, "bert")
 # tk trained models dir
 MODELS_DIR_DEFAULT = os.path.join(DATA_DIR, "models")
-RELATIVE_MODELS_PATH = os.getenv("TEXTA_RELATIVE_MODELS_DIR", MODELS_DIR_DEFAULT)
+RELATIVE_MODELS_PATH = env("TEXTA_RELATIVE_MODELS_DIR", default=MODELS_DIR_DEFAULT)
 # MLP model dir
-MLP_MODEL_DIRECTORY = os.getenv("TEXTA_MLP_MODEL_DIRECTORY_PATH", os.path.join(EXTERNAL_DATA_DIR, "mlp"))
+MLP_MODEL_DIRECTORY = env("TEXTA_MLP_MODEL_DIRECTORY_PATH", default=os.path.join(EXTERNAL_DATA_DIR, "mlp"))
 # BERT pretrained models
 BERT_PRETRAINED_MODEL_DIRECTORY = os.path.join(EXTERNAL_DATA_DIR, "bert_tagger", "pretrained")
 # BERT fine-tuned models
 BERT_FINETUNED_MODEL_DIRECTORY = os.path.join(RELATIVE_MODELS_PATH, "bert_tagger", "fine_tuned")
 # NLTK data dir
-NLTK_DATA_DIRECTORY = os.getenv("TEXTA_NLTK_DATA_DIRECTORY_PATH", os.path.join(EXTERNAL_DATA_DIR, "nltk"))
-
-# create model folders
-MODEL_TYPES = ["embedding", "tagger", "torchtagger", "bert_tagger"]
-for model_type in MODEL_TYPES:
-    model_dir = os.path.join(RELATIVE_MODELS_PATH, model_type)
-    if not os.path.exists(model_dir):
-        os.makedirs(model_dir)
-
-# create directory for external data
-if not os.path.exists(EXTERNAL_DATA_DIR):
-    os.makedirs(EXTERNAL_DATA_DIR)
-
-# create directories for BERT
-if not os.path.exists(BERT_PRETRAINED_MODEL_DIRECTORY):
-    os.makedirs(BERT_PRETRAINED_MODEL_DIRECTORY)
-
-if not os.path.exists(BERT_FINETUNED_MODEL_DIRECTORY):
-    os.makedirs(BERT_FINETUNED_MODEL_DIRECTORY)
-
-# create directories for NLTK resources
-if not os.path.exists(NLTK_DATA_DIRECTORY):
-    os.makedirs(NLTK_DATA_DIRECTORY)
+NLTK_DATA_DIRECTORY = env("TEXTA_NLTK_DATA_DIRECTORY_PATH", default=os.path.join(EXTERNAL_DATA_DIR, "nltk"))
 
 # create protected media dirs
 MEDIA_DIR = os.path.join(DATA_DIR, "media")
-if not os.path.exists(MEDIA_DIR):
-    os.makedirs(MEDIA_DIR)
 MEDIA_URL = "data/media/"
 
-# Path to the log directory. Default is /log
 LOG_PATH = os.path.join(DATA_DIR, "log")
-if not os.path.exists(LOG_PATH):
-    os.makedirs(LOG_PATH)
 
-# Path to the upload directory. Default is /upload
 UPLOAD_PATH = os.path.join(DATA_DIR, "upload")
-if not os.path.exists(UPLOAD_PATH):
-    os.makedirs(UPLOAD_PATH)
 
 # Path to the directory containing test files
 TEST_DATA_DIR = os.path.join(DATA_DIR, "test")
-if not os.path.exists(TEST_DATA_DIR):
-    os.makedirs(TEST_DATA_DIR)
 
 # default BERT models
-DEFAULT_BERT_MODELS = parse_list_env_headers("TEXTA_BERT_MODELS", ["bert-base-multilingual-cased", "EMBEDDIA/finest-bert", "bert-base-uncased"])
+DEFAULT_BERT_MODELS = env.list("TEXTA_BERT_MODELS", default=["bert-base-multilingual-cased", "EMBEDDIA/finest-bert", "bert-base-uncased"])
 
 # default MLP languages
-DEFAULT_MLP_LANGUAGE_CODES = parse_list_env_headers("TEXTA_LANGUAGE_CODES", [])
+DEFAULT_MLP_LANGUAGE_CODES = env.list("TEXTA_LANGUAGE_CODES", default=[])
 
 # default DS choices
-DEFAULT_TEXTA_DATASOURCE_CHOICES = parse_tuple_env_headers("TEXTA_DATASOURCE_CHOICES", [('emails', 'emails'), ('news articles', 'news articles'), ('comments', 'comments'), ('court decisions', 'court decisions'), ('tweets', 'tweets'), ('forum posts', 'forum posts'), ('formal documents', 'formal documents'), ('other', 'other')])
+DEFAULT_TEXTA_DATASOURCE_CHOICES = parse_tuple_env_headers("TEXTA_DATASOURCE_CHOICES", [
+    ('emails', 'emails'),
+    ('news articles', 'news articles'),
+    ('comments', 'comments'),
+    ('court decisions', 'court decisions'),
+    ('tweets', 'tweets'),
+    ('forum posts', 'forum posts'),
+    ('formal documents', 'formal documents'),
+    ('other', 'other')
+])
 
 # Logger IDs, used in apps.
 INFO_LOGGER = "info_logger"
@@ -361,34 +359,42 @@ INFO_LOG_FILE_NAME = os.path.join(LOG_PATH, "info.log")
 ERROR_LOG_FILE_NAME = os.path.join(LOG_PATH, "error.log")
 LOGGING = setup_logging(INFO_LOG_FILE_NAME, ERROR_LOG_FILE_NAME, INFO_LOGGER, ERROR_LOGGER)
 
-# Ignore Python Warning base class
-warnings.simplefilter(action="ignore", category=Warning)
-
 # Swagger Documentation
 SWAGGER_SETTINGS = {
     "DEFAULT_AUTO_SCHEMA_CLASS": "toolkit.tools.swagger.CompoundTagsSchema"
 }
 
-### RESOURCE DOWNLOADS
+ALLOW_BERT_MODEL_DOWNLOADS = env.bool("TEXTA_ALLOW_BERT_MODEL_DOWNLOADS", default=True)
 
-SKIP_MLP_RESOURCES = parse_bool_env("SKIP_MLP_RESOURCES", False)
+RELATIVE_PROJECT_DATA_PATH = env("TOOLKIT_PROJECT_DATA_PATH", default=os.path.join(DATA_DIR, "projects"))
+
+# Different types of models
+MODEL_TYPES = ["embedding", "tagger", "torchtagger", "bert_tagger"]
+
+# Ensure all the folders exists before downloading the resources.
+prepare_mandatory_directories(
+    EXTERNAL_DATA_DIR,
+    BERT_PRETRAINED_MODEL_DIRECTORY,
+    BERT_FINETUNED_MODEL_DIRECTORY,
+    NLTK_DATA_DIRECTORY,
+    MEDIA_DIR,
+    LOG_PATH,
+    UPLOAD_PATH,
+    TEST_DATA_DIR,
+    RELATIVE_PROJECT_DATA_PATH,
+    *[os.path.join(RELATIVE_MODELS_PATH, model_type) for model_type in MODEL_TYPES]
+)
+
+### RESOURCE DOWNLOADS
+SKIP_MLP_RESOURCES = env.bool("SKIP_MLP_RESOURCES", default=False)
 if SKIP_MLP_RESOURCES is False:
     download_mlp_requirements(MLP_MODEL_DIRECTORY, DEFAULT_MLP_LANGUAGE_CODES, logging.getLogger(INFO_LOGGER))
 
-SKIP_BERT_RESOURCES = parse_bool_env("SKIP_BERT_RESOURCES", False)
+SKIP_BERT_RESOURCES = env.bool("SKIP_BERT_RESOURCES", default=False)
 if SKIP_BERT_RESOURCES is False:
     # Download pretrained models with weights initiated for binary classification (using state dict with initialized weights is disabled for multiclass)
     download_bert_requirements(BERT_PRETRAINED_MODEL_DIRECTORY, DEFAULT_BERT_MODELS, BERT_CACHE_DIR, logging.getLogger(INFO_LOGGER), num_labels=2)
 
-SKIP_NLTK_RESOURCES = parse_bool_env("SKIP_NLTK_RESOURCES", False)
+SKIP_NLTK_RESOURCES = env.bool("SKIP_NLTK_RESOURCES", default=False)
 if SKIP_NLTK_RESOURCES is False:
     download_nltk_resources(NLTK_DATA_DIRECTORY)
-
-ALLOW_BERT_MODEL_DOWNLOADS = parse_bool_env("TEXTA_ALLOW_BERT_MODEL_DOWNLOADS", True)
-
-### PROJECT DATA PATH
-
-RELATIVE_PROJECT_DATA_PATH = os.getenv("TOOLKIT_PROJECT_DATA_PATH", os.path.join(DATA_DIR, "projects"))
-pathlib.Path(RELATIVE_PROJECT_DATA_PATH).mkdir(parents=True, exist_ok=True)
-
-SEARCHER_FOLDER_KEY = "searcher"

@@ -50,7 +50,7 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
 
     def get_queryset(self):
         clustering_pk = ClusterViewSet.__handle_clustering_pk(self.kwargs)
-        return Cluster.objects.filter(clusteringresult__project__pk=self.kwargs["project_pk"], clusteringresult__pk=clustering_pk)
+        return Cluster.objects.filter(clusteringresult__project__pk=self.kwargs["project_pk"], clusteringresult__pk=clustering_pk).order_by('-id')
 
 
     def update(self, request, *args, **kwargs):
@@ -444,7 +444,7 @@ class TopicAnalyzerViewset(viewsets.ModelViewSet, BulkDelete):
 
 
     def get_queryset(self):
-        return ClusteringResult.objects.filter(project=self.kwargs['project_pk'])
+        return ClusteringResult.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
 
     def perform_update(self, serializer: ClusteringSerializer):

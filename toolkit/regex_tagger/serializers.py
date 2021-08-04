@@ -1,15 +1,11 @@
 from rest_framework import serializers
 
-
-from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
-from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup
-from toolkit.regex_tagger.validators import validate_patterns
-from toolkit.regex_tagger import choices
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
-from toolkit.elastic.index.serializers import IndexSerializer
-
-
+from toolkit.regex_tagger import choices
+from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup
+from toolkit.regex_tagger.validators import validate_patterns
+from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer
 
 
 class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer):
@@ -24,13 +20,12 @@ class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, P
     phrase_slop = serializers.IntegerField(default=choices.DEFAULT_PHRASE_SLOP, required=False, help_text=f"Number of non-lexicon words allowed between the words of one lexicon entry. Default = {choices.DEFAULT_PHRASE_SLOP}.")
     counter_slop = serializers.IntegerField(default=choices.DEFAULT_COUNTER_SLOP, required=False, help_text=f"Number of words allowed between lexicon entries and counter lexicon entries for the latter to have effect. Default = {choices.DEFAULT_COUNTER_SLOP}")
     n_allowed_edits = serializers.IntegerField(default=choices.DEFAULT_N_ALLOWED_EDITS, required=False, help_text=f"Number of allowed character changes between lexicon entries and candidate matches in text. Default = {choices.DEFAULT_N_ALLOWED_EDITS}.")
-    return_fuzzy_match = serializers.BooleanField(default=choices.DEFAULT_RETURN_FUZZY_MATCH, required=False, help_text=f"Return fuzzy match (opposed to exact lexicon entry)? Default = {choices.DEFAULT_RETURN_FUZZY_MATCH }.")
+    return_fuzzy_match = serializers.BooleanField(default=choices.DEFAULT_RETURN_FUZZY_MATCH, required=False, help_text=f"Return fuzzy match (opposed to exact lexicon entry)? Default = {choices.DEFAULT_RETURN_FUZZY_MATCH}.")
     ignore_case = serializers.BooleanField(default=choices.DEFAULT_IGNORE_CASE, required=False, help_text=f"Ignore case while matching? Default = {choices.DEFAULT_IGNORE_CASE}.")
     ignore_punctuation = serializers.BooleanField(default=choices.DEFAULT_IGNORE_PUNCTUATION, required=False, help_text=f"If set False, end-of-sentence characters between lexicon entry words and/or counter lexicon entries, nullify the effect. Default = {choices.DEFAULT_IGNORE_PUNCTUATION}.")
     url = serializers.SerializerMethodField()
     tagger_groups = serializers.SerializerMethodField(read_only=True)
     task = TaskSerializer(read_only=True)
-
 
 
     def get_tagger_groups(self, value: RegexTagger):
@@ -53,8 +48,7 @@ class RegexTaggerTagTextsSerializer(serializers.Serializer):
     texts = serializers.ListField(child=serializers.CharField(required=True))
 
 
-class TagRandomDocSerializer(serializers.Serializer):
-    indices = IndexSerializer(many=True, default=[])
+class TagRandomDocSerializer(IndicesSerializerMixin):
     fields = serializers.ListField(child=serializers.CharField(), required=True, allow_empty=False)
 
 
@@ -62,9 +56,9 @@ class RegexTaggerTagDocsSerializer(serializers.Serializer):
     docs = serializers.ListField(child=serializers.JSONField(), help_text="List of JSON documents to tag.")
     fields = serializers.ListField(child=serializers.JSONField(), help_text="Dot separated paths of the JSON document to the text you wish to tag.")
 
-class ApplyRegexTaggerSerializer(FieldParseSerializer, serializers.Serializer):
+
+class ApplyRegexTaggerSerializer(FieldParseSerializer, IndicesSerializerMixin):
     description = serializers.CharField(required=True, help_text=f"Text for distinguishing this task from others.")
-    indices = IndexSerializer(many=True, default=[], help_text=f"Which indices in the project to apply this to.")
     fields = serializers.ListField(required=True, child=serializers.CharField(), help_text=f"Which fields to extract the text from.")
     query = serializers.JSONField(help_text=f"Filter the documents which to scroll and apply to.", default=EMPTY_QUERY)
     bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=choices.DEFAULT_BULK_SIZE, help_text=f"How many documents should be sent towards Elasticsearch at once. Default = {choices.DEFAULT_BULK_SIZE}")
@@ -131,9 +125,8 @@ class RegexTaggerGroupMultitagDocsSerializer(serializers.Serializer):
     )
 
 
-class ApplyRegexTaggerGroupSerializer(FieldParseSerializer, serializers.Serializer):
+class ApplyRegexTaggerGroupSerializer(FieldParseSerializer, IndicesSerializerMixin):
     description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
-    indices = IndexSerializer(many=True, default=[], help_text="Which indices in the project to apply this to.")
     fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
     query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)
     es_timeout = serializers.IntegerField(default=choices.DEFAULT_ES_TIMEOUT, help_text=f"Elasticsearch scroll timeout in minutes. Default = {choices.DEFAULT_ES_TIMEOUT}.")

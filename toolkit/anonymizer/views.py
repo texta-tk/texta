@@ -38,7 +38,7 @@ class AnonymizerViewSet(viewsets.ModelViewSet, BulkDelete):
 
 
     def get_queryset(self):
-        return Anonymizer.objects.filter(project=self.kwargs['project_pk'])
+        return Anonymizer.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
 
     def perform_create(self, serializer):

@@ -6,21 +6,20 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.embedding.models import Embedding
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choices
-from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.helper_functions import load_stop_words
-from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
+from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, ProjectFilteredPrimaryKeyRelatedField
 from toolkit.tagger import choices
 from toolkit.tagger.models import Tagger, TaggerGroup
-
+from toolkit.validator_constants import validate_pos_label
 
 # NB! Currently not used
-class ApplyTaggersSerializer(FieldParseSerializer, serializers.Serializer):
+class ApplyTaggersSerializer(FieldParseSerializer, IndicesSerializerMixin):
     author_username = serializers.CharField(source='author.username', read_only=True)
     description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
     new_fact_name = serializers.CharField(required=True, help_text="Used as fact name when applying the tagger.")
-    indices = IndexSerializer(many=True, default=[], help_text="Which indices in the project to apply this to.")
     fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
     query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)
     lemmatize = serializers.BooleanField(default=False, help_text='Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
@@ -47,11 +46,10 @@ class ApplyTaggersSerializer(FieldParseSerializer, serializers.Serializer):
         return taggers
 
 
-class ApplyTaggerSerializer(FieldParseSerializer, serializers.Serializer):
+class ApplyTaggerSerializer(FieldParseSerializer, IndicesSerializerMixin):
     description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
     new_fact_name = serializers.CharField(required=True, help_text="Used as fact name when applying the tagger.")
     new_fact_value = serializers.CharField(required=False, default="", help_text="NB! Only applicable for binary taggers! Used as fact value when applying the tagger. Defaults to tagger description (binary) / tagger result (multiclass).")
-    indices = IndexSerializer(many=True, default=[], help_text="Which indices in the project to apply this to.")
     fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
     query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)
     lemmatize = serializers.BooleanField(default=False, help_text='Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
@@ -60,10 +58,9 @@ class ApplyTaggerSerializer(FieldParseSerializer, serializers.Serializer):
     max_chunk_bytes = serializers.IntegerField(min_value=1, default=choices.DEFAULT_MAX_CHUNK_BYTES, help_text=f"Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors. Default:{choices.DEFAULT_MAX_CHUNK_BYTES}.")
 
 
-class ApplyTaggerGroupSerializer(FieldParseSerializer, serializers.Serializer):
+class ApplyTaggerGroupSerializer(FieldParseSerializer, IndicesSerializerMixin):
     description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
     new_fact_name = serializers.CharField(required=True, help_text="Used as fact name when applying the tagger.")
-    indices = IndexSerializer(many=True, default=[], help_text="Which indices in the project to apply this to.")
     fields = serializers.ListField(required=True, child=serializers.CharField(), help_text=f"Fields used for the predictions.")
     query = serializers.JSONField(help_text=f"Filter the documents which to scroll and apply to. Default = all documents.", default=EMPTY_QUERY)
     lemmatize = serializers.BooleanField(default=choices.DEFAULT_LEMMATIZE, help_text=f"Use MLP lemmatizer if available. Use only if training data was lemmatized. Default:{choices.DEFAULT_LEMMATIZE}.")
@@ -82,8 +79,8 @@ class StopWordSerializer(serializers.Serializer):
     ignore_numbers = serializers.BooleanField(required=False, default=choices.DEFAULT_IGNORE_NUMBERS, help_text='If enabled, ignore all numbers as possible features.')
 
 
-class TagRandomDocSerializer(serializers.Serializer):
-    indices = IndexSerializer(many=True, default=[])
+class TagRandomDocSerializer(IndicesSerializerMixin):
+    pass
 
 
 class TaggerTagTextSerializer(serializers.Serializer):
@@ -132,16 +129,16 @@ class TaggerGroupTagDocumentSerializer(serializers.Serializer):
     feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 
-class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer):
+class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True)
     description = serializers.CharField(help_text=f'Description for the Tagger. Will be used as tag.')
-    indices = IndexSerializer(many=True, default=[])
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     vectorizer = serializers.ChoiceField(choices=choices.get_vectorizer_choices(), default=choices.DEFAULT_VECTORIZER, help_text=f'Vectorizer algorithm to create document vectors. NB! HashingVectorizer does not support feature name extraction!')
     classifier = serializers.ChoiceField(choices=choices.get_classifier_choices(), default=choices.DEFAULT_CLASSIFIER, help_text=f'Classification algorithm used in the model.')
+    embedding = ProjectFilteredPrimaryKeyRelatedField(queryset=Embedding.objects, many=False, read_only=False, allow_null=True, default=None, help_text=f'Embedding to use. Default = None')
     negative_multiplier = serializers.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER, help_text=f'Multiplies the size of positive samples to determine negative example set size. Default: {choices.DEFAULT_NEGATIVE_MULTIPLIER}')
     maximum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, help_text=f'Maximum number of documents used to build a model. Default: {choices.DEFAULT_MAX_SAMPLE_SIZE}')
-    minimum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, help_text=f'Minimum number of documents required to train a model. Default: {choices.DEFAULT_MIN_SAMPLE_SIZE}')    
+    minimum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, help_text=f'Minimum number of documents required to train a model. Default: {choices.DEFAULT_MIN_SAMPLE_SIZE}')
     score_threshold = serializers.FloatField(default=choices.DEFAULT_SCORE_THRESHOLD,
                                              help_text=f'Elasticsearch score threshold for filtering out irrelevant examples. All examples below first document\'s score * score threshold are ignored. Float between 0 and 1. Default: {choices.DEFAULT_SCORE_THRESHOLD}')
     snowball_language = serializers.ChoiceField(choices=get_snowball_choices(), default=DEFAULT_SNOWBALL_LANGUAGE, help_text=f'Uses Snowball stemmer with specified language to normalize the texts. Default: {DEFAULT_SNOWBALL_LANGUAGE}')
@@ -151,29 +148,34 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     detect_lang = serializers.BooleanField(default=False, help_text="Whether to detect the language for the stemmer from the document itself.")
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
-    query = serializers.JSONField(help_text='Query in JSON format', required=False)
+    query = serializers.JSONField(help_text='Query in JSON format', required=False, default=json.dumps(EMPTY_QUERY))
     fact_name = serializers.CharField(default=None, required=False, help_text=f'Fact name used to filter tags (fact values). Default: None')
+    pos_label = serializers.CharField(default="", required=False, allow_blank=True, help_text=f'Fact value used as positive label while evaluating the results. This is needed only, if the selected fact has exactly two possible values. Default = ""')
     url = serializers.SerializerMethodField()
     tagger_groups = serializers.SerializerMethodField(read_only=True)
 
     balance = serializers.BooleanField(default=choices.DEFAULT_BALANCE, required=False, help_text=f'Balance sample sizes of different classes. Only applicable for multiclass taggers. Default = {choices.DEFAULT_BALANCE}')
-    balance_to_max_limit = serializers.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT, required=False, help_text=f'If enabled, the number of samples for each class is set to `maximum_sample_size`. Otherwise, it is set to max class size. NB! Only applicable for multiclass taggers with balance == True. Default = {choices.DEFAULT_BALANCE_TO_MAX_LIMIT}')
-
+    balance_to_max_limit = serializers.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT, required=False,
+                                                    help_text=f'If enabled, the number of samples for each class is set to `maximum_sample_size`. Otherwise, it is set to max class size. NB! Only applicable for multiclass taggers with balance == True. Default = {choices.DEFAULT_BALANCE_TO_MAX_LIMIT}')
 
 
     class Meta:
         model = Tagger
-        fields = ('id', 'url', 'author_username', 'description', 'query', 'fact_name', 'fields', 'detect_lang', 'embedding', 'vectorizer', 'classifier', 'stop_words',
+        fields = ('id', 'url', 'author_username', 'description', 'query', 'fact_name', 'indices', 'fields', 'detect_lang', 'embedding', 'vectorizer', 'classifier', 'stop_words',
                   'maximum_sample_size', 'minimum_sample_size', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score', 'snowball_language', 'scoring_function',
-                  'num_features', 'num_examples', 'confusion_matrix', 'plot', 'task', 'indices', 'tagger_groups', 'ignore_numbers', 'balance', 'balance_to_max_limit')
+                  'num_features', 'num_examples', 'confusion_matrix', 'plot', 'task', 'tagger_groups', 'ignore_numbers', 'balance', 'balance_to_max_limit', 'pos_label')
         read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'num_examples', 'tagger_groups', 'confusion_matrix')
         fields_to_parse = ('fields',)
 
 
-    def validate(self, attrs):
-        if attrs.get("detect_lang", None) is True and attrs.get("snowball_language", None):
+    def validate(self, data):
+        if data.get("detect_lang", None) is True and data.get("snowball_language", None):
             raise ValidationError("Values 'detect_lang' and 'snowball_language' are mutually exclusive, please opt for one!")
-        return attrs
+
+        # use custom validation for pos label as some other serializer fields are also required
+        data = validate_pos_label(data)
+
+        return data
 
 
     def __init__(self, *args, **kwargs):

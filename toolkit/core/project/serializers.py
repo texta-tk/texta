@@ -8,14 +8,14 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from toolkit.core import choices as choices
 from toolkit.core.project.models import Project
-from toolkit.core.project.validators import check_if_in_elastic
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.core.user_profile.validators import check_if_username_exist
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import IndexSerializer
-from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from toolkit.elastic.validators import check_for_existence
 from toolkit.helper_functions import wrap_in_list
+from toolkit.serializer_constants import IndicesSerializerMixin
 
 
 class ExportSearcherResultsSerializer(serializers.Serializer):
@@ -74,9 +74,7 @@ class ProjectSimplifiedSearchSerializer(serializers.Serializer):
     )
 
 
-class ProjectGetFactsSerializer(serializers.Serializer):
-    indices = IndexSerializer(many=True, default=[], help_text="Which indices to use for the fact search.")
-
+class ProjectGetFactsSerializer(IndicesSerializerMixin):
     values_per_name = serializers.IntegerField(
         default=choices.DEFAULT_VALUES_PER_NAME,
         help_text=f'Number of fact values per fact name. Default: 10.'
@@ -89,16 +87,13 @@ class ProjectGetFactsSerializer(serializers.Serializer):
 
 class HandleIndicesSerializer(serializers.Serializer):
     indices = serializers.PrimaryKeyRelatedField(many=True, queryset=Index.objects.filter(is_open=True), )
-    # indices = IndexSerializer(many=True)
 
 
 class HandleUsersSerializer(serializers.Serializer):
-    # users = UserSerializer(many=True)
     users = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), )
 
 
 class HandleProjectAdministratorsSerializer(serializers.Serializer):
-    # project_admins = UserSerializer(many=True)
     project_admins = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), )
 
 
@@ -106,7 +101,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     title = serializers.CharField(required=True)
 
     indices = IndexSerializer(many=True, required=False, read_only=True)
-    indices_write = serializers.ListField(child=serializers.CharField(), write_only=True, default=[], validators=[check_if_in_elastic])
+    indices_write = serializers.ListField(child=serializers.CharField(validators=[check_for_existence]), write_only=True, default=[])
 
     users = UserSerializer(many=True, default=serializers.CurrentUserDefault(), read_only=True)
     users_write = serializers.ListField(child=serializers.CharField(validators=[check_if_username_exist]), write_only=True, default=[])
@@ -117,6 +112,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True)
     resources = serializers.SerializerMethodField()
     resource_count = serializers.SerializerMethodField()
+
 
     # For whatever reason, it doesn't validate read-only fields, so we do it manually.
     def validate(self, data):
@@ -173,8 +169,6 @@ class ProjectSerializer(serializers.ModelSerializer):
 
             # only run if indices given as we might not have elastic running
             if indices:
-                ec = ElasticCore()
-                ec.syncher()
                 for index_name in indices:
                     index, is_created = Index.objects.get_or_create(name=index_name)
                     project.indices.add(index)
@@ -276,11 +270,10 @@ class CountIndicesSerializer(serializers.Serializer):
     indices = serializers.ListField(child=serializers.CharField(), default=[], help_text="Which indices to use for the count.")
 
 
-class ProjectSuggestFactNamesSerializer(serializers.Serializer):
+class ProjectSuggestFactNamesSerializer(IndicesSerializerMixin):
     limit = serializers.IntegerField(default=choices.DEFAULT_VALUES_PER_NAME,
                                      help_text=f'Number of suggestions. Default: {choices.DEFAULT_SUGGESTION_LIMIT}.')
     startswith = serializers.CharField(help_text=f'The string to autocomplete fact names with.', allow_blank=True)
-    indices = IndexSerializer(many=True, default=[], help_text="Which indices to use for the fact search.")
 
 
 class ProjectGetSpamSerializer(serializers.Serializer):

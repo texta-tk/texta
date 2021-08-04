@@ -13,11 +13,21 @@ from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.helper_functions import reindex_test_dataset
-from toolkit.test_settings import (TEST_FACT_NAME, TEST_FIELD_CHOICE, TEST_KEEP_PLOT_FILES, TEST_QUERY, TEST_TORCH_TAGGER_BINARY_CPU, TEST_TORCH_TAGGER_BINARY_GPU, TEST_TORCH_TAGGER_MULTICLASS_GPU, TEST_VERSION_PREFIX)
+from toolkit.test_settings import (
+    TEST_BIN_FACT_QUERY,
+    TEST_FACT_NAME,
+    TEST_FIELD_CHOICE,
+    TEST_KEEP_PLOT_FILES,
+    TEST_POS_LABEL,
+    TEST_QUERY,
+    TEST_TORCH_TAGGER_BINARY_CPU,
+    TEST_TORCH_TAGGER_BINARY_GPU,
+    TEST_TORCH_TAGGER_MULTICLASS_GPU,
+    TEST_VERSION_PREFIX
+)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 from toolkit.torchtagger.models import TorchTagger
-from toolkit.torchtagger.torch_models.models import TORCH_MODELS
-
+from texta_torch_tagger.tagger import TORCH_MODELS
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
 class TorchTaggerViewTests(APITransactionTestCase):
@@ -84,6 +94,8 @@ class TorchTaggerViewTests(APITransactionTestCase):
         self.run_train_tagger_using_query()
         self.run_train_multiclass_tagger_using_fact_name()
         self.run_train_balanced_multiclass_tagger_using_fact_name()
+        self.run_train_binary_multiclass_tagger_using_fact_name()
+        self.run_train_binary_multiclass_tagger_using_fact_name_invalid_payload()
         self.run_tag_text()
         self.run_tag_with_imported_gpu_model()
         self.run_tag_with_imported_cpu_model()
@@ -174,6 +186,70 @@ class TorchTaggerViewTests(APITransactionTestCase):
         self.test_multiclass_tagger_id = tagger_id
         # add cleanup
         self.add_cleanup_files(tagger_id)
+
+
+    def run_train_binary_multiclass_tagger_using_fact_name(self):
+        """Tests TorchTagger training with binary facts."""
+        payload = {
+            "description": "TestBinaryMulticlassTorchTaggerTraining",
+            "fact_name": TEST_FACT_NAME,
+            "fields": TEST_FIELD_CHOICE,
+            "maximum_sample_size": 500,
+            "model_architecture": self.torch_models[0],
+            "num_epochs": 3,
+            "embedding": self.test_embedding_id,
+            "pos_label": TEST_POS_LABEL,
+            "query": json.dumps(TEST_BIN_FACT_QUERY)
+        }
+        response = self.client.post(self.url, payload, format='json')
+        print_output('test_create_binary_multiclass_torchtagger_training_and_task_signal:response.data', response.data)
+        # Check if Neurotagger gets created
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # Check if f1 not NULL (train and validation success)
+        tagger_id = response.data['id']
+        response = self.client.get(f'{self.url}{tagger_id}/')
+        print_output('test_torchtagger_has_stats:response.data', response.data)
+        for score in ['f1_score', 'precision', 'recall', 'accuracy']:
+            self.assertTrue(isinstance(response.data[score], float))
+        # add cleanup
+        self.add_cleanup_files(tagger_id)
+
+
+    def run_train_binary_multiclass_tagger_using_fact_name_invalid_payload(self):
+        """Tests TorchTagger training with binary facts and invalid payload."""
+
+        # Pos label is undefined by the user
+        invalid_payload_1 = {
+            "description": "TestBinaryMulticlassTorchTaggerTrainingMissingPosLabel",
+            "fact_name": TEST_FACT_NAME,
+            "fields": TEST_FIELD_CHOICE,
+            "maximum_sample_size": 500,
+            "model_architecture": self.torch_models[0],
+            "num_epochs": 3,
+            "embedding": self.test_embedding_id,
+            "query": json.dumps(TEST_BIN_FACT_QUERY)
+        }
+        response = self.client.post(self.url, invalid_payload_1, format='json')
+        print_output('test_create_binary_multiclass_torchtagger_using_fact_name_missing_pos_label:response.data', response.data)
+        # Check if creating the Tagger fails with status code 400
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # The inserted pos label is not present in the data
+        invalid_payload_2 = {
+            "description": "TestBinaryMulticlassTorchTaggerTrainingMissingPosLabel",
+            "fact_name": TEST_FACT_NAME,
+            "fields": TEST_FIELD_CHOICE,
+            "maximum_sample_size": 500,
+            "model_architecture": self.torch_models[0],
+            "num_epochs": 3,
+            "embedding": self.test_embedding_id,
+            "query": json.dumps(TEST_BIN_FACT_QUERY),
+            "pos_label": "invalid_fact_val"
+        }
+        response = self.client.post(self.url, invalid_payload_1, format='json')
+        print_output('test_create_binary_multiclass_torchtagger_using_fact_name_invalid_pos_label:response.data', response.data)
+        # Check if creating the Tagger fails with status code 400
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
     def run_train_balanced_multiclass_tagger_using_fact_name(self):

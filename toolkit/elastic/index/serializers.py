@@ -58,7 +58,8 @@ class IndexSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Index
-        fields = "__all__"
+        fields = ('id', 'is_open', 'url', 'name', 'description', 'added_by', 'test', 'source', 'client', 'domain', 'created_at')
+        read_only_fields = ('id', 'url', 'created_at')
 
 
 class IndexBulkDeleteSerializer(serializers.Serializer):

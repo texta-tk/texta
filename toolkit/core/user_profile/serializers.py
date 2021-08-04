@@ -29,7 +29,20 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
             return instance.username
 
 
+
+    def update(self, instance, validated_data):
+        instance = super(UserSerializer, self).update(instance, validated_data)
+        # Because staff and superusers are interchangeable and some of DRF's built in
+        # methods only check is_staff we keep them in sync when superuser is mentioned.
+        if "is_superuser" in validated_data:
+            instance.is_staff = instance.is_superuser
+
+        instance.save()
+        return instance
+
+
     class Meta:
         model = User
+
         fields = ('url', 'id', 'username', 'email', 'display_name', 'date_joined', 'last_login', 'is_superuser', 'profile')
         read_only_fields = ('username', 'email', 'display_name', 'date_joined', 'last_login', 'profile')

@@ -1,11 +1,13 @@
 # Create your tests here.
 import json
+import uuid
 
 from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase, APITransactionTestCase
 
+from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.helper_functions import reindex_test_dataset
@@ -153,6 +155,14 @@ class MLPIndexProcessing(APITransactionTestCase):
         self.ec.delete_index(self.test_index_name, ignore=[400, 404])
 
 
+    def _assert_mlp_contents(self, hit: dict, test_field: str):
+        self.assertTrue(f"{test_field}_mlp.lemmas" in hit)
+        self.assertTrue(f"{test_field}_mlp.pos_tags" in hit)
+        self.assertTrue(f"{test_field}_mlp.text" in hit)
+        self.assertTrue(f"{test_field}_mlp.language.analysis" in hit)
+        self.assertTrue(f"{test_field}_mlp.language.detected" in hit)
+
+
     def test_index_processing(self):
         query_string = "inimene"
         payload = {
@@ -162,18 +172,12 @@ class MLPIndexProcessing(APITransactionTestCase):
         }
 
         response = self.client.post(self.url, data=payload, format="json")
+        print_output("test_index_processing:response.data", response.data)
 
         # Check if MLP was applied to the documents properly.
-        mlp_field = f"{TEST_FIELD}_mlp"
         s = ElasticSearcher(indices=[self.test_index_name], output=ElasticSearcher.OUT_DOC, query=payload["query"])
         for hit in s:
-            if TEST_FIELD in hit:
-                self.assertTrue(f"{TEST_FIELD}_mlp.lemmas" in hit)
-                self.assertTrue(f"{TEST_FIELD}_mlp.pos_tags" in hit)
-                self.assertTrue(f"{TEST_FIELD}_mlp.text" in hit)
-                self.assertTrue(f"{TEST_FIELD}_mlp.language.analysis" in hit)
-                self.assertTrue(f"{TEST_FIELD}_mlp.language.detected" in hit)
-                self._check_for_if_query_correct(hit, TEST_FIELD, query_string)
+            self._assert_mlp_contents(hit, TEST_FIELD)
 
 
     def _check_for_if_query_correct(self, hit: dict, field_name: str, query_string: str):
@@ -216,3 +220,24 @@ class MLPIndexProcessing(APITransactionTestCase):
         response = self.client.post(self.url, data=payload, format="json")
         print_output("test_payload_with_invalid_field_value:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+
+
+    def test_applying_mlp_on_two_indices(self):
+        indices = [f"texta_test_{uuid.uuid1()}", f"texta_test_{uuid.uuid1()}"]
+        for index in indices:
+            self.ec.es.indices.create(index=index, ignore=[400, 404])
+            self.ec.es.index(index=index, body={"text": "obscure content to parse!"})
+            index, is_created = Index.objects.get_or_create(name=index)
+            self.project.indices.add(index)
+
+        payload = {
+            "description": "TestingIndexProcessing",
+            "fields": ["text"],
+            "indices": [{"name": index} for index in indices]
+        }
+        response = self.client.post(self.url, data=payload, format="json")
+        print_output("test_applying_mlp_on_two_indices:response.data", response.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        for index in indices:
+            self.ec.es.indices.delete(index=index, ignore=[400, 404])

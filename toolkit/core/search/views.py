@@ -22,7 +22,7 @@ class SearchViewSet(viewsets.ModelViewSet, BulkDelete):
         )
 
     def get_queryset(self):
-        return Search.objects.filter(project=self.kwargs['project_pk'])
+        return Search.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
     def create(self, request, *args, **kwargs):
         serializer = SearchSerializer(data=request.data, context={'request': request})

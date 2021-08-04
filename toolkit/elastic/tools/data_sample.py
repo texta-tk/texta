@@ -127,8 +127,14 @@ class DataSample:
         max_class_size = 0
         fact_name = self._get_fact_name()
 
+        try:
+            query = json.loads(self.tagger_object.query)
+        except:
+            query = self.tagger_object.query
+
+
         if fact_name:
-            es_aggregator = ElasticAggregator(indices=self.indices)
+            es_aggregator = ElasticAggregator(indices=self.indices, query=query)
             facts = es_aggregator.get_fact_values_distribution(fact_name=fact_name, fact_name_size=10, fact_value_size=10)
             logging.getLogger(INFO_LOGGER).info(f"Class frequencies: {facts}")
             max_class_size = max(facts.values())
@@ -193,7 +199,8 @@ class DataSample:
 
     @staticmethod
     def _join_fields(list_of_dicts):
-        return [" ".join(a.values()) for a in list_of_dicts]
+        #return [" ".join(a.values()) for a in list_of_dicts]
+        return [" ".join([str(v) for v in a.values()]) for a in list_of_dicts]
 
 
     @staticmethod
@@ -224,12 +231,16 @@ class DataSample:
         min_count = 0
         if hasattr(self.tagger_object, 'fact_name'):
             fact_name = self.tagger_object.fact_name
-        query = json.loads(self.tagger_object.query)
+        try:
+            query = json.loads(self.tagger_object.query)
+        except:
+            query = self.tagger_object.query
+
         if fact_name:
             # retrieve class names using fact_name field
             if hasattr(self.tagger_object, 'minimum_sample_size'):
                 min_count = self.tagger_object.minimum_sample_size
-            class_names = self._get_tags(fact_name, min_count)
+            class_names = self._get_tags(fact_name, min_count, query=query)
             queries = self._create_queries(fact_name, class_names, query)
         else:
             # use description as class name for binary decisions
@@ -240,10 +251,10 @@ class DataSample:
         return class_names, queries
 
 
-    def _get_tags(self, fact_name, min_count=50, max_count=None):
+    def _get_tags(self, fact_name, min_count=50, max_count=None, query={}):
         """Finds possible tags for training by aggregating active project's indices."""
         active_indices = self.tagger_object.get_indices()
-        es_a = ElasticAggregator(indices=active_indices)
+        es_a = ElasticAggregator(indices=active_indices, query=query)
         # limit size to 10000 unique tags
         tag_values = es_a.facts(filter_by_fact_name=fact_name, min_count=min_count, max_count=max_count, size=10000)
         return tag_values
@@ -268,6 +279,11 @@ class DataSample:
     def _get_samples_for_classes(self):
         """Returns samples for each class as a dict."""
         samples = {}
+
+        # Return empty dict, if no classes with enough number of samples is detected
+        if not self.class_names:
+            return samples
+
         for i, class_name in enumerate(self.class_names):
             self.show_progress.update_step(f"scrolling sample for {class_name}")
             self.show_progress.update_view(0)
@@ -458,6 +474,8 @@ class DataSample:
 
     def _validate(self):
         """Validates self.data after creation."""
+        if not self.data:
+            raise InvalidDataSampleError(f"None of the classes had enough examples (required at least {self.tagger_object.minimum_sample_size} examples per class). Try lowering the value of parameter 'minimum_sample_size'.")
         # check if enough classes
         if len(self.data.keys()) < 2:
             raise InvalidDataSampleError("Data sample has less than 2 classes! Check your data!")

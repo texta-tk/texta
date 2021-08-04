@@ -18,6 +18,7 @@ from toolkit.elastic.index.serializers import (
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.permissions.project_permissions import IsSuperUser
 from toolkit.settings import TEXTA_TAGS_KEY
+from datetime import datetime
 
 
 class IndicesFilter(filters.FilterSet):
@@ -40,8 +41,6 @@ class ElasticGetIndices(views.APIView):
         Returns **all** available indices from Elasticsearch.
         This is different from get_indices action in project view as it lists **all** indices in Elasticsearch.
         """
-        es_core = ElasticCore()
-        es_core.syncher()
         indices = [{"id": index.id, "name": index.name} for index in Index.objects.all()]
         return JsonResponse(indices, safe=False, status=status.HTTP_200_OK)
 
@@ -79,7 +78,11 @@ class IndexViewSet(mixins.CreateModelMixin,
 
 
     def _check_for_facts(self, index_mappings: dict, index_name: str):
-        mapping_dict = index_mappings[index_name]["mappings"]
+        mapping_dict = index_mappings.get(index_name, {}).get("mappings", None)
+        # In case we have a faulty sync.
+        if mapping_dict is None:
+            return False
+
         mapping_dict = self._resolve_cluster_differences(mapping_dict)
 
         # In case there are no fields inside the mapping because it's a freshly
@@ -98,7 +101,7 @@ class IndexViewSet(mixins.CreateModelMixin,
 
     def list(self, request, *args, **kwargs):
         ec = ElasticCore()
-        ec.syncher()
+
         response = super(IndexViewSet, self).list(request, *args, **kwargs)
 
         data = response.data  # Get the paginated and sorted queryset results.
@@ -115,7 +118,10 @@ class IndexViewSet(mixins.CreateModelMixin,
                 is_open = index["is_open"]
                 if is_open:
                     has_texta_facts_mapping = self._check_for_facts(index_mappings=mappings, index_name=name)
-                    index.update(**stats[name], has_validated_facts=has_texta_facts_mapping)
+                    if name in stats:
+                        index.update(**stats[name], has_validated_facts=has_texta_facts_mapping)
+                    else:
+                        index.update(has_validated_facts=False)
                 else:
                     # For the sake of courtesy on the front-end, make closed indices values zero.
                     index.update(size=0, doc_count=0, has_validated_facts=False)
@@ -156,7 +162,9 @@ class IndexViewSet(mixins.CreateModelMixin,
         if es.check_if_indices_exist([index]):
             # Even if the index already exists, create the index object just in case
             index, is_created = Index.objects.get_or_create(name=index)
+
             if is_created:
+                utc_time = es.get_index_creation_date(index)
                 index.is_open = is_open
                 index.description = description
                 index.added_by = added_by
@@ -164,12 +172,18 @@ class IndexViewSet(mixins.CreateModelMixin,
                 index.source = source
                 index.client = client
                 index.domain = domain
+                index.created_at = utc_time
             index.save()
             raise ElasticIndexAlreadyExists()
 
         else:
+            es.create_index(index=index)
+            if not is_open:
+                es.close_index(index)
+
             index, is_created = Index.objects.get_or_create(name=index)
             if is_created:
+                utc_time = es.get_index_creation_date(index)
                 index.is_open = is_open
                 index.description = description
                 index.added_by = added_by
@@ -177,12 +191,11 @@ class IndexViewSet(mixins.CreateModelMixin,
                 index.source = source
                 index.client = client
                 index.domain = domain
+                index.created_at = utc_time
             index.save()
 
-            es.create_index(index=index)
-            if not is_open:
-                es.close_index(index)
             return Response({"message": f"Added index {index} into Elasticsearch!"}, status=status.HTTP_201_CREATED)
+
 
     def partial_update(self, request, pk=None, **kwargs):
         data = IndexUpdateSerializer(data=request.data, partial=True)
@@ -205,6 +218,7 @@ class IndexViewSet(mixins.CreateModelMixin,
 
         index.save()
         return Response({"message": f"Updated index {index} into Elasticsearch!"}, status=status.HTTP_201_CREATED)
+
 
     def destroy(self, request, pk=None, **kwargs):
         with transaction.atomic():

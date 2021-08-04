@@ -23,7 +23,7 @@ class ApplyLangViewsTests(APITransactionTestCase):
         self.project = project_creation("langDetectProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
         self.client.login(username='langDetectUser', password='pw')
-        self.url = reverse("v2:lang_index-list", kwargs={"project_pk": self.project.pk})
+        self.url = reverse("v1:lang_index-list", kwargs={"project_pk": self.project.pk})
 
 
     def tearDown(self) -> None:
@@ -36,14 +36,14 @@ class ApplyLangViewsTests(APITransactionTestCase):
         self.client.login(username="langDetectUserThatIsNotInProject", password="pw")
         response = self.client.get(self.url)
         print_output("test_unauthenticated_project_access:response.data", response.data)
-        self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)
+        self.assertTrue(response.status_code in (status.HTTP_403_FORBIDDEN, status.HTTP_401_UNAUTHORIZED))
 
 
     def test_unauthenticated_view_access(self):
         self.client.logout()
         response = self.client.get(self.url)
         print_output("test_unauthenticated_view_access:response.data", response.data)
-        self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)
+        self.assertTrue(response.status_code in (status.HTTP_403_FORBIDDEN, status.HTTP_401_UNAUTHORIZED))
 
 
     def test_applying_lang_detect_with_query(self):
@@ -65,6 +65,19 @@ class ApplyLangViewsTests(APITransactionTestCase):
                 self.assertTrue(lang_value == "et")
 
 
+    def test_applying_lang_detect_with_raw_query(self):
+        mlp_field = f"{TEST_FIELD}_mlp"
+        query_string = "inimene"
+        payload = {
+            "description": "TestingIndexProcessing",
+            "field": TEST_FIELD,
+            "query": {'query': {'match': {'comment_content_lemmas': query_string}}}
+        }
+        response = self.client.post(self.url, data=payload, format="json")
+        print_output("test_applying_lang_detect_with_raw_query:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+
+
     def test_applying_lang_detect_with_faulty_field_path(self):
         payload = {
             "description": "TestingIndexProcessing",
@@ -83,6 +96,26 @@ class ApplyLangViewsTests(APITransactionTestCase):
         }
         response = self.client.post(self.url, data=payload, format="json")
         print_output("test_with_non_existing_indices_in_payload:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+
+
+    def test_with_invalid_queries(self):
+        payload = {
+            "description": "TestingIndexProcessing",
+            "field": TEST_FIELD,
+            "query": "foo"
+        }
+        response = self.client.post(self.url, data=payload, format="json")
+        print_output("test_with_invalid_queries_v1:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+
+        payload = {
+            "description": "TestingIndexProcessing",
+            "field": TEST_FIELD,
+            "query": json.dumps("foo")
+        }
+        response = self.client.post(self.url, data=payload, format="json")
+        print_output("test_with_invalid_queries_v2:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
 
 
@@ -139,7 +172,7 @@ class TestLangDetectView(APITransactionTestCase):
         self.client.logout()
         response = self.client.post(self.url, data={"text": self.text}, format="json")
         print_output("test_that_unlogged_users_get_403:response.data", response.data)
-        self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)
+        self.assertTrue(response.status_code in (status.HTTP_403_FORBIDDEN, status.HTTP_401_UNAUTHORIZED))
 
 
     def test_that_normal_users_have_access(self):

@@ -58,13 +58,18 @@ def train_bert_tagger(tagger_id, testing=False):
         # retrieve neurotagger & task objects
         tagger_object = BertTaggerObject.objects.get(pk=tagger_id)
         task_object = tagger_object.task
-        #model_type = BertTaggerObject.MODEL_TYPE
+
         show_progress = ShowProgress(task_object, multiplier=1)
         # get fields & indices
         fields = json.loads(tagger_object.fields)
         indices = get_indices_from_object(tagger_object)
 
-        bert_model = tagger_object.bert_model
+
+        # set loading model from a checkpoint False by default
+        from_checkpoint = False
+        checkpoint_model = tagger_object.checkpoint_model
+
+        pos_label = tagger_object.pos_label
 
         # create Datasample object for retrieving positive and negative sample
         data_sample = DataSample(
@@ -86,34 +91,54 @@ def train_bert_tagger(tagger_id, testing=False):
         else:
             sklearn_avg_function = choices.DEFAULT_SKLEARN_AVG_MULTICLASS
 
-        # NB! saving pretrained models must be disabled!
-        tagger = BertTagger(
-            allow_standard_output = choices.DEFAULT_ALLOW_STANDARD_OUTPUT,
-            autoadjust_batch_size = choices.DEFAULT_AUTOADJUST_BATCH_SIZE,
-            sklearn_avg_function = sklearn_avg_function,
-            use_gpu = choices.DEFAULT_USE_GPU,
-            save_pretrained = False,
-            pretrained_models_dir = BERT_PRETRAINED_MODEL_DIRECTORY,
-            logger = logging.getLogger(INFO_LOGGER),
-            cache_dir = BERT_CACHE_DIR
-        )
+        # if checkpoint model is detected, load it and use it for further training
+        if checkpoint_model:
+            logging.getLogger(INFO_LOGGER).info(f"Loading model from a checkpoint stored in '{tagger_object}'...")
+
+            # use the same pre-trained bert model as the checkpoint model
+            tagger_object.bert_model = checkpoint_model.bert_model
+            tagger = checkpoint_model.load_tagger()
+
+            # set sklearn avg function in case the number of classes has changed
+            tagger.sklearn_avg_function = sklearn_avg_function
+
+            # set loading model from a checkpoint True
+            from_checkpoint = True
+
+        # if no checkpoint model is given, train a new model
+        else:
+            logging.getLogger(INFO_LOGGER).info(f"No checkpoint model detected, training a new model...")
+            # NB! saving pretrained models must be disabled!
+            tagger = BertTagger(
+                allow_standard_output = choices.DEFAULT_ALLOW_STANDARD_OUTPUT,
+                autoadjust_batch_size = choices.DEFAULT_AUTOADJUST_BATCH_SIZE,
+                sklearn_avg_function = sklearn_avg_function,
+                use_gpu = choices.DEFAULT_USE_GPU,
+                save_pretrained = False,
+                pretrained_models_dir = BERT_PRETRAINED_MODEL_DIRECTORY,
+                logger = logging.getLogger(INFO_LOGGER),
+                cache_dir = BERT_CACHE_DIR
+            )
 
         # use state dict for binary taggers
         if data_sample.is_binary:
             tagger.config.use_state_dict = True
         else:
             tagger.config.use_state_dict = False
+            pos_label = ""
 
         # train tagger and get result statistics
         report = tagger.train(
             data_sample.data,
+            from_checkpoint = from_checkpoint,
+            pos_label = pos_label,
             n_epochs = tagger_object.num_epochs,
             max_length = tagger_object.max_length,
             batch_size = tagger_object.batch_size,
             lr = tagger_object.learning_rate,
             eps = tagger_object.eps,
             split_ratio = tagger_object.split_ratio,
-            bert_model = bert_model
+            bert_model = tagger_object.bert_model
         )
         # close all db connections
         for conn in connections.all():

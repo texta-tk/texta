@@ -1,20 +1,21 @@
 import json
-
 from rest_framework import serializers
-from toolkit.helper_functions import get_downloaded_bert_models
-from toolkit.core.task.serializers import TaskSerializer
-from toolkit.elastic.index.serializers import IndexSerializer
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
-from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
+
+from django.core.exceptions import ValidationError
 from toolkit.bert_tagger import choices
 from toolkit.bert_tagger.models import BertTagger
-from toolkit.settings import BERT_PRETRAINED_MODEL_DIRECTORY, ALLOW_BERT_MODEL_DOWNLOADS
+from toolkit.core.task.serializers import TaskSerializer
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from toolkit.elastic.tools.aggregator import ElasticAggregator
+from toolkit.helper_functions import get_downloaded_bert_models
+from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, ProjectFilteredPrimaryKeyRelatedField
+from toolkit.settings import ALLOW_BERT_MODEL_DOWNLOADS, BERT_PRETRAINED_MODEL_DIRECTORY
+from toolkit.validator_constants import validate_pos_label
 
-class ApplyTaggerSerializer(FieldParseSerializer, serializers.Serializer):
+class ApplyTaggerSerializer(FieldParseSerializer, IndicesSerializerMixin):
     description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
     new_fact_name = serializers.CharField(required=True, help_text="Used as fact name when applying the tagger.")
     new_fact_value = serializers.CharField(required=False, default="", help_text="NB! Only applicable for binary taggers! Used as fact value when applying the tagger. Defaults to tagger description (binary) / tagger result (multiclass).")
-    indices = IndexSerializer(many=True, default=[], help_text="Which indices in the project to apply this to.")
     fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
     query = serializers.JSONField(help_text="Filter the documents which to scroll and apply to.", default=EMPTY_QUERY)
     es_timeout = serializers.IntegerField(default=choices.DEFAULT_ES_TIMEOUT, help_text=f"Elasticsearch scroll timeout in minutes. Default = {choices.DEFAULT_ES_TIMEOUT}.")
@@ -36,17 +37,19 @@ class BertTagTextSerializer(serializers.Serializer):
     feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 
-class TagRandomDocSerializer(serializers.Serializer):
-    indices = IndexSerializer(many=True, default=[])
-    fields = serializers.ListField(child=serializers.CharField(), default=[], required=False, allow_empty=True, help_text = 'Fields to apply the tagger. By default, the tagger is applied to the same fields it was trained on.')
+class TagRandomDocSerializer(IndicesSerializerMixin):
+    fields = serializers.ListField(child=serializers.CharField(), default=[], required=False, allow_empty=True, help_text='Fields to apply the tagger. By default, the tagger is applied to the same fields it was trained on.')
 
 
-class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer):
+class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True)
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
-    query = serializers.JSONField(required=False, help_text='Query in JSON format')
-    indices = IndexSerializer(many=True, default=[])
-    fact_name = serializers.CharField(default=None, required=False, help_text=f'Fact name used to filter tags (fact values). Default: None')
+    query = serializers.JSONField(required=False, help_text='Query in JSON format', default=json.dumps(EMPTY_QUERY))
+    #indices = IndexSerializer(many=True, default=[])
+    fact_name = serializers.CharField(default=None, required=False, help_text=f'Fact name used to filter tags (fact values). Default = None')
+    pos_label = serializers.CharField(default="", required=False, allow_blank=True, help_text=f'Fact value used as positive label while evaluating the results. This is needed only, if the selected fact has exactly two possible values. Default = ""')
+
+    checkpoint_model = ProjectFilteredPrimaryKeyRelatedField(queryset=BertTagger.objects, many=False, read_only=False, allow_null=True, default=None, help_text=f'Previously fine-tuned BERT model. Select this, if you wish to further fine-tune it with additional data and/or new parameters. Default = None')
 
     maximum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, required=False, help_text=f'Maximum number of positive examples. Default = {choices.DEFAULT_MAX_SAMPLE_SIZE}')
     minimum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, required=False, help_text=f'Minimum number of negative examples. Default = {choices.DEFAULT_MIN_SAMPLE_SIZE}')
@@ -54,7 +57,7 @@ class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Pr
 
     bert_model = serializers.CharField(default=choices.DEFAULT_BERT_MODEL, required=False, help_text=f'Pretrained BERT model to use. Default = {choices.DEFAULT_BERT_MODEL}')
     num_epochs = serializers.IntegerField(default=choices.DEFAULT_NUM_EPOCHS, required=False, help_text=f'Number of training epochs. Default = {choices.DEFAULT_NUM_EPOCHS}')
-    max_length = serializers.IntegerField(default=choices.DEFAULT_MAX_LENGTH, required=False, min_value = 1, max_value = 512, help_text=f'Maximum sequence length of BERT tokenized input text used for training. Default = {choices.DEFAULT_MAX_LENGTH}')
+    max_length = serializers.IntegerField(default=choices.DEFAULT_MAX_LENGTH, required=False, min_value=1, max_value=512, help_text=f'Maximum sequence length of BERT tokenized input text used for training. Default = {choices.DEFAULT_MAX_LENGTH}')
     batch_size = serializers.IntegerField(default=choices.DEFAULT_BATCH_SIZE, required=False, help_text=f'Batch size used for training. NB! Autoscaled based on max length if too large. Default = {choices.DEFAULT_BATCH_SIZE}')
     split_ratio = serializers.FloatField(default=choices.DEFAULT_TRAINING_SPLIT, required=False, help_text=f'Proportion of documents used for training; others are used for validation. Default = {choices.DEFAULT_TRAINING_SPLIT}')
     learning_rate = serializers.FloatField(default=choices.DEFAULT_LEARNING_RATE, required=False, help_text=f'Learning rate used while training. Default = {choices.DEFAULT_LEARNING_RATE}')
@@ -62,11 +65,13 @@ class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Pr
 
     balance = serializers.BooleanField(default=choices.DEFAULT_BALANCE, required=False, help_text=f'Balance sample sizes of different classes. Only applicable for multiclass taggers. Default = {choices.DEFAULT_BALANCE}')
     use_sentence_shuffle = serializers.BooleanField(default=choices.DEFAULT_USE_SENTENCE_SHUFFLE, required=False, help_text=f'Shuffle sentences in added examples. NB! Only applicable for multiclass taggers with balance=True. Default = {choices.DEFAULT_USE_SENTENCE_SHUFFLE}')
-    balance_to_max_limit = serializers.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT, required=False, help_text=f'If enabled, the number of samples for each class is set to `maximum_sample_size`. Otherwise, it is set to max class size. NB! Only applicable for multiclass taggers with balance=True. Default = {choices.DEFAULT_BALANCE_TO_MAX_LIMIT}')
+    balance_to_max_limit = serializers.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT, required=False,
+                                                    help_text=f'If enabled, the number of samples for each class is set to `maximum_sample_size`. Otherwise, it is set to max class size. NB! Only applicable for multiclass taggers with balance=True. Default = {choices.DEFAULT_BALANCE_TO_MAX_LIMIT}')
 
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
     url = serializers.SerializerMethodField()
+
 
     def validate_bert_model(self, bert_model):
         available_models = get_downloaded_bert_models(BERT_PRETRAINED_MODEL_DIRECTORY)
@@ -77,14 +82,21 @@ class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Pr
                 raise serializers.ValidationError(f"Model '{bert_model}' is not downloaded. Downloading models via API is disabled. Please contact you system administrator to make it available. Currently available models: {available_models}.")
         return bert_model
 
+
+    def validate(self, data):
+        # use custom validation for pos label as some other serializer fields are also required
+        data = validate_pos_label(data)
+        return data
+
+
     class Meta:
         model = BertTagger
         fields = ('url', 'author_username', 'id', 'description', 'query', 'fields', 'f1_score', 'precision', 'recall', 'accuracy',
-                  'validation_loss', 'training_loss', 'maximum_sample_size', 'minimum_sample_size', 'num_epochs', 'plot', 'task', 'fact_name',
+                  'validation_loss', 'training_loss', 'maximum_sample_size', 'minimum_sample_size', 'num_epochs', 'plot', 'task', 'pos_label', 'fact_name',
                   'indices', 'bert_model', 'learning_rate', 'eps', 'max_length', 'batch_size', 'adjusted_batch_size',
-                  'split_ratio','negative_multiplier', 'num_examples', 'confusion_matrix', 'balance', 'use_sentence_shuffle', 'balance_to_max_limit')
+                  'split_ratio','negative_multiplier', 'checkpoint_model', 'num_examples', 'confusion_matrix', 'balance', 'use_sentence_shuffle', 'balance_to_max_limit')
 
         read_only_fields = ('project', 'fields', 'f1_score', 'precision', 'recall', 'accuracy', 'validation_loss', 'training_loss', 'plot',
-                            'task', 'fact_name', 'num_examples', 'adjusted_batch_size', 'confusion_matrix')
+                            'task', 'num_examples', 'adjusted_batch_size', 'confusion_matrix')
 
         fields_to_parse = ['fields']

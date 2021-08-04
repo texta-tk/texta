@@ -345,9 +345,9 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
     def get_queryset(self):
         current_user = self.request.user
         if not current_user.is_superuser:
-            return (Project.objects.filter(users=current_user) | Project.objects.filter(administrators=current_user)).distinct()
+            return (Project.objects.filter(users=current_user).order_by('-id') | Project.objects.filter(administrators=current_user).order_by('-id')).distinct()
         else:
-            return Project.objects.all()
+            return Project.objects.all().order_by('-id')
 
 
     @action(detail=True, methods=['post'], serializer_class=HandleIndicesSerializer, permission_classes=[OnlySuperadminAllowed])

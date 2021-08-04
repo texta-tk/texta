@@ -1,14 +1,14 @@
 import json
-
+from typing import Union
 from django.urls import reverse
 from rest_framework import serializers
 from texta_mlp.mlp import SUPPORTED_ANALYZERS
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.elastic.index.serializers import IndexSerializer
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.mlp.models import ApplyLangWorker, MLPWorker
-from toolkit.serializer_constants import FieldValidationSerializer
+from toolkit.serializer_constants import FieldValidationSerializer, IndicesSerializerMixin
 from toolkit.settings import REST_FRAMEWORK
 
 
@@ -29,20 +29,19 @@ class MLPDocsSerializer(serializers.Serializer):
     )
 
 
-class MLPWorkerSerializer(serializers.ModelSerializer, FieldValidationSerializer):
-    indices = IndexSerializer(many=True, default=[])
+class MLPWorkerSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldValidationSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True, required=False)
     description = serializers.CharField()
     task = TaskSerializer(read_only=True, required=False)
     url = serializers.SerializerMethodField()
-    query = serializers.JSONField(help_text='Query in JSON format', required=False)
+    query = serializers.JSONField(help_text='Query in JSON format', required=False, default=json.dumps(EMPTY_QUERY))
     fields = serializers.ListField(child=serializers.CharField(), required=True, allow_empty=False, help_text="Which fields to apply the MLP on.")
     analyzers = serializers.MultipleChoiceField(
         choices=list(SUPPORTED_ANALYZERS),
         default=["all"]
     )
-    es_scroll_size = serializers.IntegerField(help_text="Scroll size for Elasticsearch (Default: 100)", required=False)
-    es_timeout = serializers.IntegerField(help_text="Scroll timeout in minutes for Elasticsearch (Default: 30)", required=False)
+    es_scroll_size = serializers.IntegerField(help_text="Scroll size for Elasticsearch (Default: 100)", default=100, required=False)
+    es_timeout = serializers.IntegerField(help_text="Scroll timeout in minutes for Elasticsearch (Default: 60)", default=60, required=False)
 
 
     class Meta:
@@ -73,13 +72,12 @@ class LangDetectSerializer(serializers.Serializer):
     text = serializers.CharField()
 
 
-class ApplyLangOnIndicesSerializer(serializers.ModelSerializer, FieldValidationSerializer):
+class ApplyLangOnIndicesSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldValidationSerializer):
     description = serializers.CharField()
-    indices = IndexSerializer(many=True, default=[])
     author_username = serializers.CharField(source='author.username', read_only=True, required=False)
     task = TaskSerializer(read_only=True, required=False)
     url = serializers.SerializerMethodField()
-    query = serializers.JSONField(help_text='Query in JSON format', required=False)
+    query = serializers.JSONField(help_text='Query in JSON format', required=False, default=json.dumps(EMPTY_QUERY))
     field = serializers.CharField(required=True, allow_blank=False)
 
 
@@ -95,6 +93,25 @@ class ApplyLangOnIndicesSerializer(serializers.ModelSerializer, FieldValidationS
         if not value or not set([value]).issubset(project_fields):
             raise serializers.ValidationError(f'Entered fields not in current project fields: {project_fields}')
         return value
+
+
+    def validate_query(self, query: Union[str, dict]):
+        """
+        Check if the query is formatted correctly and store it as JSON string,
+        if it is passed as a JSON dict.
+        """
+        if not isinstance(query, dict):
+            try:
+                query = json.loads(query)
+            except:
+                raise serializers.ValidationError(f"Incorrect query: '{query}'. Query should be formatted as a JSON dict or a JSON string.")
+            # If loaded query is not JSON dict, raise ValidatioNError
+            if not isinstance(query, dict):
+                raise serializers.ValidationError(f"Incorrect query: '{query}'. Query should contain a JSON dict.")
+
+        # Ensure that the query is stored as a JSON string
+        query = json.dumps(query)
+        return query
 
 
     class Meta:

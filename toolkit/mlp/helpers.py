@@ -1,5 +1,6 @@
 import logging
 from typing import List
+from celery.task.control import inspect
 
 from texta_mlp.document import Document
 from texta_mlp.mlp import MLP
@@ -85,3 +86,15 @@ def process_lang_actions(generator: ElasticSearcher, field: str, worker_id: int,
                 info_logger.info(f"Progress on applying language detection for worker with id: {worker_id} at {counter} out of {progress.n_total} documents!")
             elif counter == progress.n_total:
                 info_logger.info(f"Finished applying language detection for worker with id: {worker_id} at {counter}/{progress.n_total} documents!")
+
+
+def check_celery_tasks(QUEUE_NAME):
+    """
+    Checks for scheduled tasks in queue.
+    """
+    inspector = inspect([QUEUE_NAME])
+    scheduled_tasks = inspector.scheduled()
+    if not scheduled_tasks:
+        return True
+    else:
+        return False

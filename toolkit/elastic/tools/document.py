@@ -6,11 +6,82 @@ import elasticsearch
 from elasticsearch.helpers import bulk
 from elasticsearch_dsl import Q, Search
 
+from texta_mlp.mlp import MLP
+
 from toolkit.elastic.decorators import elastic_connection
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.settings import ERROR_LOGGER
 
 
+class ESDocObject:
+    """
+    An object connected to ES document. Retrieves the document from ES on init.
+    """
+
+
+    def __init__(self, document_id, index: str):
+        self.core = ElasticCore()
+        self.document_id = document_id
+        self.index = index
+        self.document = self.get()
+
+
+    @elastic_connection
+    def get(self):
+        """
+        Retrieve document by ID.
+        """
+        document = self.core.es.get(self.index, self.document_id)
+        return {
+            "_index": document["_index"],
+            "_type": document["_type"],
+            "_id": document["_id"],
+            "_source": document["_source"]
+        }
+
+
+    def apply_mlp(self, mlp: MLP, analyzers: List[str], field_data: List[str]):
+        """
+        Applies MLP to the selected fields and combines the results.
+        """
+        document_source = self.document["_source"]
+        mlp_processed = mlp.process_docs([document_source], analyzers=analyzers, doc_paths=field_data)[0]
+        self.document["_source"] = {**document_source, **mlp_processed}
+        return True
+
+
+    def add_field(self, field_name, field_content):
+        """
+        Adds field to document source.
+        """
+        self.document["_source"][field_name] = field_content
+        return True
+
+
+    @elastic_connection
+    def update(self, retry_on_conflict=3):
+        """
+        Updates document in ES by ID.
+        """
+        return self.core.es.update(
+            index=self.document["_index"],
+            doc_type=self.document["_type"],
+            id=self.document_id,
+            body={"doc": self.document["_source"]},
+            refresh="wait_for",
+            retry_on_conflict=retry_on_conflict
+        )
+
+
+    @elastic_connection
+    def delete(self):
+        """
+        Removes given document from ES.
+        """
+        return self.core.es.delete(index=self.index, id=self.document_id)
+
+
+# This class should be modified for bulk operations etc
 class ElasticDocument:
     """
     Everything related to managing documents in Elasticsearch

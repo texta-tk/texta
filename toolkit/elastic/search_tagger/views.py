@@ -23,7 +23,7 @@ class SearchQueryTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
     )
 
     def get_queryset(self):
-        return SearchQueryTagger.objects.filter(project=self.kwargs['project_pk'])
+        return SearchQueryTagger.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
     def perform_create(self, serializer):
         with transaction.atomic():
@@ -55,7 +55,7 @@ class SearchFieldsTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
     )
 
     def get_queryset(self):
-        return SearchFieldsTagger.objects.filter(project=self.kwargs['project_pk'])
+        return SearchFieldsTagger.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
     def perform_create(self, serializer):
         with transaction.atomic():
