@@ -1,21 +1,23 @@
-from urllib.parse import urlparse, parse_qs
-import requests
-import bs4
 import unittest
+from urllib.parse import parse_qs, urlparse
 
+import bs4
+import requests
 from rest_framework.test import APILiveServerTestCase
 
-from toolkit.test_settings import TEST_VERSION_PREFIX, TEST_UAA_PASSWORD, TEST_UAA_USERNAME, TEST_LIVE_SERVER_PORT
-from toolkit.tools.utils_for_tests import print_output
 from toolkit.settings import UAA_CLIENT_ID, UAA_REDIRECT_URI, UAA_URL, USE_UAA
+from toolkit.test_settings import TEST_LIVE_SERVER_PORT, TEST_UAA_PASSWORD, TEST_UAA_USERNAME, TEST_VERSION_PREFIX
+from toolkit.tools.utils_for_tests import print_output
 
 
 # Use the APILiveServerTestCase as we need the server to run for the callback from UAA
 class UAATests(APILiveServerTestCase):
     port = TEST_LIVE_SERVER_PORT
 
+
     def setUp(self):
         self.url = f'{TEST_VERSION_PREFIX}/uaa'
+
 
     @unittest.skipUnless(USE_UAA, 'Skipping UAA test because USE_UAA is set to False')
     def test(self):
@@ -53,7 +55,6 @@ class UAATests(APILiveServerTestCase):
         # Check if the UAA server returned an error response through the callback view
         print_output("run_callback_invalid_code", response.data)
         self.assertEqual(400, response.status_code)
-
 
 
     def run_callback_and_refresh_and_access_token_success(self):
@@ -110,7 +111,7 @@ class UAATests(APILiveServerTestCase):
             # Validate if the refresh-token endpoint works with the correct refresh_token
             # Post to the refresh-token endpoint
             refresh_resp = self.client.post(f'{self.url}/refresh-token',
-                                    {'refresh_token': query_params['refresh_token'][0]}, format='json')
+                                            {'refresh_token': query_params['refresh_token'][0]}, format='json')
 
             print_output("run_callback_and_refresh_and_access_token_success:refresh_resp.data", refresh_resp.data)
             print_output("run_callback_and_refresh_and_access_token_success:refresh_resp.data", refresh_resp.status_code)
@@ -184,6 +185,38 @@ class UAATests(APILiveServerTestCase):
         print_output("run_refresh_token_invalid_token", response.data)
         # Check if the refresh-token endpoint returned 403
         self.assertEqual(400, response.status_code)
-        #self.assertTrue('error_description' in response.data)
+        # self.assertTrue('error_description' in response.data)
         # Check if it gives a specific response
-        #self.assertTrue('invalid_token' in response.data['error'])
+        # self.assertTrue('invalid_token' in response.data['error'])
+
+
+    def test_access_after_revoked_token(self):
+        pass
+
+
+    def test_that_user_is_no_longer_superuser_after_admin_group_removal(self):
+        pass
+
+
+    def test_that_user_in_scopes_has_access_to_project_where_he_is_not_added_as_user(self):
+        pass
+
+
+    def test_that_user_with_projadmin_scope_can_do_proj_admin_procedures(self):
+        pass
+
+
+    def test_that_user_without_projadmin_scope_cant_do_proj_admin_procedures(self):
+        pass
+
+
+    def test_that_normal_user_in_scope_does_not_have_admin_access(self):
+        pass
+
+
+    def test_that_normally_added_user_still_has_access_even_if_not_in_set_scope(self):
+        pass
+
+
+    def test_that_user_without_matching_texta_wildcard_scope_cant_log_in(self):
+        pass

@@ -1,6 +1,9 @@
+import json
+
 from rest_framework import permissions
 
 from toolkit.core.project.models import Project
+from toolkit.settings import UAA_PROJECT_ADMIN_SCOPE, USE_UAA
 
 
 """
@@ -39,6 +42,11 @@ class AuthorProjAdminSuperadminAllowed(permissions.BasePermission):
         # check if user is superuser
         if request.user.is_superuser:
             return True
+
+        if USE_UAA:
+            user_scopes = json.loads(request.user.profile.scopes)
+            if UAA_PROJECT_ADMIN_SCOPE in user_scopes:
+                return True
 
         # nah, not gonna see anything!
         return False
@@ -102,11 +110,20 @@ class ProjectAccessInApplicationsAllowed(permissions.BasePermission):
         # check if user is superuser
         if request.user.is_superuser:
             return True
+
+        if USE_UAA:
+            user_scopes = json.loads(request.user.profile.scopes)
+            project_scopes = json.loads(project_object.scopes)
+
+            for project_scope in project_scopes:
+                if project_scope in user_scopes:
+                    return True
+
         # nah, not gonna see anything!
         return False
 
 
-# Used inside the Project endpoints.
+# Used inside the Project endpoints to manage access to the view itself.
 class ProjectEditAccessAllowed(permissions.BasePermission):
     message = 'Insufficient permissions for this project.'
 
@@ -133,6 +150,15 @@ class ProjectEditAccessAllowed(permissions.BasePermission):
         # Project users are permitted safe access to project list_view
         if request.user in project_object.users.all() and request.method in permissions.SAFE_METHODS:
             return True
+
+        if USE_UAA:
+            user_scopes = json.loads(request.user.profile.scopes)
+            project_scopes = json.loads(project_object.scopes)
+
+            for project_scope in project_scopes:
+                if project_scope in user_scopes:
+                    return True
+
         return False
 
 

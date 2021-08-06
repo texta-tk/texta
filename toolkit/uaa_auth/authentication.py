@@ -1,15 +1,15 @@
-import requests
 import logging
 
+import requests
 from django.contrib.auth.models import User
-from django.contrib.auth import logout
 from django.utils.translation import gettext_lazy as _
-
-from rest_framework import authentication
-from rest_framework import exceptions
+from rest_framework import authentication, exceptions
 from rest_framework.authentication import get_authorization_header
-from toolkit.settings import UAA_URL
-from toolkit.settings import INFO_LOGGER
+
+from toolkit.settings import INFO_LOGGER, UAA_URL
+
+
+REQUESTS_TIMEOUT_IN_SECONDS = 10
 
 
 class UaaAuthentication(authentication.BaseAuthentication):
@@ -48,6 +48,10 @@ class UaaAuthentication(authentication.BaseAuthentication):
             raise exceptions.AuthenticationFailed(resp_json)
 
 
+    # TODO This place will give you an error in case the scopes have changed for the user, might need to refresh it in such cases.
+    # NOTE Refreshing the token gives the same result, should we forcefully log the user out in such cases?
+    # UAA Response: "Some required "scope" are missing: [name_of_removed_scope]" HTTP 401.
+    # Possible solution: if access token fails, try refresh token and if that also fails forcefully log out.
     def _validate_token(self, bearer_token: str, request):
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -56,7 +60,7 @@ class UaaAuthentication(authentication.BaseAuthentication):
         }
 
         # Make a request to the /userinfo endpoint to check token validity and retrieve user info
-        resp = requests.get(f'{UAA_URL}/userinfo', headers=headers)
+        resp = requests.get(f'{UAA_URL}/userinfo', headers=headers, timeout=REQUESTS_TIMEOUT_IN_SECONDS)
         resp_json = resp.json()
 
         # If the req was successful, return the user data, otherwise just return nothing

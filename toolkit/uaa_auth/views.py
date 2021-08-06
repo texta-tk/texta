@@ -9,17 +9,19 @@ from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect
 from rest_framework import status, views
 from rest_framework.authtoken.models import Token
-from rest_framework.exceptions import APIException, ValidationError
+from rest_framework.exceptions import APIException, AuthenticationFailed, ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from toolkit.settings import ERROR_LOGGER, INFO_LOGGER, UAA_CLIENT_ID, UAA_CLIENT_SECRET, UAA_FRONT_REDIRECT_URL, UAA_REDIRECT_URI, UAA_URL, USE_UAA
+from toolkit.settings import ERROR_LOGGER, INFO_LOGGER, UAA_CLIENT_ID, UAA_CLIENT_SECRET, UAA_FRONT_REDIRECT_URL, UAA_REDIRECT_URI, UAA_SUPERUSER_SCOPE, UAA_TEXTA_SCOPE_PREFIX, UAA_URL, USE_UAA
 
 
 HEADERS = {
     'Content-Type': 'application/x-www-form-urlencoded',
     'Accept': 'application/json',
 }
+
+REQUESTS_TIMEOUT_IN_SECONDS = 10
 
 
 class UAAView(views.APIView):
@@ -52,23 +54,24 @@ class UAAView(views.APIView):
         }
         token_url = f'{UAA_URL}/oauth/token'
         # Make a request to the oauth/token endpoint to retrieve the access_token and user info
-        response = requests.post(token_url, headers=HEADERS, data=body)
+        response = requests.post(token_url, headers=HEADERS, data=body, timeout=REQUESTS_TIMEOUT_IN_SECONDS)
         if response.ok:
             return response.json(), response.status_code
         else:
             logging.getLogger(ERROR_LOGGER).error(response.content)
+            if "invalid_grant" in response.text:
+                raise APIException("Invalid authorization code!", code=status.HTTP_400_BAD_REQUEST)
+
             raise APIException("Could not fetch the UAA access token!", code=response.status_code)
 
 
     @staticmethod
     def _update_user_and_profile(user_profile: dict, scope: List[str], token: str, user_id: str, request):
         # Get or create the user
-        username = user_profile["userName"]
-        emails = [email["value"] for email in user_profile["emails"]]
-        email = emails[0] if emails else ""
-        name_dict = user_profile.get("name", {})
-        first_name = name_dict.get("givenName", None)
-        last_name = name_dict.get("familyName", None)
+        username = user_profile.get("user_name", "")
+        email = user_profile.get("email", "")
+        first_name = user_profile.get("given_name", "")
+        last_name = user_profile.get("family_name", "")
 
         user, is_created = User.objects.get_or_create(username=username)
         user.profile.uaa_account_id = user_id
@@ -76,8 +79,15 @@ class UAAView(views.APIView):
 
         if first_name: user.profile.first_name = first_name
         if last_name: user.profile.last_name = last_name
-        if scope: user.profile.scope = json.dumps(scope, ensure_ascii=False)
+        if scope: user.profile.scopes = json.dumps(scope, ensure_ascii=False)
         if email: user.email = email
+
+        if UAA_SUPERUSER_SCOPE in scope:
+            user.is_superuser = True
+            user.is_staff = True
+        else:
+            user.is_superuser = False
+            user.is_staff = False
 
         user.profile.save()
         user.save()
@@ -90,17 +100,25 @@ class UAAView(views.APIView):
 
 
     # TODO Rethink on whether this is the best approach for this.
-    def sign_in_with_user(self, user, request):
+    def sign_in_with_user(self, user, request, scopes: List[str]):
         login(request, user)
 
 
     @staticmethod
     def _get_uaa_user_profile(user_id, access_token):
-        response = requests.get(f"{UAA_URL}/Users/{user_id}", headers={"Authorization": f"Bearer {access_token}"})
+        response = requests.get(f"{UAA_URL}/userinfo", headers={"Authorization": f"Bearer {access_token}"}, timeout=REQUESTS_TIMEOUT_IN_SECONDS)
         if response.ok:
             return response.json()
         else:
             raise ValidationError("Could not fetch user details from UAA, is your token still valid!?")
+
+
+    def _validate_toolkit_access_scope(self, scopes: str):
+        """
+        Users without the TEXTA prefix in their scopes are not permitted access into Toolkit.
+        """
+        if UAA_TEXTA_SCOPE_PREFIX not in scopes:
+            raise AuthenticationFailed("Users UAA scopes do not contain access for TEXTA Toolkit!'")
 
 
     def get(self, request):
@@ -115,10 +133,6 @@ class UAAView(views.APIView):
         code = request.query_params.get('code', None)
         if code:
             resp, status_code = self._get_access_token(code)
-            # On error, send a 400 resp with the error with the json contents
-            if status_code != 200:
-                logging.getLogger(INFO_LOGGER).info(f"UAAView _get_access_token returned status {resp.status_code}!")
-                return Response(f"UAAView _get_access_token returned status {resp.status_code}!", status=status.HTTP_400_BAD_REQUEST)
 
             # get response json
             access_token = resp['access_token']
@@ -126,12 +140,14 @@ class UAAView(views.APIView):
 
             jit_user_info = self._decode_jit_token(resp['id_token'])
             scope = resp['scope']
-            user_id = jit_user_info['user_id']
 
+            self._validate_toolkit_access_scope(scope)
+
+            user_id = jit_user_info['user_id']
             uaa_user_profile = UAAView._get_uaa_user_profile(user_id, access_token)
 
             user = UAAView._update_user_and_profile(uaa_user_profile, scope, access_token, user_id, request)
-            self.sign_in_with_user(user, request)
+            self.sign_in_with_user(user, request, scope)
             return HttpResponseRedirect(redirect_to=f'{UAA_FRONT_REDIRECT_URL}/uaa/?access_token={access_token}&refresh_token={refresh_token}')
 
         else:
@@ -175,4 +191,4 @@ class RefreshUAATokenView(views.APIView):
             'refresh_token': refresh_token
         }
         # Make a request to the OAuth /token endpoint to refresh the token
-        return requests.post(f'{UAA_URL}/oauth/token', headers=HEADERS, data=body)
+        return requests.post(f'{UAA_URL}/oauth/token', headers=HEADERS, data=body, timeout=REQUESTS_TIMEOUT_IN_SECONDS)
