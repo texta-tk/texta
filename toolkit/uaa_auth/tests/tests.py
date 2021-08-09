@@ -14,10 +14,8 @@ from toolkit.tools.utils_for_tests import print_output
 class UAATests(APILiveServerTestCase):
     port = TEST_LIVE_SERVER_PORT
 
-
     def setUp(self):
         self.url = f'{TEST_VERSION_PREFIX}/uaa'
-
 
     @unittest.skipUnless(USE_UAA, 'Skipping UAA test because USE_UAA is set to False')
     def test(self):
@@ -28,7 +26,7 @@ class UAATests(APILiveServerTestCase):
         self.run_auth_invalid_token()
         self.run_refresh_token_incorrect_params()
         self.run_refresh_token_invalid_token()
-
+        self.test_invalid_scope_login()
 
     def run_callback_incorrect_params(self):
         '''
@@ -44,7 +42,6 @@ class UAATests(APILiveServerTestCase):
         self.assertEqual(400, response.status_code)
         print_output("run_callback_incorrect_params", response.data)
 
-
     def run_callback_invalid_code(self):
         '''
         Test if the redirect_uri callback gives the correct response
@@ -55,7 +52,6 @@ class UAATests(APILiveServerTestCase):
         # Check if the UAA server returned an error response through the callback view
         print_output("run_callback_invalid_code", response.data)
         self.assertEqual(400, response.status_code)
-
 
     def run_callback_and_refresh_and_access_token_success(self):
         '''
@@ -121,7 +117,6 @@ class UAATests(APILiveServerTestCase):
             self.assertTrue('refresh_token' in refresh_resp.data)
             self.assertTrue('access_token' in refresh_resp.data)
 
-
     def run_auth_incorrect_header(self):
         '''
         Test if UaaAuthentication gives the correct response on an incorrect header
@@ -138,7 +133,6 @@ class UAATests(APILiveServerTestCase):
         # Check if it gives a specific response
         self.assertTrue('Invalid bearer header' in response.data['detail'])
         self.assertEqual(401, response.status_code)
-
 
     def run_auth_invalid_token(self):
         '''
@@ -157,7 +151,6 @@ class UAATests(APILiveServerTestCase):
         self.assertTrue('The token expired,' in response.data['error_description'])
         self.assertEqual(401, response.status_code)
 
-
     def run_refresh_token_incorrect_params(self):
         '''
         Test if the refresh token endpoint gives the correct response on incorrect params
@@ -172,7 +165,6 @@ class UAATests(APILiveServerTestCase):
         # Check if it gives a specific response
         self.assertTrue('refresh_token missing' in response.data['refresh_token'])
         self.assertEqual(400, response.status_code)
-
 
     def run_refresh_token_invalid_token(self):
         '''
@@ -189,34 +181,48 @@ class UAATests(APILiveServerTestCase):
         # Check if it gives a specific response
         # self.assertTrue('invalid_token' in response.data['error'])
 
-
     def test_access_after_revoked_token(self):
         pass
-
 
     def test_that_user_is_no_longer_superuser_after_admin_group_removal(self):
         pass
 
-
     def test_that_user_in_scopes_has_access_to_project_where_he_is_not_added_as_user(self):
         pass
-
 
     def test_that_user_with_projadmin_scope_can_do_proj_admin_procedures(self):
         pass
 
-
     def test_that_user_without_projadmin_scope_cant_do_proj_admin_procedures(self):
         pass
-
 
     def test_that_normal_user_in_scope_does_not_have_admin_access(self):
         pass
 
-
     def test_that_normally_added_user_still_has_access_even_if_not_in_set_scope(self):
         pass
 
+    def test_that_user_can_login_with_matching_texta_wildcard_scope(self):
+        '''
+        Test if the user can login with texta.* scope
+        '''
+        # Encode the redirect_uri
+        encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
+        response = self.client.get(
+            f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=texta.*&redirect_uri={encoded_redirect_uri}')
+        # Print response data
+        print_output("test_texta_wildcard_scope_login", response.data)
+        # Check if the response returned 200
+        self.assertEqual(200, response.status_code)
 
-    def test_that_user_without_matching_texta_wildcard_scope_cant_log_in(self):
-        pass
+    def test_invalid_scope_login(self):
+        '''
+        Test if the user cannot login with incorrect scope
+        '''
+        # Encode the redirect_uri
+        encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
+        response = self.client.get(f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=unknownscope&redirect_uri={encoded_redirect_uri}')
+        # Print response data
+        print_output("test_invalid_scope_login", response.data)
+        # Check if the response returned 400
+        self.assertEqual(400, response.status_code)
