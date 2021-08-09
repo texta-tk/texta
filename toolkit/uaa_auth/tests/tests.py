@@ -26,6 +26,7 @@ class UAATests(APILiveServerTestCase):
         self.run_auth_invalid_token()
         self.run_refresh_token_incorrect_params()
         self.run_refresh_token_invalid_token()
+        self.test_that_user_can_login_with_matching_texta_wildcard_scope()
         self.test_invalid_scope_login()
 
     def run_callback_incorrect_params(self):
@@ -51,7 +52,7 @@ class UAATests(APILiveServerTestCase):
         response = self.client.get(url, format='json')
         # Check if the UAA server returned an error response through the callback view
         print_output("run_callback_invalid_code", response.data)
-        self.assertEqual(400, response.status_code)
+        self.assertEqual(500, response.status_code)
 
     def run_callback_and_refresh_and_access_token_success(self):
         '''
@@ -208,12 +209,30 @@ class UAATests(APILiveServerTestCase):
         '''
         # Encode the redirect_uri
         encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
-        response = self.client.get(
-            f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=texta.*&redirect_uri={encoded_redirect_uri}')
+        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=texta.*&redirect_uri={encoded_redirect_uri}'
+
+        # Get the csrf token from the login page HTML
+        html_resp = requests.get(uaa_login_url)
+        soup = bs4.BeautifulSoup(html_resp.text, 'lxml')
+        csrf_token = soup.select_one('[name="X-Uaa-Csrf"]')['value']
+        print_output("run_callback_and_refresh_and_access_token_success:csrf_token", csrf_token)
+        self.assertTrue(csrf_token)
+
+        headers = {
+            "content-type": "application/x-www-form-urlencoded",
+            "cookie": f'X-Uaa-Csrf={csrf_token}'
+        }
+
+        # The form_redirect_uri will be the encoded version of the uaa_login_uri
+        body = f'X-Uaa-Csrf={csrf_token}&username={TEST_UAA_USERNAME}&password={TEST_UAA_PASSWORD}&form_redirect_uri={requests.utils.quote(uaa_login_url)}'
+
+        # POST to the login.do endpoint to trigger the redirect_uri callback in the view.
+        login_resp = requests.post(f'{UAA_URL}/login.do', headers=headers, data=body)
+
         # Print response data
-        print_output("test_texta_wildcard_scope_login", response.data)
-        # Check if the response returned 200
-        self.assertEqual(200, response.status_code)
+        print_output("test_texta_wildcard_scope_login", login_resp)
+
+        self.assertEqual(200, login_resp.status_code)
 
     def test_invalid_scope_login(self):
         '''
@@ -221,8 +240,27 @@ class UAATests(APILiveServerTestCase):
         '''
         # Encode the redirect_uri
         encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
-        response = self.client.get(f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=unknownscope&redirect_uri={encoded_redirect_uri}')
+        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=unknownscope&redirect_uri={encoded_redirect_uri}'
+
+        # Get the csrf token from the login page HTML
+        html_resp = requests.get(uaa_login_url)
+        soup = bs4.BeautifulSoup(html_resp.text, 'lxml')
+        csrf_token = soup.select_one('[name="X-Uaa-Csrf"]')['value']
+        print_output("run_callback_and_refresh_and_access_token_success:csrf_token", csrf_token)
+        self.assertTrue(csrf_token)
+
+        headers = {
+            "content-type": "application/x-www-form-urlencoded",
+            "cookie": f'X-Uaa-Csrf={csrf_token}'
+        }
+
+        # The form_redirect_uri will be the encoded version of the uaa_login_uri
+        body = f'X-Uaa-Csrf={csrf_token}&username={TEST_UAA_USERNAME}&password={TEST_UAA_PASSWORD}&form_redirect_uri={requests.utils.quote(uaa_login_url)}'
+
+        # POST to the login.do endpoint to trigger the redirect_uri callback in the view.
+        login_resp = requests.post(f'{UAA_URL}/login.do', headers=headers, data=body)
+
         # Print response data
-        print_output("test_invalid_scope_login", response.data)
-        # Check if the response returned 400
-        self.assertEqual(400, response.status_code)
+        print_output("test_texta_wildcard_scope_login", login_resp)
+
+        self.assertEqual(200, login_resp.status_code)
