@@ -26,6 +26,7 @@ class UAATests(APILiveServerTestCase):
         self.run_auth_invalid_token()
         self.run_refresh_token_incorrect_params()
         self.run_refresh_token_invalid_token()
+        self.test_user_is_no_longer_superuser_after_admin_group_removal()
         self.test_that_user_can_login_with_matching_texta_wildcard_scope()
         self.test_invalid_scope_login()
 
@@ -182,11 +183,36 @@ class UAATests(APILiveServerTestCase):
         # Check if it gives a specific response
         # self.assertTrue('invalid_token' in response.data['error'])
 
-    def test_access_after_revoked_token(self):
-        pass
+    def test_user_is_no_longer_superuser_after_admin_group_removal(self):
+        '''
+        Test if the user is not admin since texta.admin is not in scope
+        '''
+        # Encode the redirect_uri
+        encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
+        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=texta.admin&redirect_uri={encoded_redirect_uri}'
 
-    def test_that_user_is_no_longer_superuser_after_admin_group_removal(self):
-        pass
+        # Get the csrf token from the login page HTML
+        html_resp = requests.get(uaa_login_url)
+        soup = bs4.BeautifulSoup(html_resp.text, 'lxml')
+        csrf_token = soup.select_one('[name="X-Uaa-Csrf"]')['value']
+        print_output("test_user_is_no_longer_superuser_after_admin_group_removal:csrf_token", csrf_token)
+        self.assertTrue(csrf_token)
+
+        headers = {
+            "content-type": "application/x-www-form-urlencoded",
+            "cookie": f'X-Uaa-Csrf={csrf_token}'
+        }
+
+        # The form_redirect_uri will be the encoded version of the uaa_login_uri
+        body = f'X-Uaa-Csrf={csrf_token}&username={TEST_UAA_USERNAME}&password={TEST_UAA_PASSWORD}&form_redirect_uri={requests.utils.quote(uaa_login_url)}'
+
+        # POST to the login.do endpoint to trigger the redirect_uri callback in the view.
+        login_resp = requests.post(f'{UAA_URL}/login.do', headers=headers, data=body)
+
+        # Print response data
+        print_output("test_user_is_no_longer_superuser_after_admin_group_removal", login_resp)
+
+        self.assertEqual(200, login_resp.status_code)
 
     def test_that_user_in_scopes_has_access_to_project_where_he_is_not_added_as_user(self):
         pass
@@ -215,7 +241,7 @@ class UAATests(APILiveServerTestCase):
         html_resp = requests.get(uaa_login_url)
         soup = bs4.BeautifulSoup(html_resp.text, 'lxml')
         csrf_token = soup.select_one('[name="X-Uaa-Csrf"]')['value']
-        print_output("run_callback_and_refresh_and_access_token_success:csrf_token", csrf_token)
+        print_output("test_that_user_can_login_with_matching_texta_wildcard_scope:csrf_token", csrf_token)
         self.assertTrue(csrf_token)
 
         headers = {
@@ -230,7 +256,7 @@ class UAATests(APILiveServerTestCase):
         login_resp = requests.post(f'{UAA_URL}/login.do', headers=headers, data=body)
 
         # Print response data
-        print_output("test_texta_wildcard_scope_login", login_resp)
+        print_output("test_that_user_can_login_with_matching_texta_wildcard_scope", login_resp)
 
         self.assertEqual(200, login_resp.status_code)
 
@@ -246,7 +272,7 @@ class UAATests(APILiveServerTestCase):
         html_resp = requests.get(uaa_login_url)
         soup = bs4.BeautifulSoup(html_resp.text, 'lxml')
         csrf_token = soup.select_one('[name="X-Uaa-Csrf"]')['value']
-        print_output("run_callback_and_refresh_and_access_token_success:csrf_token", csrf_token)
+        print_output("test_invalid_scope_login:csrf_token", csrf_token)
         self.assertTrue(csrf_token)
 
         headers = {
@@ -261,6 +287,7 @@ class UAATests(APILiveServerTestCase):
         login_resp = requests.post(f'{UAA_URL}/login.do', headers=headers, data=body)
 
         # Print response data
-        print_output("test_texta_wildcard_scope_login", login_resp)
+        print_output("test_invalid_scope_login", login_resp)
+        self.assertTrue('Provided credentials are invalid' in str(login_resp.content))
 
         self.assertEqual(200, login_resp.status_code)
