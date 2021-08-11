@@ -149,7 +149,7 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
         if "title" in validated_data:
             instance.title = validated_data["title"]
         if "scopes" in validated_data:
-            instance.scopes = json.dumps(validated_data["scopes"])
+            instance.scopes =validated_data["scopes"]
 
         instance.save()
         return instance
@@ -162,7 +162,7 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
         users = wrap_in_list(validated_data["users_write"])
         administrators = wrap_in_list(validated_data["administrators_write"])
         author = self.context["request"].user
-        scopes = json.dumps(validated_data["scopes"])
+        scopes = validated_data["scopes"]
 
         if indices and not author.is_superuser:
             raise PermissionDenied("Non-superusers can not create projects with indices defined!")

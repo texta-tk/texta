@@ -7,8 +7,8 @@ from .models import UserProfile
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ('first_name', 'last_name', 'application',)
-        read_only_fields = ('application',)
+        fields = ('first_name', 'last_name', 'is_uaa_account', 'scopes', 'application',)
+        read_only_fields = ('application', 'is_uaa_account', 'scopes')
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -27,7 +27,6 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
             return last_name
         else:
             return instance.username
-
 
 
     def update(self, instance, validated_data):

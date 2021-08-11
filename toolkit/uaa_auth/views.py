@@ -79,7 +79,7 @@ class UAAView(views.APIView):
 
         if first_name: user.profile.first_name = first_name
         if last_name: user.profile.last_name = last_name
-        if scope: user.profile.scopes = json.dumps(scope, ensure_ascii=False)
+        if scope: user.profile.scopes = scope
         if email: user.email = email
 
         if UAA_SUPERUSER_SCOPE in scope:

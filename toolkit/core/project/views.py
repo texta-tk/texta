@@ -344,7 +344,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         current_user = self.request.user
 
         if not current_user.is_superuser:
-            user_scopes_str = json.loads(current_user.profile.scopes)
+            user_scopes_str = current_user.profile.scopes
             user_scopes = user_scopes_str.split(" ")
 
             # TODO Revisit this part.
