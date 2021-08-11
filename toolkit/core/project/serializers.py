@@ -114,7 +114,7 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
     resources = serializers.SerializerMethodField()
     resource_count = serializers.SerializerMethodField()
 
-    scopes = serializers.ListField()
+    scopes = serializers.ListField(default=[], required=False)
 
 
     # For whatever reason, it doesn't validate read-only fields, so we do it manually.
@@ -125,6 +125,16 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
                 if key in self.initial_data:
                     raise ValidationError(f"Field: '{key}' is a read-only field, please use {key}_write instead!")
         return data
+
+
+    def validate_scopes(self, values):
+        user = self.context["request"].user
+        user_scopes = json.loads(user.profile.scopes)
+        if not user.is_superuser or not user.is_staff:
+            for project_scope in values:
+                if project_scope not in user_scopes:
+                    raise ValidationError("Normal users can only define scopes they have access to!")
+        return values
 
 
     def __enrich_payload_with_orm(self, base, data):
@@ -149,7 +159,7 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
         if "title" in validated_data:
             instance.title = validated_data["title"]
         if "scopes" in validated_data:
-            instance.scopes =validated_data["scopes"]
+            instance.scopes = json.dumps(validated_data["scopes"])
 
         instance.save()
         return instance
@@ -162,7 +172,7 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
         users = wrap_in_list(validated_data["users_write"])
         administrators = wrap_in_list(validated_data["administrators_write"])
         author = self.context["request"].user
-        scopes = validated_data["scopes"]
+        scopes = json.dumps(validated_data["scopes"], ensure_ascii=False)
 
         if indices and not author.is_superuser:
             raise PermissionDenied("Non-superusers can not create projects with indices defined!")

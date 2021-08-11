@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
@@ -5,6 +7,16 @@ from .models import UserProfile
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    scopes = serializers.SerializerMethodField()
+
+
+    def get_scopes(self, data):
+        try:
+            return json.loads(data.scopes)
+        except Exception:
+            return data.scopes
+
+
     class Meta:
         model = UserProfile
         fields = ('first_name', 'last_name', 'is_uaa_account', 'scopes', 'application',)

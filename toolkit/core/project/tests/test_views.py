@@ -436,3 +436,19 @@ class ProjectViewTests(APITestCase):
         response = self.client.post(url, data={"project_admins": [self.user.pk]})
         print_output("test_that_project_authors_and_projadmins_can_add_projadmins:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+
+    def test_project_creation_with_scope(self):
+        pass
+
+
+    def test_updating_scopes(self):
+        pass
+
+
+    def test_that_normal_users_can_only_add_scopes_they_are_in(self):
+        pass
+
+
+    def test_that_admins_can_pick_any_scope_they_want_to(self):
+        pass

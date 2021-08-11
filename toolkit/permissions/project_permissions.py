@@ -44,7 +44,7 @@ class AuthorProjAdminSuperadminAllowed(permissions.BasePermission):
             return True
 
         if USE_UAA:
-            user_scopes = request.user.profile.scopes
+            user_scopes = json.loads(request.user.profile.scopes)
             if UAA_PROJECT_ADMIN_SCOPE in user_scopes:
                 return True
 
@@ -112,7 +112,7 @@ class ProjectAccessInApplicationsAllowed(permissions.BasePermission):
             return True
 
         if USE_UAA:
-            user_scopes = request.user.profile.scopes
+            user_scopes = json.loads(request.user.profile.scopes)
             project_scopes = json.loads(project_object.scopes)
 
             for project_scope in project_scopes:
@@ -152,7 +152,7 @@ class ProjectEditAccessAllowed(permissions.BasePermission):
             return True
 
         if USE_UAA:
-            user_scopes = request.user.profile.scopes
+            user_scopes = json.loads(request.user.profile.scopes)
             project_scopes = json.loads(project_object.scopes)
 
             for project_scope in project_scopes:

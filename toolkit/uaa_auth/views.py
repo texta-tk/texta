@@ -66,12 +66,14 @@ class UAAView(views.APIView):
 
 
     @staticmethod
-    def _update_user_and_profile(user_profile: dict, scope: List[str], token: str, user_id: str, request):
+    def _update_user_and_profile(user_profile: dict, scope: str, token: str, user_id: str, request):
         # Get or create the user
         username = user_profile.get("user_name", "")
         email = user_profile.get("email", "")
         first_name = user_profile.get("given_name", "")
         last_name = user_profile.get("family_name", "")
+
+        scope = scope.split(" ")
 
         user, is_created = User.objects.get_or_create(username=username)
         user.profile.uaa_account_id = user_id
@@ -79,7 +81,7 @@ class UAAView(views.APIView):
 
         if first_name: user.profile.first_name = first_name
         if last_name: user.profile.last_name = last_name
-        if scope: user.profile.scopes = scope
+        if scope: user.profile.scopes = json.dumps(scope, ensure_ascii=False)
         if email: user.email = email
 
         if UAA_SUPERUSER_SCOPE in scope:
