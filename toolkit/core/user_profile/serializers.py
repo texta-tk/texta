@@ -28,20 +28,6 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
     display_name = serializers.CharField(source="profile.get_display_name")
 
 
-    #
-    # def get_display_name(self, instance: User):
-    #     first_name = instance.profile.first_name
-    #     last_name = instance.profile.last_name
-    #     if first_name and last_name:
-    #         return f"{first_name} {last_name}"
-    #     elif first_name:
-    #         return first_name
-    #     elif last_name:
-    #         return last_name
-    #     else:
-    #         return instance.username
-    #
-
     def update(self, instance, validated_data):
         instance = super(UserSerializer, self).update(instance, validated_data)
         # Because staff and superusers are interchangeable and some of DRF's built in

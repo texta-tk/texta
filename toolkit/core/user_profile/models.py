@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -10,7 +12,7 @@ class UserProfile(models.Model):
     last_name = models.TextField(null=True, default=None)
 
     is_uaa_account = models.BooleanField(default=False)
-    scopes = models.CharField(max_length=MAX_DESC_LEN, default="None")
+    scopes = models.CharField(max_length=MAX_DESC_LEN, default=json.dumps([]))
     # define the application user is used for (e.g. "toolkit" and "law")
     application = models.CharField(max_length=MAX_DESC_LEN, default="toolkit")
 
