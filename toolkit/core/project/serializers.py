@@ -110,11 +110,12 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
     administrators = UserSerializer(many=True, default=serializers.CurrentUserDefault(), read_only=True)
     administrators_write = serializers.ListField(child=serializers.CharField(validators=[check_if_username_exist]), write_only=True, default=[])
 
-    author_username = serializers.CharField(source='author.username', read_only=True)
+    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
+
     resources = serializers.SerializerMethodField()
     resource_count = serializers.SerializerMethodField()
 
-    scopes = serializers.ListField(default=[], required=False)
+    scopes = serializers.ListField(default=[], required=False, help_text="Users that belong to the given scope will have access to the Projects resources.")
 
 
     # For whatever reason, it doesn't validate read-only fields, so we do it manually.

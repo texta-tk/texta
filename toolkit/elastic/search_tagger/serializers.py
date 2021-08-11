@@ -12,7 +12,7 @@ from .models import SearchFieldsTagger, SearchQueryTagger
 
 
 class SearchQueryTaggerSerializer(serializers.ModelSerializer, FieldValidationSerializer, IndicesSerializerMixin):
-    author_username = serializers.CharField(source='author.username', read_only=True, required=False)
+    author_username = serializers.CharField(source='author.profile.get_display_namee', read_only=True, required=False)
     description = serializers.CharField()
     task = TaskSerializer(read_only=True, required=False)
     url = serializers.SerializerMethodField()
@@ -48,7 +48,7 @@ class SearchQueryTaggerSerializer(serializers.ModelSerializer, FieldValidationSe
 
 
 class SearchFieldsTaggerSerializer(serializers.ModelSerializer, FieldValidationSerializer, IndicesSerializerMixin):
-    author_username = serializers.CharField(source='author.username', read_only=True, required=False)
+    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True, required=False)
     description = serializers.CharField()
     task = TaskSerializer(read_only=True, required=False)
     url = serializers.SerializerMethodField()

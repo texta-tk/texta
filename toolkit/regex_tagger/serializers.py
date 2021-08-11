@@ -10,7 +10,7 @@ from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializer
 
 class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer):
     description = serializers.CharField()
-    author_username = serializers.CharField(source='author.username', read_only=True)
+    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
     lexicon = serializers.ListField(child=serializers.CharField(required=True), validators=[validate_patterns], help_text="Words/phrases/regex patterns to match.")
     counter_lexicon = serializers.ListField(child=serializers.CharField(required=False), default=[], validators=[validate_patterns], help_text="Words/phrases/regex patterns to nullify lexicon matches. Default = [].")
 
@@ -91,7 +91,7 @@ class RegexTaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrl
     description = serializers.CharField()
     url = serializers.SerializerMethodField()
     task = TaskSerializer(read_only=True)
-    author_username = serializers.CharField(source='author.username', read_only=True)
+    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
     tagger_info = serializers.SerializerMethodField(read_only=True)  # Helper field for displaying tagger info in a friendly manner.
 
 

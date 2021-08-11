@@ -19,7 +19,7 @@ from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUr
 
 
 class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
-    author_username = serializers.CharField(source='author.username', read_only=True)
+    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
     url = serializers.SerializerMethodField()
     scroll_size = serializers.IntegerField(min_value=0, max_value=10000, required=False)  # Max value stems from Elasticsearch max doc count limitation.
     description = serializers.CharField(help_text='Describe your re-indexing task', required=True, allow_blank=False)
