@@ -86,7 +86,7 @@ Toolkit is installed:
 * TEXTA_RELATIVE_MODELS_DIR - Relative path of the directory in which all the different types of models are stored in.
   (Default: "/data/models").
 * TEXTA_LANGUAGE_CODES - Comma separated string of Stanza supported language codes to use for Multilingual Processing.
-  (Default: "et,en,ru").
+  (Default: "").
 * TEXTA_MLP_MODEL_DIRECTORY_PATH - Relative path to the directory into which Stanza models will be stored under the "
   stanza" folder (setting this to ./home/texta will create ./home/texta/stanza which contains subfolders for every
   language like ./home/texta/stanza/et etc). (Default: "./data/models").
