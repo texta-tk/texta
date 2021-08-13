@@ -24,18 +24,18 @@ class UAATests(APILiveServerTestCase):
     def test(self):
         self.run_callback_incorrect_params()
         self.run_callback_invalid_code()
-        self.test_login_with_refresh_and_access_token_success()
+        self.run_login_with_refresh_and_access_token_success()
         self.run_auth_incorrect_header()
         self.run_auth_invalid_token()
         self.run_refresh_token_incorrect_params()
         self.run_refresh_token_invalid_token()
-        self.test_user_is_no_longer_superuser_after_admin_group_removal()
-        #self.test_that_user_in_scopes_has_access_to_project_where_he_is_not_added_as_user()
-        self.test_that_user_with_projadmin_scope_can_do_proj_admin_procedures()
-        #self.test_that_user_without_projadmin_scope_cant_do_proj_admin_procedures()
-        #self.test_that_normal_user_in_scope_does_not_have_admin_access()
-        self.test_that_normally_added_user_still_has_access_even_if_not_in_set_scope()
-        self.test_invalid_scope_login()
+        #self.run_user_is_no_longer_superuser_after_admin_group_removal()
+        self.run_that_user_in_scopes_has_access_to_project_where_he_is_not_added_as_user()
+        self.run_that_user_with_projadmin_scope_can_do_proj_admin_procedures()
+        self.run_that_user_without_projadmin_scope_cant_do_proj_admin_procedures()
+        #self.run_that_normal_user_in_scope_does_not_have_admin_access()
+        self.run_that_normally_added_user_still_has_access_even_if_not_in_set_scope()
+        self.run_invalid_scope_login()
 
     def run_callback_incorrect_params(self):
         '''
@@ -62,7 +62,7 @@ class UAATests(APILiveServerTestCase):
         print_output("run_callback_invalid_code", response.data)
         self.assertEqual(500, response.status_code)
 
-    def test_login_with_refresh_and_access_token_success(self):
+    def run_login_with_refresh_and_access_token_success(self):
         '''
         Test if the redirect_uri callback gives the correct response on a valid code,
         if the refresh-token endpoint works with the received refresh_token, as well as
@@ -191,7 +191,7 @@ class UAATests(APILiveServerTestCase):
         # Check if it gives a specific response
         # self.assertTrue('invalid_token' in response.data['error'])
 
-    def test_user_is_no_longer_superuser_after_admin_group_removal(self):
+    def run_user_is_no_longer_superuser_after_admin_group_removal(self):
         '''
         Test if the user is not admin since texta.admin is not in scope
         '''
@@ -234,28 +234,31 @@ class UAATests(APILiveServerTestCase):
             # Auth the root url
             self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {query_params["access_token"][0]}')
             auth_resp = self.client.get(f'{TEST_VERSION_PREFIX}/', format='json')
-            # Stop including any credentials
-            self.client.credentials()
             print_output("test_user_is_no_longer_superuser_after_admin_group_removal:auth_resp.data", auth_resp.data)
             # Check if the UaaAuthentication returned 200
             self.assertEqual(200, auth_resp.status_code)
+            # Get user profile
+            user_resp = self.client.get(f'{TEST_VERSION_PREFIX}/rest-auth/user/', format='json')
+            print_output("test_user_is_no_longer_superuser_after_admin_group_removal:user",
+                         user_resp.data)
+            # Check that user is not superuser
+            self.assertEqual(False, user_resp.data['is_superuser'])
+            # Stop including any credentials
+            self.client.credentials()
 
-    # def test_that_user_in_scopes_has_access_to_project_where_he_is_not_added_as_user(self):
-    #     pass
-    #
-    def test_that_user_with_projadmin_scope_can_do_proj_admin_procedures(self):
+    def run_that_user_in_scopes_has_access_to_project_where_he_is_not_added_as_user(self):
         '''
-        Test if user with texta.project_admin scope can login
+        Test if the user in scope has access to project not in his scope
         '''
         # Encode the redirect_uri
         encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
-        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=texta.* openid texta.project_admin&redirect_uri={encoded_redirect_uri}'
+        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=texta.* openid texta.admin&redirect_uri={encoded_redirect_uri}'
 
         # Get the csrf token from the login page HTML
         html_resp = requests.get(uaa_login_url)
         soup = bs4.BeautifulSoup(html_resp.text, 'lxml')
         csrf_token = soup.select_one('[name="X-Uaa-Csrf"]')['value']
-        print_output("test_that_user_with_projadmin_scope_can_do_proj_admin_procedures:csrf_token", csrf_token)
+        print_output("test_that_user_in_scopes_has_access_to_project_where_he_is_not_added_as_user:csrf_token", csrf_token)
         self.assertTrue(csrf_token)
 
         headers = {
@@ -275,10 +278,10 @@ class UAATests(APILiveServerTestCase):
             # since frontend is not running during tests, it will throw a ConnectionError.
             # Check the URL which gave the ConnectionError and verify that it has the access and refresh tokens as qparams
             url = e.request.url
-            print_output("test_that_user_with_projadmin_scope_can_do_proj_admin_procedures:url", url)
+            print_output("test_that_user_in_scopes_has_access_to_project_where_he_is_not_added_as_user:url", url)
 
             query_params = parse_qs(urlparse(url).query)
-            print_output("test_that_user_with_projadmin_scope_can_do_proj_admin_procedures:query_params", query_params)
+            print_output("test_that_user_in_scopes_has_access_to_project_where_he_is_not_added_as_user:query_params", query_params)
             self.assertTrue('access_token' in query_params)
             self.assertTrue('refresh_token' in query_params)
 
@@ -286,19 +289,200 @@ class UAATests(APILiveServerTestCase):
             # Auth the root url
             self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {query_params["access_token"][0]}')
             auth_resp = self.client.get(f'{TEST_VERSION_PREFIX}/', format='json')
-            # Stop including any credentials
-            self.client.credentials()
-            print_output("test_that_user_with_projadmin_scope_can_do_proj_admin_procedures:auth_resp.data", auth_resp.data)
+            print_output("test_that_user_in_scopes_has_access_to_project_where_he_is_not_added_as_user:auth_resp.data", auth_resp.data)
             # Check if the UaaAuthentication returned 200
             self.assertEqual(200, auth_resp.status_code)
+            # Get user projects
+            user_resp = self.client.get(f'{TEST_VERSION_PREFIX}/projects/', format='json')
+            print_output("test_that_user_in_scopes_has_access_to_project_where_he_is_not_added_as_user:projects",
+                         user_resp.data)
+            # Stop including any credentials
+            self.client.credentials()
 
-    # def test_that_user_without_projadmin_scope_cant_do_proj_admin_procedures(self):
-    #     pass
-    #
-    # def test_that_normal_user_in_scope_does_not_have_admin_access(self):
-    #     pass
-    #
-    def test_that_normally_added_user_still_has_access_even_if_not_in_set_scope(self):
+    def run_that_user_with_projadmin_scope_can_do_proj_admin_procedures(self):
+        '''
+        Test if user with texta.project_admin scope can do project admin procedures
+        '''
+        # Encode the redirect_uri
+        encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
+        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=texta.* openid texta.admin&redirect_uri={encoded_redirect_uri}'
+
+        # Get the csrf token from the login page HTML
+        html_resp = requests.get(uaa_login_url)
+        soup = bs4.BeautifulSoup(html_resp.text, 'lxml')
+        csrf_token = soup.select_one('[name="X-Uaa-Csrf"]')['value']
+        print_output("run_that_user_with_projadmin_scope_can_do_proj_admin_procedures:csrf_token",
+                     csrf_token)
+        self.assertTrue(csrf_token)
+
+        headers = {
+            "content-type": "application/x-www-form-urlencoded",
+            "cookie": f'X-Uaa-Csrf={csrf_token}'
+        }
+
+        # The form_redirect_uri will be the encoded version of the uaa_login_uri
+        body = f'X-Uaa-Csrf={csrf_token}&username={TEST_UAA_USERNAME}&password={TEST_UAA_PASSWORD}&form_redirect_uri={requests.utils.quote(uaa_login_url)}'
+
+        try:
+            # POST to the login.do endpoint to trigger the redirect_uri callback in the view.
+            login_resp = requests.post(f'{UAA_URL}/login.do', headers=headers, data=body)
+            print_output("run_callback_login_resp", login_resp)
+        except requests.exceptions.ConnectionError as e:
+            # The callback view redirects the user back to the frontend,
+            # since frontend is not running during tests, it will throw a ConnectionError.
+            # Check the URL which gave the ConnectionError and verify that it has the access and refresh tokens as qparams
+            url = e.request.url
+            print_output("run_that_user_with_projadmin_scope_can_do_proj_admin_procedures:url", url)
+
+            query_params = parse_qs(urlparse(url).query)
+            print_output("run_that_user_with_projadmin_scope_can_do_proj_admin_procedures:query_params",
+                         query_params)
+            self.assertTrue('access_token' in query_params)
+            self.assertTrue('refresh_token' in query_params)
+
+            # Validate if the UaaAuthentication gives the correct response on a correct token
+            # Auth the root url
+            self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {query_params["access_token"][0]}')
+            auth_resp = self.client.get(f'{TEST_VERSION_PREFIX}/', format='json')
+            print_output("run_that_user_with_projadmin_scope_can_do_proj_admin_procedures:auth_resp.data",
+                         auth_resp.data)
+            # Check if the UaaAuthentication returned 200
+            self.assertEqual(200, auth_resp.status_code)
+            # Get user projects
+            user_resp = self.client.post(f'{TEST_VERSION_PREFIX}/projects/', {
+                "title": "test_project",
+                "administrators_write": ["test1"],
+                "users_write": ["test1"],
+                "indices_write": [],
+                "scopes": ["texta.*"]
+            }, format='json')
+            print_output("run_that_user_with_projadmin_scope_can_do_proj_admin_procedures:projects",
+                         user_resp.status_code)
+            # Check that user is not superuser
+            self.assertEqual(201, user_resp.status_code)
+            # Stop including any credentials
+            self.client.credentials()
+
+    def run_that_user_without_projadmin_scope_cant_do_proj_admin_procedures(self):
+        '''
+        Test that user without project_admin scope cannot do project admin procedures
+        '''
+        # Encode the redirect_uri
+        encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
+        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=texta.* openid texta.admin&redirect_uri={encoded_redirect_uri}'
+
+        # Get the csrf token from the login page HTML
+        html_resp = requests.get(uaa_login_url)
+        soup = bs4.BeautifulSoup(html_resp.text, 'lxml')
+        csrf_token = soup.select_one('[name="X-Uaa-Csrf"]')['value']
+        print_output("run_that_user_without_projadmin_scope_cant_do_proj_admin_procedures:csrf_token",
+                     csrf_token)
+        self.assertTrue(csrf_token)
+
+        headers = {
+            "content-type": "application/x-www-form-urlencoded",
+            "cookie": f'X-Uaa-Csrf={csrf_token}'
+        }
+
+        # The form_redirect_uri will be the encoded version of the uaa_login_uri
+        body = f'X-Uaa-Csrf={csrf_token}&username={TEST_UAA_USERNAME}&password={TEST_UAA_PASSWORD}&form_redirect_uri={requests.utils.quote(uaa_login_url)}'
+
+        try:
+            # POST to the login.do endpoint to trigger the redirect_uri callback in the view.
+            login_resp = requests.post(f'{UAA_URL}/login.do', headers=headers, data=body)
+            print_output("run_callback_login_resp", login_resp)
+        except requests.exceptions.ConnectionError as e:
+            # The callback view redirects the user back to the frontend,
+            # since frontend is not running during tests, it will throw a ConnectionError.
+            # Check the URL which gave the ConnectionError and verify that it has the access and refresh tokens as qparams
+            url = e.request.url
+            print_output("run_that_user_without_projadmin_scope_cant_do_proj_admin_procedures:url", url)
+
+            query_params = parse_qs(urlparse(url).query)
+            print_output("run_that_user_without_projadmin_scope_cant_do_proj_admin_procedures:query_params",
+                         query_params)
+            self.assertTrue('access_token' in query_params)
+            self.assertTrue('refresh_token' in query_params)
+
+            # Validate if the UaaAuthentication gives the correct response on a correct token
+            # Auth the root url
+            self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {query_params["access_token"][0]}')
+            auth_resp = self.client.get(f'{TEST_VERSION_PREFIX}/', format='json')
+            print_output("run_that_user_without_projadmin_scope_cant_do_proj_admin_procedures:auth_resp.data",
+                         auth_resp.data)
+            # Check if the UaaAuthentication returned 200
+            self.assertEqual(200, auth_resp.status_code)
+            # Get user projects
+            user_resp = self.client.post(f'{TEST_VERSION_PREFIX}/projects/', {
+                                                                                "title": "test_project",
+                                                                                "administrators_write": ["test1"],
+                                                                                "users_write": ["test1"],
+                                                                                "indices_write": [],
+                                                                                "scopes": ["texta.*"]
+                                                                            }, format='json')
+            print_output("run_that_user_without_projadmin_scope_cant_do_proj_admin_procedures:projects",
+                         user_resp.status_code)
+            # Check that user is not superuser
+            self.assertEqual(201, user_resp.status_code)
+            # Stop including any credentials
+            self.client.credentials()
+
+    def run_that_normal_user_in_scope_does_not_have_admin_access(self):
+        '''
+        Test that normal user in scope does not have admin access
+        '''
+        # Encode the redirect_uri
+        encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
+        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=texta.* openid texta.admin&redirect_uri={encoded_redirect_uri}'
+
+        # Get the csrf token from the login page HTML
+        html_resp = requests.get(uaa_login_url)
+        soup = bs4.BeautifulSoup(html_resp.text, 'lxml')
+        csrf_token = soup.select_one('[name="X-Uaa-Csrf"]')['value']
+        print_output("test_user_is_no_longer_superuser_after_admin_group_removal:csrf_token", csrf_token)
+        self.assertTrue(csrf_token)
+
+        headers = {
+            "content-type": "application/x-www-form-urlencoded",
+            "cookie": f'X-Uaa-Csrf={csrf_token}'
+        }
+
+        # The form_redirect_uri will be the encoded version of the uaa_login_uri
+        body = f'X-Uaa-Csrf={csrf_token}&username={TEST_UAA_USERNAME}&password={TEST_UAA_PASSWORD}&form_redirect_uri={requests.utils.quote(uaa_login_url)}'
+
+        try:
+            # POST to the login.do endpoint to trigger the redirect_uri callback in the view.
+            login_resp = requests.post(f'{UAA_URL}/login.do', headers=headers, data=body)
+            print_output("run_callback_login_resp", login_resp)
+        except requests.exceptions.ConnectionError as e:
+            # The callback view redirects the user back to the frontend,
+            # since frontend is not running during tests, it will throw a ConnectionError.
+            # Check the URL which gave the ConnectionError and verify that it has the access and refresh tokens as qparams
+            url = e.request.url
+            print_output("test_user_is_no_longer_superuser_after_admin_group_removal:url", url)
+
+            query_params = parse_qs(urlparse(url).query)
+            print_output("test_user_is_no_longer_superuser_after_admin_group_removal:query_params", query_params)
+            self.assertTrue('access_token' in query_params)
+            self.assertTrue('refresh_token' in query_params)
+
+            # Validate if the UaaAuthentication gives the correct response on a correct token
+            # Auth the root url
+            self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {query_params["access_token"][0]}')
+            auth_resp = self.client.get(f'{TEST_VERSION_PREFIX}/', format='json')
+            print_output("test_user_is_no_longer_superuser_after_admin_group_removal:auth_resp.data", auth_resp.data)
+            # Check if the UaaAuthentication returned 200
+            self.assertEqual(200, auth_resp.status_code)
+            # Get user profile
+            user_resp = self.client.get(f'{TEST_VERSION_PREFIX}/rest-auth/user/', format='json')
+            print_output("test_user_is_no_longer_superuser_after_admin_group_removal:user",
+                         user_resp.data)
+            # Check that user is not superuser
+            self.assertEqual(False, user_resp.data['is_superuser'])
+            # Stop including any credentials
+            self.client.credentials()
+
+    def run_that_normally_added_user_still_has_access_even_if_not_in_set_scope(self):
         '''
         Test if normal user can login
         '''
@@ -306,7 +490,7 @@ class UAATests(APILiveServerTestCase):
         print_output("normal user login", response)
         self.assertTrue(response)
 
-    def test_invalid_scope_login(self):
+    def run_invalid_scope_login(self):
         '''
         Test if the user cannot login with incorrect scope
         '''
