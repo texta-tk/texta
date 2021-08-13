@@ -4,11 +4,11 @@ from typing import List
 
 import jwt
 import requests
-from django.contrib.auth import login
+from django.contrib.auth import logout
 from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect
+from django.utils import timezone
 from rest_framework import status, views
-from rest_framework.authtoken.models import Token
 from rest_framework.exceptions import APIException, AuthenticationFailed, ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -66,7 +66,7 @@ class UAAView(views.APIView):
 
 
     @staticmethod
-    def _update_user_and_profile(user_profile: dict, scope: str, token: str, user_id: str, request):
+    def _update_user_and_profile(user_profile: dict, scope: str, token: str, request):
         # Get or create the user
         username = user_profile.get("user_name", "")
         email = user_profile.get("email", "")
@@ -76,7 +76,6 @@ class UAAView(views.APIView):
         scope = scope.split(" ")
 
         user, is_created = User.objects.get_or_create(username=username)
-        user.profile.uaa_account_id = user_id
         user.profile.is_uaa_account = True
 
         if first_name: user.profile.first_name = first_name
@@ -94,20 +93,21 @@ class UAAView(views.APIView):
         user.profile.save()
         user.save()
 
-        # Delete existing once since we can't change it because the key
-        # is also the primary key.
-        Token.objects.filter(user=user).delete()
-        Token.objects.create(user=user, key=token)
         return user
 
 
-    # TODO Rethink on whether this is the best approach for this.
-    def sign_in_with_user(self, user, request, scopes: List[str]):
-        login(request, user)
+    # Initially this place was used to start a session for TK so that the
+    # Browsable API would also be usable but logout had a trouble of clearing said session
+    # which created a mess where on a new login the still existing session was used to return the
+    # previous user instead... now I just update the login timestamp manually.
+    def sign_in_with_user(self, user: User, request, scopes: List[str]):
+        now = timezone.now()
+        user.last_login = now
+        user.save()
 
 
     @staticmethod
-    def _get_uaa_user_profile(user_id, access_token):
+    def _get_uaa_user_profile(access_token):
         response = requests.get(f"{UAA_URL}/userinfo", headers={"Authorization": f"Bearer {access_token}"}, timeout=REQUESTS_TIMEOUT_IN_SECONDS)
         if response.ok:
             return response.json()
@@ -120,7 +120,7 @@ class UAAView(views.APIView):
         Users without the TEXTA prefix in their scopes are not permitted access into Toolkit.
         """
         if UAA_TEXTA_SCOPE_PREFIX not in scopes:
-            raise AuthenticationFailed("Users UAA scopes do not contain access for TEXTA Toolkit!'")
+            raise AuthenticationFailed(f"Users UAA scopes '{scopes}' do not contain access for TEXTA Toolkit (match: {UAA_TEXTA_SCOPE_PREFIX}.*)!")
 
 
     def get(self, request):
@@ -145,10 +145,9 @@ class UAAView(views.APIView):
 
             self._validate_toolkit_access_scope(scope)
 
-            user_id = jit_user_info['user_id']
-            uaa_user_profile = UAAView._get_uaa_user_profile(user_id, access_token)
+            uaa_user_profile = UAAView._get_uaa_user_profile(access_token)
 
-            user = UAAView._update_user_and_profile(uaa_user_profile, scope, access_token, user_id, request)
+            user = UAAView._update_user_and_profile(uaa_user_profile, scope, access_token, request)
             self.sign_in_with_user(user, request, scope)
             return HttpResponseRedirect(redirect_to=f'{UAA_FRONT_REDIRECT_URL}/uaa/?access_token={access_token}&refresh_token={refresh_token}')
 
@@ -178,9 +177,33 @@ class RefreshUAATokenView(views.APIView):
         resp = RefreshUAATokenView._refresh(refresh_token)
         # check if got 200
         if resp.status_code != 200:
-            logging.getLogger(INFO_LOGGER).info(f"UAAView _get_access_token returned status {resp.status_code}!")
-            return Response(f"UAAView _get_access_token returned status {resp.status_code}!", status=status.HTTP_400_BAD_REQUEST)
-        return Response(resp.json(), status=status.HTTP_200_OK)
+            logging.getLogger(ERROR_LOGGER).info(f"UAAView _get_access_token returned status {resp.status_code}!")
+            if "invalid_token" in resp.text:
+                logout(request)
+            raise ValidationError(f"UAAView _get_access_token returned status {resp.status_code}!")
+
+        json_resp = resp.json()
+
+        # Refresh the scopes just in case with the contents of the refresh view.
+        scopes = json_resp.get("scope", "")
+        RefreshUAATokenView._update_user_scope(scopes, request.user)
+
+        return Response(json_resp, status=status.HTTP_200_OK)
+
+
+    @staticmethod
+    def _update_user_scope(scopes: str, user: User):
+        if UAA_SUPERUSER_SCOPE in scopes:
+            user.is_superuser = True
+            user.is_staff = True
+        else:
+            user.is_superuser = False
+            user.is_staff = False
+
+        user.profile.scopes = scopes
+
+        user.profile.save()
+        user.save()
 
 
     @staticmethod

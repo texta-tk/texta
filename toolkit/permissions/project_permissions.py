@@ -106,18 +106,12 @@ class ProjectAccessInApplicationsAllowed(permissions.BasePermission):
             return False
 
         # retrieve project object
+
         try:
             pk = view.kwargs['project_pk'] if "project_pk" in view.kwargs else view.kwargs["pk"]
             project_object = Project.objects.get(id=pk)
         except:
             return False
-
-        # check if user is listed among project users
-        if request.user in project_object.users.all():
-            return True
-
-        if request.user in project_object.administrators.all():
-            return True
 
         # check if user is superuser
         if request.user.is_superuser:
@@ -130,6 +124,13 @@ class ProjectAccessInApplicationsAllowed(permissions.BasePermission):
             for project_scope in project_scopes:
                 if project_scope in user_scopes:
                     return True
+
+        # check if user is listed among project users
+        if request.user in project_object.users.all():
+            return True
+
+        if request.user in project_object.administrators.all():
+            return True
 
         # nah, not gonna see anything!
         return False
@@ -153,20 +154,13 @@ class ProjectEditAccessAllowed(permissions.BasePermission):
         # always permit SAFE_METHODS and superuser
         if request.user.is_superuser:
             return True
+
         # retrieve project object
         try:
             pk = view.kwargs['project_pk'] if "project_pk" in view.kwargs else view.kwargs["pk"]
             project_object = Project.objects.get(id=pk)
         except:
             return False
-
-        # Project admins have the right to edit project information.
-        if request.user in project_object.administrators.all():
-            return True
-
-        # Project users are permitted safe access to project list_view
-        if request.user in project_object.users.all() and request.method in permissions.SAFE_METHODS:
-            return True
 
         if USE_UAA:
             user_scopes = json.loads(request.user.profile.scopes)
@@ -175,6 +169,14 @@ class ProjectEditAccessAllowed(permissions.BasePermission):
             for project_scope in project_scopes:
                 if project_scope in user_scopes:
                     return True
+
+        # Project admins have the right to edit project information.
+        if request.user in project_object.administrators.all():
+            return True
+
+        # Project users are permitted safe access to project list_view
+        if request.user in project_object.users.all() and request.method in permissions.SAFE_METHODS:
+            return True
 
         return False
 
@@ -208,14 +210,25 @@ class ExtraActionAccessInApplications(ProjectAccessInApplicationsAllowed):
             project_object = Project.objects.get(id=pk)
         except:
             return False
+
+        # check if user is superuser
+        if request.user.is_superuser:
+            return True
+
+        if USE_UAA:
+            user_scopes = json.loads(request.user.profile.scopes)
+            project_scopes = json.loads(project_object.scopes)
+
+            for project_scope in project_scopes:
+                if project_scope in user_scopes:
+                    return True
+
         # check if user is listed among project users
         if request.user in project_object.users.all():
             return True
         if request.user in project_object.administrators.all():
             return True
-        # check if user is superuser
-        if request.user.is_superuser:
-            return True
+
         # nah, not goa see anything!
         return False
 
