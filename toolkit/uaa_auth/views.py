@@ -140,7 +140,6 @@ class UAAView(views.APIView):
             access_token = resp['access_token']
             refresh_token = resp['refresh_token']
 
-            jit_user_info = self._decode_jit_token(resp['id_token'])
             scope = resp['scope']
 
             self._validate_toolkit_access_scope(scope)

@@ -347,20 +347,23 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             user_scopes = json.loads(current_user.profile.scopes)
             user_scopes_str = " ".join(user_scopes)
 
+            in_user = Project.objects.filter(users=current_user)
+            in_admin = Project.objects.filter(administrators=current_user)
+
             # TODO Revisit this part.
             if user_scopes:
                 scopes_filter = Project.objects.filter(scopes__contains=user_scopes[0])
                 for scope in user_scopes[1:]:
                     scopes_filter = scopes_filter | Project.objects.filter(scopes__contains=scope)
+
+                query_filter = (in_user | in_admin | scopes_filter)
+
             else:
-                scopes_filter = Project.objects.filter(scopes__contains=user_scopes_str)
+                query_filter = (in_user | in_admin)
 
-            in_user = Project.objects.filter(users=current_user).order_by('-id')
-            in_admin = Project.objects.filter(administrators=current_user).order_by('-id')
-
-            return (in_user | in_admin | scopes_filter).distinct()
+            return query_filter.distinct().order_by('-id').prefetch_related("users", "administrators", "indices")
         else:
-            return Project.objects.all().order_by('-id')
+            return Project.objects.all().order_by('-id').prefetch_related("users", "administrators", "indices")
 
 
     @action(detail=True, methods=['post'], serializer_class=HandleIndicesSerializer, permission_classes=[OnlySuperadminAllowed])
