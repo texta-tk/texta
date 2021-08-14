@@ -77,13 +77,16 @@ Toolkit is installed:
 * TEXTA_USE_CSRF - Disable CSRF for integration tests.
 * TEXTA_CELERY_ALWAYS_EAGER - Whether to use Celerys async features or not, useful for testing purposes locally. (
   Default: False)
-* TEXTA_SHORT_TASK_WORKERS - Number of processes available for short term tasks (Default: 3).
-* TEXTA_LONG_TASK_WORKERS - Number of processes available for long term tasks (Default: 5).
+* TEXTA_SHORT_TASK_WORKERS - Number of processes available for short term tasks (Default: 2).
+* TEXTA_LONG_TASK_WORKERS - Number of processes available for long term tasks (Default: 4).
 * TEXTA_MLP_TASK_WORKERS - Number of processes available for MLP based tasks (Default: 2).
+* TEXTA_SHORT_MAX_TASKS - Number of tasks per worker for short term tasks (Default: 10).
+* TEXTA_LONG_MAX_TASKS - Number of tasks per worker for long term tasks (Default: 10).
+* TEXTA_MLP_MAX_TASKS - Number of tasks per worker for MLP based tasks (Default: 10).
 * TEXTA_RELATIVE_MODELS_DIR - Relative path of the directory in which all the different types of models are stored in.
   (Default: "/data/models").
 * TEXTA_LANGUAGE_CODES - Comma separated string of Stanza supported language codes to use for Multilingual Processing.
-  (Default: "et,en,ru").
+  (Default: "").
 * TEXTA_MLP_MODEL_DIRECTORY_PATH - Relative path to the directory into which Stanza models will be stored under the "
   stanza" folder (setting this to ./home/texta will create ./home/texta/stanza which contains subfolders for every
   language like ./home/texta/stanza/et etc). (Default: "./data/models").
