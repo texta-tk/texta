@@ -52,10 +52,6 @@ TEST_VERSION_PREFIX = f"/api/{VERSION_NAMESPACE}"
 
 TEST_UAA_USERNAME = 'test1'
 TEST_UAA_PASSWORD = 'test1'
-TEST_UAA_USERNAME2 = 'test2'
-TEST_UAA_PASSWORD2 = 'test2'
-TEST_UAA_USERNAME3 = 'test3'
-TEST_UAA_PASSWORD3 = 'test3'
 
 TEST_IMAGE_FILE_1 = os.path.join(TEST_DATA_DIR, "photos", "test_image_1.jpg")
 TEST_IMAGE_FILE_2 = os.path.join(TEST_DATA_DIR, "photos", "test_image_2.jpg")
