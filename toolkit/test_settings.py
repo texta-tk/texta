@@ -50,8 +50,8 @@ TEST_IMPORT_DATASET = "texta-test-import-dataset"
 VERSION_NAMESPACE = "v1"
 TEST_VERSION_PREFIX = f"/api/{VERSION_NAMESPACE}"
 
-TEST_UAA_USERNAME = 'test1'
-TEST_UAA_PASSWORD = 'test1'
+TEST_UAA_USERNAME = 'test'
+TEST_UAA_PASSWORD = 'test'
 
 TEST_IMAGE_FILE_1 = os.path.join(TEST_DATA_DIR, "photos", "test_image_1.jpg")
 TEST_IMAGE_FILE_2 = os.path.join(TEST_DATA_DIR, "photos", "test_image_2.jpg")

@@ -3,6 +3,7 @@ from urllib.parse import parse_qs, urlparse
 
 import bs4
 import jwt
+import json
 import requests
 from rest_framework.test import APILiveServerTestCase
 
@@ -17,25 +18,228 @@ class UAATests(APILiveServerTestCase):
 
     def setUp(self):
         self.url = f'{TEST_VERSION_PREFIX}/uaa'
+        self.test1_user = "test1"
+        self.test2_user = "test2"
+        self.test3_user = "test3"
         # Create a normal User
         self.user = create_test_user(name='normaluser', password='pw')
 
     @unittest.skipUnless(USE_UAA, 'Skipping UAA test because USE_UAA is set to False')
     def test(self):
-        self.run_callback_incorrect_params()
-        self.run_callback_invalid_code()
-        self.run_login_with_refresh_and_access_token_success()
-        self.run_auth_incorrect_header()
-        self.run_auth_invalid_token()
-        self.run_refresh_token_incorrect_params()
-        self.run_refresh_token_invalid_token()
+        self.run_create_users()
+        self.run_create_groups()
+        #self.run_callback_incorrect_params()
+        #self.run_callback_invalid_code()
+        #self.run_login_with_refresh_and_access_token_success()
+        #self.run_auth_incorrect_header()
+        #self.run_auth_invalid_token()
+        #self.run_refresh_token_incorrect_params()
+        #self.run_refresh_token_invalid_token()
         #self.run_user_is_no_longer_superuser_after_admin_group_removal()
-        self.run_that_user_in_scopes_has_access_to_project_where_he_is_not_added_as_user()
-        self.run_that_user_with_projadmin_scope_can_do_proj_admin_procedures()
-        self.run_that_user_without_projadmin_scope_cant_do_proj_admin_procedures()
+        #self.run_that_user_in_scopes_has_access_to_project_where_he_is_not_added_as_user()
+        #self.run_that_user_with_projadmin_scope_can_do_proj_admin_procedures()
+        #self.run_that_user_without_projadmin_scope_cant_do_proj_admin_procedures()
         #self.run_that_normal_user_in_scope_does_not_have_admin_access()
-        self.run_that_normally_added_user_still_has_access_even_if_not_in_set_scope()
-        self.run_invalid_scope_login()
+        #self.run_that_normally_added_user_still_has_access_even_if_not_in_set_scope()
+        #self.run_invalid_scope_login()
+
+    def run_create_users(self):
+        # Encode the redirect_uri
+        encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
+        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=openid texta.* uaa.admin&redirect_uri={encoded_redirect_uri}'
+
+        # Get the csrf token from the login page HTML
+        html_resp = requests.get(uaa_login_url)
+        soup = bs4.BeautifulSoup(html_resp.text, 'lxml')
+        csrf_token = soup.select_one('[name="X-Uaa-Csrf"]')['value']
+        print_output("run_create_users:csrf_token", csrf_token)
+        self.assertTrue(csrf_token)
+
+        headers = {
+            "content-type": "application/x-www-form-urlencoded",
+            "cookie": f'X-Uaa-Csrf={csrf_token}'
+        }
+
+        # The form_redirect_uri will be the encoded version of the uaa_login_uri
+        body = f'X-Uaa-Csrf={csrf_token}&username={TEST_UAA_USERNAME}&password={TEST_UAA_PASSWORD}&form_redirect_uri={requests.utils.quote(uaa_login_url)}'
+
+        try:
+            # POST to the login.do endpoint to trigger the redirect_uri callback in the view.
+            login_resp = requests.post(f'{UAA_URL}/login.do', headers=headers, data=body)
+            print_output("run_callback_login_resp", login_resp)
+        except requests.exceptions.ConnectionError as e:
+            # The callback view redirects the user back to the frontend,
+            # since frontend is not running during tests, it will throw a ConnectionError.
+            # Check the URL which gave the ConnectionError and verify that it has the access and refresh tokens as qparams
+            url = e.request.url
+            print_output("run_create_users:url", url)
+
+            query_params = parse_qs(urlparse(url).query)
+            print_output("run_create_users:query_params", query_params)
+            self.assertTrue('access_token' in query_params)
+            self.assertTrue('refresh_token' in query_params)
+
+            headers = {
+                "Accept": "application/json",
+                "content-type": "application/json",
+                "Authorization": f'Bearer {query_params["access_token"][0]}'
+            }
+            # Create test1 user
+            body = {
+                      "userName": self.test1_user,
+                      "name": {
+                        "formatted": "given name family name",
+                        "familyName": "family name",
+                        "givenName": "given name"
+                      },
+                      "emails": [{
+                        "value": "test1@test.org",
+                        "primary": True
+                      }],
+                      "active": True,
+                      "verified": True,
+                      "origin": "",
+                      "password": "test1"
+                    }
+            json_data = json.dumps(body)
+            create_resp = requests.post(f'{UAA_URL}/Users', headers=headers, data=json_data)
+            self.test1_user = json.loads(create_resp.content)
+            print_output("run_create_test1_user:resp", create_resp)
+            self.assertEqual(201, create_resp.status_code)
+            # Create test2 user
+            body = {
+                "userName": self.test2_user,
+                "name": {
+                    "formatted": "given name family name",
+                    "familyName": "family name",
+                    "givenName": "given name"
+                },
+                "emails": [{
+                    "value": "test2@test.org",
+                    "primary": True
+                }],
+                "active": True,
+                "verified": True,
+                "origin": "",
+                "password": "test2"
+            }
+            json_data = json.dumps(body)
+            create_resp = requests.post(f'{UAA_URL}/Users', headers=headers, data=json_data)
+            self.test2_user = json.loads(create_resp.content)
+            print_output("run_create_test2_user:resp", create_resp)
+            self.assertEqual(201, create_resp.status_code)
+            # Create test3 user
+            body = {
+                "userName": self.test3_user,
+                "name": {
+                    "formatted": "given name family name",
+                    "familyName": "family name",
+                    "givenName": "given name"
+                },
+                "emails": [{
+                    "value": "test3@test.org",
+                    "primary": True
+                }],
+                "active": True,
+                "verified": True,
+                "origin": "",
+                "password": "test3"
+            }
+            json_data = json.dumps(body)
+            create_resp = requests.post(f'{UAA_URL}/Users', headers=headers, data=json_data)
+            self.test3_user = json.loads(create_resp.content)
+            print_output("run_create_test3_user:resp", create_resp)
+            self.assertEqual(201, create_resp.status_code)
+
+    def run_create_groups(self):
+        # Encode the redirect_uri
+        encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
+        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=openid texta.* uaa.admin&redirect_uri={encoded_redirect_uri}'
+
+        # Get the csrf token from the login page HTML
+        html_resp = requests.get(uaa_login_url)
+        soup = bs4.BeautifulSoup(html_resp.text, 'lxml')
+        csrf_token = soup.select_one('[name="X-Uaa-Csrf"]')['value']
+        print_output("run_create_groups:csrf_token", csrf_token)
+        self.assertTrue(csrf_token)
+
+        headers = {
+            "content-type": "application/x-www-form-urlencoded",
+            "cookie": f'X-Uaa-Csrf={csrf_token}'
+        }
+
+        # The form_redirect_uri will be the encoded version of the uaa_login_uri
+        body = f'X-Uaa-Csrf={csrf_token}&username={TEST_UAA_USERNAME}&password={TEST_UAA_PASSWORD}&form_redirect_uri={requests.utils.quote(uaa_login_url)}'
+
+        try:
+            # POST to the login.do endpoint to trigger the redirect_uri callback in the view.
+            login_resp = requests.post(f'{UAA_URL}/login.do', headers=headers, data=body)
+            print_output("run_callback_login_resp", login_resp)
+        except requests.exceptions.ConnectionError as e:
+            # The callback view redirects the user back to the frontend,
+            # since frontend is not running during tests, it will throw a ConnectionError.
+            # Check the URL which gave the ConnectionError and verify that it has the access and refresh tokens as qparams
+            url = e.request.url
+            print_output("run_create_groups:url", url)
+
+            query_params = parse_qs(urlparse(url).query)
+            print_output("run_create_groups:query_params", query_params)
+            self.assertTrue('access_token' in query_params)
+            self.assertTrue('refresh_token' in query_params)
+
+            headers = {
+                "Accept": "application/json",
+                "content-type": "application/json",
+                "Authorization": f'Bearer {query_params["access_token"][0]}'
+            }
+            # Create texta.ou group and add users to group
+            body = {
+                "displayName": "texta.ou",
+                "members": [{
+                    "type": "USER",
+                    "value": self.test1_user["id"]
+                    },
+                    {
+                    "type": "USER",
+                    "value": self.test2_user["id"]
+                    },
+                    {
+                    "type": "USER",
+                    "value": self.test3_user["id"]
+                }]
+            }
+            json_data = json.dumps(body)
+            create_resp = requests.post(f'{UAA_URL}/Groups', headers=headers, data=json_data)
+            print_output("run_create_texta_ou_user_group:resp", create_resp)
+            self.assertEqual(201, create_resp.status_code)
+            # Create texta.project_admin group and add users to group
+            body = {
+                "displayName": "texta.project_admin",
+                "members": [{
+                    "type": "USER",
+                    "value": self.test1_user["id"]
+                    },
+                    {
+                        "type": "USER",
+                        "value": self.test2_user["id"]
+                    }]
+            }
+            json_data = json.dumps(body)
+            create_resp = requests.post(f'{UAA_URL}/Groups', headers=headers, data=json_data)
+            print_output("run_create_texta_project_admin_user_group:resp", create_resp)
+            self.assertEqual(201, create_resp.status_code)
+            # Create texta.admin group and add users to group
+            body = {
+                "displayName": "texta.admin",
+                "members": [{
+                    "type": "USER",
+                    "value": self.test1_user["id"]
+                }]
+            }
+            json_data = json.dumps(body)
+            create_resp = requests.post(f'{UAA_URL}/Groups', headers=headers, data=json_data)
+            print_output("run_create_texta_project_admin_user_group:resp", create_resp)
+            self.assertEqual(201, create_resp.status_code)
 
     def run_callback_incorrect_params(self):
         '''
