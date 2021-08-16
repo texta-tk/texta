@@ -30,7 +30,7 @@ class UAATests(APILiveServerTestCase):
     def test(self):
         self.run_callback_incorrect_params()
         self.run_callback_invalid_code()
-        #self.run_login_with_refresh_and_access_token_success()
+        self.run_login_with_refresh_and_access_token_success()
         self.run_auth_incorrect_header()
         self.run_auth_invalid_token()
         self.run_refresh_token_incorrect_params()
@@ -320,7 +320,7 @@ class UAATests(APILiveServerTestCase):
 
             # Validate if the refresh-token endpoint works with the correct refresh_token
             # Post to the refresh-token endpoint
-            refresh_resp = self.client.post(f'{self.url}/refresh-token',
+            refresh_resp = self.client.post(f'{self.url}/refresh-token/',
                                             {'refresh_token': query_params['refresh_token'][0]}, format='json')
 
             print_output("run_callback_and_refresh_and_access_token_success:refresh_resp.data", refresh_resp.data)
