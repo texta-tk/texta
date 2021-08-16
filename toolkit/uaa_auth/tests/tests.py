@@ -41,7 +41,7 @@ class UAATests(APILiveServerTestCase):
         #self.run_that_user_without_projadmin_scope_cant_do_proj_admin_procedures()
         self.run_that_normal_user_in_scope_does_not_have_admin_access()
         #self.run_that_normally_added_user_still_has_access_even_if_not_in_set_scope()
-        self.run_invalid_scope_login()
+        #self.run_invalid_scope_login()
 
     def create_users(self):
         # Encode the redirect_uri
