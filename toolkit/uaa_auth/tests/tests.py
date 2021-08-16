@@ -18,32 +18,32 @@ class UAATests(APILiveServerTestCase):
 
     def setUp(self):
         self.url = f'{TEST_VERSION_PREFIX}/uaa'
-        self.test1_user = "test1"
-        self.test2_user = "test2"
-        self.test3_user = "test3"
+        self.test1_user = "test1"  # Used for test1 user id
+        self.test2_user = "test2"  # Used for test2 user id
+        self.test3_user = "test3"  # Used for test3 user id
         # Create a normal User
         self.user = create_test_user(name='normaluser', password='pw')
+        self.create_users()
+        self.create_groups()
 
     @unittest.skipUnless(USE_UAA, 'Skipping UAA test because USE_UAA is set to False')
     def test(self):
-        self.run_create_users()
-        self.run_create_groups()
-        #self.run_callback_incorrect_params()
-        #self.run_callback_invalid_code()
+        self.run_callback_incorrect_params()
+        self.run_callback_invalid_code()
         #self.run_login_with_refresh_and_access_token_success()
-        #self.run_auth_incorrect_header()
-        #self.run_auth_invalid_token()
-        #self.run_refresh_token_incorrect_params()
-        #self.run_refresh_token_invalid_token()
-        #self.run_user_is_no_longer_superuser_after_admin_group_removal()
-        #self.run_that_user_in_scopes_has_access_to_project_where_he_is_not_added_as_user()
+        self.run_auth_incorrect_header()
+        self.run_auth_invalid_token()
+        self.run_refresh_token_incorrect_params()
+        self.run_refresh_token_invalid_token()
+        self.run_user_is_no_longer_superuser_after_admin_group_removal()
+        self.run_that_user_in_scopes_has_access_to_project_where_he_is_not_added_as_user()
         #self.run_that_user_with_projadmin_scope_can_do_proj_admin_procedures()
         #self.run_that_user_without_projadmin_scope_cant_do_proj_admin_procedures()
-        #self.run_that_normal_user_in_scope_does_not_have_admin_access()
+        self.run_that_normal_user_in_scope_does_not_have_admin_access()
         #self.run_that_normally_added_user_still_has_access_even_if_not_in_set_scope()
-        #self.run_invalid_scope_login()
+        self.run_invalid_scope_login()
 
-    def run_create_users(self):
+    def create_users(self):
         # Encode the redirect_uri
         encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
         uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=openid texta.* uaa.admin&redirect_uri={encoded_redirect_uri}'
@@ -66,7 +66,7 @@ class UAATests(APILiveServerTestCase):
         try:
             # POST to the login.do endpoint to trigger the redirect_uri callback in the view.
             login_resp = requests.post(f'{UAA_URL}/login.do', headers=headers, data=body)
-            print_output("run_callback_login_resp", login_resp)
+            print_output("run_create_users_login_resp", login_resp)
         except requests.exceptions.ConnectionError as e:
             # The callback view redirects the user back to the frontend,
             # since frontend is not running during tests, it will throw a ConnectionError.
@@ -151,7 +151,7 @@ class UAATests(APILiveServerTestCase):
             print_output("run_create_test3_user:resp", create_resp)
             self.assertEqual(201, create_resp.status_code)
 
-    def run_create_groups(self):
+    def create_groups(self):
         # Encode the redirect_uri
         encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
         uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=openid texta.* uaa.admin&redirect_uri={encoded_redirect_uri}'
@@ -275,7 +275,7 @@ class UAATests(APILiveServerTestCase):
 
         # Encode the redirect_uri
         encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
-        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=texta.* openid&redirect_uri={encoded_redirect_uri}'
+        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=openid texta.* uaa.admin&redirect_uri={encoded_redirect_uri}'
 
         # Get the csrf token from the login page HTML
         html_resp = requests.get(uaa_login_url)
