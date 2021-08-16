@@ -25,7 +25,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     profile = ProfileSerializer(read_only=True)
-    display_name = serializers.CharField(source="profile.get_display_name")
+    display_name = serializers.CharField(source="profile.get_display_name", read_only=True)
 
 
     def update(self, instance, validated_data):
