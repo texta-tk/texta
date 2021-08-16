@@ -721,7 +721,6 @@ class UAATests(APILiveServerTestCase):
         login_resp = requests.post(f'{UAA_URL}/login.do', headers=headers, data=body)
 
         # Print response data
+        login_resp = json.loads(login_resp.content)
         print_output("test_invalid_scope_login", login_resp)
-        self.assertTrue('invalid_scope' in str(login_resp.content))
-
-        self.assertEqual(400, login_resp.status_code)
+        self.assertTrue('invalid_scope' in login_resp["invalid_parameters"]["error"])
