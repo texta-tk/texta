@@ -133,7 +133,7 @@ UAA_PROJECT_ADMIN_SCOPE = env.str("TEXTA_UAA_PROJECT_ADMIN_SCOPE", default="text
 UAA_TEXTA_SCOPE_PREFIX = env.str("TEXTA_UAA_SCOPE_PREFIX", default="texta")
 
 # UAA server URL
-UAA_URL = env("TEXTA_UAA_URL", default="http://localhost:8080/uaa")
+UAA_URL = env("TEXTA_UAA_URL", default="http://localhost:8080")
 # Callback URL defined on the UAA server, to which the user will be redirected after logging in on UAA
 UAA_REDIRECT_URI = env("TEXTA_UAA_REDIRECT_URI", default="http://localhost:8000/api/v1/uaa/callback")
 # TEXTA front URL where the user will be redirected after the redirect_uri

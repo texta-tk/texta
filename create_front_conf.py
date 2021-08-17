@@ -19,7 +19,7 @@ config = {
     "fileFieldReplace": TEXTA_HOSTED_FILE_FIELD,
     "useCloudFoundryUAA": USE_UAA,
     "uaaConf": {
-        "uaaURL": f"{UAA_URL}/oauth/authorize",
+        "uaaURL": f"{UAA_URL}",
         "redirect_uri": UAA_REDIRECT_URI,
         "client_id": UAA_CLIENT_ID,
         "scope": UAA_SCOPES,

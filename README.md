@@ -188,7 +188,7 @@ https://elasticsearch-py.readthedocs.io/en/6.3.1/connection.html#elasticsearch.U
 * TEXTA_UAA_SCOPE_PREFIX - Prefix for determining UAA user access to TEXTA Toolkit. Any user who does not have a scope
   which matches the pattern "{TEXTA_UAA_SCOPE_PREFIX}.*" will be denied entry to TEXTA Toolkit (Default: texta).
 
-* TEXTA_UAA_URL - URI for the UAA service (Default: http://localhost:8080/uaa).
+* TEXTA_UAA_URL - URI for the UAA service (Default: http://localhost:8080).
 * TEXTA_UAA_REDIRECT_URI - URI into which the user will be redirected after a successful UAA login (
   Default: http://localhost:8000/api/v1/uaa/callback).
 * TEXTA_UAA_FRONT_REDIRECT_URL - Configuration for the front end to determine where it will redirect the user after a

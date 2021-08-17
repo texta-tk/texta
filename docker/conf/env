@@ -21,7 +21,7 @@ DJANGO_DATABASE_PORT=3306
 TEXTA_USE_UAA=True
 TEXTA_UAA_REDIRECT_URI=http://localhost/api/v1/uaa/callback
 TEXTA_UAA_FRONT_REDIRECT_URL=http://localhost/oauth
-TEXTA_UAA_URL=http://localhost:8080/uaa
+TEXTA_UAA_URL=http://localhost:8080
 
 # UUA settings for UUA server & TK
 TEXTA_UAA_CLIENT_ID=login
