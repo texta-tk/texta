@@ -45,39 +45,6 @@ class UAATests(APILiveServerTestCase):
         self.run_that_normal_user_in_scope_does_not_have_admin_access()
         self.run_that_normally_added_user_still_has_access_even_if_not_in_set_scope()
 
-    def uaa_login(self, username, password, scopes):
-        # Encode the redirect_uri
-        encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
-        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope={scopes}&redirect_uri={encoded_redirect_uri}'
-
-        # Get the csrf token from the login page HTML
-        html_resp = requests.get(uaa_login_url)
-        soup = bs4.BeautifulSoup(html_resp.text, 'lxml')
-        csrf_token = soup.select_one('[name="X-Uaa-Csrf"]')['value']
-        print_output("run_create_users:csrf_token", csrf_token)
-        self.assertTrue(csrf_token)
-
-        headers = {
-            "content-type": "application/x-www-form-urlencoded",
-            "cookie": f'X-Uaa-Csrf={csrf_token}'
-        }
-
-        # The form_redirect_uri will be the encoded version of the uaa_login_uri
-        body = f'X-Uaa-Csrf={csrf_token}&username={username}&password={password}&form_redirect_uri={requests.utils.quote(uaa_login_url)}'
-
-        try:
-            # POST to the login.do endpoint to trigger the redirect_uri callback in the view.
-            login_resp = requests.post(f'{UAA_URL}/login.do', headers=headers, data=body)
-            print_output("run_create_users_login_resp", login_resp)
-        except requests.exceptions.ConnectionError as e:
-            # The callback view redirects the user back to the frontend,
-            # since frontend is not running during tests, it will throw a ConnectionError.
-            # Check the URL which gave the ConnectionError and verify that it has the access and refresh tokens as qparams
-            url = e.request.url
-            query_params = parse_qs(urlparse(url).query)
-            return query_params["access_token"][0], query_params["refresh_token"][0]
-        return "", ""
-
     def create_users(self):
         access_token, refresh_token = self.uaa_login(username=TEST_UAA_USERNAME, password=TEST_UAA_PASSWORD, scopes="openid texta.* uaa.admin")
 
@@ -552,3 +519,35 @@ class UAATests(APILiveServerTestCase):
         response = self.client.login(username="normaluser", password="pw")
         print_output("normal user login", response)
         self.assertTrue(response)
+
+    def uaa_login(self, username, password, scopes):
+        # Encode the redirect_uri
+        encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
+        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope={scopes}&redirect_uri={encoded_redirect_uri}'
+
+        # Get the csrf token from the login page HTML
+        html_resp = requests.get(uaa_login_url)
+        soup = bs4.BeautifulSoup(html_resp.text, 'lxml')
+        csrf_token = soup.select_one('[name="X-Uaa-Csrf"]')['value']
+        print_output("run_create_users:csrf_token", csrf_token)
+        self.assertTrue(csrf_token)
+
+        headers = {
+            "content-type": "application/x-www-form-urlencoded",
+            "cookie": f'X-Uaa-Csrf={csrf_token}'
+        }
+
+        # The form_redirect_uri will be the encoded version of the uaa_login_uri
+        body = f'X-Uaa-Csrf={csrf_token}&username={username}&password={password}&form_redirect_uri={requests.utils.quote(uaa_login_url)}'
+
+        try:
+            # POST to the login.do endpoint to trigger the redirect_uri callback in the view.
+            login_resp = requests.post(f'{UAA_URL}/login.do', headers=headers, data=body)
+            print_output("run_create_users_login_resp", login_resp)
+        except requests.exceptions.ConnectionError as e:
+            # The callback view redirects the user back to the frontend,
+            # since frontend is not running during tests, it will throw a ConnectionError.
+            # Check the URL which gave the ConnectionError and verify that it has the access and refresh tokens as qparams
+            url = e.request.url
+            query_params = parse_qs(urlparse(url).query)
+            return query_params["access_token"][0], query_params["refresh_token"][0]
