@@ -76,6 +76,7 @@ class UAATests(APILiveServerTestCase):
             url = e.request.url
             query_params = parse_qs(urlparse(url).query)
             return query_params["access_token"][0], query_params["refresh_token"][0]
+        return "", ""
 
     def create_users(self):
         access_token, refresh_token = self.uaa_login(username=TEST_UAA_USERNAME, password=TEST_UAA_PASSWORD, scopes="openid texta.* uaa.admin")
