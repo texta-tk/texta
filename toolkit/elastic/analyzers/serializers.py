@@ -12,7 +12,7 @@ from ...serializer_constants import FieldValidationSerializer, IndicesSerializer
 
 
 class ApplyESAnalyzerWorkerSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldValidationSerializer):
-    author_username = serializers.CharField(source='author.username', read_only=True, required=False)
+    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True, required=False)
 
     query = serializers.JSONField(help_text='Query in JSON format', default=json.dumps(EMPTY_QUERY))
     fields = serializers.ListField(child=serializers.CharField(), required=False, allow_empty=False, help_text="Which field to stem.")

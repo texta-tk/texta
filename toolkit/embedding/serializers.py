@@ -8,7 +8,7 @@ from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializer
 
 
 class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin):
-    author_username = serializers.CharField(source='author.username', read_only=True)
+    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
     task = TaskSerializer(read_only=True)
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     snowball_language = serializers.ChoiceField(choices=get_snowball_choices(), default=DEFAULT_SNOWBALL_LANGUAGE, help_text=f'Uses Snowball stemmer with specified language to normalize the texts. Default: {DEFAULT_SNOWBALL_LANGUAGE}')

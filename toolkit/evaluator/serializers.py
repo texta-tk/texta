@@ -26,7 +26,7 @@ class IndividualResultsSerializer(serializers.Serializer):
 
 
 class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin):
-    author_username = serializers.CharField(source="author.username", read_only=True)
+    author_username = serializers.CharField(source="author.profile.get_display_name", read_only=True)
     query = serializers.JSONField(required=False, help_text="Query in JSON format", default=json.dumps(EMPTY_QUERY))
 
     true_fact = serializers.CharField(required=True, help_text=f"Fact name used as true label for mulilabel evaluation.")

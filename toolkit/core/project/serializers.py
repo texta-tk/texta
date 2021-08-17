@@ -1,3 +1,4 @@
+import json
 from typing import List
 
 from django.contrib.auth.models import User
@@ -15,7 +16,7 @@ from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.elastic.validators import check_for_existence
 from toolkit.helper_functions import wrap_in_list
-from toolkit.serializer_constants import IndicesSerializerMixin
+from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin
 
 
 class ExportSearcherResultsSerializer(serializers.Serializer):
@@ -97,7 +98,7 @@ class HandleProjectAdministratorsSerializer(serializers.Serializer):
     project_admins = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), )
 
 
-class ProjectSerializer(serializers.ModelSerializer):
+class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
     title = serializers.CharField(required=True)
 
     indices = IndexSerializer(many=True, required=False, read_only=True)
@@ -109,9 +110,12 @@ class ProjectSerializer(serializers.ModelSerializer):
     administrators = UserSerializer(many=True, default=serializers.CurrentUserDefault(), read_only=True)
     administrators_write = serializers.ListField(child=serializers.CharField(validators=[check_if_username_exist]), write_only=True, default=[])
 
-    author_username = serializers.CharField(source='author.username', read_only=True)
+    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
+
     resources = serializers.SerializerMethodField()
     resource_count = serializers.SerializerMethodField()
+
+    scopes = serializers.ListField(default=[], required=False, help_text="Users that belong to the given scope will have access to the Projects resources.")
 
 
     # For whatever reason, it doesn't validate read-only fields, so we do it manually.
@@ -122,6 +126,16 @@ class ProjectSerializer(serializers.ModelSerializer):
                 if key in self.initial_data:
                     raise ValidationError(f"Field: '{key}' is a read-only field, please use {key}_write instead!")
         return data
+
+
+    def validate_scopes(self, values):
+        user = self.context["request"].user
+        user_scopes = json.loads(user.profile.scopes)
+        if not user.is_superuser or not user.is_staff:
+            for project_scope in values:
+                if project_scope not in user_scopes:
+                    raise ValidationError("Normal users can only define scopes they have access to!")
+        return values
 
 
     def __enrich_payload_with_orm(self, base, data):
@@ -145,8 +159,10 @@ class ProjectSerializer(serializers.ModelSerializer):
     def update(self, instance: Project, validated_data: dict):
         if "title" in validated_data:
             instance.title = validated_data["title"]
-            instance.save()
+        if "scopes" in validated_data:
+            instance.scopes = json.dumps(validated_data["scopes"])
 
+        instance.save()
         return instance
 
 
@@ -157,13 +173,14 @@ class ProjectSerializer(serializers.ModelSerializer):
         users = wrap_in_list(validated_data["users_write"])
         administrators = wrap_in_list(validated_data["administrators_write"])
         author = self.context["request"].user
+        scopes = json.dumps(validated_data["scopes"], ensure_ascii=False)
 
         if indices and not author.is_superuser:
             raise PermissionDenied("Non-superusers can not create projects with indices defined!")
 
         # create object
         with transaction.atomic():
-            project = Project.objects.create(title=title, author=author)
+            project = Project.objects.create(title=title, author=author, scopes=scopes)
             project.users.add(*users, *administrators, author)
             project.administrators.add(*administrators, author)  # All admins are also users.
 
@@ -178,8 +195,9 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ('url', 'id', 'title', 'author_username', 'administrators_write', 'administrators', 'users', 'users_write', 'indices', 'indices_write', 'resources', 'resource_count',)
+        fields = ('url', 'id', 'title', 'author_username', 'administrators_write', 'administrators', 'users', 'users_write', 'indices', 'indices_write', 'scopes', 'resources', 'resource_count',)
         read_only_fields = ('author_username', 'resources',)
+        fields_to_parse = ("scopes",)
 
 
     def get_resources(self, obj):

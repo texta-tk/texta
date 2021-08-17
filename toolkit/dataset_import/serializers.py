@@ -7,7 +7,7 @@ from ..elastic.validators import check_for_banned_beginning_chars, check_for_col
 
 
 class DatasetImportSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
-    author_username = serializers.CharField(source='author.username', read_only=True)
+    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
     file = serializers.FileField(help_text='File to upload.', write_only=True)
     separator = serializers.CharField(help_text='Separator (CSV only).', required=False)
     index = serializers.CharField(

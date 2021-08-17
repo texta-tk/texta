@@ -1,3 +1,4 @@
+import json
 from typing import List
 
 from django.contrib.auth.models import User
@@ -16,6 +17,7 @@ class Project(models.Model):
     users = models.ManyToManyField(User, related_name="project_users")
     indices = models.ManyToManyField(Index, default=None)
     administrators = models.ManyToManyField(User, related_name="administrators")
+    scopes = models.TextField(default=json.dumps([]))
 
 
     def get_indices(self) -> List[str]:

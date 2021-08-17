@@ -18,7 +18,7 @@ from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializer
 
 
 class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
-    author_username = serializers.CharField(source='author.username', read_only=True)
+    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
     url = serializers.SerializerMethodField()
     scroll_size = serializers.IntegerField(min_value=0, max_value=10000, required=False)
     description = serializers.CharField(help_text='Description of the task.', required=True, allow_blank=False)

@@ -1,17 +1,31 @@
+import json
+
 from django.contrib.auth.models import User
 from rest_framework import serializers
+
 from .models import UserProfile
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    scopes = serializers.SerializerMethodField()
+
+
+    def get_scopes(self, data):
+        try:
+            return json.loads(data.scopes)
+        except Exception:
+            return data.scopes
+
+
     class Meta:
         model = UserProfile
-        fields = ('application',)
-        read_only_fields = ('application',)
+        fields = ('first_name', 'last_name', 'is_uaa_account', 'scopes', 'application',)
+        read_only_fields = ('application', 'is_uaa_account', 'scopes')
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     profile = ProfileSerializer(read_only=True)
+    display_name = serializers.CharField(source="profile.get_display_name", read_only=True)
 
 
     def update(self, instance, validated_data):
@@ -27,5 +41,6 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = User
-        fields = ('url', 'id', 'username', 'email', 'date_joined', 'is_superuser', 'last_login', 'profile')
-        read_only_fields = ('username', 'email', 'date_joined', 'last_login', 'profile')
+
+        fields = ('url', 'id', 'username', 'email', 'display_name', 'date_joined', 'last_login', 'is_superuser', 'profile')
+        read_only_fields = ('username', 'email', 'display_name', 'date_joined', 'last_login', 'profile')
