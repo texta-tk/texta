@@ -184,8 +184,8 @@ class RefreshUAATokenView(views.APIView):
         json_resp = resp.json()
 
         # Refresh the scopes just in case with the contents of the refresh view.
-        scopes = json_resp.get("scope", "")
-        RefreshUAATokenView._update_user_scope(scopes, request.user)
+        #scopes = json_resp.get("scope", "")
+        #RefreshUAATokenView._update_user_scope(scopes, request.user)
 
         return Response(json_resp, status=status.HTTP_200_OK)
 
