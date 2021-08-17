@@ -21,7 +21,7 @@ class SummarizerSummarizeSerializer(serializers.Serializer):
 
 
 class SummarizerIndexSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin):
-    author_username = serializers.CharField(source='author.username', read_only=True, required=False)
+    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True, required=False)
     description = serializers.CharField()
     task = TaskSerializer(read_only=True, required=False)
     url = serializers.SerializerMethodField()

@@ -8,9 +8,9 @@ variables:
   # UAA
   TEXTA_USE_UAA: "True"
   TEXTA_UAA_REDIRECT_URI: http://localhost:8000/api/v1/uaa/callback
-  TEXTA_UAA_USER: test1
-  TEXTA_UAA_EMAIL: test1@test1.com
-  TEXTA_UAA_PWD: test1
+  TEXTA_UAA_USER: test
+  TEXTA_UAA_EMAIL: test@test.com
+  TEXTA_UAA_PWD: test
   TEXTA_UAA_URL: http://texta-uaa:8080/uaa
   TEXTA_UAA_AUTH_URL: http://texta-uaa:8080/uaa/oauth/authorize
   TEXTA_UAA_FRONT_REDIRECT_URL: http://localhost:4200/oauth
@@ -48,7 +48,7 @@ TestBack:
     - ci-test
   script:
     - sh wait-for-uaa.sh
-    - python manage.py test
+    - python manage.py test toolkit.uaa_auth
   except:
     - tags
 

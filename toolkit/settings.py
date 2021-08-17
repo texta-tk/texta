@@ -126,6 +126,12 @@ CORS_ALLOW_ALL_ORIGINS = env.bool("TEXTA_CORS_ALLOW_ALL_ORIGINS", default=False)
 
 # CF UAA OAUTH OPTIONS
 USE_UAA = env.bool("TEXTA_USE_UAA", default=False)
+UAA_SCOPES = env.str("TEXTA_UAA_SCOPES", default="openid texta.*")
+
+UAA_SUPERUSER_SCOPE = env.str("TEXTA_UAA_SUPERUSER_SCOPE", default="texta.admin")
+UAA_PROJECT_ADMIN_SCOPE = env.str("TEXTA_UAA_PROJECT_ADMIN_SCOPE", default="texta.project_admin")
+UAA_TEXTA_SCOPE_PREFIX = env.str("TEXTA_UAA_SCOPE_PREFIX", default="texta")
+
 # UAA server URL
 UAA_URL = env("TEXTA_UAA_URL", default="http://localhost:8080/uaa")
 # Callback URL defined on the UAA server, to which the user will be redirected after logging in on UAA

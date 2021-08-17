@@ -30,7 +30,7 @@ class MLPDocsSerializer(serializers.Serializer):
 
 
 class MLPWorkerSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldValidationSerializer):
-    author_username = serializers.CharField(source='author.username', read_only=True, required=False)
+    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True, required=False)
     description = serializers.CharField()
     task = TaskSerializer(read_only=True, required=False)
     url = serializers.SerializerMethodField()
@@ -74,7 +74,7 @@ class LangDetectSerializer(serializers.Serializer):
 
 class ApplyLangOnIndicesSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldValidationSerializer):
     description = serializers.CharField()
-    author_username = serializers.CharField(source='author.username', read_only=True, required=False)
+    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True, required=False)
     task = TaskSerializer(read_only=True, required=False)
     url = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False, default=json.dumps(EMPTY_QUERY))

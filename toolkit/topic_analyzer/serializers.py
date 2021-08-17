@@ -51,7 +51,7 @@ class ClusterSerializer(serializers.ModelSerializer):
 
 
 class ClusteringSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin):
-    author_username = serializers.CharField(source='author.username', read_only=True)
+    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
     description = serializers.CharField()
     query = serializers.CharField(help_text='Query in JSON format', default=EMPTY_QUERY)
     num_cluster = serializers.IntegerField(min_value=1, max_value=1000, default=10, help_text='Number of document clusters to be formed.')

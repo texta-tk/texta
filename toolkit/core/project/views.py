@@ -39,7 +39,7 @@ from toolkit.elastic.tools.serializers import ElasticScrollSerializer
 from toolkit.elastic.tools.spam_detector import SpamDetector
 from toolkit.exceptions import InvalidInputDocument, ProjectValidationFailed, SerializerNotValid
 from toolkit.helper_functions import hash_string
-from toolkit.permissions.project_permissions import (AuthorProjAdminSuperadminAllowed, ExtraActionAccessInApplications, OnlySuperadminAllowed, ProjectEditAccessAllowed, ProjectAccessInApplicationsAllowed)
+from toolkit.permissions.project_permissions import (AuthorProjAdminSuperadminAllowed, ExtraActionAccessInApplications, OnlySuperadminAllowed, ProjectAccessInApplicationsAllowed, ProjectEditAccessAllowed)
 from toolkit.settings import RELATIVE_PROJECT_DATA_PATH, SEARCHER_FOLDER_KEY
 from toolkit.tools.autocomplete import Autocomplete
 from toolkit.view_constants import FeedbackIndexView
@@ -342,10 +342,28 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
 
     def get_queryset(self):
         current_user = self.request.user
+
         if not current_user.is_superuser:
-            return (Project.objects.filter(users=current_user).order_by('-id') | Project.objects.filter(administrators=current_user).order_by('-id')).distinct()
+            user_scopes = json.loads(current_user.profile.scopes)
+            user_scopes_str = " ".join(user_scopes)
+
+            in_user = Project.objects.filter(users=current_user)
+            in_admin = Project.objects.filter(administrators=current_user)
+
+            # TODO Revisit this part.
+            if user_scopes:
+                scopes_filter = Project.objects.filter(scopes__contains=user_scopes[0])
+                for scope in user_scopes[1:]:
+                    scopes_filter = scopes_filter | Project.objects.filter(scopes__contains=scope)
+
+                query_filter = (in_user | in_admin | scopes_filter)
+
+            else:
+                query_filter = (in_user | in_admin)
+
+            return query_filter.distinct().order_by('-id').prefetch_related("users", "administrators", "indices")
         else:
-            return Project.objects.all().order_by('-id')
+            return Project.objects.all().order_by('-id').prefetch_related("users", "administrators", "indices")
 
 
     @action(detail=True, methods=['post'], serializer_class=HandleIndicesSerializer, permission_classes=[OnlySuperadminAllowed])
