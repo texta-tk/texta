@@ -7,7 +7,7 @@ variables:
   TEXTA_REDIS_URL: redis://redis:6379
   # UAA
   TEXTA_USE_UAA: "True"
-  TEXTA_UAA_REDIRECT_URI: http://localhost:8000/api/v1/uaa/callback
+  TEXTA_UAA_REDIRECT_URI: http://texta-rest-base-image:8000/api/v1/uaa/callback
   TEXTA_UAA_USER: test
   TEXTA_UAA_EMAIL: test@test.com
   TEXTA_UAA_PWD: test
