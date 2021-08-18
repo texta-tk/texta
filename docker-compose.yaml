@@ -1,6 +1,18 @@
 version: '3'
 
 services:
+
+  texta-uaa:
+    image: docker.texta.ee/texta/texta-uaa:latest
+    container_name: texta-uaa
+    ports:
+      - 8080:8080
+    environment:
+      - TEXTA_UAA_REDIRECT_URI:http://localhost:80/api/v1/uaa/callback
+      - TEXTA_UAA_USER:test
+      - TEXTA_UAA_EMAIL:test@test.com
+      - TEXTA_UAA_PWD:test
+      - TEXTA_UAA_URL:http://localhost:8080/uaa
   
   texta-elasticsearch:
     container_name: texta-elasticsearch
