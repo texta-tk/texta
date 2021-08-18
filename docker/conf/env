@@ -28,9 +28,9 @@ TEXTA_UAA_CLIENT_ID=login
 TEXTA_UAA_CLIENT_SECRET=loginsecret
 
 # UUA settings for for UAA Server
-TEXTA_UAA_USER=test1
-TEXTA_UAA_EMAIL=test1@test1.com
-TEXTA_UAA_PWD=test1
+TEXTA_UAA_USER=test
+TEXTA_UAA_EMAIL=test@test.com
+TEXTA_UAA_PWD=test
 
 # Elastic authentication
 # Only usable with the X-Pack security
