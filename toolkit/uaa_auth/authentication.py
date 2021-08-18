@@ -60,7 +60,7 @@ class UaaAuthentication(authentication.BaseAuthentication):
         }
 
         # Make a request to the /userinfo endpoint to check token validity and retrieve user info
-        resp = requests.get(f'{UAA_URL}/userinfo', headers=headers, timeout=REQUESTS_TIMEOUT_IN_SECONDS)
+        resp = requests.get(f'{UAA_URL}/uaa/userinfo', headers=headers, timeout=REQUESTS_TIMEOUT_IN_SECONDS)
         resp_json = resp.json()
 
         # If the req was successful, return the user data, otherwise just return nothing
