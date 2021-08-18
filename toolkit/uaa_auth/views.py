@@ -52,7 +52,7 @@ class UAAView(views.APIView):
             'token_format': 'opaque',
             'redirect_uri': UAA_REDIRECT_URI
         }
-        token_url = f'{UAA_URL}/oauth/token'
+        token_url = f'{UAA_URL}/uaa/oauth/token'
         # Make a request to the oauth/token endpoint to retrieve the access_token and user info
         response = requests.post(token_url, headers=HEADERS, data=body, timeout=REQUESTS_TIMEOUT_IN_SECONDS)
         if response.ok:
@@ -108,7 +108,7 @@ class UAAView(views.APIView):
 
     @staticmethod
     def _get_uaa_user_profile(access_token):
-        response = requests.get(f"{UAA_URL}/userinfo", headers={"Authorization": f"Bearer {access_token}"}, timeout=REQUESTS_TIMEOUT_IN_SECONDS)
+        response = requests.get(f"{UAA_URL}/uaa/userinfo", headers={"Authorization": f"Bearer {access_token}"}, timeout=REQUESTS_TIMEOUT_IN_SECONDS)
         if response.ok:
             return response.json()
         else:
@@ -215,4 +215,4 @@ class RefreshUAATokenView(views.APIView):
             'refresh_token': refresh_token
         }
         # Make a request to the OAuth /token endpoint to refresh the token
-        return requests.post(f'{UAA_URL}/oauth/token', headers=HEADERS, data=body, timeout=REQUESTS_TIMEOUT_IN_SECONDS)
+        return requests.post(f'{UAA_URL}/uaa/oauth/token', headers=HEADERS, data=body, timeout=REQUESTS_TIMEOUT_IN_SECONDS)
