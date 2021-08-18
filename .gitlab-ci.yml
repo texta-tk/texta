@@ -48,7 +48,7 @@ TestBack:
     - ci-test
   script:
     - sh wait-for-uaa.sh
-    - python manage.py test 
+    - python manage.py test
   except:
     - tags
 
