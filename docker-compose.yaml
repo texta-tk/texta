@@ -8,18 +8,18 @@ services:
     ports:
       - 8080:8080
     environment:
-      - TEXTA_UAA_REDIRECT_URI:http://localhost:80/api/v1/uaa/callback
-      - TEXTA_UAA_USER:test
-      - TEXTA_UAA_EMAIL:test@test.com
-      - TEXTA_UAA_PWD:test
-      - TEXTA_UAA_URL:http://localhost:8080/uaa
+      TEXTA_UAA_REDIRECT_URI: http://texta-rest/api/v1/uaa/callback
+      TEXTA_UAA_USER: test
+      TEXTA_UAA_EMAIL: test@test.com
+      TEXTA_UAA_PWD: test
+      TEXTA_UAA_URL: http://localhost:8080
   
   texta-elasticsearch:
     container_name: texta-elasticsearch
     restart: on-failure
     image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.0
     ports:
-      - 9200
+      - 9200:9200
     environment:
       - bootstrap.memory_lock=true
       - discovery.type=single-node
@@ -34,7 +34,7 @@ services:
     container_name: redis
     image: redis
     ports:
-      - 6379
+      - 6379:6379
     restart: always
   
   texta-mariadb:
@@ -42,7 +42,7 @@ services:
     image: mariadb:10.3.28
     restart: on-failure
     ports:
-      - 3306
+      - 3306:3306
     environment:
       MYSQL_ROOT_USER: docker
       MYSQL_ROOT_PASSWORD: docker
@@ -54,21 +54,21 @@ services:
     volumes:
       - mariadb-data:/var/lib/mysql
   
-  texta-rest:
-    container_name: texta-rest
-    image: docker.texta.ee/texta/texta-rest:latest
-    build:
-      context: .
-      dockerfile: ./docker/Dockerfile
-    ports:
-      - 80:80
-    env_file:
-      - ./docker/conf/env
-    volumes:
-      - toolkit-data:/var/texta-rest/data
-    depends_on:
-      - texta-mariadb
-      - texta-elasticsearch
+#  texta-rest:
+#    container_name: texta-rest
+#    image: docker.texta.ee/texta/texta-rest:latest
+#    build:
+#      context: .
+#      dockerfile: ./docker/Dockerfile
+#    ports:
+#      - 80:80
+#    env_file:
+#      - ./docker/conf/env
+#    volumes:
+#      - toolkit-data:/var/texta-rest/data
+#    depends_on:
+#      - texta-mariadb
+#      - texta-elasticsearch
   
   # texta-rest-gpu:
   #   container_name: texta-rest-gpu
