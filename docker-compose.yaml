@@ -2,11 +2,28 @@ version: '3'
 
 services:
 
+  dps:
+    image: defreitas/dns-proxy-server
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /etc/resolv.conf:/etc/resolv.conf
+    environment:
+      MG_LOG_LEVEL: ERROR
+    hostname: dns.mageddo
+    networks:
+      dps:
+        ipv4_address: 172.0.0.10
+
   texta-uaa:
     image: docker.texta.ee/texta/texta-uaa:latest
     container_name: texta-uaa
+    hostname: texta-uaa
+    dns:
+      - 172.0.0.10
+    networks:
+        - dps
     ports:
-      - 8080:8080
+      - 8080
     environment:
       TEXTA_UAA_REDIRECT_URI: http://texta-rest/api/v1/uaa/callback
       TEXTA_UAA_USER: test
@@ -16,10 +33,15 @@ services:
   
   texta-elasticsearch:
     container_name: texta-elasticsearch
+    hostname: texta-elasticsearch
+    dns:
+      - 172.0.0.10
+    networks:
+      - dps
     restart: on-failure
     image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.0
     ports:
-      - 9200:9200
+      - 9200
     environment:
       - bootstrap.memory_lock=true
       - discovery.type=single-node
@@ -31,18 +53,28 @@ services:
       - elastic-data:/usr/share/elasticsearch/data
   
   texta-redis:
-    container_name: redis
+    container_name: texta-redis
+    hostname: texta-redis
+    dns:
+      - 172.0.0.10
+    networks:
+      - dps
     image: redis
     ports:
-      - 6379:6379
+      - 6379
     restart: always
   
   texta-mariadb:
     container_name: texta-mariadb
     image: mariadb:10.3.28
+    hostname: texta-mariadb
+    dns:
+      - 172.0.0.10
+    networks:
+      - dps
     restart: on-failure
     ports:
-      - 3306:3306
+      - 3306
     environment:
       MYSQL_ROOT_USER: docker
       MYSQL_ROOT_PASSWORD: docker
@@ -54,21 +86,26 @@ services:
     volumes:
       - mariadb-data:/var/lib/mysql
   
-#  texta-rest:
-#    container_name: texta-rest
-#    image: docker.texta.ee/texta/texta-rest:latest
-#    build:
-#      context: .
-#      dockerfile: ./docker/Dockerfile
-#    ports:
-#      - 80:80
-#    env_file:
-#      - ./docker/conf/env
-#    volumes:
-#      - toolkit-data:/var/texta-rest/data
-#    depends_on:
-#      - texta-mariadb
-#      - texta-elasticsearch
+  texta-rest:
+    image: docker.texta.ee/texta/texta-rest:latest
+    container_name: texta-rest
+    hostname: texta-rest
+    dns:
+      - 172.0.0.10
+    networks:
+      - dps
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    ports:
+      - 80:80
+    env_file:
+      - ./docker/conf/env
+    volumes:
+      - toolkit-data:/var/texta-rest/data
+    depends_on:
+      - texta-mariadb
+      - texta-elasticsearch
   
   # texta-rest-gpu:
   #   container_name: texta-rest-gpu
@@ -96,3 +133,9 @@ volumes:
   elastic-data:
   toolkit-data:
   mariadb-data:
+
+networks:
+  dps:
+    ipam:
+      config:
+        - subnet: 172.0.0.0/24
