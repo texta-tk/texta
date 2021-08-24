@@ -105,10 +105,10 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
     indices_write = serializers.ListField(child=serializers.CharField(validators=[check_for_existence]), write_only=True, default=[])
 
     users = UserSerializer(many=True, default=serializers.CurrentUserDefault(), read_only=True)
-    users_write = serializers.ListField(child=serializers.CharField(validators=[check_if_username_exist]), write_only=True, default=[])
+    users_write = serializers.ListField(child=serializers.CharField(validators=[check_if_username_exist]), write_only=True, default=[], help_text="Usernames of users that should have access to the Projects resources.")
 
     administrators = UserSerializer(many=True, default=serializers.CurrentUserDefault(), read_only=True)
-    administrators_write = serializers.ListField(child=serializers.CharField(validators=[check_if_username_exist]), write_only=True, default=[])
+    administrators_write = serializers.ListField(child=serializers.CharField(validators=[check_if_username_exist]), write_only=True, default=[], help_text="Usernames of users that should be given Project Administrator permissions.")
 
     author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
 

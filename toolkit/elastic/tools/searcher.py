@@ -5,6 +5,7 @@ from elasticsearch_dsl import Search
 from elasticsearch_dsl.query import MoreLikeThis
 
 from toolkit.elastic.tools.core import ElasticCore, elastic_connection
+from toolkit.settings import TEXTA_TAGS_KEY
 
 
 ES_SCROLL_SIZE = 500
@@ -237,7 +238,12 @@ class ElasticSearcher:
                 self.callback_progress.update_view(0)
                 self.callback_progress.n_count = 0
 
-            page = self.core.es.search(index=self.indices, body=self.query, scroll=self.scroll_timeout, size=self.scroll_size)
+            field_data = self.field_data + [TEXTA_TAGS_KEY] if TEXTA_TAGS_KEY not in self.field_data else self.field_data
+            if self.output == self.OUT_META:
+                page = self.core.es.search(index=self.indices, body=self.query, scroll=self.scroll_timeout, _source_excludes=["*"], size=self.scroll_size)
+            else:
+                page = self.core.es.search(index=self.indices, body=self.query, scroll=self.scroll_timeout, _source=field_data, size=self.scroll_size)
+
             scroll_id = page['_scroll_id']
             current_page = 0
             # set page size

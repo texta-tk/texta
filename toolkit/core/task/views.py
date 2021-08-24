@@ -51,7 +51,6 @@ class TaskAPIView(GenericAPIView):
             with transaction.atomic():
                 lock = Task.objects.select_for_update().filter(id=task_id)[0]
                 lock.num_processed += amount_of_docs
-                lock.progress = lock.num_processed / lock.total * 100
                 lock.last_update = now()
                 lock.save()
             return Response("Updated task successfully with progress at {}%!".format(lock.progress))
