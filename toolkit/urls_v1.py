@@ -37,6 +37,7 @@ from toolkit.regex_tagger.urls import router as regex_tagger_router
 from toolkit.summarizer.urls import router as summarizer_router
 from toolkit.summarizer.views import SummarizerSummarize
 from toolkit.tagger.urls import router as tagger_router
+from toolkit.rakun_keyword_extractor.urls import router as rakun_extractor_router
 from toolkit.tools.swagger import schema_view
 from toolkit.topic_analyzer.views import ClusterViewSet, TopicAnalyzerViewset
 from toolkit.torchtagger.urls import router as torchtagger_router
@@ -56,6 +57,7 @@ project_router.registry.extend(search_tagger_router.registry)
 project_router.registry.extend(splitter_router.registry)
 project_router.registry.extend(dataset_import_router.registry)
 project_router.registry.extend(tagger_router.registry)
+project_router.registry.extend(rakun_extractor_router.registry)
 project_router.registry.extend(core_router.registry)
 project_router.registry.extend(torchtagger_router.registry)
 project_router.registry.extend(mlp_router.registry)
