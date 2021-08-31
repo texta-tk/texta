@@ -3,6 +3,7 @@ from toolkit.embedding.models import Embedding
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
 from toolkit.serializer_constants import IndicesSerializerMixin, ProjectResourceUrlSerializer, ProjectFasttextFilteredPrimaryKeyRelatedField
 
+
 class RakunExtractorSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin):
     author_username = serializers.CharField(source="author.profile.get_display_name", read_only=True)
     description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
@@ -16,10 +17,11 @@ class RakunExtractorSerializer(serializers.ModelSerializer, ProjectResourceUrlSe
     max_similar = serializers.IntegerField(required=False, default=3, help_text="most similar can show up n times")
     max_occurrence = serializers.IntegerField(required=False, default=3, help_text="maximum frequency overall")
     fasttext_embedding = ProjectFasttextFilteredPrimaryKeyRelatedField(queryset=Embedding.objects, many=False, read_only=False, allow_null=True, default=None, help_text=f'FastText Embedding to use. Default = None')
+    url = serializers.SerializerMethodField()
 
     class Meta:
         model = RakunExtractor
-        fields = ('id', 'author_username', 'description', 'distance_threshold', 'num_keywords', 'pair_diff_length',
+        fields = ('id', 'url', 'author_username', 'description', 'distance_threshold', 'num_keywords', 'pair_diff_length',
                   'stopwords', 'bigram_count_threshold', 'min_tokens', 'max_tokens', 'max_similar', 'max_occurrence',
                   'fasttext_embedding')
         read_only_fields = ()
