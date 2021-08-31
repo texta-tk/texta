@@ -1,6 +1,7 @@
 from rest_framework import serializers
+from toolkit.embedding.models import Embedding
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
-from toolkit.serializer_constants import IndicesSerializerMixin, ProjectResourceUrlSerializer
+from toolkit.serializer_constants import IndicesSerializerMixin, ProjectResourceUrlSerializer, ProjectFasttextFilteredPrimaryKeyRelatedField
 
 class RakunExtractorSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin):
     author_username = serializers.CharField(source="author.profile.get_display_name", read_only=True)
@@ -14,7 +15,7 @@ class RakunExtractorSerializer(serializers.ModelSerializer, ProjectResourceUrlSe
     max_tokens = serializers.IntegerField(required=False, min_value=1, max_value=2, default=1, help_text="The maximum number of tokens that can constitute a keyword")
     max_similar = serializers.IntegerField(required=False, default=3, help_text="most similar can show up n times")
     max_occurrence = serializers.IntegerField(required=False, default=3, help_text="maximum frequency overall")
-    fasttext_embedding = serializers.CharField(required=False, default=None)
+    fasttext_embedding = ProjectFasttextFilteredPrimaryKeyRelatedField(queryset=Embedding.objects, many=False, read_only=False, allow_null=True, default=None, help_text=f'FastText Embedding to use. Default = None')
 
     class Meta:
         model = RakunExtractor

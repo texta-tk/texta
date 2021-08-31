@@ -4,6 +4,7 @@ from django.db.models import CheckConstraint, Q
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from django.contrib.auth.models import User
+from toolkit.embedding.models import Embedding
 
 
 class RakunExtractor(models.Model):
@@ -19,7 +20,7 @@ class RakunExtractor(models.Model):
     max_tokens = models.IntegerField(default=1, null=True)
     max_similar = models.IntegerField(default=3, null=True)
     max_occurrence = models.IntegerField(default=3, null=True)
-    fasttext_embedding = models.CharField(default=None, null=True, max_length=MAX_DESC_LEN)
+    fasttext_embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
 
     class Meta:
         constraints = (
