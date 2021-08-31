@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from toolkit.core.task.serializers import TaskSerializer
 from toolkit.embedding.models import Embedding
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
 from toolkit.serializer_constants import IndicesSerializerMixin, ProjectResourceUrlSerializer, ProjectFasttextFilteredPrimaryKeyRelatedField
@@ -18,11 +19,12 @@ class RakunExtractorSerializer(serializers.ModelSerializer, ProjectResourceUrlSe
     max_occurrence = serializers.IntegerField(required=False, default=3, help_text="maximum frequency overall")
     fasttext_embedding = ProjectFasttextFilteredPrimaryKeyRelatedField(queryset=Embedding.objects, many=False, read_only=False, allow_null=True, default=None, help_text=f'FastText Embedding to use. Default = None')
     url = serializers.SerializerMethodField()
+    task = TaskSerializer(read_only=True)
 
     class Meta:
         model = RakunExtractor
         fields = ('id', 'url', 'author_username', 'description', 'distance_threshold', 'num_keywords', 'pair_diff_length',
                   'stopwords', 'bigram_count_threshold', 'min_tokens', 'max_tokens', 'max_similar', 'max_occurrence',
-                  'fasttext_embedding')
+                  'fasttext_embedding', 'task')
         read_only_fields = ()
         fields_to_parse = ('fields',)

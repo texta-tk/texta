@@ -5,6 +5,7 @@ from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from django.contrib.auth.models import User
 from toolkit.embedding.models import Embedding
+from toolkit.core.task.models import Task
 
 
 class RakunExtractor(models.Model):
@@ -21,6 +22,7 @@ class RakunExtractor(models.Model):
     max_similar = models.IntegerField(default=3, null=True)
     max_occurrence = models.IntegerField(default=3, null=True)
     fasttext_embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
+    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
     class Meta:
         constraints = (
