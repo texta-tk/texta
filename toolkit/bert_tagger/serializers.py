@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from toolkit.bert_tagger import choices
 from toolkit.bert_tagger.models import BertTagger
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.helper_functions import get_downloaded_bert_models
@@ -42,7 +43,7 @@ class TagRandomDocSerializer(IndicesSerializerMixin):
 
 
 class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
-    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
+    author = UserSerializer(read_only=True)
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     query = serializers.JSONField(required=False, help_text='Query in JSON format', default=json.dumps(EMPTY_QUERY))
     #indices = IndexSerializer(many=True, default=[])
@@ -91,7 +92,7 @@ class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, In
 
     class Meta:
         model = BertTagger
-        fields = ('url', 'author_username', 'id', 'description', 'query', 'fields', 'f1_score', 'precision', 'recall', 'accuracy',
+        fields = ('url', 'author', 'id', 'description', 'query', 'fields', 'f1_score', 'precision', 'recall', 'accuracy',
                   'validation_loss', 'training_loss', 'maximum_sample_size', 'minimum_sample_size', 'num_epochs', 'plot', 'task', 'pos_label', 'fact_name',
                   'indices', 'bert_model', 'learning_rate', 'eps', 'max_length', 'batch_size', 'adjusted_batch_size',
                   'split_ratio','negative_multiplier', 'checkpoint_model', 'num_examples', 'confusion_matrix', 'balance', 'use_sentence_shuffle', 'balance_to_max_limit')

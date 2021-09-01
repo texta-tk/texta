@@ -110,7 +110,7 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
     administrators = UserSerializer(many=True, default=serializers.CurrentUserDefault(), read_only=True)
     administrators_write = serializers.ListField(child=serializers.CharField(validators=[check_if_username_exist]), write_only=True, default=[])
 
-    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
+    author = UserSerializer(read_only=True)
 
     resources = serializers.SerializerMethodField()
     resource_count = serializers.SerializerMethodField()
@@ -195,8 +195,8 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ('url', 'id', 'title', 'author_username', 'administrators_write', 'administrators', 'users', 'users_write', 'indices', 'indices_write', 'scopes', 'resources', 'resource_count',)
-        read_only_fields = ('author_username', 'resources',)
+        fields = ('url', 'id', 'title', 'author', 'administrators_write', 'administrators', 'users', 'users_write', 'indices', 'indices_write', 'scopes', 'resources', 'resource_count',)
+        read_only_fields = ('author', 'resources',)
         fields_to_parse = ("scopes",)
 
 

@@ -6,6 +6,7 @@ from texta_mlp.mlp import SUPPORTED_ANALYZERS
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.mlp.models import ApplyLangWorker, MLPWorker
 from toolkit.serializer_constants import FieldValidationSerializer, IndicesSerializerMixin
@@ -30,7 +31,7 @@ class MLPDocsSerializer(serializers.Serializer):
 
 
 class MLPWorkerSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldValidationSerializer):
-    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True, required=False)
+    author = UserSerializer(read_only=True)
     description = serializers.CharField()
     task = TaskSerializer(read_only=True, required=False)
     url = serializers.SerializerMethodField()
@@ -46,7 +47,7 @@ class MLPWorkerSerializer(serializers.ModelSerializer, IndicesSerializerMixin, F
 
     class Meta:
         model = MLPWorker
-        fields = ("id", "url", "author_username", "indices", "description", "task", "query", "fields", "analyzers", "es_scroll_size", "es_timeout")
+        fields = ("id", "url", "author", "indices", "description", "task", "query", "fields", "analyzers", "es_scroll_size", "es_timeout")
 
 
     def get_url(self, obj):
@@ -74,7 +75,7 @@ class LangDetectSerializer(serializers.Serializer):
 
 class ApplyLangOnIndicesSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldValidationSerializer):
     description = serializers.CharField()
-    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True, required=False)
+    author = UserSerializer(read_only=True)
     task = TaskSerializer(read_only=True, required=False)
     url = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False, default=json.dumps(EMPTY_QUERY))
@@ -116,7 +117,7 @@ class ApplyLangOnIndicesSerializer(serializers.ModelSerializer, IndicesSerialize
 
     class Meta:
         model = ApplyLangWorker
-        fields = ("id", "url", "author_username", "indices", "description", "task", "query", "field")
+        fields = ("id", "url", "author", "indices", "description", "task", "query", "field")
 
 
     def get_url(self, obj):

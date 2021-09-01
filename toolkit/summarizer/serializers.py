@@ -9,6 +9,7 @@ from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializer
 from toolkit.settings import REST_FRAMEWORK
 from .models import Summarizer
 from .values import DefaultSummarizerValues
+from ..core.user_profile.serializers import UserSerializer
 
 
 class SummarizerSummarizeSerializer(serializers.Serializer):
@@ -21,7 +22,7 @@ class SummarizerSummarizeSerializer(serializers.Serializer):
 
 
 class SummarizerIndexSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin):
-    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True, required=False)
+    author = UserSerializer(read_only=True)
     description = serializers.CharField()
     task = TaskSerializer(read_only=True, required=False)
     url = serializers.SerializerMethodField()
@@ -36,7 +37,7 @@ class SummarizerIndexSerializer(FieldParseSerializer, serializers.ModelSerialize
 
     class Meta:
         model = Summarizer
-        fields = ("id", "url", "author_username", "indices", "description", "task", "query", "fields", "algorithm", "ratio")
+        fields = ("id", "url", "author", "indices", "description", "task", "query", "fields", "algorithm", "ratio")
         fields_to_parse = ['fields']
 
 
