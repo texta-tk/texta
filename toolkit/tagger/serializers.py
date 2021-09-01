@@ -6,6 +6,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.embedding.models import Embedding
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choices
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
@@ -17,7 +18,7 @@ from toolkit.validator_constants import validate_pos_label
 
 # NB! Currently not used
 class ApplyTaggersSerializer(FieldParseSerializer, IndicesSerializerMixin):
-    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
+    author = UserSerializer(read_only=True)
     description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
     new_fact_name = serializers.CharField(required=True, help_text="Used as fact name when applying the tagger.")
     fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
@@ -130,7 +131,7 @@ class TaggerGroupTagDocumentSerializer(serializers.Serializer):
 
 
 class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
-    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
+    author = UserSerializer(read_only=True)
     description = serializers.CharField(help_text=f'Description for the Tagger. Will be used as tag.')
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     vectorizer = serializers.ChoiceField(choices=choices.get_vectorizer_choices(), default=choices.DEFAULT_VECTORIZER, help_text=f'Vectorizer algorithm to create document vectors. NB! HashingVectorizer does not support feature name extraction!')
@@ -161,7 +162,7 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Indice
 
     class Meta:
         model = Tagger
-        fields = ('id', 'url', 'author_username', 'description', 'query', 'fact_name', 'indices', 'fields', 'detect_lang', 'embedding', 'vectorizer', 'classifier', 'stop_words',
+        fields = ('id', 'url', 'author', 'description', 'query', 'fact_name', 'indices', 'fields', 'detect_lang', 'embedding', 'vectorizer', 'classifier', 'stop_words',
                   'maximum_sample_size', 'minimum_sample_size', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score', 'snowball_language', 'scoring_function',
                   'num_features', 'num_examples', 'confusion_matrix', 'plot', 'task', 'tagger_groups', 'ignore_numbers', 'balance', 'balance_to_max_limit', 'pos_label')
         read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'num_examples', 'tagger_groups', 'confusion_matrix')
@@ -197,7 +198,7 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Indice
 
 
 class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
-    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
+    author = UserSerializer(read_only=True)
     description = serializers.CharField(help_text=f'Description for the Tagger Group.')
     minimum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, help_text=f'Minimum number of documents required to train a model. Default: {choices.DEFAULT_MIN_SAMPLE_SIZE}')
     fact_name = serializers.CharField(default=choices.DEFAULT_TAGGER_GROUP_FACT_NAME, help_text=f'Fact name used to filter tags (fact values). Default: {choices.DEFAULT_TAGGER_GROUP_FACT_NAME}')
@@ -212,7 +213,7 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
 
     class Meta:
         model = TaggerGroup
-        fields = ('id', 'url', 'author_username', 'description', 'fact_name', 'num_tags', 'minimum_sample_size',
+        fields = ('id', 'url', 'author', 'description', 'fact_name', 'num_tags', 'minimum_sample_size',
                   'tagger_status', 'tagger_params', 'tagger', 'tagger_statistics', 'task')
 
 

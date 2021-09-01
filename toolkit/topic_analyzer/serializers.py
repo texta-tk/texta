@@ -5,6 +5,7 @@ from django.urls import reverse
 from rest_framework import serializers
 
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin
 from toolkit.settings import REST_FRAMEWORK
@@ -51,7 +52,7 @@ class ClusterSerializer(serializers.ModelSerializer):
 
 
 class ClusteringSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin):
-    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
+    author = UserSerializer(read_only=True)
     description = serializers.CharField()
     query = serializers.CharField(help_text='Query in JSON format', default=EMPTY_QUERY)
     num_cluster = serializers.IntegerField(min_value=1, max_value=1000, default=10, help_text='Number of document clusters to be formed.')
@@ -97,7 +98,7 @@ class ClusteringSerializer(FieldParseSerializer, serializers.ModelSerializer, In
     class Meta:
         model = ClusteringResult
         fields = [
-            "id", "url", "description", "author_username", "query", "indices", "num_cluster", "clustering_algorithm",
+            "id", "url", "description", "author", "query", "indices", "num_cluster", "clustering_algorithm",
             "vectorizer", "num_dims", "use_lsi", "num_topics", "significant_words_filter", "display_fields",
             "stop_words", "ignored_ids", "fields", "embedding", "document_limit", "task"
         ]

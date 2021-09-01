@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choices
 from toolkit.embedding import choices
 from toolkit.embedding.models import Embedding
@@ -8,7 +9,7 @@ from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializer
 
 
 class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin):
-    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
+    author = UserSerializer(read_only=True)
     task = TaskSerializer(read_only=True)
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     snowball_language = serializers.ChoiceField(choices=get_snowball_choices(), default=DEFAULT_SNOWBALL_LANGUAGE, help_text=f'Uses Snowball stemmer with specified language to normalize the texts. Default: {DEFAULT_SNOWBALL_LANGUAGE}')
@@ -32,7 +33,7 @@ class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSeri
 
     class Meta:
         model = Embedding
-        fields = ('id', 'url', 'author_username', 'description', 'indices', 'fields', 'use_phraser', 'embedding_type', 'snowball_language', 'query', 'num_dimensions', 'max_documents', 'min_freq', 'vocab_size', 'task')
+        fields = ('id', 'url', 'author', 'description', 'indices', 'fields', 'use_phraser', 'embedding_type', 'snowball_language', 'query', 'num_dimensions', 'max_documents', 'min_freq', 'vocab_size', 'task')
         read_only_fields = ('vocab_size',)
         fields_to_parse = ('fields',)
 
