@@ -91,11 +91,11 @@ class HandleIndicesSerializer(serializers.Serializer):
 
 
 class HandleUsersSerializer(serializers.Serializer):
-    users = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), )
+    users = serializers.ListField(help_text="ID's or usernames of the users you wish to manage.")
 
 
 class HandleProjectAdministratorsSerializer(serializers.Serializer):
-    project_admins = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), )
+    project_admins = serializers.ListField(help_text="ID's or usernames of the users you wish to manage.")
 
 
 class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):

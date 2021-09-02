@@ -2,7 +2,7 @@
 import json
 import os
 
-from toolkit.settings import UAA_SCOPES, USE_UAA, UAA_URL, UAA_REDIRECT_URI, UAA_CLIENT_ID
+from toolkit.settings import UAA_PROJECT_ADMIN_SCOPE, UAA_SCOPES, USE_UAA, UAA_URL, UAA_REDIRECT_URI, UAA_CLIENT_ID
 
 
 # Parse env variables
@@ -23,7 +23,9 @@ config = {
         "redirect_uri": UAA_REDIRECT_URI,
         "client_id": UAA_CLIENT_ID,
         "scope": UAA_SCOPES,
-        "response_type": "code"
+        "admin_scope": UAA_PROJECT_ADMIN_SCOPE,
+        "response_type": "code",
+
     }
 }
 # print output

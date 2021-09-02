@@ -137,6 +137,7 @@ UAA_URL = env("TEXTA_UAA_URL", default="http://localhost:8080")
 # Callback URL defined on the UAA server, to which the user will be redirected after logging in on UAA
 UAA_REDIRECT_URI = env("TEXTA_UAA_REDIRECT_URI", default="http://localhost:8000/api/v1/uaa/callback")
 # TEXTA front URL where the user will be redirected after the redirect_uri
+# Default value is for when running the front-end separately.
 UAA_FRONT_REDIRECT_URL = env("TEXTA_UAA_FRONT_REDIRECT_URL", default="http://localhost:4200/oauth")
 # OAuth client application (eg texta_toolkit) id and secret.
 UAA_CLIENT_ID = env("TEXTA_UAA_CLIENT_ID", default="login")
