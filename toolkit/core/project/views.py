@@ -402,11 +402,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         users = [str(user) for user in serializer.validated_data["users"]]
-
-        user_ids = [user_id for user_id in users if user_id.isnumeric()]
-        usernames = [user_id for user_id in users if not user_id.isnumeric()]
-
-        user_filter = Q(username__in=usernames) | Q(pk__in=user_ids)
+        user_filter = Q(username__in=users)
         users = User.objects.filter(user_filter)
         project.users.add(*users)
         return Response({"detail": f"Added users '{str([user for user in users])}' into the project!"})
@@ -418,11 +414,8 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         users = [str(user) for user in serializer.validated_data["users"]]
-        user_ids = [user_id for user_id in users if user_id.isnumeric()]
-        usernames = [user_id for user_id in users if not user_id.isnumeric()]
-        user_filter = Q(username__in=usernames) | Q(pk__in=user_ids)
+        user_filter = Q(username__in=users)
         users = User.objects.filter(user_filter)
-
         project.users.remove(*users)
         return Response({"detail": f"Removed users '{str([user for user in users])}' from the project!"})
 
@@ -433,9 +426,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         users = [str(user) for user in serializer.validated_data["project_admins"]]
-        user_ids = [user_id for user_id in users if user_id.isnumeric()]
-        usernames = [user_id for user_id in users if not user_id.isnumeric()]
-        user_filter = Q(username__in=usernames) | Q(pk__in=user_ids)
+        user_filter = Q(username__in=users)
         users = User.objects.filter(user_filter)
         project.administrators.add(*users)
         return Response({"detail": f"Added project administrators '{str([user for user in users])}' into the project!"})
@@ -447,9 +438,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         users = [str(user) for user in serializer.validated_data["project_admins"]]
-        user_ids = [user_id for user_id in users if user_id.isnumeric()]
-        usernames = [user_id for user_id in users if not user_id.isnumeric()]
-        user_filter = Q(username__in=usernames) | Q(pk__in=user_ids)
+        user_filter = Q(username__in=users)
         users = User.objects.filter(user_filter)
         project.administrators.remove(*users)
         return Response({"detail": f"Removed project administrators '{str([user for user in users])}' from the project!"})
