@@ -8,6 +8,8 @@ from toolkit.serializer_constants import IndicesSerializerMixin, ProjectResource
 class RakunExtractorSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin):
     author_username = serializers.CharField(source="author.profile.get_display_name", read_only=True)
     description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
+    fields = serializers.ListField(required=True, child=serializers.CharField(),
+                                   help_text=f"Fields used for the text.")
     distance_threshold = serializers.FloatField(required=False, min_value=1.0, default=2.0, help_text="Distance between tokens that initiates the merge process (if more similar than this, the tokens are merged)")
     num_keywords = serializers.IntegerField(required=False, default=25, help_text="The number of keywords to be detected")
     pair_diff_length = serializers.IntegerField(required=False, default=2, help_text="If the difference in the length of the two tokens is smaller than this parameter, the tokens are considered for merging.")
@@ -23,7 +25,7 @@ class RakunExtractorSerializer(serializers.ModelSerializer, ProjectResourceUrlSe
 
     class Meta:
         model = RakunExtractor
-        fields = ('id', 'url', 'author_username', 'description', 'distance_threshold', 'num_keywords', 'pair_diff_length',
+        fields = ('id', 'url', 'author_username', 'description', 'indices', 'fields', 'query', 'distance_threshold', 'num_keywords', 'pair_diff_length',
                   'stopwords', 'bigram_count_threshold', 'min_tokens', 'max_tokens', 'max_similar', 'max_occurrence',
                   'fasttext_embedding', 'task')
         read_only_fields = ()
