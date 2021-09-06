@@ -10,6 +10,7 @@ from toolkit.base_tasks import TransactionAwareTask
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
 from toolkit.tools.show_progress import ShowProgress
+from mrakun import RakunDetector
 
 
 def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], rakun_extractor_object: RakunExtractor, fact_name: str, fact_value: str, add_spans: bool):
@@ -22,7 +23,9 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
             for field in fields:
                 text = flat_hit.get(field, None)
                 if text and isinstance(text, str):
-                    results = rakun_extractor_object.apply([text], field_path=field, fact_name=fact_name, fact_value=fact_value, add_spans=add_spans)
+                    keyword_detector = RakunDetector()
+                    results = keyword_detector.find_keywords(text, input_type="text")
+                    #results = rakun_extractor_object.apply([text], field_path=field, fact_name=fact_name, fact_value=fact_value, add_spans=add_spans)
                     existing_facts.extend(results)
 
                 if existing_facts:
@@ -37,8 +40,17 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
                     "_source": {"doc": {"texta_facts": existing_facts}}
                 }
 
-@task(name="apply_regex_tagger_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
-def apply_rakun_extractor(object_id: int, indices: List[str], fields: List[str], query: dict, es_timeout: int = 10, bulk_size: int = 100, max_chunk_bytes: int = 104857600, fact_name: str = "", fact_value: str = "", add_spans: bool = True):
+@task(name="start_rakun_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
+def start_rakun_task(object_id: int):
+    rakun = RakunExtractor.objects.get(pk=object_id)
+    task_object = rakun.task
+    show_progress = ShowProgress(task_object, multiplier=1)
+    show_progress.update_step('starting rakun')
+    show_progress.update_view(0)
+    return object_id
+
+@task(name="apply_rakun_extractor_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
+def apply_rakun_extractor_to_index(object_id: int, indices: List[str], fields: List[str], query: dict, es_timeout: int = 10, bulk_size: int = 100, max_chunk_bytes: int = 104857600, fact_name: str = "", fact_value: str = "", add_spans: bool = True):
     """Apply Rakun Keyword Extractor to index."""
     try:
         rakun_extractor_object = RakunExtractor.objects.get(pk=object_id)
