@@ -6,6 +6,7 @@ from django_filters import rest_framework as filters
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
 from toolkit.core.project.models import Project
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
+from toolkit.elastic.index.models import Index
 
 
 class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
@@ -23,7 +24,17 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
 
     def perform_create(self, serializer: RakunExtractorSerializer):
         project = Project.objects.get(id=self.kwargs['project_pk'])
-        serializer.save(
+        indices = [index["name"] for index in serializer.validated_data["indices"]]
+        indices = project.get_available_or_all_project_indices(indices)
+
+        serializer.validated_data.pop("indices")
+
+        rakun: RakunExtractor = serializer.save(
             author=self.request.user,
             project=project
         )
+
+        for index in Index.objects.filter(name__in=indices, is_open=True):
+            rakun.indices.add(index)
+
+        rakun.apply_rakun()
