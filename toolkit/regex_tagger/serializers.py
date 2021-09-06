@@ -96,8 +96,17 @@ class RegexTaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrl
     tagger_info = serializers.SerializerMethodField(read_only=True)  # Helper field for displaying tagger info in a friendly manner.
 
 
+    # Ensure that only Regex Taggers inside the same Project are returned.
+    def get_fields(self, *args, **kwargs):
+        fields = super(RegexTaggerGroupSerializer, self).get_fields(*args, **kwargs)
+        project_pk = self.context["view"].kwargs["project_pk"]
+        fields['regex_taggers'].queryset = RegexTagger.objects.filter(project__pk=project_pk)
+        return fields
+
+
     def get_tagger_info(self, value: RegexTaggerGroup):
-        serializer = RegexTaggerSerializer(value.regex_taggers.all(), many=True, context={"request": self.context["request"]})
+        queryset = value.regex_taggers.filter(project__pk=value.pk)
+        serializer = RegexTaggerSerializer(queryset, many=True, context={"request": self.context["request"]})
         return serializer.data
 
 
