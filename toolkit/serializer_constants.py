@@ -8,6 +8,12 @@ from toolkit.core.project.models import Project
 from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.elastic.validators import check_for_existence
 
+# Helptext constants to ensure consistent values inside Toolkit.
+BULK_SIZE_HELPTEXT = "How many documents should be sent into Elasticsearch in a single batch for update."
+ES_TIMEOUT_HELPTEXT = "How many seconds should be allowed for the the update request to Elasticsearch."
+DESCRIPTION_HELPTEXT = "Description of the task to distinguish it from others."
+QUERY_HELPTEXT = "Elasticsearch query for subsetting in JSON format"
+FIELDS_HELPTEXT = "Which fields to parse the content from."
 
 class EmptySerializer(serializers.Serializer):
     pass
@@ -87,7 +93,8 @@ class ProjectFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
         if not request or not queryset:
             return None
         return queryset.filter(project=view.kwargs["project_pk"])
-        
+
+
 # Subclassing serializers.Serializer is necessary for some magical reason,
 # without it, the ModelSerializers behavior takes precedence no matter how you subclass it.
 class IndicesSerializerMixin(serializers.Serializer):
