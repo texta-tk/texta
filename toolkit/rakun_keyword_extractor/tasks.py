@@ -7,9 +7,11 @@ from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.base_tasks import TransactionAwareTask
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
 from toolkit.tools.show_progress import ShowProgress
+from toolkit.helper_functions import get_indices_from_object, load_stop_words
+from texta_tools.embedding import FastTextEmbedding
 from mrakun import RakunDetector
 
 
@@ -50,30 +52,30 @@ def start_rakun_task(object_id: int):
     return object_id
 
 @task(name="apply_rakun_extractor_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
-def apply_rakun_extractor_to_index(object_id: int, indices: List[str], fields: List[str], query: dict, es_timeout: int = 10, bulk_size: int = 100, max_chunk_bytes: int = 104857600, fact_name: str = "", fact_value: str = "", add_spans: bool = True):
+def apply_rakun_extractor_to_index(object_id: int):
     """Apply Rakun Keyword Extractor to index."""
     try:
-        rakun_extractor_object = RakunExtractor.objects.get(pk=object_id)
+        logging.getLogger(INFO_LOGGER).info(f"Starting task 'apply_rakun_extractor_to_index' with ID: {object_id}!")
+        rakun_extractor_object = RakunExtractor.objects.get(id=object_id)
 
         progress = ShowProgress(rakun_extractor_object.task)
 
-        ec = ElasticCore()
-        [ec.add_texta_facts_mapping(index) for index in indices]
+        # retrieve indices & field data
+        indices = get_indices_from_object(rakun_extractor_object)
+        field_data = json.loads(rakun_extractor_object.fields)
+        stop_words = load_stop_words(rakun_extractor_object.stopwords)
 
-        searcher = ElasticSearcher(
-            indices=indices,
-            field_data=fields + ["texta_facts"],  # Get facts to add upon existing ones.
-            query=query,
-            timeout=f"{es_timeout}m",
-            output=ElasticSearcher.OUT_RAW,
-            callback_progress=progress,
-            scroll_size=bulk_size
-        )
+        # load embedding if any
+        if rakun_extractor_object.fasttext_embedding:
+            embedding = FastTextEmbedding()
+            embedding.load_django(rakun_extractor_object.fasttext_embedding)
+        else:
+            embedding = None
 
-        actions = update_generator(generator=searcher, ec=ec, fields=fields, rakun_extractor_object=rakun_extractor_object, fact_name=fact_name, fact_value=fact_value, add_spans=add_spans)
-        for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes):
-            if not success:
-                logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
+        #actions = update_generator(generator=searcher, ec=ec, fields=fields, rakun_extractor_object=rakun_extractor_object, fact_name=fact_name, fact_value=fact_value, add_spans=add_spans)
+        #for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes):
+        #    if not success:
+        #        logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
 
         rakun_extractor_object.task.complete()
         return True
