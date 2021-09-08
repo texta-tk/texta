@@ -24,6 +24,7 @@ class RakunExtractor(models.Model):
     indices = models.ManyToManyField(Index)
     fields = models.TextField(default=json.dumps([]))
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
+    distance_method = models.CharField(default="editdistance", max_length=MAX_DESC_LEN)
     distance_threshold = models.FloatField(validators=[MinValueValidator(0.0)], default=2.0, null=True)
     num_keywords = models.IntegerField(default=25, null=True)
     pair_diff_length = models.IntegerField(default=2, null=True)
@@ -43,6 +44,9 @@ class RakunExtractor(models.Model):
                 check=Q(distance_threshold__gte=0.0),
                 name='distance_threshold_min'),
         )
+
+    def get_indices(self):
+        return [index.name for index in self.indices.filter(is_open=True)]
 
     def __str__(self):
         return self.description
