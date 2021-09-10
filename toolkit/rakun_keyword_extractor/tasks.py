@@ -61,16 +61,46 @@ def apply_rakun_extractor_to_index(object_id: int):
         progress = ShowProgress(rakun_extractor_object.task)
 
         # retrieve indices & field data
-        indices = get_indices_from_object(rakun_extractor_object)
+        indices = rakun_extractor_object.get_indices()
         field_data = json.loads(rakun_extractor_object.fields)
         stop_words = load_stop_words(rakun_extractor_object.stopwords)
+        if int(rakun_extractor_object.min_tokens) == int(rakun_extractor_object.max_tokens):
+            num_tokens = [int(rakun_extractor_object.min_tokens)]
+        else:
+            num_tokens = [int(rakun_extractor_object.min_tokens), int(rakun_extractor_object.max_tokens)]
 
         # load embedding if any
         if rakun_extractor_object.fasttext_embedding:
-            embedding = FastTextEmbedding()
-            embedding.load_django(rakun_extractor_object.fasttext_embedding)
+            embedding_model_path = str(rakun_extractor_object.fasttext_embedding.embedding_model)
+            print(rakun_extractor_object.fasttext_embedding.embedding_model)
+            gensim_embedding_model_path = embedding_model_path + "_gensim"
+            print(gensim_embedding_model_path)
         else:
-            embedding = None
+            gensim_embedding_model_path = None
+
+        es_s = ElasticSearcher(indices=indices, query=rakun_extractor_object.query)
+        docs = es_s.search()
+
+        for doc in docs:
+            for field in json.loads(rakun_extractor_object.fields):
+
+                HYPERPARAMETERS = {"distance_threshold": rakun_extractor_object.distance_threshold,
+                                   "distance_method": rakun_extractor_object.distance_method,
+                                   "pretrained_embedding_path": gensim_embedding_model_path,
+                                   "num_keywords": rakun_extractor_object.num_keywords,
+                                   "pair_diff_length": rakun_extractor_object.pair_diff_length,
+                                   "stopwords": stop_words,
+                                   "bigram_count_threshold": rakun_extractor_object.bigram_count_threshold,
+                                   "num_tokens": num_tokens,
+                                   "max_similar": rakun_extractor_object.max_similar,
+                                   "max_occurrence": rakun_extractor_object.max_occurrence,
+                                   "lemmatizer": None}
+
+                keyword_detector = RakunDetector(HYPERPARAMETERS)
+
+                keywords = keyword_detector.find_keywords(doc[field], input_type="text")
+                print(keywords)
+
 
         #actions = update_generator(generator=searcher, ec=ec, fields=fields, rakun_extractor_object=rakun_extractor_object, fact_name=fact_name, fact_value=fact_value, add_spans=add_spans)
         #for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes):
