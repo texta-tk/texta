@@ -1,6 +1,8 @@
 from celery.decorators import task
 from django.db import connections
 import json
+import joblib
+import gensim
 
 from texta_tools.text_processor import TextProcessor
 
@@ -55,6 +57,13 @@ def train_embedding(embedding_id):
         show_progress.update_step('saving')
         full_model_path, relative_model_path = embedding_object.generate_name("embedding")
         embedding.save(full_model_path)
+
+        # save gensim model
+        if embedding_object.embedding_type == "FastTextEmbedding":
+            fast_text_embedding_model = joblib.load(full_model_path)["embedding"]
+            gensim_full_model_path = full_model_path + "_gensim"
+            gensim.models.fasttext.save_facebook_model(fast_text_embedding_model, gensim_full_model_path,
+                                                       encoding='utf-8')
 
         # save model path
         embedding_object.embedding_model.name = relative_model_path
