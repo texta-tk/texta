@@ -1,6 +1,6 @@
 from django.urls import path
 
-from toolkit.document_importer.views import DocumentImportView, DocumentInstanceView, UpdateSplitDocument
+from toolkit.elastic.document_api.views import DocumentImportView, DocumentInstanceView, UpdateSplitDocument
 
 
 document_import_urls = [

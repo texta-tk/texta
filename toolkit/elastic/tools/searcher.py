@@ -237,7 +237,7 @@ class ElasticSearcher:
                 self.callback_progress.update_view(0)
                 self.callback_progress.n_count = 0
 
-            page = self.core.es.search(index=self.indices, body=self.query, scroll=self.scroll_timeout, size=self.scroll_size)
+            page = self.core.es.search(index=self.indices, body=self.query, scroll=self.scroll_timeout, size=self.scroll_size, _source=self.field_data + ["texta_facts", ])
             scroll_id = page['_scroll_id']
             current_page = 0
             # set page size

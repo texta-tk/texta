@@ -1,22 +1,27 @@
 # Create your views here.
+import json
 from typing import List
 
 import elasticsearch
+import rest_framework.filters as drf_filters
+from django_filters import rest_framework as filters
 from elasticsearch_dsl import Q, Search
-from rest_framework import permissions, status
+from rest_framework import permissions, status, viewsets
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework.response import Response
 from texta_tools.text_splitter import TextSplitter
 
 from toolkit.core.project.models import Project
-from toolkit.elastic.document_importer.serializers import InsertDocumentsSerializer, UpdateSplitDocumentSerializer
-from toolkit.elastic.tools.document import ElasticDocument
+from toolkit.elastic.document_api.models import DeleteFactsByQueryTask, EditFactsByQueryTask
+from toolkit.elastic.document_api.serializers import DeleteFactsByQuerySerializer, EditFactsByQuerySerializer, FactsSerializer, InsertDocumentsSerializer, UpdateFactsSerializer, UpdateSplitDocumentSerializer
 from toolkit.elastic.index.models import Index
+from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.elastic.tools.searcher import ElasticSearcher
-from toolkit.permissions.project_permissions import ProjectEditAccessAllowed
+from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed, ProjectEditAccessAllowed
 from toolkit.serializer_constants import EmptySerializer
 from toolkit.settings import DEPLOY_KEY
+from toolkit.view_constants import BulkDelete
 
 
 def validate_index_and_project_perms(request, pk, index):
@@ -159,6 +164,157 @@ class DocumentInstanceView(GenericAPIView):
         except elasticsearch.exceptions.RequestError as e:
             if e.error == "mapper_parsing_exception":  # TODO Extend the decorator with different variants of the request error instead.
                 return Response(e.info["error"]["root_cause"], status=status.HTTP_400_BAD_REQUEST)
+
+
+class UpdateFactsView(GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = UpdateFactsSerializer
+
+
+    def patch(self, request, pk: int, index: str, document_id: str):
+        validate_index_and_project_perms(request, pk, index)
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            ed = ElasticDocument(index)
+            document = ed.get(document_id, fields=["texta_facts"])
+            if not document:
+                raise NotFound(f"Could not find document with ID '{document_id}' from index '{index}'!")
+            document = document.get("_source")
+            target_facts = serializer.validated_data.get("target_facts", [])
+            resulting_fact = serializer.validated_data.get("resulting_fact")
+            existing_facts = document.get("texta_facts", [])
+            for index_count, existing_fact in enumerate(existing_facts):
+                for fact in target_facts:
+                    if fact.items() <= existing_fact.items():
+                        existing_facts[index_count] = resulting_fact
+            document["texta_facts"] = existing_facts
+            ed.update(index, document_id, doc=document)
+            return Response({"message": f"Edited given facts from document with the ID of {document_id}!"})
+
+
+class DeleteFactsView(GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = FactsSerializer
+
+
+    def post(self, request, pk: int, index: str, document_id: str):
+        validate_index_and_project_perms(request, pk, index)
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            ed = ElasticDocument(index)
+            document = ed.get(document_id, fields=["texta_facts"])
+            if not document:
+                raise NotFound(f"Could not find document with ID '{document_id}' from index '{index}'!")
+
+            document = document.get("_source")
+            target_facts = serializer.validated_data.get("facts", [])
+            existing_facts = document.get("texta_facts", [])
+
+            new_facts = []
+            for index_count, existing_fact in enumerate(existing_facts):
+                for fact in target_facts:
+                    if not (fact.items() <= existing_fact.items()):
+                        new_facts.append(existing_fact)
+
+            document["texta_facts"] = new_facts
+            ed.update(index, document_id, doc=document)
+            return Response({"message": f"Removed given facts from document with the ID of {document_id}!"})
+
+
+class AddFactsView(GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = FactsSerializer
+
+
+    def post(self, request, pk: int, index: str, document_id: str):
+        validate_index_and_project_perms(request, pk, index)
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            ed = ElasticDocument(index)
+            document = ed.get(document_id, fields=["texta_facts"])
+            if not document:
+                raise NotFound(f"Could not find document with ID '{document_id}' from index '{index}'!")
+
+            document = document.get("_source")
+            facts = serializer.validated_data.get("facts", [])
+            existing_facts = document.get("texta_facts", [])
+            new_facts = ed.remove_duplicate_facts(facts + existing_facts)
+
+            document["texta_facts"] = new_facts
+            ed.update(index, document_id, doc=document)
+            return Response({"message": f"Added given facts from document with the ID of {document_id}!"})
+
+
+class DeleteFactsByQueryViewset(viewsets.ModelViewSet, BulkDelete):
+    serializer_class = DeleteFactsByQuerySerializer
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+    ordering_fields = (
+        'id', 'author__username', 'description', 'task__time_started', 'task__time_completed', 'task__status')
+    permission_classes = (
+        ProjectAccessInApplicationsAllowed,
+        permissions.IsAuthenticated,
+    )
+
+
+    def get_queryset(self):
+        return DeleteFactsByQueryTask.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
+
+
+    def perform_create(self, serializer):
+        project = Project.objects.get(id=self.kwargs['project_pk'])
+        indices = [index["name"] for index in serializer.validated_data["indices"]]
+        indices = project.get_available_or_all_project_indices(indices)
+        facts = serializer.validated_data["facts"]
+        query = serializer.validated_data["query"]
+
+        serializer.validated_data.pop("indices")
+
+        worker: DeleteFactsByQueryTask = serializer.save(
+            author=self.request.user,
+            project=project,
+            query=json.dumps(query, ensure_ascii=False),
+            facts=json.dumps(facts, ensure_ascii=False)
+        )
+        for index in Index.objects.filter(name__in=indices, is_open=True):
+            worker.indices.add(index)
+        worker.process()
+
+
+class EditFactsByQueryViewset(viewsets.ModelViewSet, BulkDelete):
+    serializer_class = EditFactsByQuerySerializer
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+    ordering_fields = (
+        'id', 'author__username', 'description', 'task__time_started', 'task__time_completed', 'task__status')
+    permission_classes = (
+        ProjectAccessInApplicationsAllowed,
+        permissions.IsAuthenticated,
+    )
+
+
+    def get_queryset(self):
+        return EditFactsByQueryTask.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
+
+
+    def perform_create(self, serializer):
+        project = Project.objects.get(id=self.kwargs['project_pk'])
+        indices = [index["name"] for index in serializer.validated_data["indices"]]
+        indices = project.get_available_or_all_project_indices(indices)
+        target_facts = serializer.validated_data["target_facts"]
+        resulting_fact = serializer.validated_data["fact"]
+        query = serializer.validated_data["query"]
+
+        serializer.validated_data.pop("indices")
+
+        worker: EditFactsByQueryTask = serializer.save(
+            author=self.request.user,
+            project=project,
+            query=json.dumps(query, ensure_ascii=False),
+            target_facts=json.dumps(target_facts, ensure_ascii=False),
+            fact=json.dumps(resulting_fact, ensure_ascii=False)
+        )
+        for index in Index.objects.filter(name__in=indices, is_open=True):
+            worker.indices.add(index)
+        worker.process()
 
 
 class UpdateSplitDocument(GenericAPIView):
