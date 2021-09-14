@@ -1,16 +1,19 @@
 # Create your tests here.
+import json
 import random
 import uuid
 
+from django.test import override_settings
 from django.urls import reverse
 from elasticsearch import NotFoundError
 from elasticsearch_dsl import Q, Search
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, APITransactionTestCase
 
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.helper_functions import reindex_test_dataset
-from toolkit.test_settings import VERSION_NAMESPACE
+from toolkit.settings import TEXTA_TAGS_KEY
+from toolkit.test_settings import TEST_QUERY, VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -206,15 +209,174 @@ class DocumentImporterAPITestCase(APITestCase):
         self.assertTrue("page" not in document["_source"])
 
 
-    # def test_updating_split_documents(self):
-    #     url = reverse(f"{VERSION_NAMESPACE}:update_split_document", kwargs={"pk": self.project.pk, "index": self.test_index_name})
-    #     payload = {"id_field": "uuid", "id_value": self.uuid, "text_field": "hello", "content": "hell"}
-    #     response = self.client.patch(url, data=payload, format="json")
-    #     print_output("test_updating_split_documents:response.data", response.data)
-    #     self.assertTrue(response.status_code == status.HTTP_200_OK)
-    #
-    #     query = Search().query(Q("term", **{"uuid.keyword": self.uuid})).to_dict()
-    #     hits = self.ec.es.search(index="*", body=query)
-    #     hits = hits["hits"]["hits"]
-    #     document = hits[0]["_source"]
-    #     self.assertTrue(document["hello"] == "hell")
+class FactManagementTests(APITestCase):
+
+    def setUp(self):
+        self.test_index_name = reindex_test_dataset()
+        self.user = create_test_user('first_user', 'my@email.com', 'pw')
+        self.project = project_creation("FactManagementTestCase", self.test_index_name, self.user)
+
+        self.uuid = uuid.uuid1().hex
+        self.source = {
+            "hello": "world",
+            TEXTA_TAGS_KEY: [
+                {"str_val": "politsei", "fact": "ORG", "spans": json.dumps([[0, 0]]), "doc_path": "hello"}
+            ]
+        }
+        self.ec = ElasticCore()
+        self.ec.es.index(index=self.test_index_name, id=self.uuid, body=self.source, refresh="wait_for")
+        self.client.login(username='first_user', password='pw')
+
+
+    def tearDown(self) -> None:
+        self.ec.es.indices.delete(index=self.test_index_name, ignore=[400, 404])
+
+
+    def test_updating_fact(self):
+        url = reverse("v2:update_facts", kwargs={"pk": self.project.pk, "index": self.test_index_name, "document_id": self.uuid})
+        payload = {
+            "target_facts": [{"str_val": "politsei", "fact": "ORG", "spans": json.dumps([[0, 0]]), "doc_path": "hello"}],
+            "resulting_fact": {"str_val": "Eesti Politsei", "fact": "ORG", "spans": json.dumps([[0, 0]]), "doc_path": "hello"}
+        }
+        response = self.client.post(url, data=payload, format="json")
+        print_output("test_updating_fact:response.data", response)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+        document = self.ec.es.get(index=self.test_index_name, doc_type="_doc", id=self.uuid)["_source"]
+        self.assertTrue(document["hello"] == "world")
+        facts = document.get(TEXTA_TAGS_KEY, [])
+        for fact in facts:
+            self.assertTrue(fact["str_val"] == "Eesti Politsei")
+            self.assertTrue(fact["fact"] == "ORG")
+            self.assertTrue(fact["doc_path"] == "hello")
+            self.assertTrue(fact["spans"] == json.dumps([[0, 0]]))
+
+
+    def test_deleting_fact(self):
+        url = reverse("v2:delete_facts", kwargs={"pk": self.project.pk, "index": self.test_index_name, "document_id": self.uuid})
+        payload = {
+            "facts": [{"str_val": "politsei", "fact": "ORG", "spans": json.dumps([[0, 0]]), "doc_path": "hello"}]
+        }
+        response = self.client.post(url, data=payload, format="json")
+        print_output("test_deleting_fact:response.data", response)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+        document = self.ec.es.get(index=self.test_index_name, doc_type="_doc", id=self.uuid)["_source"]
+        self.assertTrue(document["hello"] == "world")
+        facts = document.get(TEXTA_TAGS_KEY, [])
+        self.assertTrue(TEXTA_TAGS_KEY in document)
+        self.assertTrue(facts == [])
+
+
+    def test_adding_fact(self):
+        url = reverse("v2:add_facts", kwargs={"pk": self.project.pk, "index": self.test_index_name, "document_id": self.uuid})
+        payload = {
+            "facts": [{"str_val": "Eesti Kiirabi", "fact": "ORG", "spans": json.dumps([[0, 0]]), "doc_path": "hello"}]
+        }
+        response = self.client.post(url, data=payload, format="json")
+        print_output("test_adding_fact:response.data", response)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+        document = self.ec.es.get(index=self.test_index_name, doc_type="_doc", id=self.uuid)["_source"]
+        self.assertTrue(document["hello"] == "world")
+        facts = document.get(TEXTA_TAGS_KEY, [])
+        facts = [fact for fact in facts if fact["str_val"] == "Eesti Kiirabi"]
+        for fact in facts:
+            self.assertTrue(fact["str_val"] == "Eesti Kiirabi")
+            self.assertTrue(fact["fact"] == "ORG")
+            self.assertTrue(fact["doc_path"] == "hello")
+            self.assertTrue(fact["spans"] == json.dumps([[0, 0]]))
+
+
+    def test_unauthenticated_access_to_endpoints(self):
+        self.client.logout()
+        kwargs = {"pk": self.project.pk, "index": self.test_index_name, "document_id": self.uuid}
+        names = ["v2:add_facts", "v2:delete_facts", "v2:update_facts"]
+        urls = [reverse(name, kwargs=kwargs) for name in names]
+        payload = {
+            "facts": [{"str_val": "Eesti Kiirabi", "fact": "ORG", "spans": json.dumps([[0, 0]]), "doc_path": "hello"}]
+        }
+        for url in urls:
+            response = self.client.post(url, data=payload, format="json")
+            print_output("test_unauthenticated_access_to_endpoints:response.data", response.data)
+            self.assertTrue(response.status_code == status.HTTP_401_UNAUTHORIZED or response.status_code == status.HTTP_403_FORBIDDEN)
+
+
+@override_settings(CELERY_ALWAYS_EAGER=True)
+class FactManagementApplicationTests(APITransactionTestCase):
+
+    def setUp(self):
+        self.test_index_name = reindex_test_dataset()
+        self.user = create_test_user('first_user', 'my@email.com', 'pw')
+        self.project = project_creation("FactManagementApplicationTests", self.test_index_name, self.user)
+
+        self.uuid = uuid.uuid1().hex
+        self.source = {
+            "comment_content_lemmas": "miks inimesed on sellised lollid!?",
+            TEXTA_TAGS_KEY: [
+                {"str_val": "politsei", "fact": "ORG", "spans": json.dumps([[0, 0]]), "doc_path": "hello"}
+            ]
+        }
+        self.ec = ElasticCore()
+        self.ec.es.index(index=self.test_index_name, id=self.uuid, body=self.source)
+        self.kwargs = {"project_pk": self.project.pk}
+        self.client.login(username='first_user', password='pw')
+
+
+    def test_delete_facts_by_query(self):
+        url = reverse("v2:delete_facts_by_query-list", kwargs=self.kwargs)
+        payload = {
+            "description": "testing wether this deletes facts",
+            "query": TEST_QUERY,
+            "facts": [{"str_val": "politsei", "fact": "ORG", "spans": json.dumps([[0, 0]]), "doc_path": "hello"}],
+            "indices": [{"name": self.test_index_name}]
+        }
+        response = self.client.post(url, data=payload, format="json")
+        print_output("test_delete_facts_by_query:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+
+        # Check whether the document itself got changed.
+        document = self.ec.es.get(index=self.test_index_name, doc_type="_doc", id=self.uuid)["_source"]
+        # Assure that the content isn't overwritten by some mishap.
+        self.assertTrue(document["comment_content_lemmas"] == "miks inimesed on sellised lollid!?")
+        # Fact field should still stay in the document, it should just be empty.
+        self.assertTrue(TEXTA_TAGS_KEY in document)
+        facts = document.get(TEXTA_TAGS_KEY, [])
+        self.assertTrue(facts == [])
+
+
+    def test_update_facts_by_query(self):
+        url = reverse("v2:edit_facts_by_query-list", kwargs=self.kwargs)
+        payload = {
+            "description": "testing wether this deletes facts",
+            "query": TEST_QUERY,
+            "target_facts": [{"str_val": "politsei", "fact": "ORG", "spans": json.dumps([[0, 0]]), "doc_path": "hello"}],
+            "fact": {"str_val": "Eesti Politsei", "fact": "ORG", "spans": json.dumps([[0, 0]]), "doc_path": "hello"},
+            "indices": [{"name": self.test_index_name}]
+        }
+        response = self.client.post(url, data=payload, format="json")
+        print_output("test_update_facts_by_query:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+
+        # Check whether the document itself got changed.
+        document = self.ec.es.get(index=self.test_index_name, doc_type="_doc", id=self.uuid)["_source"]
+        # Assure that the content isn't overwritten by some mishap.
+        self.assertTrue(document["comment_content_lemmas"] == "miks inimesed on sellised lollid!?")
+        facts = document.get(TEXTA_TAGS_KEY, [])
+        facts = [fact for fact in facts if fact["str_val"] == "Eesti Politsei"]
+        # Ensure that only the relevant portions have been changed.
+        for fact in facts:
+            self.assertTrue(fact["str_val"] == "Eesti Politsei")
+            self.assertTrue(fact["fact"] == "ORG")
+            self.assertTrue(fact["doc_path"] == "hello")
+            self.assertTrue(fact["spans"] == json.dumps([[0, 0]]))
+
+
+    def test_unauthorized_access(self):
+        self.client.logout()
+        names = ["v2:delete_facts_by_query-list", "v2:edit_facts_by_query-list"]
+        for name in names:
+            url = reverse(name, kwargs=self.kwargs)
+            response = self.client.post(url, data={}, format="json")
+            print_output("test_unauthorized_access:response.data", response.data)
+            self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN or response.status_code == status.HTTP_401_UNAUTHORIZED)

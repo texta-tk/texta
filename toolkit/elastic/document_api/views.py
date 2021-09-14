@@ -20,7 +20,7 @@ from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed, ProjectEditAccessAllowed
 from toolkit.serializer_constants import EmptySerializer
-from toolkit.settings import DEPLOY_KEY
+from toolkit.settings import DEPLOY_KEY, TEXTA_TAGS_KEY
 from toolkit.view_constants import BulkDelete
 
 
@@ -171,23 +171,23 @@ class UpdateFactsView(GenericAPIView):
     serializer_class = UpdateFactsSerializer
 
 
-    def patch(self, request, pk: int, index: str, document_id: str):
+    def post(self, request, pk: int, index: str, document_id: str):
         validate_index_and_project_perms(request, pk, index)
         serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             ed = ElasticDocument(index)
-            document = ed.get(document_id, fields=["texta_facts"])
+            document = ed.get(document_id, fields=[TEXTA_TAGS_KEY])
             if not document:
                 raise NotFound(f"Could not find document with ID '{document_id}' from index '{index}'!")
             document = document.get("_source")
             target_facts = serializer.validated_data.get("target_facts", [])
             resulting_fact = serializer.validated_data.get("resulting_fact")
-            existing_facts = document.get("texta_facts", [])
+            existing_facts = document.get(TEXTA_TAGS_KEY, [])
             for index_count, existing_fact in enumerate(existing_facts):
                 for fact in target_facts:
                     if fact.items() <= existing_fact.items():
                         existing_facts[index_count] = resulting_fact
-            document["texta_facts"] = existing_facts
+            document[TEXTA_TAGS_KEY] = existing_facts
             ed.update(index, document_id, doc=document)
             return Response({"message": f"Edited given facts from document with the ID of {document_id}!"})
 
@@ -202,13 +202,13 @@ class DeleteFactsView(GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             ed = ElasticDocument(index)
-            document = ed.get(document_id, fields=["texta_facts"])
+            document = ed.get(document_id, fields=[TEXTA_TAGS_KEY])
             if not document:
                 raise NotFound(f"Could not find document with ID '{document_id}' from index '{index}'!")
 
             document = document.get("_source")
             target_facts = serializer.validated_data.get("facts", [])
-            existing_facts = document.get("texta_facts", [])
+            existing_facts = document.get(TEXTA_TAGS_KEY, [])
 
             new_facts = []
             for index_count, existing_fact in enumerate(existing_facts):
@@ -216,7 +216,7 @@ class DeleteFactsView(GenericAPIView):
                     if not (fact.items() <= existing_fact.items()):
                         new_facts.append(existing_fact)
 
-            document["texta_facts"] = new_facts
+            document[TEXTA_TAGS_KEY] = new_facts
             ed.update(index, document_id, doc=document)
             return Response({"message": f"Removed given facts from document with the ID of {document_id}!"})
 
@@ -231,16 +231,16 @@ class AddFactsView(GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             ed = ElasticDocument(index)
-            document = ed.get(document_id, fields=["texta_facts"])
+            document = ed.get(document_id, fields=[TEXTA_TAGS_KEY])
             if not document:
                 raise NotFound(f"Could not find document with ID '{document_id}' from index '{index}'!")
 
             document = document.get("_source")
             facts = serializer.validated_data.get("facts", [])
-            existing_facts = document.get("texta_facts", [])
+            existing_facts = document.get(TEXTA_TAGS_KEY, [])
             new_facts = ed.remove_duplicate_facts(facts + existing_facts)
 
-            document["texta_facts"] = new_facts
+            document[TEXTA_TAGS_KEY] = new_facts
             ed.update(index, document_id, doc=document)
             return Response({"message": f"Added given facts from document with the ID of {document_id}!"})
 

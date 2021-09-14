@@ -9,7 +9,7 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.document_api.models import DeleteFactsByQueryTask, EditFactsByQueryTask
 from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.elastic.tools.searcher import ElasticSearcher
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, TEXTA_TAGS_KEY
 from toolkit.tools.show_progress import ShowProgress
 
 
@@ -51,14 +51,14 @@ def query_delete_actions_generator(searcher, target_facts: List[dict]):
     for documents in searcher:
         for document in documents:
             source = document.get("_source")
-            existing_facts = source.get("texta_facts", [])
+            existing_facts = source.get(TEXTA_TAGS_KEY, [])
             new_facts = []
             for index_count, existing_fact in enumerate(existing_facts):
                 for fact in target_facts:
                     if not (fact.items() <= existing_fact.items()):
                         new_facts.append(existing_fact)
 
-            document["_source"]["texta_facts"] = new_facts
+            document["_source"][TEXTA_TAGS_KEY] = new_facts
             yield {
                 "_op_type": "update",
                 "_index": document["_index"],
@@ -83,7 +83,7 @@ def fact_delete_query_task(self, worker_id: int):
         searcher = ElasticSearcher(
             query=json.loads(worker_object.query),
             indices=indices,
-            field_data=["texta_facts"],
+            field_data=[TEXTA_TAGS_KEY],
             output=ElasticSearcher.OUT_RAW,
             callback_progress=show_progress,
             scroll_size=scroll_size,
@@ -126,7 +126,7 @@ def start_fact_edit_query_task(self, worker_id: int):
         output=ElasticSearcher.OUT_DOC,
         callback_progress=show_progress,
         scroll_size=worker_object.scroll_size,
-        field_data=["texta_facts"]
+        field_data=[TEXTA_TAGS_KEY]
     )
 
     count = searcher.count()
@@ -144,13 +144,13 @@ def query_edit_actions_generator(searcher, target_facts: List[dict], resulting_f
     for documents in searcher:
         for document in documents:
             source = document.get("_source")
-            existing_facts = source.get("texta_facts", [])
+            existing_facts = source.get(TEXTA_TAGS_KEY, [])
             for index_count, existing_fact in enumerate(existing_facts):
                 for fact in target_facts:
                     if fact.items() <= existing_fact.items():
                         existing_facts[index_count] = resulting_fact
 
-            document["_source"]["texta_facts"] = existing_facts
+            document["_source"][TEXTA_TAGS_KEY] = existing_facts
             yield {
                 "_op_type": "update",
                 "_index": document["_index"],
@@ -175,7 +175,7 @@ def fact_edit_query_task(self, worker_id: int):
         searcher = ElasticSearcher(
             query=json.loads(worker_object.query),
             indices=indices,
-            field_data=["texta_facts"],
+            field_data=[TEXTA_TAGS_KEY],
             output=ElasticSearcher.OUT_RAW,
             callback_progress=show_progress,
             scroll_size=scroll_size,

@@ -82,7 +82,7 @@ class EditFactsByQuerySerializer(serializers.ModelSerializer, IndicesSerializerM
     query = serializers.JSONField(help_text=QUERY_HELPTEXT, required=False, default=json.dumps(EMPTY_QUERY))
     url = serializers.SerializerMethodField()
     target_facts = serializers.ListField(child=serializers.DictField(), help_text=f'List of facts to edit from documents')
-    fact = serializers.JSONField()
+    fact = serializers.JSONField(help_text="How the targeted facts should be changed into.")
 
 
     def to_representation(self, instance):

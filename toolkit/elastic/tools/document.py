@@ -10,7 +10,7 @@ from texta_mlp.mlp import MLP
 
 from toolkit.elastic.decorators import elastic_connection
 from toolkit.elastic.tools.core import ElasticCore
-from toolkit.settings import ERROR_LOGGER
+from toolkit.settings import ERROR_LOGGER, TEXTA_TAGS_KEY
 
 
 class ESDocObject:
@@ -115,9 +115,9 @@ class ElasticDocument:
     def _fact_addition_generator(self, documents, fact):
         for document in documents:
             # If there is no texta_facts field in the index, add it.
-            if "texta_facts" not in document["_source"]:
+            if TEXTA_TAGS_KEY not in document["_source"]:
                 self.core.add_texta_facts_mapping(document["_index"])
-                facts = document["_source"].get("texta_facts", [fact])
+                facts = document["_source"].get(TEXTA_TAGS_KEY, [fact])
                 doc_type = document.get("_type", "_doc")
                 yield {
                     "_op_type": "update",
@@ -125,15 +125,15 @@ class ElasticDocument:
                     "_index": document["_index"],
                     "_type": doc_type,
                     "_id": document["_id"],
-                    "doc": {"texta_facts": facts}
+                    "doc": {TEXTA_TAGS_KEY: facts}
                 }
 
             else:
                 # Avoid sending duplicates.
-                if self.__does_fact_exist(fact, document["_source"]["texta_facts"]):
+                if self.__does_fact_exist(fact, document["_source"][TEXTA_TAGS_KEY]):
                     pass
                 else:
-                    facts = document["_source"]["texta_facts"]
+                    facts = document["_source"][TEXTA_TAGS_KEY]
                     facts.append(fact)
                     doc_type = document.get("_type", "_doc")
                     yield {
@@ -142,7 +142,7 @@ class ElasticDocument:
                         "_index": document["_index"],
                         "_type": doc_type,
                         "_id": document["_id"],
-                        "doc": {"texta_facts": facts}
+                        "doc": {TEXTA_TAGS_KEY: facts}
                     }
 
 
@@ -150,7 +150,7 @@ class ElasticDocument:
     def add_fact_to_documents(self, fact: dict, doc_ids: List):
         # Fetch the documents with the bulk function to get the facts,
         # and to validate that those ids also exist.
-        documents = self.get_bulk(doc_ids=doc_ids, fields=["texta_facts"])
+        documents = self.get_bulk(doc_ids=doc_ids, fields=[TEXTA_TAGS_KEY])
         generator = self._fact_addition_generator(documents, fact)
         self.bulk_update(generator)
         return True
@@ -164,7 +164,7 @@ class ElasticDocument:
         s = Search(using=self.core.es, index=self.index)
         s = s.query("ids", values=[doc_id])
         s = s.source(fields)
-        s = s[:1000]
+        s = s[:1]
         response = s.execute()
         if response:
             document = response[0]
