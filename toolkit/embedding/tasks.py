@@ -11,7 +11,7 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.tools.lemmatizer import ElasticAnalyzer
 from toolkit.embedding.models import Embedding
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, FACEBOOK_MODEL_SUFFIX
 
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.helper_functions import get_indices_from_object
@@ -61,7 +61,7 @@ def train_embedding(embedding_id):
         # save gensim model
         if embedding_object.embedding_type == "FastTextEmbedding":
             fast_text_embedding_model = joblib.load(full_model_path)["embedding"]
-            gensim_full_model_path = full_model_path + "_gensim"
+            gensim_full_model_path = full_model_path + "_" + FACEBOOK_MODEL_SUFFIX
             gensim.models.fasttext.save_facebook_model(fast_text_embedding_model, gensim_full_model_path,
                                                        encoding='utf-8')
 

@@ -7,7 +7,7 @@ from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.base_tasks import TransactionAwareTask
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, FACEBOOK_MODEL_SUFFIX
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.helper_functions import get_indices_from_object, load_stop_words
@@ -73,7 +73,7 @@ def apply_rakun_extractor_to_index(object_id: int):
         if rakun_extractor_object.fasttext_embedding:
             embedding_model_path = str(rakun_extractor_object.fasttext_embedding.embedding_model)
             print(rakun_extractor_object.fasttext_embedding.embedding_model)
-            gensim_embedding_model_path = embedding_model_path + "_gensim"
+            gensim_embedding_model_path = embedding_model_path + "_" + FACEBOOK_MODEL_SUFFIX
             print(gensim_embedding_model_path)
         else:
             gensim_embedding_model_path = None
@@ -82,7 +82,7 @@ def apply_rakun_extractor_to_index(object_id: int):
         docs = es_s.search()
 
         for doc in docs:
-            for field in json.loads(rakun_extractor_object.fields):
+            for field in field_data:
 
                 HYPERPARAMETERS = {"distance_threshold": rakun_extractor_object.distance_threshold,
                                    "distance_method": rakun_extractor_object.distance_method,
