@@ -10,12 +10,10 @@ from toolkit.base_tasks import TransactionAwareTask
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, FACEBOOK_MODEL_SUFFIX
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
 from toolkit.tools.show_progress import ShowProgress
-from toolkit.helper_functions import get_indices_from_object, load_stop_words
-from texta_tools.embedding import FastTextEmbedding
-from mrakun import RakunDetector
+from toolkit.helper_functions import load_stop_words
 
 
-def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], rakun_extractor_object: RakunExtractor, fact_name: str, fact_value: str, add_spans: bool):
+def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], rakun_extractor_object: RakunExtractor, fact_name: str, fact_value: str, add_spans: bool, **hyperparamaters: dict):
     for scroll_batch in generator:
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
@@ -25,9 +23,7 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
             for field in fields:
                 text = flat_hit.get(field, None)
                 if text and isinstance(text, str):
-                    keyword_detector = RakunDetector()
-                    results = keyword_detector.find_keywords(text, input_type="text")
-                    #results = rakun_extractor_object.apply([text], field_path=field, fact_name=fact_name, fact_value=fact_value, add_spans=add_spans)
+                    results = rakun_extractor_object.get_rakun_keywords([text], field_path=fields, fact_name=fact_name, fact_value=fact_value, add_spans=add_spans, hyperparameters=hyperparamaters)
                     existing_facts.extend(results)
 
                 if existing_facts:
@@ -78,34 +74,36 @@ def apply_rakun_extractor_to_index(object_id: int):
         else:
             gensim_embedding_model_path = None
 
-        es_s = ElasticSearcher(indices=indices, query=rakun_extractor_object.query)
-        docs = es_s.search()
 
-        for doc in docs:
-            for field in field_data:
+        ec = ElasticCore()
+        [ec.add_texta_facts_mapping(index) for index in indices]
 
-                HYPERPARAMETERS = {"distance_threshold": rakun_extractor_object.distance_threshold,
-                                   "distance_method": rakun_extractor_object.distance_method,
-                                   "pretrained_embedding_path": gensim_embedding_model_path,
-                                   "num_keywords": rakun_extractor_object.num_keywords,
-                                   "pair_diff_length": rakun_extractor_object.pair_diff_length,
-                                   "stopwords": stop_words,
-                                   "bigram_count_threshold": rakun_extractor_object.bigram_count_threshold,
-                                   "num_tokens": num_tokens,
-                                   "max_similar": rakun_extractor_object.max_similar,
-                                   "max_occurrence": rakun_extractor_object.max_occurrence,
-                                   "lemmatizer": None}
+        searcher = ElasticSearcher(
+            indices=indices,
+            field_data=field_data + ["texta_facts"],  # Get facts to add upon existing ones.
+            query=rakun_extractor_object.query,
+            timeout="10m",
+            output=ElasticSearcher.OUT_RAW,
+            callback_progress=progress,
+            scroll_size=100
+        )
 
-                keyword_detector = RakunDetector(HYPERPARAMETERS)
+        HYPERPARAMETERS = {"distance_threshold": rakun_extractor_object.distance_threshold,
+                           "distance_method": rakun_extractor_object.distance_method,
+                           "pretrained_embedding_path": gensim_embedding_model_path,
+                           "num_keywords": rakun_extractor_object.num_keywords,
+                           "pair_diff_length": rakun_extractor_object.pair_diff_length,
+                           "stopwords": stop_words,
+                           "bigram_count_threshold": rakun_extractor_object.bigram_count_threshold,
+                           "num_tokens": num_tokens,
+                           "max_similar": rakun_extractor_object.max_similar,
+                           "max_occurrence": rakun_extractor_object.max_occurrence,
+                           "lemmatizer": None}
 
-                keywords = keyword_detector.find_keywords(doc[field], input_type="text")
-                print(keywords)
-
-
-        #actions = update_generator(generator=searcher, ec=ec, fields=fields, rakun_extractor_object=rakun_extractor_object, fact_name=fact_name, fact_value=fact_value, add_spans=add_spans)
-        #for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes):
-        #    if not success:
-        #        logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
+        actions = update_generator(generator=searcher, ec=ec, fields=field_data, rakun_extractor_object=rakun_extractor_object, fact_name="rakun", fact_value="", add_spans=True, hyperparameters=HYPERPARAMETERS)
+        for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=100, max_chunk_bytes=104857600):
+            if not success:
+                logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
 
         rakun_extractor_object.task.complete()
         return True
