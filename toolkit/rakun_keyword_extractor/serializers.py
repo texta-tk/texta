@@ -3,7 +3,6 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.embedding.models import Embedding
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.rakun_keyword_extractor import choices
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
 from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, ProjectFasttextFilteredPrimaryKeyRelatedField
@@ -13,9 +12,6 @@ from toolkit import serializer_constants
 class RakunExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin):
     author_username = serializers.CharField(source="author.profile.get_display_name", read_only=True)
     description = serializers.CharField(required=True, help_text=serializer_constants.DESCRIPTION_HELPTEXT)
-    fields = serializers.ListField(required=True, child=serializers.CharField(),
-                                   help_text=serializer_constants.FIELDS_HELPTEXT)
-    query = serializers.JSONField(help_text=serializer_constants.QUERY_HELPTEXT, required=False, default=json.dumps(EMPTY_QUERY))
     distance_method = serializers.CharField(required=False, default="editdistance", help_text="Default = editdistance")
     distance_threshold = serializers.FloatField(required=False, min_value=0.0, default=2.0, help_text="Distance between tokens that initiates the merge process (if more similar than this, the tokens are merged)")
     num_keywords = serializers.IntegerField(required=False, default=25, help_text="The number of keywords to be detected")
@@ -32,10 +28,9 @@ class RakunExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer
 
     class Meta:
         model = RakunExtractor
-        fields = ('id', 'url', 'author_username', 'description', 'indices', 'fields', 'query', 'distance_method', 'distance_threshold', 'num_keywords', 'pair_diff_length',
+        fields = ('id', 'url', 'author_username', 'description', 'distance_method', 'distance_threshold', 'num_keywords', 'pair_diff_length',
                   'stopwords', 'bigram_count_threshold', 'min_tokens', 'max_tokens', 'max_similar', 'max_occurrence',
                   'fasttext_embedding', 'task')
-        fields_to_parse = ('fields',)
 
     def validate(self, data):
         if data.get("distance_method", None) == "fasttext":
@@ -45,8 +40,6 @@ class RakunExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer
 
     def to_representation(self, instance: RakunExtractor):
         data = super(RakunExtractorSerializer, self).to_representation(instance)
-        data["fields"] = json.loads(instance.fields)
-        data["query"] = json.loads(instance.query)
         data["stopwords"] = json.loads(instance.stopwords)
         return data
 
