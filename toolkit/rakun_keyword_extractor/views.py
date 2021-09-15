@@ -101,7 +101,7 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
 
         return Response(response, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
+    @action(detail=False, methods=['post'], serializer_class=GeneralTextSerializer)
     def extract_from_text(self, request, pk=None, project_pk=None):
         serializer = GeneralTextSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
