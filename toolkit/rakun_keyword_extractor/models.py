@@ -30,7 +30,7 @@ class RakunExtractor(models.Model):
     distance_threshold = models.FloatField(validators=[MinValueValidator(0.0)], default=2.0, null=True)
     num_keywords = models.IntegerField(default=25, null=True)
     pair_diff_length = models.IntegerField(default=2, null=True)
-    stopwords = models.TextField(default="[]", null=True, max_length=MAX_DESC_LEN)
+    stopwords = models.TextField(default="[]", null=True)
     bigram_count_threshold = models.IntegerField(default=2, null=True)
     min_tokens = models.IntegerField(default=1, null=True)
     max_tokens = models.IntegerField(default=1, null=True)
