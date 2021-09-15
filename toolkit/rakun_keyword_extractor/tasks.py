@@ -99,9 +99,9 @@ def apply_rakun_extractor_to_index(object_id: int):
                            "lemmatizer": None}
 
         actions = update_generator(generator=searcher, ec=ec, fields=field_data, rakun_extractor_object=rakun_extractor_object, fact_name="rakun", fact_value="", add_spans=True, hyperparameters=HYPERPARAMETERS)
-        for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=100, max_chunk_bytes=104857600):
-            if not success:
-                logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
+        # Send the data towards Elasticsearch
+        ed = ElasticDocument("_all")
+        elastic_response = ed.bulk_update(actions=actions)
 
         rakun_extractor_object.task.complete()
         return True
