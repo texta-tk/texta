@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.embedding.models import Embedding
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from toolkit.rakun_keyword_extractor import choices
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
 from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, ProjectFasttextFilteredPrimaryKeyRelatedField
 
@@ -18,7 +19,7 @@ class RakunExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer
     distance_threshold = serializers.FloatField(required=False, min_value=0.0, default=2.0, help_text="Distance between tokens that initiates the merge process (if more similar than this, the tokens are merged)")
     num_keywords = serializers.IntegerField(required=False, default=25, help_text="The number of keywords to be detected")
     pair_diff_length = serializers.IntegerField(required=False, default=2, help_text="If the difference in the length of the two tokens is smaller than this parameter, the tokens are considered for merging.")
-    stopwords = serializers.CharField(required=False, default=[], help_text="Stop words to add. Default = [].")
+    stopwords = serializers.ListField(required=False, default=[], help_text="Stop words to add. Default = [].")
     bigram_count_threshold = serializers.IntegerField(required=False, default=2, help_text="Default = 2")
     min_tokens = serializers.IntegerField(required=False, min_value=1, max_value=3, default=1, help_text="The minimum number of tokens that can constitute a keyword")
     max_tokens = serializers.IntegerField(required=False, min_value=1, max_value=2, default=1, help_text="The maximum number of tokens that can constitute a keyword")
@@ -45,8 +46,14 @@ class RakunExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer
         data = super(RakunExtractorSerializer, self).to_representation(instance)
         data["fields"] = json.loads(instance.fields)
         data["query"] = json.loads(instance.query)
+        data["stopwords"] = json.loads(instance.stopwords)
         return data
 
 
 class RakunExtractorRandomDocSerializer(IndicesSerializerMixin):
     fields = serializers.ListField(child=serializers.CharField(), required=True, allow_empty=False)
+
+
+class StopWordSerializer(serializers.Serializer):
+    stopwords = serializers.ListField(child=serializers.CharField(required=False), required=True, help_text=f"List of stop words to add.")
+    overwrite_existing = serializers.BooleanField(required=False, default=choices.DEFAULT_OVERWRITE_EXISTING_STOPWORDS, help_text=f"If enabled, overwrites all existing stop words, otherwise appends to the existing ones. Default: {choices.DEFAULT_OVERWRITE_EXISTING_STOPWORDS}.")
