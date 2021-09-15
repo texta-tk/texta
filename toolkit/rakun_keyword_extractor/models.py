@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import List
 from django.db import models, transaction
 from django.core import serializers
 from django.core.validators import MinValueValidator
@@ -12,6 +13,7 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER
+from mrakun import RakunDetector
 
 
 class RakunExtractor(models.Model):
@@ -28,7 +30,7 @@ class RakunExtractor(models.Model):
     distance_threshold = models.FloatField(validators=[MinValueValidator(0.0)], default=2.0, null=True)
     num_keywords = models.IntegerField(default=25, null=True)
     pair_diff_length = models.IntegerField(default=2, null=True)
-    stopwords = models.CharField(default=[], null=True, max_length=MAX_DESC_LEN)
+    stopwords = models.TextField(default="[]", null=True, max_length=MAX_DESC_LEN)
     bigram_count_threshold = models.IntegerField(default=2, null=True)
     min_tokens = models.IntegerField(default=1, null=True)
     max_tokens = models.IntegerField(default=1, null=True)
@@ -67,3 +69,17 @@ class RakunExtractor(models.Model):
         logging.getLogger(INFO_LOGGER).info(f"Celery: Starting rakun keyword extractor: {self.to_json()}")
         chain = start_rakun_task.s() | apply_rakun_extractor_to_index.s()
         transaction.on_commit(lambda: chain.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE))
+
+    def get_rakun_keywords(self, texts: List[str], field_path: str, fact_name: str = "", fact_value: str = "", add_spans: bool=False, **hyperparameters):
+        new_facts = []
+        for text in texts:
+            keyword_detector = RakunDetector(hyperparameters["hyperparameters"]["hyperparameters"])
+            results = keyword_detector.find_keywords(text, input_type="text")
+            new_rakun = {
+                "fact": fact_name,
+                "str_val": results,
+                "spans": json.dumps([[0,0]]),
+                "doc_path": field_path
+            }
+            new_facts.append(new_rakun)
+        return new_facts
