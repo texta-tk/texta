@@ -24,14 +24,11 @@ class TaggerViewTests(APITransactionTestCase):
         payloads = [
             {
                 "description": "test_all",
-                "indices": [{"name": "test_data"}],
-                "fields": ["content"],
-                "query": "{}",
                 "distance_method": "fasttext",
                 "distance_threshold": 1,
                 "num_keywords": 1,
                 "pair_diff_length": 1,
-                "stopwords": "yes,now",
+                "stopwords": ["word1", "word2"],
                 "bigram_count_threshold": 2,
                 "min_tokens": 2,
                 "max_tokens": 2,
@@ -40,10 +37,12 @@ class TaggerViewTests(APITransactionTestCase):
                 "fasttext_embedding": 1
             },
             {
-                "description": "",
-                "indices": [{"name": "test_data"}],
-                "fields": ["content"],
-                "query": "{}"
+                "description": "rakun_test_new",
+                "distance_method": "fasttext",
+                "distance_threshold": 1.0,
+                "min_tokens": 1,
+                "max_tokens": 2,
+                "fasttext_embedding": 1
             }
         ]
 
@@ -56,7 +55,7 @@ class TaggerViewTests(APITransactionTestCase):
     def tearDown(self) -> None:
         ec = ElasticCore()
         ec.delete_index(index=self.test_index_name, ignore=[400, 404])
-        print_output(f"Delete [Rakun Extractor] apply_rakun test index {self.test_index_name}")
+        print_output(f"Delete [Rakun Extractor] test index {self.test_index_name}")
 
     def test(self):
         self.run_test_rakun_extractor_create()
