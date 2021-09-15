@@ -34,23 +34,23 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
 
     def perform_create(self, serializer):
         project = Project.objects.get(id=self.kwargs['project_pk'])
-        indices = [index["name"] for index in serializer.validated_data["indices"]]
-        indices = project.get_available_or_all_project_indices(indices)
+        #indices = [index["name"] for index in serializer.validated_data["indices"]]
+        #indices = project.get_available_or_all_project_indices(indices)
 
-        serializer.validated_data.pop("indices")
+        #serializer.validated_data.pop("indices")
 
 
         rakun: RakunExtractor = serializer.save(
             author=self.request.user,
             project=project,
-            fields=json.dumps(serializer.validated_data['fields']),
+            #fields=json.dumps(serializer.validated_data['fields']),
             stopwords=json.dumps(serializer.validated_data.get('stopwords', []), ensure_ascii=False)
         )
 
-        for index in Index.objects.filter(name__in=indices, is_open=True):
-            rakun.indices.add(index)
+        #for index in Index.objects.filter(name__in=indices, is_open=True):
+        #    rakun.indices.add(index)
 
-        rakun.apply_rakun()
+        #rakun.apply_rakun()
 
     @action(detail=True, methods=['get', 'post'], serializer_class=StopWordSerializer)
     def stop_words(self, request, pk=None, project_pk=None):
