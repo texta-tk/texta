@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import authentication, exceptions
 from rest_framework.authentication import get_authorization_header
 
-from toolkit.settings import INFO_LOGGER, UAA_URL
+from toolkit.settings import INFO_LOGGER, UAA_USERINFO_URI
 
 
 REQUESTS_TIMEOUT_IN_SECONDS = 10
@@ -60,7 +60,7 @@ class UaaAuthentication(authentication.BaseAuthentication):
         }
 
         # Make a request to the /userinfo endpoint to check token validity and retrieve user info
-        resp = requests.get(f'{UAA_URL}/uaa/userinfo', headers=headers, timeout=REQUESTS_TIMEOUT_IN_SECONDS)
+        resp = requests.get(UAA_USERINFO_URI, headers=headers, timeout=REQUESTS_TIMEOUT_IN_SECONDS)
         resp_json = resp.json()
 
         # If the req was successful, return the user data, otherwise just return nothing

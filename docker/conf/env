@@ -17,11 +17,12 @@ DJANGO_DATABASE_PASSWORD=docker
 DJANGO_DATABASE_HOST=texta-mariadb
 DJANGO_DATABASE_PORT=3306
 
+
 # UAA settings for TK
 TEXTA_USE_UAA=True
 TEXTA_UAA_REDIRECT_URI=http://localhost:80/api/v1/uaa/callback
 TEXTA_UAA_FRONT_REDIRECT_URL=http://localhost/oauth
-TEXTA_UAA_URL=http://172.17.0.1:8080/uaa
+
 
 # UUA settings for UUA server & TK
 TEXTA_UAA_CLIENT_ID=login
