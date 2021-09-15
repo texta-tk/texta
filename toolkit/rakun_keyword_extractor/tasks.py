@@ -2,7 +2,6 @@ import json
 import logging
 from typing import List
 from celery.decorators import task
-from elasticsearch.helpers import streaming_bulk
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.elastic.tools.searcher import ElasticSearcher
