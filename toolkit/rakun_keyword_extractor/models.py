@@ -52,10 +52,7 @@ class RakunExtractor(models.Model):
 
     def to_json(self) -> dict:
         serialized = serializers.serialize('json', [self])
-        json_obj = json.loads(serialized)[0]["fields"]
-        del json_obj["project"]
-        del json_obj["author"]
-        del json_obj["task"]
+        json_obj = json.loads(serialized)
         return json_obj
 
     def apply_rakun(self):
