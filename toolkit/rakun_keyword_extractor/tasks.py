@@ -68,9 +68,7 @@ def apply_rakun_extractor_to_index(object_id: int):
         # load embedding if any
         if rakun_extractor_object.fasttext_embedding:
             embedding_model_path = str(rakun_extractor_object.fasttext_embedding.embedding_model)
-            print(rakun_extractor_object.fasttext_embedding.embedding_model)
             gensim_embedding_model_path = embedding_model_path + "_" + FACEBOOK_MODEL_SUFFIX
-            print(gensim_embedding_model_path)
         else:
             gensim_embedding_model_path = None
 
