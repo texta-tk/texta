@@ -48,7 +48,8 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
 
 
     def get_queryset(self):
-        return RegexTagger.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
+        queryset = RegexTagger.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
+        return queryset
 
 
     def perform_create(self, serializer: RegexTaggerSerializer):

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.regex_tagger import choices
 from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup
@@ -10,7 +11,7 @@ from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializer
 
 class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer):
     description = serializers.CharField()
-    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
+    author = UserSerializer(read_only=True)
     lexicon = serializers.ListField(child=serializers.CharField(required=True), validators=[validate_patterns], help_text="Words/phrases/regex patterns to match.")
     counter_lexicon = serializers.ListField(child=serializers.CharField(required=False), default=[], validators=[validate_patterns], help_text="Words/phrases/regex patterns to nullify lexicon matches. Default = [].")
 
@@ -36,7 +37,7 @@ class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, P
 
     class Meta:
         model = RegexTagger
-        fields = ('id', 'url', 'author_username',
+        fields = ('id', 'url', 'author',
                   'description', 'lexicon', 'counter_lexicon', 'operator', 'match_type', 'required_words',
                   'phrase_slop', 'counter_slop', 'n_allowed_edits', 'return_fuzzy_match', 'ignore_case',
                   'ignore_punctuation', 'phrase_slop', 'counter_slop', 'n_allowed_edits', 'return_fuzzy_match',
@@ -91,19 +92,28 @@ class RegexTaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrl
     description = serializers.CharField()
     url = serializers.SerializerMethodField()
     task = TaskSerializer(read_only=True)
-    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
+    author = UserSerializer(read_only=True)
     tagger_info = serializers.SerializerMethodField(read_only=True)  # Helper field for displaying tagger info in a friendly manner.
 
 
+    # Ensure that only Regex Taggers inside the same Project are returned.
+    def get_fields(self, *args, **kwargs):
+        fields = super(RegexTaggerGroupSerializer, self).get_fields(*args, **kwargs)
+        project_pk = self.context["view"].kwargs["project_pk"]
+        fields['regex_taggers'].queryset = RegexTagger.objects.filter(project__pk=project_pk)
+        return fields
+
+
     def get_tagger_info(self, value: RegexTaggerGroup):
-        serializer = RegexTaggerSerializer(value.regex_taggers.all(), many=True, context={"request": self.context["request"]})
+        queryset = value.regex_taggers.filter(project__pk=value.pk)
+        serializer = RegexTaggerSerializer(queryset, many=True, context={"request": self.context["request"]})
         return serializer.data
 
 
     class Meta:
         model = RegexTaggerGroup
         # regex_taggers is the field which to use to manipulate the related RegexTagger model objects.
-        fields = ('id', 'url', 'regex_taggers', 'author_username', 'task', 'description', 'tagger_info')
+        fields = ('id', 'url', 'regex_taggers', 'author', 'task', 'description', 'tagger_info')
 
 
 class RegexTaggerGroupMultitagTextSerializer(serializers.Serializer):

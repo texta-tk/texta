@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.choices import LABEL_DISTRIBUTION
 from toolkit.elastic.index_splitter.models import IndexSplitter
 from toolkit.elastic.tools.core import ElasticCore
@@ -18,7 +19,7 @@ from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializer
 
 
 class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
-    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
+    author = UserSerializer(read_only=True)
     url = serializers.SerializerMethodField()
     scroll_size = serializers.IntegerField(min_value=0, max_value=10000, required=False)
     description = serializers.CharField(help_text='Description of the task.', required=True, allow_blank=False)
@@ -60,7 +61,7 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
 
     class Meta:
         model = IndexSplitter
-        fields = ('id', 'url', 'author_username', 'description', 'indices', 'scroll_size', 'fields', 'query', 'train_index', 'test_index', "test_size", 'fact', 'str_val', 'distribution', 'custom_distribution', 'task')
+        fields = ('id', 'url', 'author', 'description', 'indices', 'scroll_size', 'fields', 'query', 'train_index', 'test_index', "test_size", 'fact', 'str_val', 'distribution', 'custom_distribution', 'task')
         fields_to_parse = ('fields', 'custom_distribution')
 
 

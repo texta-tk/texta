@@ -8,12 +8,12 @@ from .models import ApplyESAnalyzerWorker
 from ..choices import DEFAULT_ELASTIC_TOKENIZER, DEFAULT_SNOWBALL_LANGUAGE, ELASTIC_TOKENIZERS, get_snowball_choices
 from ..tools.searcher import EMPTY_QUERY
 from ...core.task.serializers import TaskSerializer
+from ...core.user_profile.serializers import UserSerializer
 from ...serializer_constants import FieldValidationSerializer, IndicesSerializerMixin
 
 
 class ApplyESAnalyzerWorkerSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldValidationSerializer):
-    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True, required=False)
-
+    author = UserSerializer(read_only=True)
     query = serializers.JSONField(help_text='Query in JSON format', default=json.dumps(EMPTY_QUERY))
     fields = serializers.ListField(child=serializers.CharField(), required=False, allow_empty=False, help_text="Which field to stem.")
     url = serializers.SerializerMethodField()
@@ -63,7 +63,7 @@ class ApplyESAnalyzerWorkerSerializer(serializers.ModelSerializer, IndicesSerial
 
     class Meta:
         model = ApplyESAnalyzerWorker
-        fields = ("id", "url", "author_username", "strip_html", "indices", "analyzers", "stemmer_lang", "fields", "tokenizer", "es_timeout", "bulk_size", "detect_lang", "description", "task", "query",)
+        fields = ("id", "url", "author", "strip_html", "indices", "analyzers", "stemmer_lang", "fields", "tokenizer", "es_timeout", "bulk_size", "detect_lang", "description", "task", "query",)
 
 
 class SnowballSerializer(serializers.Serializer):

@@ -13,7 +13,7 @@ from rest_framework.exceptions import APIException, AuthenticationFailed, Valida
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from toolkit.settings import ERROR_LOGGER, INFO_LOGGER, UAA_CLIENT_ID, UAA_CLIENT_SECRET, UAA_FRONT_REDIRECT_URL, UAA_REDIRECT_URI, UAA_SUPERUSER_SCOPE, UAA_TEXTA_SCOPE_PREFIX, UAA_URL, USE_UAA
+from toolkit.settings import ERROR_LOGGER, INFO_LOGGER, UAA_CLIENT_ID, UAA_CLIENT_SECRET, UAA_FRONT_REDIRECT_URL, UAA_OAUTH_TOKEN_URI, UAA_REDIRECT_URI, UAA_SUPERUSER_SCOPE, UAA_TEXTA_SCOPE_PREFIX, UAA_USERINFO_URI, USE_UAA
 
 
 HEADERS = {
@@ -52,7 +52,7 @@ class UAAView(views.APIView):
             'token_format': 'opaque',
             'redirect_uri': UAA_REDIRECT_URI
         }
-        token_url = f'{UAA_URL}/uaa/oauth/token'
+        token_url = UAA_OAUTH_TOKEN_URI
         # Make a request to the oauth/token endpoint to retrieve the access_token and user info
         response = requests.post(token_url, headers=HEADERS, data=body, timeout=REQUESTS_TIMEOUT_IN_SECONDS)
         if response.ok:
@@ -108,7 +108,7 @@ class UAAView(views.APIView):
 
     @staticmethod
     def _get_uaa_user_profile(access_token):
-        response = requests.get(f"{UAA_URL}/uaa/userinfo", headers={"Authorization": f"Bearer {access_token}"}, timeout=REQUESTS_TIMEOUT_IN_SECONDS)
+        response = requests.get(UAA_USERINFO_URI, headers={"Authorization": f"Bearer {access_token}"}, timeout=REQUESTS_TIMEOUT_IN_SECONDS)
         if response.ok:
             return response.json()
         else:
@@ -148,7 +148,7 @@ class UAAView(views.APIView):
 
             user = UAAView._update_user_and_profile(uaa_user_profile, scope, access_token, request)
             self.sign_in_with_user(user, request, scope)
-            return HttpResponseRedirect(redirect_to=f'{UAA_FRONT_REDIRECT_URL}/uaa/?access_token={access_token}&refresh_token={refresh_token}')
+            return HttpResponseRedirect(redirect_to=f'{UAA_FRONT_REDIRECT_URL}?access_token={access_token}&refresh_token={refresh_token}')
 
         else:
             logging.getLogger(INFO_LOGGER).info(f"UAAView access code asserted as False! code: {code}; request.query_params: {request.query_params}")
@@ -184,8 +184,8 @@ class RefreshUAATokenView(views.APIView):
         json_resp = resp.json()
 
         # Refresh the scopes just in case with the contents of the refresh view.
-        #scopes = json_resp.get("scope", "")
-        #RefreshUAATokenView._update_user_scope(scopes, request.user)
+        # scopes = json_resp.get("scope", "")
+        # RefreshUAATokenView._update_user_scope(scopes, request.user)
 
         return Response(json_resp, status=status.HTTP_200_OK)
 
@@ -215,4 +215,4 @@ class RefreshUAATokenView(views.APIView):
             'refresh_token': refresh_token
         }
         # Make a request to the OAuth /token endpoint to refresh the token
-        return requests.post(f'{UAA_URL}/uaa/oauth/token', headers=HEADERS, data=body, timeout=REQUESTS_TIMEOUT_IN_SECONDS)
+        return requests.post(UAA_OAUTH_TOKEN_URI, headers=HEADERS, data=body, timeout=REQUESTS_TIMEOUT_IN_SECONDS)
