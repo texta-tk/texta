@@ -31,6 +31,7 @@ class RakunExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer
         fields = ('id', 'url', 'author_username', 'description', 'distance_method', 'distance_threshold', 'num_keywords', 'pair_diff_length',
                   'stopwords', 'bigram_count_threshold', 'min_tokens', 'max_tokens', 'max_similar', 'max_occurrence',
                   'fasttext_embedding', 'task')
+        fields_to_parse = ()
 
     def validate(self, data):
         if data.get("distance_method", None) == "fasttext":
