@@ -156,7 +156,8 @@ def query_edit_actions_generator(searcher, target_facts: List[dict], resulting_f
                 "_index": document["_index"],
                 "_type": document.get("_type", "_doc"),
                 "_id": document["_id"],
-                "_source": {"doc": document["_source"]}}
+                "_source": {"doc": document["_source"]}
+            }
 
 
 @task(name="fact_edit_query_task", base=QuietTransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
@@ -184,7 +185,7 @@ def fact_edit_query_task(self, worker_id: int):
 
         ed = ElasticDocument(index=None)
         actions = query_edit_actions_generator(searcher, target_facts, resulting_fact=fact)
-        ed.bulk_update(actions)
+        ed.bulk_update(actions, chunk_size=scroll_size)
 
         worker_object.task.complete()
         worker_object.save()

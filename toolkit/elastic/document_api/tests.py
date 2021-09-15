@@ -312,7 +312,7 @@ class FactManagementApplicationTests(APITransactionTestCase):
 
         self.uuid = uuid.uuid1().hex
         self.source = {
-            "comment_content_lemmas": "miks inimesed on sellised lollid!?",
+            "comment_content_lemmas": "miks sa oled loll!?",
             TEXTA_TAGS_KEY: [
                 {"str_val": "politsei", "fact": "ORG", "spans": json.dumps([[0, 0]]), "doc_path": "hello"}
             ]
@@ -338,7 +338,7 @@ class FactManagementApplicationTests(APITransactionTestCase):
         # Check whether the document itself got changed.
         document = self.ec.es.get(index=self.test_index_name, doc_type="_doc", id=self.uuid)["_source"]
         # Assure that the content isn't overwritten by some mishap.
-        self.assertTrue(document["comment_content_lemmas"] == "miks inimesed on sellised lollid!?")
+        self.assertTrue(document["comment_content_lemmas"] == "miks sa oled loll!?")
         # Fact field should still stay in the document, it should just be empty.
         self.assertTrue(TEXTA_TAGS_KEY in document)
         facts = document.get(TEXTA_TAGS_KEY, [])
@@ -360,8 +360,9 @@ class FactManagementApplicationTests(APITransactionTestCase):
 
         # Check whether the document itself got changed.
         document = self.ec.es.get(index=self.test_index_name, doc_type="_doc", id=self.uuid)["_source"]
+
         # Assure that the content isn't overwritten by some mishap.
-        self.assertTrue(document["comment_content_lemmas"] == "miks inimesed on sellised lollid!?")
+        self.assertTrue(document["comment_content_lemmas"] == "miks sa oled loll!?")
         facts = document.get(TEXTA_TAGS_KEY, [])
         facts = [fact for fact in facts if fact["str_val"] == "Eesti Politsei"]
         # Ensure that only the relevant portions have been changed.
