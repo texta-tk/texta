@@ -29,7 +29,7 @@ services:
       TEXTA_UAA_USER: test
       TEXTA_UAA_EMAIL: test@test.com
       TEXTA_UAA_PWD: test
-      TEXTA_UAA_URL: http://localhost:8080
+      TEXTA_UAA_URL: http://localhost:8080/uaa
   
   texta-elasticsearch:
     container_name: texta-elasticsearch
