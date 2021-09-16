@@ -95,6 +95,16 @@ class ProjectFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
         return queryset.filter(project=view.kwargs["project_pk"])
 
 
+class ProjectFasttextFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
+    def get_queryset(self):
+        request = self.context.get("request", None)
+        view = self.context.get("view", None)
+        queryset = super(ProjectFasttextFilteredPrimaryKeyRelatedField, self).get_queryset()
+        if not request or not queryset:
+            return None
+        return queryset.filter(project=view.kwargs["project_pk"]).filter(embedding_type="FastTextEmbedding")
+
+
 # Subclassing serializers.Serializer is necessary for some magical reason,
 # without it, the ModelSerializers behavior takes precedence no matter how you subclass it.
 class IndicesSerializerMixin(serializers.Serializer):
