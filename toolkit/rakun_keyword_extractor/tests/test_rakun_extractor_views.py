@@ -10,14 +10,13 @@ from toolkit.elastic.tools.core import ElasticCore
 from toolkit.core.task.models import Task
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.tools.utils_for_tests import create_test_user, project_creation, print_output
-from toolkit.test_settings import (TEST_VERSION_PREFIX, VERSION_NAMESPACE, TEST_FIELD_CHOICE)
+from toolkit.test_settings import (TEST_VERSION_PREFIX, VERSION_NAMESPACE, TEST_FIELD_CHOICE, TEST_RAKUN_QUERY)
 
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
 class RakunViewTest(APITransactionTestCase):
     def setUp(self):
         self.test_index_name = reindex_test_dataset()
-
         self.user = create_test_user('user', 'my@email.com', 'pw')
         self.project = project_creation("RakunExtractorTestProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
@@ -52,7 +51,7 @@ class RakunViewTest(APITransactionTestCase):
         # Check if Embedding gets trained and completed
         self.assertEqual(created_embedding.task.status, Task.STATUS_COMPLETED)
 
-        ids = []
+        self.ids = []
         payloads = [
             {
                 "description": "test_all",
@@ -82,7 +81,7 @@ class RakunViewTest(APITransactionTestCase):
         for payload in payloads:
             response = self.client.post(rakun_url, payload)
             self.assertTrue(response.status_code == status.HTTP_201_CREATED)
-            ids.append(int(response.data["id"]))
+            self.ids.append(int(response.data["id"]))
 
     def tearDown(self) -> None:
         ec = ElasticCore()
@@ -93,11 +92,61 @@ class RakunViewTest(APITransactionTestCase):
         print_output(f"Delete Rakun FASTTEXT Embeddings", None)
 
     def test(self):
-        self.run_test_rakun_extractor_create()
         self.run_test_apply_rakun_extractor_to_index()
-
-    def run_test_rakun_extractor_create(self):
-        pass
+        self.run_test_rakun_extractor_duplicate()
+        self.run_test_rakun_extractor_from_random_doc()
+        self.run_test_rakun_extractor_from_text()
+        self.run_test_rakun_extractor_stopwords()
 
     def run_test_apply_rakun_extractor_to_index(self):
-        pass
+        index_payload = {
+                    "indices": [{"name": self.test_index_name}],
+                    "description": "test_apply_rakun_to_index",
+                    "fields": TEST_FIELD_CHOICE,
+                    "query": json.dumps(TEST_RAKUN_QUERY)
+                }
+        for rakun_id in self.ids:
+            rakun_apply_to_index_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{rakun_id}/apply_to_index/'
+            print_output(f"Apply Rakun to Index for ID: {rakun_id}", None)
+            response = self.client.post(rakun_apply_to_index_url, index_payload)
+            self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+
+    def run_test_rakun_extractor_duplicate(self):
+        duplicate_payload = {}
+        for rakun_id in self.ids:
+            rakun_duplicate_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{rakun_id}/duplicate/'
+            print_output(f"Duplicate Rakun for ID: {rakun_id}", None)
+            response = self.client.post(rakun_duplicate_url, duplicate_payload)
+            self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+    def run_test_rakun_extractor_from_random_doc(self):
+        random_payload = {
+                    "indices": [{"name": self.test_index_name}],
+                    "fields": TEST_FIELD_CHOICE
+                }
+        for rakun_id in self.ids:
+            rakun_random_doc_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{rakun_id}/extract_from_random_doc/'
+            print_output(f"Rakun extract from random doc for ID: {rakun_id}", None)
+            response = self.client.post(rakun_random_doc_url, random_payload)
+            self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+    def run_test_rakun_extractor_from_text(self):
+        text_payload = {
+            "text": "This is some random text to be used with Rakun."
+        }
+        for rakun_id in self.ids:
+            rakun_text_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{rakun_id}/extract_from_text/'
+            print_output(f"Rakun extract from text for ID: {rakun_id}", None)
+            response = self.client.post(rakun_text_url, text_payload)
+            self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+    def run_test_rakun_extractor_stopwords(self):
+        stopwords_payload = {
+            "stopwords": ["Word1", "Word2"],
+            "overwrite_existing": False
+        }
+        for rakun_id in self.ids:
+            rakun_stopwords_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{rakun_id}/stop_words/'
+            print_output(f"Rakun stopwords for ID: {rakun_id}", None)
+            response = self.client.post(rakun_stopwords_url, stopwords_payload)
+            self.assertTrue(response.status_code == status.HTTP_200_OK)
