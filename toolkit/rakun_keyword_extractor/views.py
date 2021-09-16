@@ -129,35 +129,7 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
 
         text = serializer.validated_data['text']
 
-        # retrieve data
-        stop_words = load_stop_words(rakun_object.stopwords)
-        if int(rakun_object.min_tokens) == int(rakun_object.max_tokens):
-            num_tokens = [int(rakun_object.min_tokens)]
-        else:
-            num_tokens = [int(rakun_object.min_tokens), int(rakun_object.max_tokens)]
-
-        # load embedding if any
-        if rakun_object.fasttext_embedding:
-            embedding_model_path = str(rakun_object.fasttext_embedding.embedding_model)
-            print(rakun_object.fasttext_embedding.embedding_model)
-            gensim_embedding_model_path = embedding_model_path + "_" + FACEBOOK_MODEL_SUFFIX
-            print(gensim_embedding_model_path)
-        else:
-            gensim_embedding_model_path = None
-
-        HYPERPARAMETERS = {"hyperparameters": {"distance_threshold": rakun_object.distance_threshold,
-                           "distance_method": rakun_object.distance_method,
-                           "pretrained_embedding_path": gensim_embedding_model_path,
-                           "num_keywords": rakun_object.num_keywords,
-                           "pair_diff_length": rakun_object.pair_diff_length,
-                           "stopwords": stop_words,
-                           "bigram_count_threshold": rakun_object.bigram_count_threshold,
-                           "num_tokens": num_tokens,
-                           "max_similar": rakun_object.max_similar,
-                           "max_occurrence": rakun_object.max_occurrence,
-                           "lemmatizer": None}
-                           }
-        keywords = rakun_object.get_rakun_keywords([text], field_path="", fact_name="rakun", fact_value="", add_spans=False, hyperparameters=HYPERPARAMETERS)
+        keywords = rakun_object.get_rakun_keywords([text], field_path="", fact_name="rakun", fact_value="", add_spans=False)
 
         # apply rakun
         results = {
@@ -189,34 +161,6 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         random_doc = ElasticSearcher(indices=indices).random_documents(size=1)[0]
         flattened_doc = ElasticCore(check_connection=False).flatten(random_doc)
 
-        # retrieve data
-        stop_words = load_stop_words(rakun_object.stopwords)
-        if int(rakun_object.min_tokens) == int(rakun_object.max_tokens):
-            num_tokens = [int(rakun_object.min_tokens)]
-        else:
-            num_tokens = [int(rakun_object.min_tokens), int(rakun_object.max_tokens)]
-
-        # load embedding if any
-        if rakun_object.fasttext_embedding:
-            embedding_model_path = str(rakun_object.fasttext_embedding.embedding_model)
-            print(rakun_object.fasttext_embedding.embedding_model)
-            gensim_embedding_model_path = embedding_model_path + "_" + FACEBOOK_MODEL_SUFFIX
-            print(gensim_embedding_model_path)
-        else:
-            gensim_embedding_model_path = None
-
-        HYPERPARAMETERS = {"hyperparameters": {"distance_threshold": rakun_object.distance_threshold,
-                                               "distance_method": rakun_object.distance_method,
-                                               "pretrained_embedding_path": gensim_embedding_model_path,
-                                               "num_keywords": rakun_object.num_keywords,
-                                               "pair_diff_length": rakun_object.pair_diff_length,
-                                               "stopwords": stop_words,
-                                               "bigram_count_threshold": rakun_object.bigram_count_threshold,
-                                               "num_tokens": num_tokens,
-                                               "max_similar": rakun_object.max_similar,
-                                               "max_occurrence": rakun_object.max_occurrence,
-                                               "lemmatizer": None}
-                           }
         # apply rakun
         results = {
             "rakun_id": rakun_object.pk,
@@ -229,7 +173,7 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         for field in fields:
             text = flattened_doc.get(field, None)
             results["document"][field] = text
-            keywords = rakun_object.get_rakun_keywords([text], field_path=field, fact_name="rakun", fact_value="", add_spans=False, hyperparameters=HYPERPARAMETERS)
+            keywords = rakun_object.get_rakun_keywords([text], field_path=field, fact_name="rakun", fact_value="", add_spans=False)
 
             if keywords:
                 final_keywords.extend(keywords)
