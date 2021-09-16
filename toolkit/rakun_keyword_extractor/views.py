@@ -6,11 +6,13 @@ from toolkit.view_constants import BulkDelete
 from .serializers import RakunExtractorSerializer, RakunExtractorRandomDocSerializer
 import rest_framework.filters as drf_filters
 from django_filters import rest_framework as filters
-from toolkit.rakun_keyword_extractor.serializers import StopWordSerializer
+from django.db import transaction
+from toolkit.rakun_keyword_extractor.serializers import StopWordSerializer, RakunExtractorIndexSerializer
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
+from toolkit.rakun_keyword_extractor.tasks import apply_rakun_extractor_to_index
 from toolkit.core.project.models import Project
+from toolkit.core.task.models import Task
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
-from toolkit.elastic.index.models import Index
 from toolkit.serializer_constants import GeneralTextSerializer
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.searcher import ElasticSearcher
@@ -34,23 +36,41 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
 
     def perform_create(self, serializer):
         project = Project.objects.get(id=self.kwargs['project_pk'])
-        #indices = [index["name"] for index in serializer.validated_data["indices"]]
-        #indices = project.get_available_or_all_project_indices(indices)
-
-        #serializer.validated_data.pop("indices")
-
 
         rakun: RakunExtractor = serializer.save(
             author=self.request.user,
             project=project,
-            #fields=json.dumps(serializer.validated_data['fields']),
             stopwords=json.dumps(serializer.validated_data.get('stopwords', []), ensure_ascii=False)
         )
 
-        #for index in Index.objects.filter(name__in=indices, is_open=True):
-        #    rakun.indices.add(index)
+    @action(detail=True, methods=['post'], serializer_class=RakunExtractorIndexSerializer)
+    def apply_to_index(self, request, pk=None, project_pk=None):
+        with transaction.atomic():
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
 
-        #rakun.apply_rakun()
+            rakun_object: RakunExtractor = self.get_object()
+            rakun_object.task = Task.objects.create(rakunextractor=rakun_object, status=Task.STATUS_CREATED)
+            rakun_object.save()
+
+            project = Project.objects.get(pk=project_pk)
+            indices = [index["name"] for index in serializer.validated_data["indices"]]
+
+            fields = serializer.validated_data["fields"]
+            query = serializer.validated_data["query"]
+            bulk_size = serializer.validated_data["bulk_size"]
+            es_timeout = serializer.validated_data["es_timeout"]
+
+            fact_name = serializer.validated_data["new_fact_name"]
+            fact_value = serializer.validated_data["new_fact_value"]
+
+            add_spans = serializer.validated_data["add_spans"]
+
+            args = (pk, indices, fields, query, bulk_size, es_timeout, fact_name, fact_value, add_spans)
+            transaction.on_commit(lambda: apply_rakun_extractor_to_index.apply_async(args=args))
+
+            message = "Started process of applying Rakun with id: {}".format(rakun_object.id)
+            return Response({"message": message}, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['get', 'post'], serializer_class=StopWordSerializer)
     def stop_words(self, request, pk=None, project_pk=None):
@@ -101,7 +121,7 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
 
         return Response(response, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=['post'], serializer_class=GeneralTextSerializer)
+    @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
     def extract_from_text(self, request, pk=None, project_pk=None):
         serializer = GeneralTextSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
