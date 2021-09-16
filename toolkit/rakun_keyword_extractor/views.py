@@ -112,6 +112,7 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         rakun_object.pk = None
         rakun_object.description = f"{rakun_object.description}_copy"
         rakun_object.author = self.request.user
+        rakun_object.task = None
         rakun_object.save()
 
         response = {
