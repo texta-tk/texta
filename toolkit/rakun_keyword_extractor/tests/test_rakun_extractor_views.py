@@ -29,7 +29,7 @@ class RakunViewTest(APITransactionTestCase):
         """Create FastText Embedding, which will save facebook_model"""
         fasttext_payload = {
             "description": "TestEmbedding",
-            "query": json.dumps(EMPTY_QUERY),
+            "query": json.dumps(TEST_RAKUN_QUERY),
             "fields": TEST_FIELD_CHOICE,
             "max_vocab": 100,
             "min_freq": 5,
