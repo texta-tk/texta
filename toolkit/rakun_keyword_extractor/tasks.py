@@ -7,13 +7,12 @@ from toolkit.elastic.tools.document import ElasticDocument
 from elasticsearch.helpers import streaming_bulk
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.base_tasks import TransactionAwareTask
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, FACEBOOK_MODEL_SUFFIX
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
 from toolkit.tools.show_progress import ShowProgress
-from toolkit.helper_functions import load_stop_words
 
 
-def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], rakun_extractor_object: RakunExtractor, fact_name: str, fact_value: str, add_spans: bool, **hyperparamaters: dict):
+def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], rakun_extractor_object: RakunExtractor, fact_name: str, fact_value: str, add_spans: bool):
     for scroll_batch in generator:
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
@@ -23,7 +22,7 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
             for field in fields:
                 text = flat_hit.get(field, None)
                 if text and isinstance(text, str):
-                    results = rakun_extractor_object.get_rakun_keywords([text], field_path=fields, fact_name=fact_name, fact_value=fact_value, add_spans=add_spans, hyperparameters=hyperparamaters)
+                    results = rakun_extractor_object.get_rakun_keywords([text], field_path=field, fact_name=fact_name, fact_value=fact_value, add_spans=add_spans)
                     existing_facts.extend(results)
 
                 if existing_facts:
@@ -56,20 +55,8 @@ def apply_rakun_extractor_to_index(object_id: int, indices: List[str], fields: L
 
         progress = ShowProgress(rakun_extractor_object.task)
 
-        # retrieve stopwords & calculate num_tokens
+        # retrieve fields
         field_data = fields
-        stop_words = load_stop_words(rakun_extractor_object.stopwords)
-        if int(rakun_extractor_object.min_tokens) == int(rakun_extractor_object.max_tokens):
-            num_tokens = [int(rakun_extractor_object.min_tokens)]
-        else:
-            num_tokens = [int(rakun_extractor_object.min_tokens), int(rakun_extractor_object.max_tokens)]
-
-        # load embedding if any
-        if rakun_extractor_object.fasttext_embedding:
-            embedding_model_path = str(rakun_extractor_object.fasttext_embedding.embedding_model)
-            gensim_embedding_model_path = embedding_model_path + "_" + FACEBOOK_MODEL_SUFFIX
-        else:
-            gensim_embedding_model_path = None
 
         ec = ElasticCore()
         [ec.add_texta_facts_mapping(index) for index in indices]
@@ -84,19 +71,7 @@ def apply_rakun_extractor_to_index(object_id: int, indices: List[str], fields: L
             scroll_size=bulk_size
         )
 
-        HYPERPARAMETERS = {"distance_threshold": rakun_extractor_object.distance_threshold,
-                           "distance_method": rakun_extractor_object.distance_method,
-                           "pretrained_embedding_path": gensim_embedding_model_path,
-                           "num_keywords": rakun_extractor_object.num_keywords,
-                           "pair_diff_length": rakun_extractor_object.pair_diff_length,
-                           "stopwords": stop_words,
-                           "bigram_count_threshold": rakun_extractor_object.bigram_count_threshold,
-                           "num_tokens": num_tokens,
-                           "max_similar": rakun_extractor_object.max_similar,
-                           "max_occurrence": rakun_extractor_object.max_occurrence,
-                           "lemmatizer": None}
-
-        actions = update_generator(generator=searcher, ec=ec, fields=field_data, rakun_extractor_object=rakun_extractor_object, fact_name="rakun", fact_value="", add_spans=True, hyperparameters=HYPERPARAMETERS)
+        actions = update_generator(generator=searcher, ec=ec, fields=field_data, rakun_extractor_object=rakun_extractor_object, fact_name="rakun", fact_value="", add_spans=True)
         for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size):
             if not success:
                 logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
