@@ -13,7 +13,8 @@ from toolkit import serializer_constants
 class RakunExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin):
     author_username = serializers.CharField(source="author.profile.get_display_name", read_only=True)
     description = serializers.CharField(required=True, help_text=serializer_constants.DESCRIPTION_HELPTEXT)
-    distance_method = serializers.CharField(required=False, default="editdistance", help_text="Default = editdistance")
+    distance_method = serializers.ChoiceField(choices=choices.DEFAULT_DISTANCE_METHOD_CHOICES, default=choices.DEFAULT_DISTANCE_METHOD,
+                                         help_text="Default = editdistance")
     distance_threshold = serializers.FloatField(required=False, min_value=0.0, default=2.0, help_text="Distance between tokens that initiates the merge process (if more similar than this, the tokens are merged)")
     num_keywords = serializers.IntegerField(required=False, default=25, help_text="The number of keywords to be detected")
     pair_diff_length = serializers.IntegerField(required=False, default=2, help_text="If the difference in the length of the two tokens is smaller than this parameter, the tokens are considered for merging.")
