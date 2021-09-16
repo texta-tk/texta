@@ -4,6 +4,7 @@ from typing import List
 from celery.decorators import task
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.document import ElasticDocument
+from elasticsearch.helpers import streaming_bulk
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.base_tasks import TransactionAwareTask
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, FACEBOOK_MODEL_SUFFIX
@@ -47,7 +48,7 @@ def start_rakun_task(object_id: int):
     return object_id
 
 @task(name="apply_rakun_extractor_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
-def apply_rakun_extractor_to_index(object_id: int):
+def apply_rakun_extractor_to_index(object_id: int, indices: List[str], fields: List[str], query: dict, es_timeout: int, bulk_size: int, fact_name: str, fact_value: str, add_spans: bool):
     """Apply Rakun Keyword Extractor to index."""
     try:
         logging.getLogger(INFO_LOGGER).info(f"Starting task 'apply_rakun_extractor_to_index' with ID: {object_id}!")
@@ -55,9 +56,8 @@ def apply_rakun_extractor_to_index(object_id: int):
 
         progress = ShowProgress(rakun_extractor_object.task)
 
-        # retrieve indices & field data
-        indices = rakun_extractor_object.get_indices()
-        field_data = json.loads(rakun_extractor_object.fields)
+        # retrieve stopwords & calculate num_tokens
+        field_data = fields
         stop_words = load_stop_words(rakun_extractor_object.stopwords)
         if int(rakun_extractor_object.min_tokens) == int(rakun_extractor_object.max_tokens):
             num_tokens = [int(rakun_extractor_object.min_tokens)]
@@ -71,18 +71,17 @@ def apply_rakun_extractor_to_index(object_id: int):
         else:
             gensim_embedding_model_path = None
 
-
         ec = ElasticCore()
         [ec.add_texta_facts_mapping(index) for index in indices]
 
         searcher = ElasticSearcher(
             indices=indices,
             field_data=field_data + ["texta_facts"],  # Get facts to add upon existing ones.
-            query=rakun_extractor_object.query,
-            timeout="10m",
+            query=query,
+            timeout=f"{es_timeout}m",
             output=ElasticSearcher.OUT_RAW,
             callback_progress=progress,
-            scroll_size=100
+            scroll_size=bulk_size
         )
 
         HYPERPARAMETERS = {"distance_threshold": rakun_extractor_object.distance_threshold,
@@ -98,9 +97,9 @@ def apply_rakun_extractor_to_index(object_id: int):
                            "lemmatizer": None}
 
         actions = update_generator(generator=searcher, ec=ec, fields=field_data, rakun_extractor_object=rakun_extractor_object, fact_name="rakun", fact_value="", add_spans=True, hyperparameters=HYPERPARAMETERS)
-        # Send the data towards Elasticsearch
-        ed = ElasticDocument("_all")
-        elastic_response = ed.bulk_update(actions=actions)
+        for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size):
+            if not success:
+                logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
 
         rakun_extractor_object.task.complete()
         return True
