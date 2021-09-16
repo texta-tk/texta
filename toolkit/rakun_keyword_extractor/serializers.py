@@ -2,6 +2,7 @@ import json
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.rakun_keyword_extractor import choices
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
@@ -43,6 +44,23 @@ class RakunExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer
         data = super(RakunExtractorSerializer, self).to_representation(instance)
         data["stopwords"] = json.loads(instance.stopwords)
         return data
+
+
+class RakunExtractorIndexSerializer(FieldParseSerializer, IndicesSerializerMixin):
+    description = serializers.CharField(required=True, help_text=f"Text for distinguishing this task from others.")
+    fields = serializers.ListField(required=True, child=serializers.CharField(),
+                                   help_text=f"Which fields to extract the text from.")
+    query = serializers.JSONField(help_text=f"Filter the documents which to scroll and apply to.", default=EMPTY_QUERY)
+    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=choices.DEFAULT_BULK_SIZE,
+                                         help_text=f"How many documents should be sent towards Elasticsearch at once. Default = {choices.DEFAULT_BULK_SIZE}")
+    es_timeout = serializers.IntegerField(default=choices.DEFAULT_ES_TIMEOUT,
+                                          help_text=f"Elasticsearch scroll timeout in minutes. Default = {choices.DEFAULT_ES_TIMEOUT}.")
+    new_fact_name = serializers.CharField(required=False, default="",
+                                          help_text=f"Used as fact name when applying the tagger. Defaults to tagger description.")
+    new_fact_value = serializers.CharField(required=False, default="",
+                                           help_text=f"Used as fact value when applying the tagger. Defaults to tagger match.")
+    add_spans = serializers.BooleanField(required=False, default=choices.DEFAULT_ADD_SPANS,
+                                         help_text=f"If enabled, spans of detected matches are added to texta facts and corresponding facts can be highlighted in Searcher. Default = {choices.DEFAULT_ADD_SPANS}")
 
 
 class RakunExtractorRandomDocSerializer(IndicesSerializerMixin):
