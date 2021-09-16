@@ -12,8 +12,9 @@ from toolkit.embedding.models import Embedding
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, FACEBOOK_MODEL_SUFFIX
 from mrakun import RakunDetector
+from toolkit.helper_functions import load_stop_words
 
 
 class RakunExtractor(models.Model):
@@ -44,9 +45,6 @@ class RakunExtractor(models.Model):
                 name='distance_threshold_min'),
         )
 
-    def get_indices(self):
-        return [index.name for index in self.indices.filter(is_open=True)]
-
     def __str__(self):
         return self.description
 
@@ -64,10 +62,46 @@ class RakunExtractor(models.Model):
         chain = start_rakun_task.s() | apply_rakun_extractor_to_index.s()
         transaction.on_commit(lambda: chain.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE))
 
-    def get_rakun_keywords(self, texts: List[str], field_path: str, fact_name: str = "", fact_value: str = "", add_spans: bool=False, **hyperparameters):
+    @property
+    def num_tokens(self):
+        if int(self.min_tokens) == int(self.max_tokens):
+            num_tokens = [int(self.min_tokens)]
+        else:
+            num_tokens = [int(self.min_tokens), int(self.max_tokens)]
+        return num_tokens
+
+    @property
+    def get_facebook_model(self):
+        # load embedding if any
+        if self.fasttext_embedding:
+            embedding_model_path = str(self.fasttext_embedding.embedding_model)
+            gensim_embedding_model_path = embedding_model_path + "_" + FACEBOOK_MODEL_SUFFIX
+        else:
+            gensim_embedding_model_path = None
+        return gensim_embedding_model_path
+
+    @property
+    def hyperparameters(self):
+        stop_words = load_stop_words(self.stopwords)
+        HYPERPARAMETERS = {"distance_threshold": self.distance_threshold,
+                           "distance_method": self.distance_method,
+                           "pretrained_embedding_path": self.get_facebook_model,
+                           "num_keywords": self.num_keywords,
+                           "pair_diff_length": self.pair_diff_length,
+                           "stopwords": stop_words,
+                           "bigram_count_threshold": self.bigram_count_threshold,
+                           "num_tokens": self.num_tokens,
+                           "max_similar": self.max_similar,
+                           "max_occurrence": self.max_occurrence,
+                           "lemmatizer": None}
+        return HYPERPARAMETERS
+
+
+    def get_rakun_keywords(self, texts: List[str], field_path: str, fact_name: str = "", fact_value: str = "", add_spans: bool=False):
         new_facts = []
+        HYPERPARAMETERS = self.hyperparameters
         for text in texts:
-            keyword_detector = RakunDetector(hyperparameters["hyperparameters"]["hyperparameters"])
+            keyword_detector = RakunDetector(HYPERPARAMETERS)
             results = keyword_detector.find_keywords(text, input_type="text")
             new_rakun = {
                 "fact": fact_name,
