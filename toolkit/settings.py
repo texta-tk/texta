@@ -92,6 +92,7 @@ INSTALLED_APPS = [
     "toolkit.evaluator",
     "toolkit.summarizer",
     "toolkit.celery_management",
+    "toolkit.rakun_keyword_extractor",
     # TEXTA Extension Apps
     # "docscraper",
     # THIRD PARTY
@@ -325,6 +326,8 @@ BERT_CACHE_DIR = os.path.join(CACHE_DIR, "bert")
 # tk trained models dir
 MODELS_DIR_DEFAULT = os.path.join(DATA_DIR, "models")
 RELATIVE_MODELS_PATH = env("TEXTA_RELATIVE_MODELS_DIR", default=MODELS_DIR_DEFAULT)
+# Facebook Model Suffix
+FACEBOOK_MODEL_SUFFIX = env("FACEBOOK_MODEL_SUFFIX", default="facebook")
 # MLP model dir
 MLP_MODEL_DIRECTORY = env("TEXTA_MLP_MODEL_DIRECTORY_PATH", default=os.path.join(EXTERNAL_DATA_DIR, "mlp"))
 # BERT pretrained models
