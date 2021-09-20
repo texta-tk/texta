@@ -21,12 +21,14 @@ config = {
     "uaaConf": {
         "uaaURL": f"{UAA_URL}",
         "redirect_uri": UAA_REDIRECT_URI,
+        "oauth_uri": UAA_OAUTH_TOKEN_URI,
         "logout_uri": UAA_LOGOUT_URI,
         "authorize_uri": UAA_AUTHORIZE_URI,
         "client_id": UAA_CLIENT_ID,
         "scope": UAA_SCOPES,
         "admin_scope": UAA_PROJECT_ADMIN_SCOPE,
         "response_type": "code",
+
     }
 }
 # print output

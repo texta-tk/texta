@@ -58,4 +58,3 @@ dependencies:
       - nltk==3.6.*
       - sumy
       - django-environ
-      - mrakun
