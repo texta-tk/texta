@@ -37,8 +37,8 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
                     "_source": {"doc": {"texta_facts": existing_facts}}
                 }
 
-@task(name="start_rakun_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
-def start_rakun_task(object_id: int):
+@task(name="start_rakun_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
+def start_rakun_task(self, object_id: int):
     rakun = RakunExtractor.objects.get(pk=object_id)
     task_object = rakun.task
     show_progress = ShowProgress(task_object, multiplier=1)
@@ -46,8 +46,8 @@ def start_rakun_task(object_id: int):
     show_progress.update_view(0)
     return object_id
 
-@task(name="apply_rakun_extractor_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
-def apply_rakun_extractor_to_index(object_id: int, indices: List[str], fields: List[str], query: dict, es_timeout: int, bulk_size: int, fact_name: str, fact_value: str, add_spans: bool):
+@task(name="apply_rakun_extractor_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
+def apply_rakun_extractor_to_index(self, object_id: int, indices: List[str], fields: List[str], query: dict, es_timeout: int, bulk_size: int, fact_name: str, fact_value: str, add_spans: bool):
     """Apply Rakun Keyword Extractor to index."""
     try:
         logging.getLogger(INFO_LOGGER).info(f"Starting task 'apply_rakun_extractor_to_index' with ID: {object_id}!")
