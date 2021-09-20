@@ -48,7 +48,7 @@ def start_rakun_task(self, object_id: int):
     return object_id
 
 @task(name="apply_rakun_extractor_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
-def apply_rakun_extractor_to_index(self, object_id: int, indices: List[str], fields: List[str], query: dict, es_timeout: int, bulk_size: int, fact_name: str, fact_value: str, add_spans: bool):
+def apply_rakun_extractor_to_index(self, object_id: int, indices: List[str], fields: List[str], query: dict, es_timeout: int, bulk_size: int, fact_name: str, add_spans: bool):
     """Apply Rakun Keyword Extractor to index."""
     try:
         logging.getLogger(INFO_LOGGER).info(f"Starting task 'apply_rakun_extractor_to_index' with ID: {object_id}!")

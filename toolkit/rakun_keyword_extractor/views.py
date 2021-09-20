@@ -62,11 +62,10 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             es_timeout = serializer.validated_data["es_timeout"]
 
             fact_name = serializer.validated_data["new_fact_name"]
-            fact_value = serializer.validated_data["new_fact_value"]
 
             add_spans = serializer.validated_data["add_spans"]
 
-            args = (pk, indices, fields, query, bulk_size, es_timeout, fact_name, fact_value, add_spans)
+            args = (pk, indices, fields, query, bulk_size, es_timeout, fact_name, add_spans)
             transaction.on_commit(lambda: apply_rakun_extractor_to_index.apply_async(args=args))
 
             message = "Started process of applying Rakun with id: {}".format(rakun_object.id)
