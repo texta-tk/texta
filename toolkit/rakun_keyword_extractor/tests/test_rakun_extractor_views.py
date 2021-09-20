@@ -88,7 +88,7 @@ class RakunViewTest(APITransactionTestCase):
         print_output(f"Delete Rakun FASTTEXT Embeddings", None)
 
     def test(self):
-        self.run_test_apply_rakun_extractor_to_index()
+        #self.run_test_apply_rakun_extractor_to_index()
         self.run_test_rakun_extractor_duplicate()
         self.run_test_rakun_extractor_from_random_doc()
         self.run_test_rakun_extractor_from_text()
