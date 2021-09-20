@@ -32,16 +32,16 @@ class RakunViewTest(APITransactionTestCase):
             "fields": TEST_FIELD_CHOICE,
             "embedding_type": "FastTextEmbedding"
         }
-        print_output("Staring fasttext embedding", "post")
+        print_output("Staring Rakun fasttext embedding", "post")
 
         response = self.client.post(self.embedding_url, json.dumps(fasttext_payload), content_type='application/json')
-        print_output('test_create_fasttext_embedding_training_and_task_signal:response.data', response.data)
+        print_output('test_create_rakun_fasttext_embedding_training_and_task_signal:response.data', response.data)
         # Check if Embedding gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         created_embedding = Embedding.objects.get(id=response.data['id'])
         self.test_embedding_id = created_embedding.id
         # Remove Embedding files after test is done
-        print_output("created fasttext embedding task status", created_embedding.task.status)
+        print_output("created Rakun fasttext embedding task status", created_embedding.task.status)
         # Check if Task gets created via a signal
         self.assertTrue(created_embedding.task is not None)
         # Check if Embedding gets trained and completed
