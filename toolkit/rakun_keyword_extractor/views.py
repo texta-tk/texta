@@ -129,8 +129,9 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         rakun_object: RakunExtractor = self.get_object()
 
         text = serializer.validated_data['text']
+        keyword_detector = rakun_object.load_rakun_keyword_detector()
 
-        keywords = rakun_object.get_rakun_keywords([text], field_path="", fact_name="rakun", fact_value="", add_spans=False)
+        keywords = rakun_object.get_rakun_keywords(keyword_detector=keyword_detector, texts=[text], field_path="", fact_name="rakun", fact_value="", add_spans=False)
 
         # apply rakun
         results = {
@@ -171,10 +172,11 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             "document": flattened_doc
         }
         final_keywords = []
+        keyword_detector = rakun_object.load_rakun_keyword_detector()
         for field in fields:
             text = flattened_doc.get(field, None)
             results["document"][field] = text
-            keywords = rakun_object.get_rakun_keywords([text], field_path=field, fact_name="rakun", fact_value="", add_spans=False)
+            keywords = rakun_object.get_rakun_keywords(keyword_detector=keyword_detector, texts=[text], field_path=field, fact_name="rakun", fact_value="", add_spans=False)
 
             if keywords:
                 final_keywords.extend(keywords)

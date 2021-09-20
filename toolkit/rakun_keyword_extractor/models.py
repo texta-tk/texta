@@ -95,12 +95,14 @@ class RakunExtractor(models.Model):
                            "lemmatizer": None}
         return HYPERPARAMETERS
 
-
-    def get_rakun_keywords(self, texts: List[str], field_path: str, fact_name: str = "", fact_value: str = "", add_spans: bool=False):
-        new_facts = []
+    def load_rakun_keyword_detector(self):
         HYPERPARAMETERS = self.hyperparameters
+        keyword_detector = RakunDetector(HYPERPARAMETERS)
+        return keyword_detector
+
+    def get_rakun_keywords(self, keyword_detector: RakunDetector, texts: List[str], field_path: str, fact_name: str = "", fact_value: str = "", add_spans: bool=False):
+        new_facts = []
         for text in texts:
-            keyword_detector = RakunDetector(HYPERPARAMETERS)
             results = keyword_detector.find_keywords(text, input_type="text")
             new_rakun = {
                 "fact": fact_name,

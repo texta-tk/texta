@@ -10,9 +10,10 @@ from toolkit.base_tasks import TransactionAwareTask
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
 from toolkit.tools.show_progress import ShowProgress
+from mrakun import RakunDetector
 
 
-def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], rakun_extractor_object: RakunExtractor, fact_name: str, fact_value: str, add_spans: bool):
+def update_generator(keyword_detector: RakunDetector, generator: ElasticSearcher, ec: ElasticCore, fields: List[str], rakun_extractor_object: RakunExtractor, fact_name: str, fact_value: str, add_spans: bool):
     for scroll_batch in generator:
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
@@ -22,7 +23,7 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
             for field in fields:
                 text = flat_hit.get(field, None)
                 if text and isinstance(text, str):
-                    results = rakun_extractor_object.get_rakun_keywords([text], field_path=field, fact_name=fact_name, fact_value=fact_value, add_spans=add_spans)
+                    results = rakun_extractor_object.get_rakun_keywords(keyword_detector=keyword_detector, texts=[text], field_path=field, fact_name=fact_name, fact_value=fact_value, add_spans=add_spans)
                     existing_facts.extend(results)
 
             if existing_facts:
@@ -70,8 +71,8 @@ def apply_rakun_extractor_to_index(self, object_id: int, indices: List[str], fie
             callback_progress=progress,
             scroll_size=bulk_size
         )
-
-        actions = update_generator(generator=searcher, ec=ec, fields=field_data, rakun_extractor_object=rakun_extractor_object, fact_name="rakun", fact_value="", add_spans=True)
+        keyword_detector = rakun_extractor_object.load_rakun_keyword_detector()
+        actions = update_generator(keyword_detector=keyword_detector, generator=searcher, ec=ec, fields=field_data, rakun_extractor_object=rakun_extractor_object, fact_name="rakun", fact_value="", add_spans=True)
         # for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size):
         #     if not success:
         #         logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
