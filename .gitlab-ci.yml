@@ -47,7 +47,7 @@ TestBack:
     - ci-test
   script:
     - sh wait-for-uaa.sh
-    - python manage.py test toolkit.rakun_keyword_extractor.tests
+    - python manage.py test
   except:
     - tags
 
