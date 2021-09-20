@@ -10,7 +10,7 @@ from toolkit.elastic.tools.core import ElasticCore
 from toolkit.core.task.models import Task
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.tools.utils_for_tests import create_test_user, project_creation, print_output
-from toolkit.test_settings import (TEST_VERSION_PREFIX, VERSION_NAMESPACE, TEST_FIELD_CHOICE, TEST_RAKUN_QUERY)
+from toolkit.test_settings import (TEST_VERSION_PREFIX, VERSION_NAMESPACE, TEST_FIELD_CHOICE, TEST_RAKUN_QUERY, TEST_QUERY)
 
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
@@ -29,14 +29,12 @@ class RakunViewTest(APITransactionTestCase):
         """Create FastText Embedding, which will save facebook_model"""
         fasttext_payload = {
             "description": "TestEmbedding",
-            "query": json.dumps(EMPTY_QUERY),
+            "query": json.dumps(TEST_QUERY),
+            "indices": [{"name": self.test_index_name}],
             "fields": TEST_FIELD_CHOICE,
-            "max_vocab": 100,
-            "min_freq": 5,
-            "num_dimensions": 10,
             "embedding_type": "FastTextEmbedding"
         }
-        print_output("Staring fasttext embedding", "doing post")
+        print_output("Staring fasttext embedding", "post")
 
         response = self.client.post(self.embedding_url, json.dumps(fasttext_payload), content_type='application/json')
         print_output('test_create_fasttext_embedding_training_and_task_signal:response.data', response.data)
