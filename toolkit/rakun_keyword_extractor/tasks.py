@@ -25,17 +25,17 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
                     results = rakun_extractor_object.get_rakun_keywords([text], field_path=field, fact_name=fact_name, fact_value=fact_value, add_spans=add_spans)
                     existing_facts.extend(results)
 
-                if existing_facts:
-                    # Remove duplicates to avoid adding the same facts with repetitive use.
-                    existing_facts = ElasticDocument.remove_duplicate_facts(existing_facts)
+            if existing_facts:
+                # Remove duplicates to avoid adding the same facts with repetitive use.
+                existing_facts = ElasticDocument.remove_duplicate_facts(existing_facts)
 
-                yield {
-                    "_index": raw_doc["_index"],
-                    "_id": raw_doc["_id"],
-                    "_type": raw_doc.get("_type", "_doc"),
-                    "_op_type": "update",
-                    "_source": {"doc": {"texta_facts": existing_facts}}
-                }
+            yield {
+                "_index": raw_doc["_index"],
+                "_id": raw_doc["_id"],
+                "_type": raw_doc.get("_type", "_doc"),
+                "_op_type": "update",
+                "_source": {"doc": {"texta_facts": existing_facts}}
+            }
 
 @task(name="start_rakun_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
 def start_rakun_task(self, object_id: int):
@@ -72,9 +72,13 @@ def apply_rakun_extractor_to_index(self, object_id: int, indices: List[str], fie
         )
 
         actions = update_generator(generator=searcher, ec=ec, fields=field_data, rakun_extractor_object=rakun_extractor_object, fact_name="rakun", fact_value="", add_spans=True)
-        for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size):
-            if not success:
-                logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
+        # for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size):
+        #     if not success:
+        #         logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
+
+        # Send the data towards Elasticsearch
+        ed = ElasticDocument("_all")
+        elastic_response = ed.bulk_update(actions=actions)
 
         rakun_extractor_object.task.complete()
         return True
