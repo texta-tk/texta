@@ -58,8 +58,6 @@ class RakunExtractorIndexSerializer(FieldParseSerializer, IndicesSerializerMixin
                                           help_text=f"Elasticsearch scroll timeout in minutes. Default = {choices.DEFAULT_ES_TIMEOUT}.")
     new_fact_name = serializers.CharField(required=False, default="",
                                           help_text=f"Used as fact name when applying the tagger. Defaults to tagger description.")
-    new_fact_value = serializers.CharField(required=False, default="",
-                                           help_text=f"Used as fact value when applying the tagger. Defaults to tagger match.")
     add_spans = serializers.BooleanField(required=False, default=choices.DEFAULT_ADD_SPANS,
                                          help_text=f"If enabled, spans of detected matches are added to texta facts and corresponding facts can be highlighted in Searcher. Default = {choices.DEFAULT_ADD_SPANS}")
 

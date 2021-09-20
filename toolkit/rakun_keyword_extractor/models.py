@@ -104,11 +104,12 @@ class RakunExtractor(models.Model):
         new_facts = []
         for text in texts:
             results = keyword_detector.find_keywords(text, input_type="text")
-            new_rakun = {
-                "fact": fact_name,
-                "str_val": results,
-                "spans": json.dumps([[0,0]]),
-                "doc_path": field_path
-            }
-            new_facts.append(new_rakun)
+            for result in results:
+                new_rakun = {
+                    "fact": fact_name,
+                    "str_val": result[0],
+                    "spans": json.dumps([[0,0]]),
+                    "doc_path": field_path
+                }
+                new_facts.append(new_rakun)
         return new_facts
