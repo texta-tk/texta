@@ -14,17 +14,17 @@ class RakunExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer
     author_username = serializers.CharField(source="author.profile.get_display_name", read_only=True)
     description = serializers.CharField(required=True, help_text=serializer_constants.DESCRIPTION_HELPTEXT)
     distance_method = serializers.ChoiceField(choices=choices.DEFAULT_DISTANCE_METHOD_CHOICES, default=choices.DEFAULT_DISTANCE_METHOD,
-                                         help_text="Default = editdistance")
-    distance_threshold = serializers.FloatField(required=False, min_value=0.0, default=2.0, help_text="Distance between tokens that initiates the merge process (if more similar than this, the tokens are merged)")
+                                         help_text="Method for merging similar tokens.")
+    distance_threshold = serializers.FloatField(required=False, min_value=0.0, default=2.0, help_text="Distance between tokens that initiates the merge process (if more similar than this, the tokens are merged).")
     num_keywords = serializers.IntegerField(required=False, default=25, help_text="The number of keywords to be detected")
     pair_diff_length = serializers.IntegerField(required=False, default=2, help_text="If the difference in the length of the two tokens is smaller than this parameter, the tokens are considered for merging.")
-    stopwords = serializers.ListField(required=False, default=[], help_text="Stop words to add. Default = [].")
-    bigram_count_threshold = serializers.IntegerField(required=False, default=2, help_text="Default = 2")
-    min_tokens = serializers.IntegerField(required=False, min_value=1, max_value=3, default=1, help_text="The minimum number of tokens that can constitute a keyword")
-    max_tokens = serializers.IntegerField(required=False, min_value=1, max_value=2, default=1, help_text="The maximum number of tokens that can constitute a keyword")
-    max_similar = serializers.IntegerField(required=False, default=3, help_text="most similar can show up n times")
-    max_occurrence = serializers.IntegerField(required=False, default=3, help_text="maximum frequency overall")
-    fasttext_embedding = ProjectFasttextFilteredPrimaryKeyRelatedField(queryset=Embedding.objects, many=False, read_only=False, allow_null=True, default=None, help_text=f'FastText Embedding to use. Default = None')
+    stopwords = serializers.ListField(child=serializers.CharField(required=False), required=False, default=[], help_text="Words to ignore as possible keywords.")
+    bigram_count_threshold = serializers.IntegerField(required=False, default=2, help_text="Minimum edge weight for constituting a bigram.")
+    min_tokens = serializers.IntegerField(required=False, min_value=1, max_value=3, default=1, help_text="The minimum number of tokens that can constitute a keyword.")
+    max_tokens = serializers.IntegerField(required=False, min_value=1, max_value=3, default=1, help_text="The maximum number of tokens that can constitute a keyword.")
+    max_similar = serializers.IntegerField(required=False, default=3, help_text="How many similar keywords are permitted. For example, 'british vote' and 'british parliament' would be considered similar (overlap of at least one token).")
+    max_occurrence = serializers.IntegerField(required=False, default=3, help_text="How many of the most common keywords are to be considered during max_similar prunning step.")
+    fasttext_embedding = ProjectFasttextFilteredPrimaryKeyRelatedField(queryset=Embedding.objects, many=False, read_only=False, allow_null=True, default=None, help_text=f'FastText embedding to use.')
     url = serializers.SerializerMethodField()
     task = TaskSerializer(read_only=True)
 
@@ -53,21 +53,27 @@ class RakunExtractorIndexSerializer(FieldParseSerializer, IndicesSerializerMixin
                                    help_text=f"Which fields to extract the text from.")
     query = serializers.JSONField(help_text=f"Filter the documents which to scroll and apply to.", default=EMPTY_QUERY)
     bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=choices.DEFAULT_BULK_SIZE,
-                                         help_text=f"How many documents should be sent towards Elasticsearch at once. Default = {choices.DEFAULT_BULK_SIZE}")
+                                         help_text=f"How many documents should be sent towards Elasticsearch at once.")
     es_timeout = serializers.IntegerField(default=choices.DEFAULT_ES_TIMEOUT,
-                                          help_text=f"Elasticsearch scroll timeout in minutes. Default = {choices.DEFAULT_ES_TIMEOUT}.")
+                                          help_text=f"Elasticsearch scroll timeout in minutes.")
     new_fact_name = serializers.CharField(required=False, default="",
-                                          help_text=f"Used as fact name when applying the tagger. Defaults to tagger description.")
-    new_fact_value = serializers.CharField(required=False, default="",
-                                           help_text=f"Used as fact value when applying the tagger. Defaults to tagger match.")
+                                          help_text=f"Used as fact name when applying the tagger. Defaults to Rakun description.")
     add_spans = serializers.BooleanField(required=False, default=choices.DEFAULT_ADD_SPANS,
-                                         help_text=f"If enabled, spans of detected matches are added to texta facts and corresponding facts can be highlighted in Searcher. Default = {choices.DEFAULT_ADD_SPANS}")
+                                         help_text=f"If enabled, spans of detected matches are added to texta facts and corresponding facts can be highlighted in Searcher.")
+
+
+class RakunExtractorTextSerializer(serializers.Serializer):
+    text = serializers.CharField(required=True, help_text="Text to process with Rakun")
+    add_spans = serializers.BooleanField(required=False, default=choices.DEFAULT_ADD_SPANS,
+                                         help_text=f"If enabled, spans of detected matches are added to texta facts and corresponding facts can be highlighted in Searcher.")
 
 
 class RakunExtractorRandomDocSerializer(IndicesSerializerMixin):
     fields = serializers.ListField(child=serializers.CharField(), required=True, allow_empty=False)
+    add_spans = serializers.BooleanField(required=False, default=choices.DEFAULT_ADD_SPANS,
+                                         help_text=f"If enabled, spans of detected matches are added to texta facts and corresponding facts can be highlighted in Searcher.")
 
 
 class StopWordSerializer(serializers.Serializer):
-    stopwords = serializers.ListField(child=serializers.CharField(required=False), required=True, help_text=f"List of stop words to add.")
-    overwrite_existing = serializers.BooleanField(required=False, default=choices.DEFAULT_OVERWRITE_EXISTING_STOPWORDS, help_text=f"If enabled, overwrites all existing stop words, otherwise appends to the existing ones. Default: {choices.DEFAULT_OVERWRITE_EXISTING_STOPWORDS}.")
+    stopwords = serializers.ListField(child=serializers.CharField(required=False), required=True, help_text=f"Words to ignore as possible keywords.")
+    overwrite_existing = serializers.BooleanField(required=False, default=choices.DEFAULT_OVERWRITE_EXISTING_STOPWORDS, help_text=f"If enabled, overwrites all existing stop words, otherwise appends to the existing ones.")
