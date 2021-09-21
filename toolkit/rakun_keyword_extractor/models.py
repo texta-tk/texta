@@ -1,5 +1,6 @@
 import json
 import logging
+import regex as re
 from typing import List
 from django.db import models, transaction
 from django.core import serializers
@@ -95,18 +96,30 @@ class RakunExtractor(models.Model):
                            "lemmatizer": None}
         return HYPERPARAMETERS
 
-
-    def get_rakun_keywords(self, texts: List[str], field_path: str, fact_name: str = "", fact_value: str = "", add_spans: bool=False):
-        new_facts = []
+    def load_rakun_keyword_detector(self):
         HYPERPARAMETERS = self.hyperparameters
+        keyword_detector = RakunDetector(HYPERPARAMETERS)
+        return keyword_detector
+
+    def get_rakun_keywords(self, keyword_detector: RakunDetector, texts: List[str], field_path: str, fact_name: str = "", fact_value: str = "", add_spans: bool=False):
+        new_facts = []
         for text in texts:
-            keyword_detector = RakunDetector(HYPERPARAMETERS)
             results = keyword_detector.find_keywords(text, input_type="text")
-            new_rakun = {
-                "fact": fact_name,
-                "str_val": results,
-                "spans": json.dumps([[0,0]]),
-                "doc_path": field_path
-            }
-            new_facts.append(new_rakun)
+            for result in results:
+                rakun_keyword = result[0]
+
+                if add_spans:
+                    # Find all positions of the keyword in text
+                    spans = [[m.start(), m.end()] for m in
+                             re.finditer(re.escape(rakun_keyword), re.escape(text), re.IGNORECASE)]
+                else:
+                    spans = [[0, 0]]
+
+                new_rakun = {
+                    "fact": fact_name,
+                    "str_val": result[0],
+                    "spans": json.dumps(spans),
+                    "doc_path": field_path
+                }
+                new_facts.append(new_rakun)
         return new_facts

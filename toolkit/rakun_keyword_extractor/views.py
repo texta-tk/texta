@@ -7,7 +7,7 @@ from .serializers import RakunExtractorSerializer, RakunExtractorRandomDocSerial
 import rest_framework.filters as drf_filters
 from django_filters import rest_framework as filters
 from django.db import transaction
-from toolkit.rakun_keyword_extractor.serializers import StopWordSerializer, RakunExtractorIndexSerializer
+from toolkit.rakun_keyword_extractor.serializers import StopWordSerializer, RakunExtractorIndexSerializer, RakunExtractorTextSerializer
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
 from toolkit.rakun_keyword_extractor.tasks import apply_rakun_extractor_to_index
 from toolkit.core.project.models import Project
@@ -17,7 +17,6 @@ from toolkit.serializer_constants import GeneralTextSerializer
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.helper_functions import load_stop_words
-from toolkit.settings import FACEBOOK_MODEL_SUFFIX
 from toolkit.exceptions import SerializerNotValid
 
 
@@ -43,6 +42,14 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             stopwords=json.dumps(serializer.validated_data.get('stopwords', []), ensure_ascii=False)
         )
 
+    def perform_update(self, serializer):
+        project = Project.objects.get(id=self.kwargs['project_pk'])
+        rakun: RakunExtractor = serializer.save(
+            author=self.request.user,
+            project=project,
+            stopwords=json.dumps(serializer.validated_data.get('stopwords', []), ensure_ascii=False)
+        )
+
     @action(detail=True, methods=['post'], serializer_class=RakunExtractorIndexSerializer)
     def apply_to_index(self, request, pk=None, project_pk=None):
         with transaction.atomic():
@@ -61,12 +68,16 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             bulk_size = serializer.validated_data["bulk_size"]
             es_timeout = serializer.validated_data["es_timeout"]
 
-            fact_name = serializer.validated_data["new_fact_name"]
-            fact_value = serializer.validated_data["new_fact_value"]
+            new_fact_name = serializer.validated_data["new_fact_name"]
+
+            if new_fact_name:
+                fact_name = new_fact_name
+            else:
+                fact_name = rakun_object.description
 
             add_spans = serializer.validated_data["add_spans"]
 
-            args = (pk, indices, fields, query, bulk_size, es_timeout, fact_name, fact_value, add_spans)
+            args = (pk, indices, fields, query, bulk_size, es_timeout, fact_name, add_spans)
             transaction.on_commit(lambda: apply_rakun_extractor_to_index.apply_async(args=args))
 
             message = "Started process of applying Rakun with id: {}".format(rakun_object.id)
@@ -122,15 +133,20 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
 
         return Response(response, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
+    @action(detail=True, methods=['post'], serializer_class=RakunExtractorTextSerializer)
     def extract_from_text(self, request, pk=None, project_pk=None):
         serializer = GeneralTextSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         rakun_object: RakunExtractor = self.get_object()
 
-        text = serializer.validated_data['text']
+        serializer = RakunExtractorTextSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        keywords = rakun_object.get_rakun_keywords([text], field_path="", fact_name="rakun", fact_value="", add_spans=False)
+        text = serializer.validated_data['text']
+        add_spans = serializer.validated_data["add_spans"]
+        keyword_detector = rakun_object.load_rakun_keyword_detector()
+
+        keywords = rakun_object.get_rakun_keywords(keyword_detector=keyword_detector, texts=[text], field_path="text", fact_name=rakun_object.description, fact_value="", add_spans=add_spans)
 
         # apply rakun
         results = {
@@ -171,10 +187,11 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             "document": flattened_doc
         }
         final_keywords = []
+        keyword_detector = rakun_object.load_rakun_keyword_detector()
         for field in fields:
             text = flattened_doc.get(field, None)
             results["document"][field] = text
-            keywords = rakun_object.get_rakun_keywords([text], field_path=field, fact_name="rakun", fact_value="", add_spans=False)
+            keywords = rakun_object.get_rakun_keywords(keyword_detector=keyword_detector, texts=[text], field_path=field, fact_name=rakun_object.description, fact_value="", add_spans=False)
 
             if keywords:
                 final_keywords.extend(keywords)

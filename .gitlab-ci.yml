@@ -2,7 +2,7 @@ image: docker.texta.ee/texta/texta-rest-base-image:latest
 
 variables:
   # Elastic
-  TEXTA_ES_URL: http://elastic-dev.texta.ee:9200
+  TEXTA_ES_URL: http://texta-elastic:9200
   # Redis
   TEXTA_REDIS_URL: redis://redis:6379
   # UAA
@@ -27,6 +27,10 @@ services:
   - name: redis:latest
   - name: docker.texta.ee/texta/texta-uaa:latest
     alias: texta-uaa
+  - name: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
+    alias: texta-elastic
+    command: [ "bin/elasticsearch", "-Ediscovery.type=single-node" ]
+
 
 
 stages:
