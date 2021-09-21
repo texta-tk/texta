@@ -21,7 +21,7 @@ class RakunExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer
     stopwords = serializers.ListField(child=serializers.CharField(required=False), required=False, default=[], help_text="Stop words to add. Default = [].")
     bigram_count_threshold = serializers.IntegerField(required=False, default=2, help_text="Default = 2")
     min_tokens = serializers.IntegerField(required=False, min_value=1, max_value=3, default=1, help_text="The minimum number of tokens that can constitute a keyword")
-    max_tokens = serializers.IntegerField(required=False, min_value=1, max_value=2, default=1, help_text="The maximum number of tokens that can constitute a keyword")
+    max_tokens = serializers.IntegerField(required=False, min_value=1, max_value=3, default=1, help_text="The maximum number of tokens that can constitute a keyword")
     max_similar = serializers.IntegerField(required=False, default=3, help_text="most similar can show up n times")
     max_occurrence = serializers.IntegerField(required=False, default=3, help_text="maximum frequency overall")
     fasttext_embedding = ProjectFasttextFilteredPrimaryKeyRelatedField(queryset=Embedding.objects, many=False, read_only=False, allow_null=True, default=None, help_text=f'FastText Embedding to use. Default = None')
