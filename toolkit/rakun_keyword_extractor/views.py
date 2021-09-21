@@ -68,7 +68,12 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             bulk_size = serializer.validated_data["bulk_size"]
             es_timeout = serializer.validated_data["es_timeout"]
 
-            fact_name = serializer.validated_data["new_fact_name"]
+            new_fact_name = serializer.validated_data["new_fact_name"]
+
+            if new_fact_name:
+                fact_name = new_fact_name
+            else:
+                fact_name = rakun_object.description
 
             add_spans = serializer.validated_data["add_spans"]
 
