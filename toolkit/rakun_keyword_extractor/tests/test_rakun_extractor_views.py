@@ -93,6 +93,7 @@ class RakunViewTest(APITransactionTestCase):
         self.run_test_rakun_extractor_from_random_doc()
         self.run_test_rakun_extractor_from_text()
         self.run_test_rakun_extractor_stopwords()
+        self.run_test_rakun_extractor_edit()
 
     def run_test_apply_rakun_extractor_to_index(self):
         index_payload = {
@@ -145,4 +146,15 @@ class RakunViewTest(APITransactionTestCase):
             rakun_stopwords_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{rakun_id}/stop_words/'
             print_output(f"Rakun stopwords for ID: {rakun_id}", None)
             response = self.client.post(rakun_stopwords_url, stopwords_payload)
+            self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+    def run_test_rakun_extractor_edit(self):
+        rakun_extractor_edit_payload = {
+                "description": "test_edit",
+                "stopwords": ["New_word1", "New_word2"]
+            }
+        for rakun_id in self.ids:
+            rakun_edit_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{rakun_id}/'
+            print_output(f"Editing Rakun Extractor for ID: {rakun_id}", None)
+            response = self.client.put(rakun_edit_url, rakun_extractor_edit_payload)
             self.assertTrue(response.status_code == status.HTTP_200_OK)

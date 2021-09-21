@@ -42,6 +42,14 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             stopwords=json.dumps(serializer.validated_data.get('stopwords', []), ensure_ascii=False)
         )
 
+    def perform_update(self, serializer):
+        project = Project.objects.get(id=self.kwargs['project_pk'])
+        rakun: RakunExtractor = serializer.save(
+            author=self.request.user,
+            project=project,
+            stopwords=json.dumps(serializer.validated_data.get('stopwords', []), ensure_ascii=False)
+        )
+
     @action(detail=True, methods=['post'], serializer_class=RakunExtractorIndexSerializer)
     def apply_to_index(self, request, pk=None, project_pk=None):
         with transaction.atomic():
