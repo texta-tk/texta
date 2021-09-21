@@ -70,7 +70,7 @@ def apply_rakun_extractor_to_index(self, object_id: int, indices: List[str], fie
             scroll_size=bulk_size
         )
         keyword_detector = rakun_extractor_object.load_rakun_keyword_detector()
-        actions = update_generator(keyword_detector=keyword_detector, generator=searcher, ec=ec, fields=field_data, rakun_extractor_object=rakun_extractor_object, fact_name="rakun", fact_value="", add_spans=True)
+        actions = update_generator(keyword_detector=keyword_detector, generator=searcher, ec=ec, fields=field_data, rakun_extractor_object=rakun_extractor_object, fact_name="rakun", fact_value="", add_spans=add_spans)
 
         # Send the data towards Elasticsearch
         ed = ElasticDocument("_all")

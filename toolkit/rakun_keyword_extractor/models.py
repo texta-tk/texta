@@ -1,5 +1,6 @@
 import json
 import logging
+import regex as re
 from typing import List
 from django.db import models, transaction
 from django.core import serializers
@@ -105,10 +106,19 @@ class RakunExtractor(models.Model):
         for text in texts:
             results = keyword_detector.find_keywords(text, input_type="text")
             for result in results:
+                rakun_keyword = result[0]
+
+                if add_spans:
+                    # Find all positions of the keyword in text
+                    spans = [[m.start(), m.end()] for m in
+                             re.finditer(re.escape(rakun_keyword), re.escape(text), re.IGNORECASE)]
+                else:
+                    spans = [[0, 0]]
+
                 new_rakun = {
                     "fact": fact_name,
                     "str_val": result[0],
-                    "spans": json.dumps([[0,0]]),
+                    "spans": json.dumps([spans]),
                     "doc_path": field_path
                 }
                 new_facts.append(new_rakun)

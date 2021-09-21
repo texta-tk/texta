@@ -62,8 +62,16 @@ class RakunExtractorIndexSerializer(FieldParseSerializer, IndicesSerializerMixin
                                          help_text=f"If enabled, spans of detected matches are added to texta facts and corresponding facts can be highlighted in Searcher. Default = {choices.DEFAULT_ADD_SPANS}")
 
 
+class RakunExtractorTextSerializer(serializers.Serializer):
+    text = serializers.CharField(required=True, help_text="Text to process with Rakun")
+    add_spans = serializers.BooleanField(required=False, default=choices.DEFAULT_ADD_SPANS,
+                                         help_text=f"If enabled, spans of detected matches are added to texta facts and corresponding facts can be highlighted in Searcher. Default = {choices.DEFAULT_ADD_SPANS}")
+
+
 class RakunExtractorRandomDocSerializer(IndicesSerializerMixin):
     fields = serializers.ListField(child=serializers.CharField(), required=True, allow_empty=False)
+    add_spans = serializers.BooleanField(required=False, default=choices.DEFAULT_ADD_SPANS,
+                                         help_text=f"If enabled, spans of detected matches are added to texta facts and corresponding facts can be highlighted in Searcher. Default = {choices.DEFAULT_ADD_SPANS}")
 
 
 class StopWordSerializer(serializers.Serializer):

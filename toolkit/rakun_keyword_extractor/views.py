@@ -7,7 +7,7 @@ from .serializers import RakunExtractorSerializer, RakunExtractorRandomDocSerial
 import rest_framework.filters as drf_filters
 from django_filters import rest_framework as filters
 from django.db import transaction
-from toolkit.rakun_keyword_extractor.serializers import StopWordSerializer, RakunExtractorIndexSerializer
+from toolkit.rakun_keyword_extractor.serializers import StopWordSerializer, RakunExtractorIndexSerializer, RakunExtractorTextSerializer
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
 from toolkit.rakun_keyword_extractor.tasks import apply_rakun_extractor_to_index
 from toolkit.core.project.models import Project
@@ -128,16 +128,20 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
 
         return Response(response, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
+    @action(detail=True, methods=['post'], serializer_class=RakunExtractorTextSerializer)
     def extract_from_text(self, request, pk=None, project_pk=None):
         serializer = GeneralTextSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         rakun_object: RakunExtractor = self.get_object()
 
+        serializer = RakunExtractorTextSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         text = serializer.validated_data['text']
+        add_spans = serializer.validated_data["add_spans"]
         keyword_detector = rakun_object.load_rakun_keyword_detector()
 
-        keywords = rakun_object.get_rakun_keywords(keyword_detector=keyword_detector, texts=[text], field_path="text", fact_name=rakun_object.description, fact_value="", add_spans=False)
+        keywords = rakun_object.get_rakun_keywords(keyword_detector=keyword_detector, texts=[text], field_path="text", fact_name=rakun_object.description, fact_value="", add_spans=add_spans)
 
         # apply rakun
         results = {
