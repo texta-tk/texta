@@ -115,11 +115,12 @@ class RakunExtractor(models.Model):
                 else:
                     spans = [[0, 0]]
 
-                new_rakun = {
-                    "fact": fact_name,
-                    "str_val": result[0],
-                    "spans": json.dumps(spans),
-                    "doc_path": field_path
-                }
-                new_facts.append(new_rakun)
+                for span in spans:
+                    new_rakun = {
+                        "fact": fact_name,
+                        "str_val": result[0],
+                        "spans": json.dumps([span]),
+                        "doc_path": field_path
+                    }
+                    new_facts.append(new_rakun)
         return new_facts
