@@ -107,6 +107,7 @@ class RakunExtractor(models.Model):
             results = keyword_detector.find_keywords(text, input_type="text")
             for result in results:
                 rakun_keyword = result[0]
+                probability = result[1]
 
                 if add_spans:
                     # Find all positions of the keyword in text
@@ -120,7 +121,8 @@ class RakunExtractor(models.Model):
                         "fact": fact_name,
                         "str_val": result[0],
                         "spans": json.dumps([span]),
-                        "doc_path": field_path
+                        "doc_path": field_path,
+                        "probability": probability
                     }
                     new_facts.append(new_rakun)
         return new_facts
