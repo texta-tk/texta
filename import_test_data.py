@@ -80,7 +80,8 @@ FACT_MAPPING = {
                 'fact': {'type': 'keyword'},
                 'num_val': {'type': 'long'},
                 'spans': {'type': 'keyword'},
-                'str_val': {'type': 'keyword'}
+                'str_val': {'type': 'keyword'},
+                'sent_index': {'type': 'long'},
             }
         }
     }

@@ -223,6 +223,7 @@ class MLPIndexProcessing(APITransactionTestCase):
 
 
     def test_applying_mlp_on_two_indices(self):
+        query_string = "inimene"
         indices = [f"texta_test_{uuid.uuid1()}", f"texta_test_{uuid.uuid1()}"]
         for index in indices:
             self.ec.es.indices.create(index=index, ignore=[400, 404])
@@ -233,7 +234,8 @@ class MLPIndexProcessing(APITransactionTestCase):
         payload = {
             "description": "TestingIndexProcessing",
             "fields": ["text"],
-            "indices": [{"name": index} for index in indices]
+            "indices": [{"name": index} for index in indices],
+            "query": json.dumps({'query': {'match': {'comment_content_lemmas': query_string}}}, ensure_ascii=False)
         }
         response = self.client.post(self.url, data=payload, format="json")
         print_output("test_applying_mlp_on_two_indices:response.data", response.data)

@@ -23,7 +23,8 @@ def to_texta_facts(tagger_result: dict, field: str, fact_name: str, fact_value: 
         "fact": fact_name.strip(),
         "str_val": fact_value.strip(),
         "doc_path": field,
-        "spans": json.dumps([[0, 0]])
+        "spans": json.dumps([[0, 0]]),
+        "sent_index": 0
     }
     return [new_fact]
 

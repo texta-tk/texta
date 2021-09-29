@@ -24,6 +24,7 @@ class ElasticFactSerializer(serializers.Serializer):
     num_val = serializers.IntegerField(required=False)
     spans = serializers.CharField(default="[[0,0]]")
     doc_path = serializers.CharField()
+    sent_index = serializers.IntegerField(required=False)
 
 
 class ElasticDocumentSerializer(serializers.Serializer):
