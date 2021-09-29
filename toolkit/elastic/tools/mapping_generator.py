@@ -60,6 +60,9 @@ class SchemaGenerator:
                               },
                               "str_val": {
                                   "type": "keyword"
+                              },
+                              "sent_index": {
+                                  "type": "long"
                               }
                           }}
 

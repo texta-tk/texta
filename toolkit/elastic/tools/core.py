@@ -348,6 +348,7 @@ class ElasticCore:
                 "str_val": Keyword(),
                 "doc_path": Keyword(),
                 "num_val": Long(),
+                "sent_index": Long()
             }
         )
 

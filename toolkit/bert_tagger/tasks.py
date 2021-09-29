@@ -199,7 +199,8 @@ def to_texta_facts(tagger_result: List[Dict[str, Union[str, int, bool]]], field:
         "fact": fact_name,
         "str_val": fact_value,
         "doc_path": field,
-        "spans": json.dumps([[0,0]])
+        "spans": json.dumps([[0,0]]),
+        "sent_index": 0
     }
     return [new_fact]
 

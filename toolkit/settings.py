@@ -35,7 +35,7 @@ SEARCHER_FOLDER_KEY = "searcher"
 # ES_URL = get_core_setting("ES_URL")
 
 CORE_SETTINGS = {
-    "TEXTA_ES_URL": env("TEXTA_ES_URL", default="http://elastic-dev.texta.ee:9200"),
+    "TEXTA_ES_URL": env("TEXTA_ES_URL", default="http://localhost:9200"),
     "TEXTA_ES_PREFIX": env("TEXTA_ES_PREFIX", default=""),
     "TEXTA_ES_USERNAME": env("TEXTA_ES_USER", default=""),
     "TEXTA_ES_PASSWORD": env("TEXTA_ES_PASSWORD", default=""),
@@ -164,7 +164,7 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ),
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.NamespaceVersioning",
-    "DEFAULT_VERSION": "v2",
+    "DEFAULT_VERSION": "v1",
     "ALLOWED_VERSIONS": ["v1", "v2"],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         # For DRF API browser pages
