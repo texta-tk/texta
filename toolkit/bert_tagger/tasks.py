@@ -54,11 +54,10 @@ def apply_persistent_bert_tagger(tagger_input: Union[str, Dict], tagger_id: int,
 
 @task(name="train_bert_tagger", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def train_bert_tagger(tagger_id, testing=False):
+    # retrieve neurotagger & task objects
+    tagger_object = BertTaggerObject.objects.get(pk=tagger_id)
+    task_object = tagger_object.task
     try:
-        # retrieve neurotagger & task objects
-        tagger_object = BertTaggerObject.objects.get(pk=tagger_id)
-        task_object = tagger_object.task
-
         show_progress = ShowProgress(task_object, multiplier=1)
         # get fields & indices
         fields = json.loads(tagger_object.fields)
