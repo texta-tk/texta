@@ -14,6 +14,8 @@ ES_TIMEOUT_HELPTEXT = "How many seconds should be allowed for the the update req
 DESCRIPTION_HELPTEXT = "Description of the task to distinguish it from others."
 QUERY_HELPTEXT = "Elasticsearch query for subsetting in JSON format"
 FIELDS_HELPTEXT = "Which fields to parse the content from."
+PROJECT_HELPTEXT = "Which Project this item belongs to."
+INDICES_HELPTEXT = "Which indices to query from Elasticsearch"
 
 class EmptySerializer(serializers.Serializer):
     pass

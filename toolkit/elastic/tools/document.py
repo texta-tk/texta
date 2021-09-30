@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 from typing import List
@@ -5,12 +6,14 @@ from typing import List
 import elasticsearch
 from elasticsearch.helpers import bulk
 from elasticsearch_dsl import Q, Search
-
 from texta_mlp.mlp import MLP
 
 from toolkit.elastic.decorators import elastic_connection
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.settings import ERROR_LOGGER
+
+
+TEXTA_ANNOTATOR_KEY = "texta_annotator"
 
 
 class ESDocObject:
@@ -58,8 +61,24 @@ class ESDocObject:
         return True
 
 
+    def add_comment(self, comment: str):
+        source = self.document["_source"]
+        annotation_dict = source.get(TEXTA_ANNOTATOR_KEY, {})
+        comments = annotation_dict.get("comments", [])
+        comments.append(comment)
+        annotation_dict["comments"] = comments
+        self.document["_source"][TEXTA_ANNOTATOR_KEY] = annotation_dict
+
+
+    def add_skipped(self):
+        source = self.document["_source"]
+        annotation_dict = source.get(TEXTA_ANNOTATOR_KEY, {})
+        annotation_dict["skipped_timestamp_utc"] = datetime.datetime.utcnow()
+        self.document["_source"][TEXTA_ANNOTATOR_KEY] = annotation_dict
+
+
     @elastic_connection
-    def update(self, retry_on_conflict=3):
+    def update(self, retry_on_conflict=3, refresh="wait_for"):
         """
         Updates document in ES by ID.
         """
@@ -68,7 +87,7 @@ class ESDocObject:
             doc_type=self.document["_type"],
             id=self.document_id,
             body={"doc": self.document["_source"]},
-            refresh="wait_for",
+            refresh=refresh,
             retry_on_conflict=retry_on_conflict
         )
 

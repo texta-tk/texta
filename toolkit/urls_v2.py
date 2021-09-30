@@ -45,7 +45,7 @@ from toolkit.tools.swagger import schema_view
 from toolkit.topic_analyzer.views import ClusterViewSet, TopicAnalyzerViewset
 from toolkit.torchtagger.urls import router as torchtagger_router
 from toolkit.uaa_auth.views import RefreshUAATokenView, UAAView
-
+from toolkit.annotator.urls import router as annotator_router
 
 router = routers.DefaultRouter()
 router.register(r'projects', ProjectViewSet, basename='project')
@@ -57,6 +57,7 @@ project_router = routers.NestedDefaultRouter(router, r'projects', lookup='projec
 project_router.registry.extend(embedding_router.registry)
 project_router.registry.extend(embedding_router.registry)
 project_router.registry.extend(tagger_router.registry)
+project_router.registry.extend(annotator_router.registry)
 project_router.registry.extend(rakun_extractor_router.registry)
 project_router.registry.extend(core_router.registry)
 project_router.registry.extend(torchtagger_router.registry)
