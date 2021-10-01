@@ -5,6 +5,7 @@ import secrets
 from django.core import serializers
 from django.contrib.auth.models import User
 from django.db import models, transaction
+from multiselectfield import MultiSelectField
 
 from texta_crf_extractor.feature_extraction import DEFAULT_LAYERS, DEFAULT_EXTRACTORS
 
@@ -15,6 +16,7 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, RELATIVE_MODELS_PATH
+from .choices import FEATURE_FIELDS_CHOICES, FEATURE_EXTRACTOR_CHOICES
 
 
 class CRFExtractor(models.Model):
@@ -38,12 +40,12 @@ class CRFExtractor(models.Model):
     
     # this is the main field used for training
     field = models.CharField(default="text.text", max_length=MAX_DESC_LEN)
-    # feature fields
-    feature_fields = models.TextField(default=json.dumps(DEFAULT_LAYERS))
-    context_feature_fields = models.TextField(default=json.dumps(DEFAULT_LAYERS))
-    # feature extractors
-    feature_extractors = models.TextField(default=json.dumps(DEFAULT_EXTRACTORS))
-    context_feature_extractors = models.TextField(default=json.dumps(DEFAULT_EXTRACTORS))
+
+    feature_fields = MultiSelectField(choices=FEATURE_FIELDS_CHOICES)
+    context_feature_fields = MultiSelectField(choices=FEATURE_FIELDS_CHOICES)
+
+    feature_extractors = MultiSelectField(choices=FEATURE_EXTRACTOR_CHOICES)
+    context_feature_extractors = MultiSelectField(choices=FEATURE_EXTRACTOR_CHOICES)
 
     embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE, default=None, null=True)
 

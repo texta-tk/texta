@@ -1,6 +1,5 @@
 import json
-from rest_framework import serializers
-
+from rest_framework import serializers, fields
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.serializer_constants import (
@@ -21,7 +20,7 @@ class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin
 
     field = serializers.CharField(help_text=f'Text field used to build the model.')
 
-    #labels = models.TextField(default=json.dumps(["GPE", "ORG", "PER", "LOC"]))
+    labels = serializers.CharField(default=json.dumps(["GPE", "ORG", "PER", "LOC"]))
 
     num_iter = serializers.IntegerField(default=100)
     test_size = serializers.FloatField(default=0.3)
@@ -31,9 +30,9 @@ class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin
     window_size = serializers.IntegerField(default=2)
     suffix_len = serializers.CharField(default=json.dumps((2,2)))
 
-    feature_fields = PatchedMultiSelectField(choices=FEATURE_FIELDS_CHOICES)
-    context_feature_fields = PatchedMultiSelectField(choices=FEATURE_FIELDS_CHOICES)
-    feature_extractors = PatchedMultiSelectField(choices=FEATURE_EXTRACTOR_CHOICES)
+    feature_fields = fields.MultipleChoiceField(choices=FEATURE_FIELDS_CHOICES, default=FEATURE_FIELDS_CHOICES)
+    context_feature_fields = fields.MultipleChoiceField(choices=FEATURE_FIELDS_CHOICES, default=FEATURE_FIELDS_CHOICES)
+    feature_extractors = fields.MultipleChoiceField(choices=FEATURE_EXTRACTOR_CHOICES, default=FEATURE_EXTRACTOR_CHOICES)
 
     window_size = serializers.IntegerField(default=2)
     url = serializers.SerializerMethodField()
@@ -44,7 +43,8 @@ class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin
         model = CRFExtractor
         fields = (
             'id', 'url', 'author', 'description', 'query', 'indices', 'field', 'window_size', 'test_size',
-            'num_iter', 'c1', 'c2', 'bias', 'suffix_len'
+            'num_iter', 'c1', 'c2', 'bias', 'suffix_len', 'labels', 'feature_fields', 'context_feature_fields',
+            'feature_extractors'
         )
         read_only_fields = ()
         fields_to_parse = ('fields',)
