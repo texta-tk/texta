@@ -8,9 +8,11 @@ from toolkit.serializer_constants import (
     IndicesSerializerMixin,
     ProjectResourceUrlSerializer
 )
+from toolkit.multiselectfield import PatchedMultiSelectField
 
 from toolkit.embedding.models import Embedding
 from .models import CRFExtractor
+from .choices import FEATURE_FIELDS_CHOICES, FEATURE_EXTRACTOR_CHOICES
 
 
 class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
@@ -19,7 +21,19 @@ class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin
 
     field = serializers.CharField(help_text=f'Text field used to build the model.')
 
-    # add other params
+    #labels = models.TextField(default=json.dumps(["GPE", "ORG", "PER", "LOC"]))
+
+    num_iter = serializers.IntegerField(default=100)
+    test_size = serializers.FloatField(default=0.3)
+    c1 = serializers.FloatField(default=1.0)
+    c2 = serializers.FloatField(default=1.0)
+    bias = serializers.BooleanField(default=True)
+    window_size = serializers.IntegerField(default=2)
+    suffix_len = serializers.CharField(default=json.dumps((2,2)))
+
+    feature_fields = PatchedMultiSelectField(choices=FEATURE_FIELDS_CHOICES)
+    context_feature_fields = PatchedMultiSelectField(choices=FEATURE_FIELDS_CHOICES)
+    feature_extractors = PatchedMultiSelectField(choices=FEATURE_EXTRACTOR_CHOICES)
 
     window_size = serializers.IntegerField(default=2)
     url = serializers.SerializerMethodField()
@@ -29,7 +43,8 @@ class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin
     class Meta:
         model = CRFExtractor
         fields = (
-            'id', 'url', 'author', 'description', 'query', 'indices', 'field', 'window_size',
+            'id', 'url', 'author', 'description', 'query', 'indices', 'field', 'window_size', 'test_size',
+            'num_iter', 'c1', 'c2', 'bias', 'suffix_len'
         )
         read_only_fields = ()
         fields_to_parse = ('fields',)

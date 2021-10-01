@@ -58,6 +58,8 @@ class CRFExtractorViewTests(APITransactionTestCase):
                     "description": "TestCRF",
                     #"query": json.dumps(EMTPY_QUERY),
                     "test_size": 0.2,
+                    "feature_fields": ["lemmas", "pos_tags"],
+                    "feature_context_fields": ["lemmas", "pos_tags"],
                     "field": CRF_TEST_FIELD,
                     "indices": [{"name": self.test_index_name}],
         }
