@@ -36,6 +36,7 @@ class ElasticSearcher:
                  text_processor=None,
                  score_threshold=0.0,
                  timeout='10m',
+                 flatten=True,
                  scroll_timeout: str = None):
         """
 
@@ -44,6 +45,7 @@ class ElasticSearcher:
         :param query: Query for Elasticsearch.
         :param scroll_size: How many items should be pulled with each scroll request.
         :param output: Constant for determine document output.
+        :param flatten: Whether to flatten output document or not.
         :param callback_progress: Function to call after each successful scroll request.
         :param scroll_limit: Number of maximum documents that are returned from the scrolling process.
         :param ignore_ids: Iterable of Elasticsearch document ID's which are not returned.
@@ -61,6 +63,7 @@ class ElasticSearcher:
         self.score_threshold = score_threshold
         self.ignore_ids = ignore_ids
         self.output = output
+        self.flatten = flatten
         self.callback_progress = callback_progress
         self.text_processor = text_processor
         self.timeout = timeout
@@ -155,8 +158,9 @@ class ElasticSearcher:
         """
         index = doc['_index']
         highlight = doc['highlight'] if 'highlight' in doc else {}
-        doc = doc['_source']
-        new_doc = self.core.flatten(doc)
+        new_doc = doc['_source']
+        if self.flatten:
+            new_doc = self.core.flatten(doc)
         return new_doc, index, highlight
 
 

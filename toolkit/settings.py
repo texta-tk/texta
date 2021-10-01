@@ -93,6 +93,7 @@ INSTALLED_APPS = [
     "toolkit.summarizer",
     "toolkit.celery_management",
     "toolkit.rakun_keyword_extractor",
+    "toolkit.crf_extractor",
     # TEXTA Extension Apps
     # "docscraper",
     # THIRD PARTY

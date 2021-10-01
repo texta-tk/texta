@@ -44,6 +44,7 @@ from toolkit.rakun_keyword_extractor.urls import router as rakun_extractor_route
 from toolkit.tools.swagger import schema_view
 from toolkit.topic_analyzer.views import ClusterViewSet, TopicAnalyzerViewset
 from toolkit.torchtagger.urls import router as torchtagger_router
+from toolkit.crf_extractor.urls import router as crf_router
 from toolkit.uaa_auth.views import RefreshUAATokenView, UAAView
 
 
@@ -66,6 +67,7 @@ project_router.registry.extend(anonymizer_router.registry)
 project_router.registry.extend(bert_tagger_router.registry)
 project_router.registry.extend(evaluator_router.registry)
 project_router.registry.extend(summarizer_router.registry)
+project_router.registry.extend(crf_router.registry)
 
 # elastic resources
 project_router.register('elastic/dataset_imports', DatasetImportViewSet, basename='dataset_import')
