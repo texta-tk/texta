@@ -39,11 +39,11 @@ class CRFExtractor(models.Model):
     suffix_len = models.TextField(default=json.dumps((2,2)))
     
     # this is the main field used for training
-    field = models.CharField(default="text.text", max_length=MAX_DESC_LEN)
-
+    field = models.CharField(default="text", max_length=MAX_DESC_LEN)
+    # these are the parsed feature fields
     feature_fields = MultiSelectField(choices=FEATURE_FIELDS_CHOICES)
     context_feature_fields = MultiSelectField(choices=FEATURE_FIELDS_CHOICES)
-
+    # these are used feature extractors
     feature_extractors = MultiSelectField(choices=FEATURE_EXTRACTOR_CHOICES)
     context_feature_extractors = MultiSelectField(choices=FEATURE_EXTRACTOR_CHOICES)
 
@@ -61,12 +61,11 @@ class CRFExtractor(models.Model):
         Returns full and relative filepaths for the intended models.
         Args:
             name: Name for the model to distinguish itself from others in the same directory.
-
         Returns: Full and relative file paths, full for saving the model object and relative for actual DB storage.
         """
         model_file_name = f'{name}_{str(self.pk)}_{secrets.token_hex(10)}'
-        full_path = pathlib.Path(BASE_DIR) / RELATIVE_MODELS_PATH / "tagger" / model_file_name
-        relative_path = pathlib.Path(RELATIVE_MODELS_PATH) / "tagger" / model_file_name
+        full_path = pathlib.Path(BASE_DIR) / RELATIVE_MODELS_PATH / "crf" / model_file_name
+        relative_path = pathlib.Path(RELATIVE_MODELS_PATH) / "crf" / model_file_name
         return str(full_path), str(relative_path)
 
 

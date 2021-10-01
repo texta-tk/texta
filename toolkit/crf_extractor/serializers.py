@@ -20,7 +20,7 @@ class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin
 
     field = serializers.CharField(help_text=f'Text field used to build the model.')
 
-    labels = serializers.CharField(default=json.dumps(["GPE", "ORG", "PER", "LOC"]))
+    labels = serializers.JSONField(default=["GPE", "ORG", "PER", "LOC"])
 
     num_iter = serializers.IntegerField(default=100)
     test_size = serializers.FloatField(default=0.3)
@@ -36,7 +36,6 @@ class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin
 
     window_size = serializers.IntegerField(default=2)
     url = serializers.SerializerMethodField()
-
 
 
     class Meta:

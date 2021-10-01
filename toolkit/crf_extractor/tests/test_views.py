@@ -58,8 +58,9 @@ class CRFExtractorViewTests(APITransactionTestCase):
                     "description": "TestCRF",
                     #"query": json.dumps(EMTPY_QUERY),
                     "test_size": 0.2,
-                    "feature_fields": ["lemmas", "pos_tags"],
-                    "feature_context_fields": ["lemmas", "pos_tags"],
+                    "feature_fields": ["lemmas", "pos_tags", "text"],
+                    "feature_context_fields": ["lemmas", "pos_tags", "text"],
+                    "labels": ["GPE", "ORG", "PER"],
                     "field": CRF_TEST_FIELD,
                     "indices": [{"name": self.test_index_name}],
         }
@@ -81,3 +82,5 @@ class CRFExtractorViewTests(APITransactionTestCase):
         self.assertTrue(created.task is not None)
         # Check if gets trained and completed
         self.assertEqual(created.task.status, Task.STATUS_COMPLETED)
+
+# TODO: test training with incorrect fields & labels

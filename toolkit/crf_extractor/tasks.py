@@ -80,17 +80,14 @@ def train_crf_task(crf_id: int):
             feature_layers = crf_object.feature_fields,
             feature_extractors = crf_object.feature_extractors
         )
-
-        #print([crf_object.context_feature_fields])
-
+        # start training
         logging.getLogger(INFO_LOGGER).info(f"Training the model for CRFExtractor with ID: {crf_id}!")
-
         # create extractor
         extractor = CRFExtractor(config = config)
         # train the CRF model
         model_full_path, relative_model_path = crf_object.generate_name("crf")
         report, _ = extractor.train(documents, save_path = model_full_path, mlp_field = field)
-
+        # pass results to next task
         return {
             "id": crf_id,
             "extractor_path": relative_model_path,
