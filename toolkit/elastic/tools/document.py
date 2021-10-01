@@ -1,7 +1,6 @@
 import datetime
 import json
 import logging
-import random
 from typing import List
 
 import elasticsearch
@@ -54,6 +53,7 @@ class ESDocObject:
         hits = s.execute()
         for hit in hits:
             return ESDocObject(document_id=hit.meta.id, index=hit.meta.index)
+        return None
 
 
     def apply_mlp(self, mlp: MLP, analyzers: List[str], field_data: List[str]):

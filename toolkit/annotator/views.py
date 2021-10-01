@@ -1,6 +1,6 @@
 import rest_framework.filters as drf_filters
 from django_filters import rest_framework as filters
-from rest_framework import mixins, permissions, viewsets
+from rest_framework import mixins, permissions, status, viewsets
 # Create your views here.
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -32,7 +32,10 @@ class AnnotatorViewset(mixins.CreateModelMixin,
     def pull_document(self, request, pk=None, project_pk=None):
         annotator: Annotator = self.get_object()
         document = annotator.pull_document()
-        return Response(document)
+        if document:
+            return Response(document)
+        else:
+            return Response({"detail": "No more documents left!"}, status=status.HTTP_404_NOT_FOUND)
 
 
     @action(detail=True, methods=["POST"], serializer_class=SkipDocumentSerializer)

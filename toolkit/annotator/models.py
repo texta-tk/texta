@@ -174,7 +174,11 @@ class Annotator(models.Model):
         indices = self.get_indices()
         query = ec.get_negative_annotator_query(json_query)
         document = ESDocObject.random_document(indices=indices, query=query)
-        return document.document
+        # At one point in time, the documents will rune out.
+        if document:
+            return document.document
+        else:
+            return None
 
 
     def skip_document(self, document_id: str):
