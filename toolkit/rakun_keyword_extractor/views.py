@@ -189,7 +189,7 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         final_keywords = []
         keyword_detector = rakun_object.load_rakun_keyword_detector()
         for field in fields:
-            text = flattened_doc.get(field, None)
+            text = flattened_doc.get(field, "")
             results["document"][field] = text
             keywords = rakun_object.get_rakun_keywords(keyword_detector=keyword_detector, texts=[text], field_path=field, fact_name=rakun_object.description, fact_value="", add_spans=False)
 
