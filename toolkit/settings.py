@@ -46,6 +46,7 @@ CORE_SETTINGS = {
 EVALUATOR_MEMORY_BUFFER_RATIO = 0.5
 
 TEXTA_TAGS_KEY = "texta_facts"
+TEXTA_ANNOTATOR_KEY = "texta_annotator"
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

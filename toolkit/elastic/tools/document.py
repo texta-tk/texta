@@ -1,19 +1,19 @@
 import datetime
 import json
 import logging
+import random
 from typing import List
 
 import elasticsearch
+import elasticsearch_dsl
 from elasticsearch.helpers import bulk
 from elasticsearch_dsl import Q, Search
 from texta_mlp.mlp import MLP
 
 from toolkit.elastic.decorators import elastic_connection
 from toolkit.elastic.tools.core import ElasticCore
-from toolkit.settings import ERROR_LOGGER
-
-
-TEXTA_ANNOTATOR_KEY = "texta_annotator"
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from toolkit.settings import ERROR_LOGGER, TEXTA_ANNOTATOR_KEY
 
 
 class ESDocObject:
@@ -41,6 +41,19 @@ class ESDocObject:
             "_id": document["_id"],
             "_source": document["_source"]
         }
+
+
+    @staticmethod
+    @elastic_connection
+    def random_document(indices, query=EMPTY_QUERY):
+        ec = ElasticCore()
+        s = elasticsearch_dsl.Search(using=ec.es, index=indices)
+        s = s.query("function_score", random_score={})
+        s = s.source(exclude=["*"])
+        s = s.extra(size=1)
+        hits = s.execute()
+        for hit in hits:
+            return ESDocObject(document_id=hit.meta.id, index=hit.meta.index)
 
 
     def apply_mlp(self, mlp: MLP, analyzers: List[str], field_data: List[str]):

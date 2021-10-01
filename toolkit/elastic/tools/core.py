@@ -6,12 +6,12 @@ import elasticsearch
 import elasticsearch_dsl
 import requests
 from elasticsearch import Elasticsearch
-from elasticsearch_dsl import Keyword, Long, Mapping, Nested
+from elasticsearch_dsl import Date, Keyword, Long, Mapping, Nested, Object, Q
 from rest_framework.exceptions import ValidationError
 
 from toolkit.elastic.decorators import elastic_connection
 from toolkit.helper_functions import get_core_setting
-from toolkit.settings import ES_CONNECTION_PARAMETERS
+from toolkit.settings import ES_CONNECTION_PARAMETERS, TEXTA_ANNOTATOR_KEY
 
 
 class ElasticCore:
@@ -356,6 +356,37 @@ class ElasticCore:
         mapping = m.field("texta_facts", texta_facts).to_dict()
         doc_type = self.get_doc_type_for_index(index)
         self.es.indices.put_mapping(body=mapping, index=index, doc_type=doc_type, include_type_name=True)
+
+
+    @elastic_connection
+    def add_annotator_mapping(self, index: str):
+        m = Mapping()
+        texta_annotator = Object(
+            properties={
+                "processed_timestamp_utc": Date(),
+                "skipped_timestamp_utc": Date(),
+                "validated_timestamp_utc": Date(),
+                "comments": Keyword(multi=True),
+            }
+        )
+
+        # Set the name of the field along with its mapping body
+        mapping = m.field(TEXTA_ANNOTATOR_KEY, texta_annotator).to_dict()
+        doc_type = self.get_doc_type_for_index(index)
+        self.es.indices.put_mapping(body=mapping, index=index, doc_type=doc_type, include_type_name=True)
+
+
+    def get_negative_annotator_query(self, query: dict):
+        """
+        Return a query dictionary for the annotator for documents that lack the given field
+        within a limited subset.
+        :param query: Dictionary of an Elasticsearch query as an additional restriction.
+        :return:
+        """
+
+        negative_queries = [Q("exists", field="processed_timestamp_utc"), Q("exists", field="skipped_timestamp_utc")]
+        s = Q("bool", must_not=negative_queries, must=[Q(query["query"])])
+        return s.to_dict()
 
 
     def flatten(self, d, parent_key='', sep='.'):

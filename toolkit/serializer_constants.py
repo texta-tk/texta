@@ -52,6 +52,16 @@ class FieldValidationSerializer:
         return value
 
 
+    def validate_field(self, value):
+        project_id = self.context['view'].kwargs['project_pk']
+        project_obj = Project.objects.get(id=project_id)
+        project_fields = set(project_obj.get_elastic_fields(path_list=True))
+        if not value or not {value}.issubset(project_fields):
+            raise serializers.ValidationError(f'Entered field not in current project fields: {project_fields}')
+        return value
+
+
+
 class FieldParseSerializer(FieldValidationSerializer):
     """
     For serializers that need to override to_representation and parse fields

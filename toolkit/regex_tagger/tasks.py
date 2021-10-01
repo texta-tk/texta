@@ -6,6 +6,7 @@ from celery.decorators import task
 from elasticsearch.helpers import streaming_bulk
 
 from toolkit.base_tasks import TransactionAwareTask
+from toolkit.core.task.models import Task
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.elastic.tools.searcher import ElasticSearcher

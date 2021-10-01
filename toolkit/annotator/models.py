@@ -26,31 +26,31 @@ ES_TIMEOUT_MAX = 100
 ES_BULK_SIZE_MAX = 500
 
 
+class Category(models.Model):
+    value = models.CharField(max_length=CHAR_LIMIT)
+
+
 class Label(models.Model):
     value = models.CharField(max_length=CHAR_LIMIT)
 
 
-class LabelValue(models.Model):
-    value = models.CharField(max_length=CHAR_LIMIT)
-
-
 class Labelset(models.Model):
-    label = models.ForeignKey(Label, on_delete=models.CASCADE)
-    values = models.ManyToManyField(LabelValue)
-
-
-class BinaryAnnotatorConfiguration(models.Model):
-    fact_name = models.CharField(max_length=CHAR_LIMIT)
-    pos_value = models.CharField(max_length=CHAR_LIMIT)
-    neg_value = models.CharField(max_length=CHAR_LIMIT)
-
-
-class EntityAnnotatorConfiguration(models.Model):
-    fact_name = models.CharField(max_length=CHAR_LIMIT, help_text="Name of the fact which will be added.")
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    values = models.ManyToManyField(Label)
 
 
 class MultilabelAnnotatorConfiguration(models.Model):
     labelset = models.ForeignKey(Labelset, on_delete=models.CASCADE)
+
+
+class BinaryAnnotatorConfiguration(models.Model):
+    fact_name = models.CharField(max_length=CHAR_LIMIT, help_text="Sets the value for the fact name for all annotated documents.")
+    pos_value = models.CharField(max_length=CHAR_LIMIT, help_text="Sets the name for a fact value for positive documents.")
+    neg_value = models.CharField(max_length=CHAR_LIMIT, help_text="Sets the name for a fact value for negative documents.")
+
+
+class EntityAnnotatorConfiguration(models.Model):
+    fact_name = models.CharField(max_length=CHAR_LIMIT, help_text="Name of the fact which will be added.")
 
 
 class Annotator(models.Model):
@@ -59,7 +59,7 @@ class Annotator(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, help_text=PROJECT_HELPTEXT)
     query = models.TextField(default=json.dumps(EMPTY_QUERY), help_text=QUERY_HELPTEXT)
     field = models.TextField(default=None, help_text="Which field to parse the content from.")
-    indices = models.ManyToManyField(Index, default=None, help_text=INDICES_HELPTEXT)
+    indices = models.ManyToManyField(Index, default=[], help_text=INDICES_HELPTEXT)
     annotation_type = models.CharField(max_length=CHAR_LIMIT, choices=ANNOTATION_CHOICES, help_text="Which type of annotation does the user wish to perform")
 
     annotator_users = models.ManyToManyField(User, default=None, related_name="annotators", help_text="Who are the users who will be annotating.")
@@ -167,7 +167,14 @@ class Annotator(models.Model):
         Function for returning a new Elasticsearch document to the for annotation.
         :return:
         """
-        pass
+        from toolkit.elastic.tools.core import ElasticCore
+
+        ec = ElasticCore()
+        json_query = json.loads(self.query)
+        indices = self.get_indices()
+        query = ec.get_negative_annotator_query(json_query)
+        document = ESDocObject.random_document(indices=indices, query=query)
+        return document.document
 
 
     def skip_document(self, document_id: str):
@@ -232,13 +239,8 @@ class Annotator(models.Model):
         :param indices: Which indices to target for the schemas.
         :return:
         """
-        # TODO Should this be a nested field? Every user has their own annotation record to differentiate who did who inside the document itself.
-        mapping = {
-            "texta_annotator": {
-                "processed_timestamp_utc": "date",
-                "skipped_timestamp_utc": "date",
-                "validated_timestamp_utc": "date",
-                "comments": "list_of_strings",
-            }
-        }
-        pass
+        from toolkit.elastic.tools.core import ElasticCore
+
+        ec = ElasticCore()
+        for index in indices:
+            ec.add_annotator_mapping(index)
