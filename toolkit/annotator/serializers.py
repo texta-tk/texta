@@ -1,3 +1,5 @@
+import json
+
 from django.urls import reverse
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -7,6 +9,7 @@ from toolkit.core.project.models import Project
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import IndexSerializer
+from toolkit.elastic.tools.searcher import EMPTY_QUERY, ElasticSearcher
 from toolkit.elastic.validators import check_for_existence
 from toolkit.serializer_constants import FieldValidationSerializer
 
@@ -48,7 +51,7 @@ class AnnotatorSerializer(FieldValidationSerializer, serializers.ModelSerializer
     annotator_users = UserSerializer(many=True, read_only=True)
     author = UserSerializer(read_only=True)
 
-    query = serializers.JSONField(help_text='Query in JSON format', required=False)
+    query = serializers.JSONField(help_text='Query in JSON format', required=False, default=json.dumps(EMPTY_QUERY))
 
     indices = IndexSerializer(
         many=True,
@@ -70,15 +73,7 @@ class AnnotatorSerializer(FieldValidationSerializer, serializers.ModelSerializer
             return None
 
 
-    def create(self, validated_data):
-        request = self.context.get('request')
-        project_pk = request.parser_context.get('kwargs').get("project_pk")
-        project_obj = Project.objects.get(id=project_pk)
-
-        indices = [index["name"] for index in validated_data["indices"]]
-        indices = project_obj.get_available_or_all_project_indices(indices)
-        validated_data.pop("indices")
-
+    def __get_configurations(self, validated_data):
         # Get what type of annotation is used.
         annotator_type = validated_data["annotation_type"]
         # Generate the model field name of the respective annotators conf.
@@ -88,12 +83,32 @@ class AnnotatorSerializer(FieldValidationSerializer, serializers.ModelSerializer
         # Fetch the proper configuration class and populate it with the fields.
         configuration = ANNOTATION_MAPPING[annotator_type](**configurations)
         configuration.save()
+        return {configuration_field: configuration}
+
+
+    def __get_total(self, indices, query):
+        ec = ElasticSearcher(indices=indices, query=query)
+        return ec.count()
+
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        project_pk = request.parser_context.get('kwargs').get("project_pk")
+        project_obj = Project.objects.get(id=project_pk)
+
+        indices = [index["name"] for index in validated_data["indices"]]
+        indices = project_obj.get_available_or_all_project_indices(indices)
+        validated_data.pop("indices")
+
+        configuration = self.__get_configurations(validated_data)
+        total = self.__get_total(indices=indices, query=json.loads(validated_data["query"]))
 
         annotator = Annotator.objects.create(
             **validated_data,
             author=request.user,
-            **{configuration_field: configuration},
-            project=project_obj
+            project=project_obj,
+            total=total,
+            **configuration,
         )
 
         annotator.annotator_users.add(request.user)
@@ -139,6 +154,7 @@ class AnnotatorSerializer(FieldValidationSerializer, serializers.ModelSerializer
             'completed_at',
             'total',
             'num_processed',
+            'skipped',
             'validated',
             'binary_configuration',
             "multilabel_configuration",
