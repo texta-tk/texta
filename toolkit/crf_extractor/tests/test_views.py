@@ -51,6 +51,8 @@ class CRFExtractorViewTests(APITransactionTestCase):
 
     def test_run(self):
         self.run_create_crf_training_and_task_signal()
+        self.run_list_features()
+        self.run_tag_text()
         self.run_test_export_import()
 
     def run_create_crf_training_and_task_signal(self):
@@ -82,6 +84,31 @@ class CRFExtractorViewTests(APITransactionTestCase):
         self.assertTrue(created.task is not None)
         # Check if gets trained and completed
         self.assertEqual(created.task.status, Task.STATUS_COMPLETED)
+
+
+    def run_list_features(self):
+        for test_tagger_id in self.test_crf_ids:
+            url = f'{self.url}{test_tagger_id}/list_features/'
+            response = self.client.get(url)
+            print_output('test_list_features:response.data', response.data)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            # Check if response data is not empty, but a result instead
+            self.assertTrue(response.data)
+            self.assertTrue(len(response.data["positive"]))      
+
+
+    def run_tag_text(self):
+        """Tests the endpoint for the tag_text action"""
+        payload = {"text": "New York is a place in US."}
+
+        for test_tagger_id in self.test_crf_ids:
+            tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
+            response = self.client.post(tag_text_url, payload)
+            print_output('test_tag_text:response.data', response.data)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            # Check if response data is not empty, but a result instead
+            self.assertTrue(response.data)
 
 
     def run_test_export_import(self):

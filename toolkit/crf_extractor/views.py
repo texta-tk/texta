@@ -7,14 +7,18 @@ from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from celery.result import allow_join_result
 
 from .models import CRFExtractor
-from .serializers import CRFExtractorSerializer
+from .serializers import CRFExtractorSerializer, CRFExtractorTagTextSerializer
+from .tasks import apply_crf_extractor
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.index.models import Index
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
+from toolkit.mlp.tasks import apply_mlp_on_list
+from toolkit.settings import CELERY_MLP_TASK_QUEUE
 #from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE
 #from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import BulkDelete
@@ -74,14 +78,13 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
     @action(detail=True, methods=['get', 'post'])
     def list_features(self, request, pk=None, project_pk=None):
         """Returns list of features for the extactor."""
-
         extractor: Extractor = self.get_object()
         # check if model exists
         if not extractor.model.path:
             raise NonExistantModelError()
-
-
-
+        
+        crf_model = extractor.load_extractor()
+        feature_info = crf_model.get_features()
         return Response(feature_info, status=status.HTTP_200_OK)
 
 
@@ -103,3 +106,29 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         uploaded_file = serializer.validated_data['file']
         crf_id = CRFExtractor.import_resources(uploaded_file, request, project_pk)
         return Response({"id": crf_id, "message": "Successfully imported model and associated files."}, status=status.HTTP_201_CREATED)
+
+
+    @action(detail=True, methods=['post'], serializer_class=CRFExtractorTagTextSerializer)
+    def tag_text(self, request, pk=None, project_pk=None):
+        serializer = CRFExtractorTagTextSerializer(data=request.data)
+        # check if valid request
+        if not serializer.is_valid():
+            raise SerializerNotValid(detail=serializer.errors)
+        # retrieve tagger object
+        extractor: CRFExtractor = self.get_object()
+        # check if tagger exists
+        if not extractor.model.path:
+            raise NonExistantModelError()
+        # apply mlp
+        text = serializer.validated_data["text"]
+        with allow_join_result():
+            mlp = apply_mlp_on_list.apply_async(kwargs={"texts": [text], "analyzers": ["lemmas", "pos_tags", "sentences"]}, queue=CELERY_MLP_TASK_QUEUE).get()
+            mlp_document = mlp[0]
+        # apply extractor
+        extractor_response = apply_crf_extractor(
+            extractor.id,
+            mlp_document
+        )
+
+        print(extractor_response)
+        return Response(extractor_response, status=status.HTTP_200_OK)

@@ -12,6 +12,7 @@ from django.http import HttpResponse
 from multiselectfield import MultiSelectField
 
 from texta_crf_extractor.feature_extraction import DEFAULT_LAYERS, DEFAULT_EXTRACTORS
+from texta_crf_extractor.crf_extractor import CRFExtractor as Extractor
 
 from toolkit.embedding.models import Embedding
 from toolkit.constants import MAX_DESC_LEN
@@ -147,3 +148,26 @@ class CRFExtractor(models.Model):
         on the filesystem.
         """
         return {"model": self.model.path, "plot": self.plot.path}
+
+
+    def load_extractor(self):
+        """Loading model from disc."""
+        # load embedding
+        #if self.embedding:
+        #    embedding = W2VEmbedding()
+        #    embedding.load_django(self.embedding)
+        #else:
+        #    embedding = False
+        # load tagger
+        extractor = Extractor()
+        loaded = extractor.load_django(self)
+        # check if tagger gets loaded
+        if not loaded:
+            return None
+        return extractor
+
+
+
+    def apply_loaded_extractor(self, extractor: Extractor, mlp_document):
+        result = extractor.tag(mlp_document)
+        return result

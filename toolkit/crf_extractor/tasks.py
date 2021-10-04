@@ -141,3 +141,14 @@ def save_crf_results(result_data: dict):
         task_object.add_error(str(e))
         task_object.update_status(Task.STATUS_FAILED)
         raise e
+
+
+@task(name="apply_crf_extractor", base=BaseTask)
+def apply_crf_extractor(crf_id: int, mlp_document: dict):
+    # Get CRF object
+    crf_object = CRFExtractorObject.objects.get(pk=crf_id)
+    # Load model from the disc
+    crf_extractor = crf_object.load_extractor()
+    # Use the loaded model for predicting
+    prediction = crf_object.apply_loaded_extractor(crf_extractor, mlp_document)
+    return prediction

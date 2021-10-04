@@ -47,3 +47,7 @@ class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin
         )
         read_only_fields = ()
         fields_to_parse = ('fields',)
+
+
+class CRFExtractorTagTextSerializer(serializers.Serializer):
+    text = serializers.CharField()
