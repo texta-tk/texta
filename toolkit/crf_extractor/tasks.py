@@ -1,5 +1,7 @@
 from celery.decorators import task
+import pathlib
 import logging
+import secrets
 import json
 import os
 
@@ -13,13 +15,15 @@ from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.embedding.models import Embedding
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.helper_functions import get_indices_from_object
+from toolkit.tools.plots import create_tagger_plot
 
 from toolkit.settings import (
     CELERY_LONG_TERM_TASK_QUEUE,
     #CELERY_MLP_TASK_QUEUE,
     #CELERY_SHORT_TERM_TASK_QUEUE,
     ERROR_LOGGER,
-    INFO_LOGGER
+    INFO_LOGGER,
+    MEDIA_URL
 )
 
 
@@ -87,6 +91,10 @@ def train_crf_task(crf_id: int):
         # train the CRF model
         model_full_path, relative_model_path = crf_object.generate_name("crf")
         report, _ = extractor.train(documents, save_path = model_full_path, mlp_field = field)
+        # Save the image before its path.
+        image_name = f'{secrets.token_hex(15)}.png'
+        crf_object.plot.save(image_name, create_tagger_plot(report.to_dict()), save=False)
+        image_path = pathlib.Path(MEDIA_URL) / image_name
         # pass results to next task
         return {
             "id": crf_id,
@@ -96,6 +104,7 @@ def train_crf_task(crf_id: int):
             "f1_score": float(report.f1_score),
             "confusion_matrix": report.confusion.tolist(),
             "model_size": round(float(os.path.getsize(model_full_path)) / 1000000, 1),  # bytes to mb
+            "plot": str(image_path),
         }
 
 
@@ -123,6 +132,7 @@ def save_crf_results(result_data: dict):
         crf_object.f1_score = result_data["f1_score"]
         crf_object.model_size = result_data["model_size"]
         crf_object.confusion_matrix = result_data["confusion_matrix"]
+        crf_object.plot.name = result_data["plot"]
         crf_object.save()
         task_object.complete()
         return True

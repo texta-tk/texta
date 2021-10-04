@@ -1,4 +1,5 @@
 import json
+import os
 
 import rest_framework.filters as drf_filters
 from django.http import HttpResponse
@@ -10,21 +11,11 @@ from rest_framework.response import Response
 from .models import CRFExtractor
 from .serializers import CRFExtractorSerializer
 
-#from toolkit.core.health.utils import get_redis_status
 from toolkit.core.project.models import Project
-#from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-#from toolkit.elastic.tools.core import ElasticCore
-#from toolkit.elastic.tools.searcher import ElasticSearcher
-#from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, SerializerNotValid
-#from toolkit.helper_functions import add_finite_url_to_feedback, load_stop_words
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
-#from toolkit.serializer_constants import (
-#    ProjectResourceImportModelSerializer)
+from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 #from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE
-#from toolkit.tagger.models import Tagger
-#from toolkit.tagger.serializers import (ApplyTaggerSerializer, StopWordSerializer, TagRandomDocSerializer, TaggerListFeaturesSerializer, TaggerMultiTagSerializer, TaggerSerializer, TaggerTagDocumentSerializer, TaggerTagTextSerializer)
-#from toolkit.tagger.tasks import apply_tagger, apply_tagger_to_index, save_tagger_results, start_tagger_task, train_tagger_task
 #from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import BulkDelete
 
@@ -78,3 +69,37 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         instance: CRFExtractor = self.get_object()
         instance.delete()
         return Response({"success": "CRFExtractor instance deleted, model and plot removed"}, status=status.HTTP_204_NO_CONTENT)
+
+
+    @action(detail=True, methods=['get', 'post'])
+    def list_features(self, request, pk=None, project_pk=None):
+        """Returns list of features for the extactor."""
+
+        extractor: Extractor = self.get_object()
+        # check if model exists
+        if not extractor.model.path:
+            raise NonExistantModelError()
+
+
+
+        return Response(feature_info, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['get'])
+    def export_model(self, request, pk=None, project_pk=None):
+        zip_name = f'crf_model_{pk}.zip'
+
+        extractor: CRFExtractor = self.get_object()
+        data = extractor.export_resources()
+        response = HttpResponse(data)
+        response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(zip_name)
+        return response
+
+
+    @action(detail=False, methods=["post"], serializer_class=ProjectResourceImportModelSerializer)
+    def import_model(self, request, pk=None, project_pk=None):
+        serializer = ProjectResourceImportModelSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        uploaded_file = serializer.validated_data['file']
+        crf_id = CRFExtractor.import_resources(uploaded_file, request, project_pk)
+        return Response({"id": crf_id, "message": "Successfully imported model and associated files."}, status=status.HTTP_201_CREATED)

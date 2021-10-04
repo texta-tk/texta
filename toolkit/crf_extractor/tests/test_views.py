@@ -1,5 +1,7 @@
 import uuid
 import json
+import pathlib
+from io import BytesIO
 
 from django.test import override_settings
 from django.urls import reverse
@@ -7,11 +9,7 @@ from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
 from toolkit.core.task.models import Task
-#from toolkit.elastic.reindexer.models import Reindexer
-#from toolkit.elastic.tools.aggregator import ElasticAggregator
-#from toolkit.elastic.tools.core import ElasticCore
 from toolkit.helper_functions import reindex_test_dataset
-#from toolkit.settings import RELATIVE_MODELS_PATH
 from toolkit.crf_extractor.models import CRFExtractor
 from toolkit.test_settings import (
     CRF_TEST_FIELD,
@@ -23,6 +21,7 @@ from toolkit.test_settings import (
     VERSION_NAMESPACE,
     CRF_TEST_INDEX
 )
+from toolkit.settings import RELATIVE_MODELS_PATH
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
@@ -44,14 +43,15 @@ class CRFExtractorViewTests(APITransactionTestCase):
     def add_cleanup_files(self, id):
         crf = CRFExtractor.objects.get(pk=id)
         self.addCleanup(remove_file, crf.model.path)
-        #if not TEST_KEEP_PLOT_FILES:
-        #    self.addCleanup(remove_file, crf.plot.path)
+        if not TEST_KEEP_PLOT_FILES:
+            self.addCleanup(remove_file, crf.plot.path)
         #if tagger_object.embedding:
         #    self.addCleanup(remove_file, tagger_object.embedding.embedding_model.path)
 
 
     def test_run(self):
         self.run_create_crf_training_and_task_signal()
+        self.run_test_export_import()
 
     def run_create_crf_training_and_task_signal(self):
         payload = {
@@ -82,5 +82,35 @@ class CRFExtractorViewTests(APITransactionTestCase):
         self.assertTrue(created.task is not None)
         # Check if gets trained and completed
         self.assertEqual(created.task.status, Task.STATUS_COMPLETED)
+
+
+    def run_test_export_import(self):
+        """Tests endpoint for model export and import"""
+        test_model_id = self.test_crf_ids[0]
+
+        # retrieve model zip
+        url = f'{self.url}{test_model_id}/export_model/'
+        response = self.client.get(url)
+
+        # Post model zip
+        import_url = f'{self.url}import_model/'
+        response = self.client.post(import_url, data={'file': BytesIO(response.content)})
+        print_output('test_import_model:response.data', import_url)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        imported_tagger_id = response.data['id']
+
+        tagger = CRFExtractor.objects.get(id=imported_tagger_id)
+        tagger_model_dir = pathlib.Path(RELATIVE_MODELS_PATH) / "crf"
+        tagger_model_path = pathlib.Path(tagger.model.name)
+        self.assertTrue(tagger_model_path.exists())
+
+        # Check whether the model was saved into the right location.
+        self.assertTrue(str(tagger_model_dir) in str(tagger.model.path))
+
+        #self.run_tag_text([imported_tagger_id])
+        self.add_cleanup_files(test_model_id)
+        self.add_cleanup_files(imported_tagger_id)
+
 
 # TODO: test training with incorrect fields & labels

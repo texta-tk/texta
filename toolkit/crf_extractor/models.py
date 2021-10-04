@@ -2,9 +2,13 @@ import json
 import logging
 import pathlib
 import secrets
+import tempfile
+import zipfile
+from io import BytesIO
 from django.core import serializers
 from django.contrib.auth.models import User
 from django.db import models, transaction
+from django.http import HttpResponse
 from multiselectfield import MultiSelectField
 
 from texta_crf_extractor.feature_extraction import DEFAULT_LAYERS, DEFAULT_EXTRACTORS
@@ -90,3 +94,56 @@ class CRFExtractor(models.Model):
         logging.getLogger(INFO_LOGGER).info(f"Celery: Starting task for training of CRFExtractor: {self.to_json()}")
         chain = start_crf_task.s() | train_crf_task.s() | save_crf_results.s()
         transaction.on_commit(lambda: chain.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE))
+
+
+    def export_resources(self) -> HttpResponse:
+        with tempfile.SpooledTemporaryFile(encoding="utf8") as tmp:
+            with zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as archive:
+                # Write model object to zip as json
+                model_json = self.to_json()
+                model_json = json.dumps(model_json).encode("utf8")
+                archive.writestr(self.MODEL_JSON_NAME, model_json)
+                for file_path in self.get_resource_paths().values():
+                    path = pathlib.Path(file_path)
+                    archive.write(file_path, arcname=str(path.name))
+            tmp.seek(0)
+            return tmp.read()
+
+
+    @staticmethod
+    def import_resources(zip_file, request, pk) -> int:
+        with transaction.atomic():
+            with zipfile.ZipFile(zip_file, 'r') as archive:
+                json_string = archive.read(CRFExtractor.MODEL_JSON_NAME).decode()
+                model_json = json.loads(json_string)
+                indices = model_json.pop("indices")
+                new_model = CRFExtractor(**model_json)
+                new_model.task = Task.objects.create(crfextractor=new_model, status=Task.STATUS_COMPLETED)
+                new_model.author = User.objects.get(id=request.user.id)
+                new_model.project = Project.objects.get(id=pk)
+                new_model.save()  # Save the intermediate results.
+
+                for index in indices:
+                    index_model, is_created = Index.objects.get_or_create(name=index)
+                    new_model.indices.add(index_model)
+
+                full_tagger_path, relative_tagger_path = new_model.generate_name("crf")
+                with open(full_tagger_path, "wb") as fp:
+                    path = pathlib.Path(model_json["model"]).name
+                    fp.write(archive.read(path))
+                    new_model.model.name = relative_tagger_path
+
+                plot_name = pathlib.Path(model_json["plot"])
+                path = plot_name.name
+                new_model.plot.save(f'{secrets.token_hex(15)}.png', BytesIO(archive.read(path)))
+
+                new_model.save()
+                return new_model.id
+
+
+    def get_resource_paths(self):
+        """
+        Return the full paths of every resource used by this model that lives
+        on the filesystem.
+        """
+        return {"model": self.model.path, "plot": self.plot.path}
