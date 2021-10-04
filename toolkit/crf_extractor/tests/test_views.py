@@ -19,9 +19,11 @@ from toolkit.test_settings import (
     TEST_QUERY,
     TEST_VERSION_PREFIX,
     VERSION_NAMESPACE,
-    CRF_TEST_INDEX
+    CRF_TEST_INDEX,
+    TEST_FIELD_CHOICE
 )
 from toolkit.settings import RELATIVE_MODELS_PATH
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
@@ -36,8 +38,25 @@ class CRFExtractorViewTests(APITransactionTestCase):
         self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/crf_extractors/'
         self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
 
+        self.embedding_ids = [None]
         self.test_crf_ids = []
         self.client.login(username='crfOwner', password='pw')
+
+
+    def __train_embedding_for_test(self) -> int:
+        url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/embeddings/'
+        payload = {
+            "description": "TestEmbedding",
+            "fields": ["text.lemmas"],
+            "max_vocab": 10000,
+            "min_freq": 1,
+            "num_dimensions": 100
+        }
+        response = self.client.post(url, data=payload, format="json")
+        self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+        print_output("__train_embedding_for_test:response.data", response.data)
+
+        return response.data["id"]
 
 
     def add_cleanup_files(self, id):
@@ -45,45 +64,45 @@ class CRFExtractorViewTests(APITransactionTestCase):
         self.addCleanup(remove_file, crf.model.path)
         if not TEST_KEEP_PLOT_FILES:
             self.addCleanup(remove_file, crf.plot.path)
-        #if tagger_object.embedding:
-        #    self.addCleanup(remove_file, tagger_object.embedding.embedding_model.path)
+        if crf.embedding:
+            self.addCleanup(remove_file, crf.embedding.embedding_model.path)
 
 
     def test_run(self):
+        self.embedding_ids.append(self.__train_embedding_for_test())
         self.run_create_crf_training_and_task_signal()
         self.run_list_features()
         self.run_tag_text()
         self.run_test_export_import()
 
     def run_create_crf_training_and_task_signal(self):
-        payload = {
+        for embedding_id in self.embedding_ids:
+            payload = {
                     "description": "TestCRF",
-                    #"query": json.dumps(EMTPY_QUERY),
                     "test_size": 0.2,
                     "feature_fields": ["lemmas", "pos_tags", "text"],
                     "feature_context_fields": ["lemmas", "pos_tags", "text"],
                     "labels": ["GPE", "ORG", "PER"],
-                    "field": CRF_TEST_FIELD,
+                    "mlp_field": CRF_TEST_FIELD,
                     "indices": [{"name": self.test_index_name}],
-        }
+                    "embedding": embedding_id
+            }
+            response = self.client.post(self.url, payload, format='json')
+            print_output('test_create_tagger_training_and_task_signal:response.data', response.data)
 
-        # procees to analyze result
-        response = self.client.post(self.url, payload, format='json')
-        print_output('test_create_tagger_training_and_task_signal:response.data', response.data)
-
-        # Check if Extractor gets created
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        created = CRFExtractor.objects.get(id=response.data['id'])
-        # add to be tested
-        self.test_crf_ids.append(created.pk)
-        # Check if not errors
-        self.assertEqual(created.task.errors, '[]')
-        # Remove tagger files after test is done
-        self.add_cleanup_files(created.id)
-        # Check if Task gets created via a signal
-        self.assertTrue(created.task is not None)
-        # Check if gets trained and completed
-        self.assertEqual(created.task.status, Task.STATUS_COMPLETED)
+            # Check if Extractor gets created
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            created = CRFExtractor.objects.get(id=response.data['id'])
+            # add to be tested
+            self.test_crf_ids.append(created.pk)
+            # Check if not errors
+            self.assertEqual(created.task.errors, '[]')
+            # Remove tagger files after test is done
+            self.add_cleanup_files(created.id)
+            # Check if Task gets created via a signal
+            self.assertTrue(created.task is not None)
+            # Check if gets trained and completed
+            self.assertEqual(created.task.status, Task.STATUS_COMPLETED)
 
 
     def run_list_features(self):

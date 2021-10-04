@@ -44,7 +44,7 @@ class CRFExtractor(models.Model):
     suffix_len = models.TextField(default=json.dumps((2,2)))
     
     # this is the main field used for training
-    field = models.CharField(default="text", max_length=MAX_DESC_LEN)
+    mlp_field = models.CharField(default="text", max_length=MAX_DESC_LEN)
     # these are the parsed feature fields
     feature_fields = MultiSelectField(choices=FEATURE_FIELDS_CHOICES)
     context_feature_fields = MultiSelectField(choices=FEATURE_FIELDS_CHOICES)
@@ -153,19 +153,18 @@ class CRFExtractor(models.Model):
     def load_extractor(self):
         """Loading model from disc."""
         # load embedding
-        #if self.embedding:
-        #    embedding = W2VEmbedding()
-        #    embedding.load_django(self.embedding)
-        #else:
-        #    embedding = False
-        # load tagger
-        extractor = Extractor()
+        if self.embedding:
+            embedding = self.embedding.get_embedding()
+            embedding.load_django(self.embedding)
+        else:
+            embedding = False
+        # load extractor model
+        extractor = Extractor(embedding=embedding)
         loaded = extractor.load_django(self)
-        # check if tagger gets loaded
+        # check if model gets loaded
         if not loaded:
             return None
         return extractor
-
 
 
     def apply_loaded_extractor(self, extractor: Extractor, mlp_document):

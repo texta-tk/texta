@@ -19,8 +19,7 @@ from toolkit.tools.plots import create_tagger_plot
 
 from toolkit.settings import (
     CELERY_LONG_TERM_TASK_QUEUE,
-    #CELERY_MLP_TASK_QUEUE,
-    #CELERY_SHORT_TERM_TASK_QUEUE,
+    CELERY_SHORT_TERM_TASK_QUEUE,
     ERROR_LOGGER,
     INFO_LOGGER,
     MEDIA_URL
@@ -50,14 +49,14 @@ def train_crf_task(crf_id: int):
         show_progress.update_view(0)
         # retrieve indices & field data
         indices = get_indices_from_object(crf_object)
-        field = crf_object.field
+        mlp_field = crf_object.mlp_field
 
         # load embedding if any
-        #if crf_object.embedding:
-        #    embedding = W2VEmbedding()
-        #    embedding.load_django(tagger_object.embeˇdding)
-        #else:
-        #    embedding = None
+        if crf_object.embedding:
+            embedding = crf_object.embedding.get_embedding()
+            embedding.load_django(crf_object.embedding)
+        else:
+            embedding = None
 
         # scroll docs
         logging.getLogger(INFO_LOGGER).info(f"Scrolling data for CRFExtractor with ID: {crf_id}!")
@@ -87,10 +86,10 @@ def train_crf_task(crf_id: int):
         # start training
         logging.getLogger(INFO_LOGGER).info(f"Training the model for CRFExtractor with ID: {crf_id}!")
         # create extractor
-        extractor = CRFExtractor(config = config)
+        extractor = CRFExtractor(config=config, embedding=embedding)
         # train the CRF model
         model_full_path, relative_model_path = crf_object.generate_name("crf")
-        report, _ = extractor.train(documents, save_path = model_full_path, mlp_field = field)
+        report, _ = extractor.train(documents, save_path = model_full_path, mlp_field = mlp_field)
         # Save the image before its path.
         image_name = f'{secrets.token_hex(15)}.png'
         crf_object.plot.save(image_name, create_tagger_plot(report.to_dict()), save=False)
@@ -143,7 +142,7 @@ def save_crf_results(result_data: dict):
         raise e
 
 
-@task(name="apply_crf_extractor", base=BaseTask)
+@task(name="apply_crf_extractor", base=BaseTask, QUEUE=CELERY_SHORT_TERM_TASK_QUEUE)
 def apply_crf_extractor(crf_id: int, mlp_document: dict):
     # Get CRF object
     crf_object = CRFExtractorObject.objects.get(pk=crf_id)

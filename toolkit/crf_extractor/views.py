@@ -19,8 +19,6 @@ from toolkit.permissions.project_permissions import ProjectAccessInApplicationsA
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.mlp.tasks import apply_mlp_on_list
 from toolkit.settings import CELERY_MLP_TASK_QUEUE
-#from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE
-#from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import BulkDelete
 
 
@@ -82,7 +80,6 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         # check if model exists
         if not extractor.model.path:
             raise NonExistantModelError()
-        
         crf_model = extractor.load_extractor()
         feature_info = crf_model.get_features()
         return Response(feature_info, status=status.HTTP_200_OK)
@@ -91,7 +88,6 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
     @action(detail=True, methods=['get'])
     def export_model(self, request, pk=None, project_pk=None):
         zip_name = f'crf_model_{pk}.zip'
-
         extractor: CRFExtractor = self.get_object()
         data = extractor.export_resources()
         response = HttpResponse(data)
@@ -129,6 +125,4 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             extractor.id,
             mlp_document
         )
-
-        print(extractor_response)
         return Response(extractor_response, status=status.HTTP_200_OK)

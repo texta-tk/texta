@@ -158,10 +158,10 @@ class ElasticSearcher:
         """
         index = doc['_index']
         highlight = doc['highlight'] if 'highlight' in doc else {}
-        new_doc = doc['_source']
+        doc = doc['_source']
         if self.flatten:
-            new_doc = self.core.flatten(doc)
-        return new_doc, index, highlight
+            doc = self.core.flatten(doc)
+        return doc, index, highlight
 
 
     def _decode_doc(self, doc, field_path=None):
@@ -233,14 +233,11 @@ class ElasticSearcher:
     @elastic_connection
     def scroll(self):
         scroll_id = None
-
         try:
-
             # Zero-out the progress in case the same ElasticSearch instance is used twice while iterating through the dataset
             if self.callback_progress:
                 self.callback_progress.update_view(0)
                 self.callback_progress.n_count = 0
-
             page = self.core.es.search(index=self.indices, body=self.query, scroll=self.scroll_timeout, size=self.scroll_size)
             scroll_id = page['_scroll_id']
             current_page = 0
@@ -272,10 +269,8 @@ class ElasticSearcher:
                         if hit['_id'] not in self.ignore_ids:
                             num_scrolled += 1
                             parsed_doc = self._parse_doc(hit)
-
                             if self.output == self.OUT_META:
                                 yield hit
-
                             elif self.output == self.OUT_TEXT:
                                 for field in parsed_doc.values():
                                     if self.text_processor:
