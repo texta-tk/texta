@@ -118,7 +118,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
 
     def run_tag_text(self):
         """Tests the endpoint for the tag_text action"""
-        payload = {"text": "New York is a place in US."}
+        payload = {"text": "New York is a place in the US."}
 
         for test_tagger_id in self.test_crf_ids:
             tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'

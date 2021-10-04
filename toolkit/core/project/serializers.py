@@ -232,7 +232,8 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
                 'lang_index',
                 'evaluators',
                 'summarizer_index',
-                'rakun_extractors'
+                'rakun_extractors',
+                'crf_extrcators'
             )
         elif api_version == 'v1':
             resources = (
@@ -258,7 +259,8 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
                 'evaluators',
                 'summarizer_index',
                 'apply_analyzers',
-                'rakun_extractors'
+                'rakun_extractors',
+                'crf_extrcators'
             )
 
         for resource_name in resources:
