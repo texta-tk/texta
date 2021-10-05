@@ -21,8 +21,24 @@ ANNOTATION_MAPPING = {
 }
 
 
-class SkipDocumentSerializer(serializers.Serializer):
+class DocumentIDSerializer(serializers.Serializer):
     document_id = serializers.CharField()
+
+
+class BinaryAnnotationSerializer(serializers.Serializer):
+    document_id = serializers.CharField()
+    annotation_type = serializers.ChoiceField(choices=(
+        ("pos", "pos"),
+        ("neg", "neg"))
+    )
+
+
+class EntityAnnotationSerializer(serializers.Serializer):
+    document_id = serializers.CharField()
+    # Add proper validation for the structure here.
+    spans = serializers.ListSerializer(child=serializers.IntegerField(), default=[0, 0])
+    fact_name = serializers.CharField()
+    fact_value = serializers.CharField()
 
 
 class MultilabelAnnotatorConfigurationSerializer(serializers.ModelSerializer):
@@ -153,7 +169,7 @@ class AnnotatorSerializer(FieldValidationSerializer, serializers.ModelSerializer
             'modified_at',
             'completed_at',
             'total',
-            'num_processed',
+            'annotated',
             'skipped',
             'validated',
             'binary_configuration',
@@ -162,4 +178,4 @@ class AnnotatorSerializer(FieldValidationSerializer, serializers.ModelSerializer
             "bulk_size",
             "es_timeout"
         )
-        read_only_fields = ["annotator_users", "author", "total", "num_processed", "validated", "skipped", "created_at", "modified_at", "completed_at"]
+        read_only_fields = ["annotator_users", "author", "total", "annotated", "validated", "skipped", "created_at", "modified_at", "completed_at"]

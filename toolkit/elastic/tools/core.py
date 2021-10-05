@@ -376,7 +376,7 @@ class ElasticCore:
         self.es.indices.put_mapping(body=mapping, index=index, doc_type=doc_type, include_type_name=True)
 
 
-    def get_negative_annotator_query(self, query: dict):
+    def get_annotation_query(self, query: dict):
         """
         Return a query dictionary for the annotator for documents that lack the given field
         within a limited subset.

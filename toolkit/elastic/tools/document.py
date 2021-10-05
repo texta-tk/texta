@@ -15,104 +15,6 @@ from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.settings import ERROR_LOGGER, TEXTA_ANNOTATOR_KEY
 
 
-class ESDocObject:
-    """
-    An object connected to ES document. Retrieves the document from ES on init.
-    """
-
-
-    def __init__(self, document_id, index: str):
-        self.core = ElasticCore()
-        self.document_id = document_id
-        self.index = index
-        self.document = self.get()
-
-
-    @elastic_connection
-    def get(self):
-        """
-        Retrieve document by ID.
-        """
-        document = self.core.es.get(self.index, self.document_id)
-        return {
-            "_index": document["_index"],
-            "_type": document["_type"],
-            "_id": document["_id"],
-            "_source": document["_source"]
-        }
-
-
-    @staticmethod
-    @elastic_connection
-    def random_document(indices, query=EMPTY_QUERY):
-        ec = ElasticCore()
-        s = elasticsearch_dsl.Search(using=ec.es, index=indices)
-        s = s.query("function_score", random_score={})
-        s = s.source(exclude=["*"])
-        s = s.extra(size=1)
-        hits = s.execute()
-        for hit in hits:
-            return ESDocObject(document_id=hit.meta.id, index=hit.meta.index)
-        return None
-
-
-    def apply_mlp(self, mlp: MLP, analyzers: List[str], field_data: List[str]):
-        """
-        Applies MLP to the selected fields and combines the results.
-        """
-        document_source = self.document["_source"]
-        mlp_processed = mlp.process_docs([document_source], analyzers=analyzers, doc_paths=field_data)[0]
-        self.document["_source"] = {**document_source, **mlp_processed}
-        return True
-
-
-    def add_field(self, field_name, field_content):
-        """
-        Adds field to document source.
-        """
-        self.document["_source"][field_name] = field_content
-        return True
-
-
-    def add_comment(self, comment: str):
-        source = self.document["_source"]
-        annotation_dict = source.get(TEXTA_ANNOTATOR_KEY, {})
-        comments = annotation_dict.get("comments", [])
-        comments.append(comment)
-        annotation_dict["comments"] = comments
-        self.document["_source"][TEXTA_ANNOTATOR_KEY] = annotation_dict
-
-
-    def add_skipped(self):
-        source = self.document["_source"]
-        annotation_dict = source.get(TEXTA_ANNOTATOR_KEY, {})
-        annotation_dict["skipped_timestamp_utc"] = datetime.datetime.utcnow()
-        self.document["_source"][TEXTA_ANNOTATOR_KEY] = annotation_dict
-
-
-    @elastic_connection
-    def update(self, retry_on_conflict=3, refresh="wait_for"):
-        """
-        Updates document in ES by ID.
-        """
-        return self.core.es.update(
-            index=self.document["_index"],
-            doc_type=self.document["_type"],
-            id=self.document_id,
-            body={"doc": self.document["_source"]},
-            refresh=refresh,
-            retry_on_conflict=retry_on_conflict
-        )
-
-
-    @elastic_connection
-    def delete(self):
-        """
-        Removes given document from ES.
-        """
-        return self.core.es.delete(index=self.index, id=self.document_id)
-
-
 # This class should be modified for bulk operations etc
 class ElasticDocument:
     """
@@ -326,3 +228,120 @@ class ElasticDocument:
         """
         index = indices if indices else self.index
         return self.core.es.count(index=index)["count"]
+
+
+class ESDocObject:
+    """
+    An object connected to ES document. Retrieves the document from ES on init.
+    """
+
+
+    def __init__(self, document_id, index):
+        """
+        :param document_id: ID of an Elasticsearch document.
+        :param index: Name or names of indices in.
+        """
+        self.core = ElasticCore()
+        self.document_id = document_id
+        self.index = index
+        self.document = self.get()
+
+
+    @elastic_connection
+    def get(self):
+        """
+        Retrieve document by ID.
+        """
+        document = self.core.es.get(self.index, self.document_id)
+        return {
+            "_index": document["_index"],
+            "_type": document["_type"],
+            "_id": document["_id"],
+            "_source": document["_source"]
+        }
+
+
+    @staticmethod
+    @elastic_connection
+    def random_document(indices, query=EMPTY_QUERY):
+        ec = ElasticCore()
+        s = elasticsearch_dsl.Search(using=ec.es, index=indices)
+        s = s.query("function_score", random_score={})
+        s = s.source(exclude=["*"])
+        s = s.extra(size=1)
+        hits = s.execute()
+        for hit in hits:
+            return ESDocObject(document_id=hit.meta.id, index=hit.meta.index)
+        return None
+
+
+    def apply_mlp(self, mlp: MLP, analyzers: List[str], field_data: List[str]):
+        """
+        Applies MLP to the selected fields and combines the results.
+        """
+        document_source = self.document["_source"]
+        mlp_processed = mlp.process_docs([document_source], analyzers=analyzers, doc_paths=field_data)[0]
+        self.document["_source"] = {**document_source, **mlp_processed}
+        return True
+
+
+    def add_field(self, field_name, field_content):
+        """
+        Adds field to document source.
+        """
+        self.document["_source"][field_name] = field_content
+        return True
+
+
+    def add_fact(self, fact_name, fact_value, doc_path, spans=json.dumps([[0, 0]])):
+        fact = {"str_val": fact_value, "fact_name": fact_name, "doc_path": doc_path, "spans": spans}
+        existing_facts = self.document["_source"].get("texta_facts", [])
+        existing_facts.append(fact)
+        existing_facts = ElasticDocument.remove_duplicate_facts(existing_facts)
+        self.document["_source"]["texta_facts"] = existing_facts
+
+
+    def add_comment(self, comment: str):
+        source = self.document["_source"]
+        annotation_dict = source.get(TEXTA_ANNOTATOR_KEY, {})
+        comments = annotation_dict.get("comments", [])
+        comments.append(comment)
+        annotation_dict["comments"] = comments
+        self.document["_source"][TEXTA_ANNOTATOR_KEY] = annotation_dict
+
+
+    def add_skipped(self):
+        source = self.document["_source"]
+        annotation_dict = source.get(TEXTA_ANNOTATOR_KEY, {})
+        annotation_dict["skipped_timestamp_utc"] = datetime.datetime.utcnow()
+        self.document["_source"][TEXTA_ANNOTATOR_KEY] = annotation_dict
+
+
+    def add_annotated(self):
+        source = self.document["_source"]
+        annotation_dict = source.get(TEXTA_ANNOTATOR_KEY, {})
+        annotation_dict["processed_timestamp_utc"] = datetime.datetime.utcnow()
+        self.document["_source"][TEXTA_ANNOTATOR_KEY] = annotation_dict
+
+
+    @elastic_connection
+    def update(self, retry_on_conflict=3, refresh="wait_for"):
+        """
+        Updates document in ES by ID.
+        """
+        return self.core.es.update(
+            index=self.document["_index"],
+            doc_type=self.document["_type"],
+            id=self.document_id,
+            body={"doc": self.document["_source"]},
+            refresh=refresh,
+            retry_on_conflict=retry_on_conflict
+        )
+
+
+    @elastic_connection
+    def delete(self):
+        """
+        Removes given document from ES.
+        """
+        return self.core.es.delete(index=self.index, id=self.document_id)

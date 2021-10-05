@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from toolkit.annotator.models import Annotator
-from toolkit.annotator.serializers import AnnotatorSerializer, SkipDocumentSerializer
+from toolkit.annotator.serializers import AnnotatorSerializer, BinaryAnnotationSerializer, EntityAnnotationSerializer
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import EmptySerializer
 from toolkit.view_constants import BulkDelete
@@ -38,13 +38,53 @@ class AnnotatorViewset(mixins.CreateModelMixin,
             return Response({"detail": "No more documents left!"}, status=status.HTTP_404_NOT_FOUND)
 
 
-    @action(detail=True, methods=["POST"], serializer_class=SkipDocumentSerializer)
+    @action(detail=True, methods=["POST"], serializer_class=BinaryAnnotationSerializer)
     def skip_document(self, request, pk=None, project_pk=None):
-        serializer: SkipDocumentSerializer = self.get_serializer(data=request.data)
+        serializer: BinaryAnnotationSerializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         annotator: Annotator = self.get_object()
         annotator.skip_document(serializer.validated_data["document_id"])
         return Response({"detail": f"Skipped document with ID: {serializer.validated_data['document_id']}"})
+
+
+    @action(detail=True, methods=["POST"], serializer_class=EntityAnnotationSerializer)
+    def annotate_entity(self, request, pk=None, project_pk=None):
+        serializer: EntityAnnotationSerializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        annotator: Annotator = self.get_object()
+        annotator.add_entity(
+            document_id=serializer.validated_data["document_id"],
+            fact_name=serializer.validated_data["fact_name"],
+            fact_value=serializer.validated_data["fact_value"],
+            spans=serializer.validated_data["spans"]
+        )
+        return Response({"detail": f"Skipped document with ID: {serializer.validated_data['document_id']}"})
+
+
+    @action(detail=True, methods=["POST"], serializer_class=BinaryAnnotationSerializer)
+    def annotate_binary(self, request, pk=None, project_pk=None):
+        serializer: BinaryAnnotationSerializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        annotator: Annotator = self.get_object()
+        choice = serializer.validated_data["annotation_type"]
+
+        if choice == "pos":
+            annotator.add_pos_label(serializer.validated_data["document_id"])
+            return Response({"detail": f"Annotated document with ID: {serializer.validated_data['document_id']} with the pos label '{annotator.binary_configuration.pos_value}'"})
+
+        elif choice == "neg":
+            annotator.add_neg_label(serializer.validated_data["document_id"])
+            return Response({"detail": f"Annotated document with ID: {serializer.validated_data['document_id']} with the neg label '{annotator.binary_configuration.neg_value}'"})
+
+
+    #
+    # @action(detail=True, methods=["POST"], serializer_class=BinaryAnnotationSerializer)
+    # def annotate_multilabel(self, request, pk=None, project_pk=None):
+    #     serializer: BinaryAnnotationSerializer = self.get_serializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     annotator: Annotator = self.get_object()
+    #     annotator.skip_document(serializer.validated_data["document_id"])
+    #     return Response({"detail": f"Skipped document with ID: {serializer.validated_data['document_id']}"})
 
 
     def get_queryset(self):

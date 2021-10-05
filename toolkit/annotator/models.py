@@ -45,6 +45,7 @@ class MultilabelAnnotatorConfiguration(models.Model):
 
 class BinaryAnnotatorConfiguration(models.Model):
     fact_name = models.CharField(max_length=CHAR_LIMIT, help_text="Sets the value for the fact name for all annotated documents.")
+    # Change these to a Label value.
     pos_value = models.CharField(max_length=CHAR_LIMIT, help_text="Sets the name for a fact value for positive documents.")
     neg_value = models.CharField(max_length=CHAR_LIMIT, help_text="Sets the name for a fact value for negative documents.")
 
@@ -70,7 +71,7 @@ class Annotator(models.Model):
     completed_at = models.DateTimeField(null=True, default=None)
 
     total = models.IntegerField(default=0, help_text="How many documents are going to be annotated.")
-    num_processed = models.IntegerField(default=0, help_text="How many documents of the total have been annotated.")
+    annotated = models.IntegerField(default=0, help_text="How many documents of the total have been annotated.")
     skipped = models.IntegerField(default=0, help_text="How many documents of the total have been skipped.")
     validated = models.IntegerField(default=0, help_text="How many documents of the total have been validated.")
 
@@ -128,7 +129,12 @@ class Annotator(models.Model):
         :param document_id: Elasticsearch document ID of the comment in question.
         :return:
         """
-        pass
+        indices = self.get_indices()
+        ed = ESDocObject(document_id=document_id, index=indices)
+        ed.add_fact(fact_value=self.binary_configuration.pos_value, fact_name=self.binary_configuration.fact_name, doc_path=self.field)
+        ed.add_annotated()
+        ed.update()
+        self.update_progress()
 
 
     def add_neg_label(self, document_id: str):
@@ -137,7 +143,12 @@ class Annotator(models.Model):
         :param document_id: Elasticsearch document ID of the comment in question.
         :return:
         """
-        pass
+        indices = self.get_indices()
+        ed = ESDocObject(document_id=document_id, index=indices)
+        ed.add_fact(fact_value=self.binary_configuration.neg_value, fact_name=self.binary_configuration.fact_name, doc_path=self.field)
+        ed.add_annotated()
+        ed.update()
+        self.update_progress()
 
 
     def add_label(self, document_id: str, label: str):
@@ -159,12 +170,18 @@ class Annotator(models.Model):
         :param fact_value: Which fact value to give to the Elasticsearch document.
         :return:
         """
-        pass
+        indices = self.get_indices()
+        ed = ESDocObject(document_id=document_id, index=indices)
+        first, last = spans
+        ed.add_fact(fact_value=fact_value, fact_name=fact_name, doc_path=self.field, spans=json.dumps([first, last]))
+        ed.add_annotated()
+        ed.update()
+        self.update_progress()
 
 
     def pull_document(self):
         """
-        Function for returning a new Elasticsearch document to the for annotation.
+        Function for returning a new Elasticsearch document for annotation.
         :return:
         """
         from toolkit.elastic.tools.core import ElasticCore
@@ -172,7 +189,7 @@ class Annotator(models.Model):
         ec = ElasticCore()
         json_query = json.loads(self.query)
         indices = self.get_indices()
-        query = ec.get_negative_annotator_query(json_query)
+        query = ec.get_annotation_query(json_query)
         document = ESDocObject.random_document(indices=indices, query=query)
         # At one point in time, the documents will rune out.
         if document:
@@ -208,6 +225,11 @@ class Annotator(models.Model):
         ed.add_comment(comment)
         ed.update()
         return True
+
+
+    def update_progress(self):
+        self.annotated = F('annotated') + 1
+        self.save(update_fields=["annotated"])
 
 
     def pull_skipped_documents(self):
