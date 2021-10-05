@@ -2,21 +2,23 @@ import json
 from rest_framework import serializers, fields
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.serializer_constants import (
     FieldParseSerializer,
     IndicesSerializerMixin,
     ProjectResourceUrlSerializer,
     ProjectFilteredPrimaryKeyRelatedField
 )
-
+from toolkit.tagger.choices import DEFAULT_ES_TIMEOUT, DEFAULT_BULK_SIZE, DEFAULT_MAX_CHUNK_BYTES
 from toolkit.embedding.models import Embedding
 from .models import CRFExtractor
 from .choices import FEATURE_FIELDS_CHOICES, FEATURE_EXTRACTOR_CHOICES
 
 
 class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
-    author = UserSerializer(read_only=True)
     description = serializers.CharField(help_text='Description for the CRFExtractor model.')
+    author = UserSerializer(read_only=True)
+    query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)
     mlp_field = serializers.CharField(help_text='Text field used to build the model.')
     labels = serializers.JSONField(default=["GPE", "ORG", "PER", "LOC"], help_text="List of labels used to train the extraction model.")
     num_iter = serializers.IntegerField(default=100)
@@ -44,6 +46,15 @@ class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin
         )
         read_only_fields = ()
         fields_to_parse = ('fields',)
+
+
+class ApplyCRFExtractorSerializer(FieldParseSerializer, IndicesSerializerMixin):
+    mlp_fields = serializers.ListField(child=serializers.CharField())
+    query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)
+    es_timeout = serializers.IntegerField(default=DEFAULT_ES_TIMEOUT, help_text=f"Elasticsearch scroll timeout in minutes. Default:{DEFAULT_ES_TIMEOUT}.")
+    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=DEFAULT_BULK_SIZE, help_text=f"How many documents should be sent towards Elasticsearch at once. Default:{DEFAULT_BULK_SIZE}.")
+    max_chunk_bytes = serializers.IntegerField(min_value=1, default=DEFAULT_MAX_CHUNK_BYTES, help_text=f"Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors. Default:{DEFAULT_MAX_CHUNK_BYTES}.")
+
 
 
 class CRFExtractorTagTextSerializer(serializers.Serializer):

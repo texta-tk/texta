@@ -1,6 +1,7 @@
 import uuid
 import json
 import pathlib
+from time import sleep
 from io import BytesIO
 
 from django.test import override_settings
@@ -22,6 +23,7 @@ from toolkit.test_settings import (
     CRF_TEST_INDEX,
     TEST_FIELD_CHOICE
 )
+from toolkit.elastic.tools.core import ElasticCore
 from toolkit.settings import RELATIVE_MODELS_PATH
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
@@ -32,6 +34,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
 
     def setUp(self):
         self.test_index_name = CRF_TEST_INDEX
+        self.test_index_copy = reindex_test_dataset(from_index=CRF_TEST_INDEX)
         self.user = create_test_user('crfOwner', 'my@email.com', 'pw')
         self.project = project_creation("crfTestProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
@@ -41,6 +44,12 @@ class CRFExtractorViewTests(APITransactionTestCase):
         self.embedding_ids = [None]
         self.test_crf_ids = []
         self.client.login(username='crfOwner', password='pw')
+
+
+    def tearDown(self) -> None:
+        CRFExtractor.objects.all().delete()
+        ec = ElasticCore()
+        res = ec.delete_index(self.test_index_copy)
 
 
     def __train_embedding_for_test(self) -> int:
@@ -74,6 +83,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
         self.run_list_features()
         self.run_tag_text()
         self.run_test_export_import()
+        self.run_apply_crf_to_index()
 
     def run_create_crf_training_and_task_signal(self):
         for embedding_id in self.embedding_ids:
@@ -157,6 +167,37 @@ class CRFExtractorViewTests(APITransactionTestCase):
         #self.run_tag_text([imported_tagger_id])
         self.add_cleanup_files(test_model_id)
         self.add_cleanup_files(imported_tagger_id)
+
+
+    def run_apply_crf_to_index(self):
+        """Tests applying extractor to index using apply_to_index endpoint."""
+
+        test_tagger_id = self.test_crf_ids[0]
+        url = f'{self.url}{test_tagger_id}/apply_to_index/'
+
+        payload = {
+            "description": "apply crf test task",
+            #"query": 
+            "mlp_fields": ["text"],
+            "indices": [{"name": self.test_index_name}],
+        }
+        response = self.client.post(url, payload, format='json')
+        print_output('test_apply_crf_to_index:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        tagger_object = CRFExtractor.objects.get(pk=test_tagger_id)
+
+        # Wait til the task has finished
+        while tagger_object.task.status != Task.STATUS_COMPLETED:
+            print_output('test_apply_crf_to_index: waiting for applying tagger task to finish, current status:', tagger_object.task.status)
+            sleep(2)
+
+        #results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution(self.new_fact_name)
+        #print_output("test_apply_tagger_to_index:elastic aggerator results:", results)
+
+        # Check if expected number of facts are added to the index
+        #expected_number_of_facts = 30
+        #self.assertTrue(results[self.new_fact_value] == expected_number_of_facts)
+        #self.add_cleanup_files(test_tagger_id)
 
 
 # TODO: test training with incorrect fields & labels

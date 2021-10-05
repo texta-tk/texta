@@ -1,4 +1,6 @@
 from celery.decorators import task
+from elasticsearch.helpers import streaming_bulk
+from typing import List
 import pathlib
 import logging
 import secrets
@@ -12,6 +14,8 @@ from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.core.task.models import Task
 from .models import CRFExtractor as CRFExtractorObject
 from toolkit.elastic.tools.searcher import ElasticSearcher
+from toolkit.elastic.tools.core import ElasticCore
+from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.embedding.models import Embedding
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.helper_functions import get_indices_from_object
@@ -137,6 +141,8 @@ def save_crf_results(result_data: dict):
         return True
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(e)
+        crf_object = CRFExtractorObject.objects.get(pk=crf_id)
+        task_object = crf_object.task
         task_object.add_error(str(e))
         task_object.update_status(Task.STATUS_FAILED)
         raise e
@@ -151,3 +157,75 @@ def apply_crf_extractor(crf_id: int, mlp_document: dict):
     # Use the loaded model for predicting
     prediction = crf_object.apply_loaded_extractor(crf_extractor, mlp_document)
     return prediction
+
+
+def update_generator(generator: ElasticSearcher, ec: ElasticCore, mlp_fields: List[str], object_id: int, extractor: CRFExtractor = None):
+    for i, scroll_batch in enumerate(generator):
+        logging.getLogger(INFO_LOGGER).info(f"Appyling CRFExtractor with ID {object_id} to batch {i + 1}...")
+        for raw_doc in scroll_batch:
+            hit = raw_doc["_source"]
+            existing_facts = hit.get("texta_facts", [])
+
+            for mlp_field in mlp_fields:
+                # parse document structure and find mlp field
+
+
+                result = extractor.tag(hit, field_name=mlp_field)
+
+
+                # TODO: into facts!!!
+
+
+                #result = tagger_object.apply_loaded_tagger(tagger, text, input_type="text", feedback=None)
+                #new_facts = to_texta_fact(tags, field, fact_name, fact_value)
+                #if new_facts:
+                #    existing_facts.extend(new_facts)
+
+            if existing_facts:
+                # Remove duplicates to avoid adding the same facts with repetitive use.
+                existing_facts = ElasticDocument.remove_duplicate_facts(existing_facts)
+
+            yield {
+                "_index": raw_doc["_index"],
+                "_id": raw_doc["_id"],
+                "_type": raw_doc.get("_type", "_doc"),
+                "_op_type": "update",
+                "_source": {"doc": {"texta_facts": existing_facts}}
+            }
+
+
+@task(name="apply_crf_extractor_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
+def apply_crf_extractor_to_index(object_id: int, indices: List[str], mlp_fields: List[str], query: dict, bulk_size: int, max_chunk_bytes: int, es_timeout: int):
+    try:
+        # load model
+        crf_object = CRFExtractorObject.objects.get(pk=object_id)
+        extractor = crf_object.load_extractor()
+        # progress
+        progress = ShowProgress(crf_object.task)
+        # add fact field if missing
+        ec = ElasticCore()
+        [ec.add_texta_facts_mapping(index) for index in indices]
+        # search
+        searcher = ElasticSearcher(
+            indices=indices,
+            field_data=mlp_fields + ["texta_facts"],  # Get facts to add upon existing ones.
+            query=query,
+            output=ElasticSearcher.OUT_RAW,
+            timeout=f"{es_timeout}m",
+            callback_progress=progress,
+        )
+        # create update actions
+        actions = update_generator(generator=searcher, ec=ec, mlp_fields=mlp_fields, object_id=object_id, extractor=extractor)
+        for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes, max_retries=3):
+            if not success:
+                logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
+        # all done
+        crf_object.task.complete()
+        return True
+
+    except Exception as e:
+        logging.getLogger(ERROR_LOGGER).exception(e)
+        error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
+        crf_object = CRFExtractorObject.objects.get(pk=object_id)
+        crf_object.task.add_error(error_message)
+        crf_object.task.update_status(Task.STATUS_FAILED)
