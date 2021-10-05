@@ -56,6 +56,5 @@ class ApplyCRFExtractorSerializer(FieldParseSerializer, IndicesSerializerMixin):
     max_chunk_bytes = serializers.IntegerField(min_value=1, default=DEFAULT_MAX_CHUNK_BYTES, help_text=f"Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors. Default:{DEFAULT_MAX_CHUNK_BYTES}.")
 
 
-
 class CRFExtractorTagTextSerializer(serializers.Serializer):
     text = serializers.CharField()

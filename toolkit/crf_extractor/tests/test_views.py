@@ -23,6 +23,7 @@ from toolkit.test_settings import (
     CRF_TEST_INDEX,
     TEST_FIELD_CHOICE
 )
+from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.settings import RELATIVE_MODELS_PATH
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
@@ -171,15 +172,12 @@ class CRFExtractorViewTests(APITransactionTestCase):
 
     def run_apply_crf_to_index(self):
         """Tests applying extractor to index using apply_to_index endpoint."""
-
         test_tagger_id = self.test_crf_ids[0]
         url = f'{self.url}{test_tagger_id}/apply_to_index/'
-
         payload = {
             "description": "apply crf test task",
-            #"query": 
             "mlp_fields": ["text"],
-            "indices": [{"name": self.test_index_name}],
+            "indices": [{"name": self.test_index_copy}],
         }
         response = self.client.post(url, payload, format='json')
         print_output('test_apply_crf_to_index:response.data', response.data)
@@ -191,13 +189,15 @@ class CRFExtractorViewTests(APITransactionTestCase):
             print_output('test_apply_crf_to_index: waiting for applying tagger task to finish, current status:', tagger_object.task.status)
             sleep(2)
 
-        #results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution(self.new_fact_name)
-        #print_output("test_apply_tagger_to_index:elastic aggerator results:", results)
+        results_old = ElasticAggregator(indices=[self.test_index_name]).get_fact_values_distribution("GPE")
+        print_output("test_apply_crf_to_index_bofore:elastic aggerator results:", results_old)
 
-        # Check if expected number of facts are added to the index
-        #expected_number_of_facts = 30
-        #self.assertTrue(results[self.new_fact_value] == expected_number_of_facts)
-        #self.add_cleanup_files(test_tagger_id)
+        results_new = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution("GPE")
+        print_output("test_apply_crf_to_index_after:elastic aggerator results:", results_new)
+
+        # assert we have more facts than before
+        for item in ["China", "U.S.", "Iran"]:
+            self.assertTrue(results_old[item] < results_new[item])
 
 
 # TODO: test training with incorrect fields & labels

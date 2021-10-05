@@ -159,6 +159,21 @@ def apply_crf_extractor(crf_id: int, mlp_document: dict):
     return prediction
 
 
+def to_texta_fact(results: List[dict], field: str):
+    new_facts = []
+    for result in results:
+        for fact_name, fact_value in result.items():
+            new_fact = {
+                "fact": fact_name,
+                "str_val": fact_value,
+                "doc_path": field + "text",
+                # need to get real spans!!
+                "spans": json.dumps([[0, 0]])
+            }
+            new_facts.append(new_fact)
+    return new_facts
+
+
 def update_generator(generator: ElasticSearcher, ec: ElasticCore, mlp_fields: List[str], object_id: int, extractor: CRFExtractor = None):
     for i, scroll_batch in enumerate(generator):
         logging.getLogger(INFO_LOGGER).info(f"Appyling CRFExtractor with ID {object_id} to batch {i + 1}...")
@@ -167,19 +182,13 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, mlp_fields: Li
             existing_facts = hit.get("texta_facts", [])
 
             for mlp_field in mlp_fields:
-                # parse document structure and find mlp field
-
-
                 result = extractor.tag(hit, field_name=mlp_field)
 
+                # do this in package instead!!!
+                new_facts = to_texta_fact(result, mlp_field)
 
-                # TODO: into facts!!!
-
-
-                #result = tagger_object.apply_loaded_tagger(tagger, text, input_type="text", feedback=None)
-                #new_facts = to_texta_fact(tags, field, fact_name, fact_value)
-                #if new_facts:
-                #    existing_facts.extend(new_facts)
+                if new_facts:
+                    existing_facts.extend(new_facts)
 
             if existing_facts:
                 # Remove duplicates to avoid adding the same facts with repetitive use.
