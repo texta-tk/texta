@@ -16,7 +16,6 @@ from .models import CRFExtractor as CRFExtractorObject
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.document import ElasticDocument
-from toolkit.embedding.models import Embedding
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.helper_functions import get_indices_from_object
 from toolkit.tools.plots import create_tagger_plot

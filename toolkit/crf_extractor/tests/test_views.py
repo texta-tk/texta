@@ -1,11 +1,8 @@
-import uuid
-import json
 import pathlib
 from time import sleep
 from io import BytesIO
 
 from django.test import override_settings
-from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
@@ -26,13 +23,19 @@ from toolkit.test_settings import (
 from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.settings import RELATIVE_MODELS_PATH
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
-from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
+from toolkit.tools.utils_for_tests import (
+    create_test_user,
+    print_output,
+    project_creation,
+    remove_file
+)
 
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
 class CRFExtractorViewTests(APITransactionTestCase):
-
+    """
+    Tests CRF Extractor.
+    """
     def setUp(self):
         self.test_index_name = CRF_TEST_INDEX
         self.test_index_copy = reindex_test_dataset(from_index=CRF_TEST_INDEX)
@@ -50,7 +53,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
     def tearDown(self) -> None:
         CRFExtractor.objects.all().delete()
         ec = ElasticCore()
-        res = ec.delete_index(self.test_index_copy)
+        ec.delete_index(self.test_index_copy)
 
 
     def __train_embedding_for_test(self) -> int:
