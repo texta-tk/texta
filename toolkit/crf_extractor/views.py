@@ -18,6 +18,7 @@ from toolkit.permissions.project_permissions import ProjectAccessInApplicationsA
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.mlp.tasks import apply_mlp_on_list
 from toolkit.view_constants import BulkDelete
+from toolkit.exceptions import NonExistantModelError, SerializerNotValid
 from .tasks import apply_crf_extractor, apply_crf_extractor_to_index
 from .models import CRFExtractor
 from .serializers import (
@@ -146,7 +147,6 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             extractor.task = Task.objects.create(crfextractor=extractor, status=Task.STATUS_CREATED)
             extractor.save()
 
-            project = Project.objects.get(pk=project_pk)
             indices = [index["name"] for index in serializer.validated_data["indices"]]
             mlp_fields = serializer.validated_data["mlp_fields"]
             query = serializer.validated_data["query"]
