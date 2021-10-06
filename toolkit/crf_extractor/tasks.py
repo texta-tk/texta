@@ -30,6 +30,9 @@ from .models import CRFExtractor as CRFExtractorObject
 
 @task(name="start_crf_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def start_crf_task(crf_id: int):
+    """
+    Starts the training process for Extractor.
+    """
     extractor = CRFExtractorObject.objects.get(pk=crf_id)
     task_object = extractor.task
     show_progress = ShowProgress(task_object, multiplier=1)
@@ -40,6 +43,9 @@ def start_crf_task(crf_id: int):
 
 @task(name="train_crf_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def train_crf_task(crf_id: int):
+    """
+    Trains CRF model.
+    """
     try:
         # get task object
         logging.getLogger(INFO_LOGGER).info(f"Starting task 'train_crf' for CRFExtractor with ID: {crf_id}!")
@@ -118,6 +124,9 @@ def train_crf_task(crf_id: int):
 
 @task(name="save_crf_results", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def save_crf_results(result_data: dict):
+    """
+    Saves task results to database.
+    """
     try:
         crf_id = result_data['id']
         logging.getLogger(INFO_LOGGER).info(f"Starting task results for CRFExtractor with ID: {crf_id}!")
@@ -148,6 +157,9 @@ def save_crf_results(result_data: dict):
 
 @task(name="apply_crf_extractor", base=BaseTask, QUEUE=CELERY_SHORT_TERM_TASK_QUEUE)
 def apply_crf_extractor(crf_id: int, mlp_document: dict):
+    """
+    Applies Extractor to mlp document.
+    """
     # Get CRF object
     crf_object = CRFExtractorObject.objects.get(pk=crf_id)
     # Load model from the disc
@@ -157,7 +169,16 @@ def apply_crf_extractor(crf_id: int, mlp_document: dict):
     return prediction
 
 
-def update_generator(generator: ElasticSearcher, ec: ElasticCore, mlp_fields: List[str], object_id: int, extractor: CRFExtractor = None):
+def update_generator(
+    generator: ElasticSearcher,
+    ec: ElasticCore,
+    mlp_fields: List[str],
+    object_id: int,
+    extractor: CRFExtractor = None
+    ):
+    """
+    Tags & updates documents in ES.
+    """
     for i, scroll_batch in enumerate(generator):
         logging.getLogger(INFO_LOGGER).info(f"Appyling CRFExtractor with ID {object_id} to batch {i + 1}...")
         for raw_doc in scroll_batch:
@@ -183,7 +204,18 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, mlp_fields: Li
 
 
 @task(name="apply_crf_extractor_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
-def apply_crf_extractor_to_index(object_id: int, indices: List[str], mlp_fields: List[str], query: dict, bulk_size: int, max_chunk_bytes: int, es_timeout: int):
+def apply_crf_extractor_to_index(
+    object_id: int,
+    indices: List[str],
+    mlp_fields: List[str],
+    query: dict,
+    bulk_size: int,
+    max_chunk_bytes: int,
+    es_timeout: int
+    ):
+    """
+    Applies Extractor to ES index.
+    """
     try:
         # load model
         crf_object = CRFExtractorObject.objects.get(pk=object_id)
@@ -203,8 +235,22 @@ def apply_crf_extractor_to_index(object_id: int, indices: List[str], mlp_fields:
             callback_progress=progress,
         )
         # create update actions
-        actions = update_generator(generator=searcher, ec=ec, mlp_fields=mlp_fields, object_id=object_id, extractor=extractor)
-        for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes, max_retries=3):
+        actions = update_generator(
+            generator=searcher,
+            ec=ec,
+            mlp_fields=mlp_fields,
+            object_id=object_id,
+            extractor=extractor
+        )
+        # perform updates
+        for success, info in streaming_bulk(
+            client=ec.es,
+            actions=actions,
+            refresh="wait_for",
+            chunk_size=bulk_size,
+            max_chunk_bytes=max_chunk_bytes,
+            max_retries=3
+            ):
             if not success:
                 logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
         # all done
@@ -213,7 +259,7 @@ def apply_crf_extractor_to_index(object_id: int, indices: List[str], mlp_fields:
 
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(e)
-        error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
+        error_message = f"{str(e)[:100]}..."
         crf_object = CRFExtractorObject.objects.get(pk=object_id)
         crf_object.task.add_error(error_message)
         crf_object.task.update_status(Task.STATUS_FAILED)
