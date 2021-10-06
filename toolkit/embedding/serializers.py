@@ -22,6 +22,8 @@ class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSeri
         default=choices.DEFAULT_MIN_FREQ,
         help_text=f'Default: {choices.DEFAULT_MIN_FREQ}'
     )
+    window_size = serializers.IntegerField(min_value=1, default=5, help_text="Maximum distance between the current and predicted word within a sentence.")
+    num_epochs = serializers.IntegerField(min_value=1, default=5, help_text="Number of iterations (epochs) over the corpus.")
     use_phraser = serializers.BooleanField(
         default=True,
         help_text='Phrase input texts.'
@@ -33,7 +35,7 @@ class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSeri
 
     class Meta:
         model = Embedding
-        fields = ('id', 'url', 'author', 'description', 'indices', 'fields', 'use_phraser', 'embedding_type', 'snowball_language', 'query', 'num_dimensions', 'max_documents', 'min_freq', 'vocab_size', 'task')
+        fields = ('id', 'url', 'author', 'description', 'indices', 'fields', 'use_phraser', 'embedding_type', 'snowball_language', 'query', 'num_dimensions', 'max_documents', 'min_freq', 'window_size', 'num_epochs', 'vocab_size', 'task')
         read_only_fields = ('vocab_size',)
         fields_to_parse = ('fields',)
 
