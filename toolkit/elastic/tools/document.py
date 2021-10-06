@@ -265,7 +265,7 @@ class ESDocObject:
     @elastic_connection
     def random_document(indices, query=EMPTY_QUERY):
         ec = ElasticCore()
-        s = elasticsearch_dsl.Search(using=ec.es, index=indices)
+        s = elasticsearch_dsl.Search.from_dict(query).using(ec.es).index(indices)
         s = s.query("function_score", random_score={})
         s = s.source(exclude=["*"])
         s = s.extra(size=1)
@@ -310,10 +310,18 @@ class ESDocObject:
         self.document["_source"][TEXTA_ANNOTATOR_KEY] = annotation_dict
 
 
+    # TODO These three can be unified into a more general function.
     def add_skipped(self):
         source = self.document["_source"]
         annotation_dict = source.get(TEXTA_ANNOTATOR_KEY, {})
         annotation_dict["skipped_timestamp_utc"] = datetime.datetime.utcnow()
+        self.document["_source"][TEXTA_ANNOTATOR_KEY] = annotation_dict
+
+
+    def add_validated(self):
+        source = self.document["_source"]
+        annotation_dict = source.get(TEXTA_ANNOTATOR_KEY, {})
+        annotation_dict["validated_timestamp_utc"] = datetime.datetime.utcnow()
         self.document["_source"][TEXTA_ANNOTATOR_KEY] = annotation_dict
 
 

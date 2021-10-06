@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import List, Optional
 
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -151,14 +151,35 @@ class Annotator(models.Model):
         self.update_progress()
 
 
-    def add_label(self, document_id: str, label: str):
+    def add_labels(self, document_id: str, labels: List[str]):
         """
         Adds a label to Elasticsearch documents during multilabel annotations.
         :param document_id: Elasticsearch document ID of the comment in question.
-        :param label: Which label to add into the document.
+        :param labels: Which labels to add into the document.
         :return:
         """
-        pass
+        indices = self.get_indices()
+        ed = ESDocObject(document_id=document_id, index=indices)
+        for label in labels:
+            ed.add_fact(fact_value=label, fact_name=self.multilabel_configuration.labelset.category.value, doc_path=self.field)
+        ed.add_annotated()
+        ed.update()
+        self.update_progress()
+
+
+    def validate_document(self, document_id: str) -> bool:
+        """
+        Edits the Elasticsearch documents validation timestamp and the progress in the model.
+        :param document_id: Elasticsearch document ID of the comment in question.
+        :return:
+        """
+        indices = self.get_indices()
+        ed = ESDocObject(document_id=document_id, index=indices)
+        ed.add_validated()
+        ed.update()
+        self.skipped = F('validated') + 1
+        self.save(update_fields=["validated"])
+        return True
 
 
     def add_entity(self, document_id: str, spans: List, fact_name: str, fact_value: str):
@@ -179,7 +200,7 @@ class Annotator(models.Model):
         self.update_progress()
 
 
-    def pull_document(self):
+    def pull_document(self) -> Optional[bool]:
         """
         Function for returning a new Elasticsearch document for annotation.
         :return:
@@ -198,7 +219,7 @@ class Annotator(models.Model):
             return None
 
 
-    def skip_document(self, document_id: str):
+    def skip_document(self, document_id: str) -> bool:
         """
         Add the skip label to the document and update the progress accordingly.
         :param document_id: Elasticsearch document ID of the comment in question.
@@ -213,7 +234,7 @@ class Annotator(models.Model):
         return True
 
 
-    def add_comment(self, document_id: str, comment: str):
+    def add_comment(self, document_id: str, comment: str) -> bool:
         """
         Adds an annotators comment into the document in question.
         :param comment: Comment to be stores inside the Elasticsearch document.
@@ -228,6 +249,10 @@ class Annotator(models.Model):
 
 
     def update_progress(self):
+        """
+        Wrapper function for updating the progress after each annotation.
+        :return:
+        """
         self.annotated = F('annotated') + 1
         self.save(update_fields=["annotated"])
 
@@ -240,12 +265,23 @@ class Annotator(models.Model):
         pass
 
 
-    def pull_annotated_document(self):
+    def pull_annotated_document(self) -> Optional[dict]:
         """
         Returns an already annotated document for validation purposes.
         :return:
         """
-        pass
+        from toolkit.elastic.tools.core import ElasticCore
+
+        ec = ElasticCore()
+        json_query = json.loads(self.query)
+        indices = self.get_indices()
+        query = ec.get_annotation_validation_query(json_query)
+        document = ESDocObject.random_document(indices=indices, query=query)
+        # At one point in time, the documents will rune out.
+        if document:
+            return document.document
+        else:
+            return None
 
 
     def reset_processed_records(self, indices: List[str], query: dict):

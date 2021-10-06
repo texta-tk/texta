@@ -25,6 +25,11 @@ class DocumentIDSerializer(serializers.Serializer):
     document_id = serializers.CharField()
 
 
+class MultilabelAnnotationSerializer(serializers.Serializer):
+    document_id = serializers.CharField()
+    labels = serializers.ListSerializer(child=serializers.CharField())
+
+
 class BinaryAnnotationSerializer(serializers.Serializer):
     document_id = serializers.CharField()
     annotation_type = serializers.ChoiceField(choices=(
