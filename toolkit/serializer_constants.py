@@ -7,6 +7,7 @@ from rest_framework import serializers
 from toolkit.core.project.models import Project
 from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.elastic.validators import check_for_existence
+from toolkit.choice_constants import DEFAULT_ES_TIMEOUT, DEFAULT_BULK_SIZE, DEFAULT_MAX_CHUNK_BYTES
 
 # Helptext constants to ensure consistent values inside Toolkit.
 BULK_SIZE_HELPTEXT = "How many documents should be sent into Elasticsearch in a single batch for update."
@@ -115,4 +116,22 @@ class IndicesSerializerMixin(serializers.Serializer):
         validators=[
             check_for_existence
         ]
+    )
+
+
+class ElasticScrollMixIn(serializers.Serializer):
+    es_timeout = serializers.IntegerField(
+        default=DEFAULT_ES_TIMEOUT,
+        help_text=f"Elasticsearch scroll timeout in minutes. Default:{DEFAULT_ES_TIMEOUT}."
+    )
+    bulk_size = serializers.IntegerField(
+        min_value=1,
+        max_value=10000,
+        default=DEFAULT_BULK_SIZE,
+        help_text=f"How many documents should be sent towards Elasticsearch at once. Default:{DEFAULT_BULK_SIZE}."
+    )
+    max_chunk_bytes = serializers.IntegerField(
+        min_value=1,
+        default=DEFAULT_MAX_CHUNK_BYTES,
+        help_text=f"Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors. Default:{DEFAULT_MAX_CHUNK_BYTES}."
     )
