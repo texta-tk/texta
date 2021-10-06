@@ -1,6 +1,5 @@
 import json
 from rest_framework import serializers, fields
-from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.serializer_constants import (

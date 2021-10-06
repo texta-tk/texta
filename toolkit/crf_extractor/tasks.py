@@ -12,14 +12,12 @@ from texta_crf_extractor.config import CRFConfig
 
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.core.task.models import Task
-from .models import CRFExtractor as CRFExtractorObject
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.helper_functions import get_indices_from_object
 from toolkit.tools.plots import create_tagger_plot
-
 from toolkit.settings import (
     CELERY_LONG_TERM_TASK_QUEUE,
     CELERY_SHORT_TERM_TASK_QUEUE,
@@ -27,6 +25,7 @@ from toolkit.settings import (
     INFO_LOGGER,
     MEDIA_URL
 )
+from .models import CRFExtractor as CRFExtractorObject
 
 
 @task(name="start_crf_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)

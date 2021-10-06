@@ -11,7 +11,6 @@ from django.db import models, transaction
 from django.http import HttpResponse
 from multiselectfield import MultiSelectField
 
-from texta_crf_extractor.feature_extraction import DEFAULT_LAYERS, DEFAULT_EXTRACTORS
 from texta_crf_extractor.crf_extractor import CRFExtractor as Extractor
 
 from toolkit.embedding.models import Embedding
@@ -20,7 +19,12 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
-from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, RELATIVE_MODELS_PATH
+from toolkit.settings import (
+    BASE_DIR,
+    CELERY_LONG_TERM_TASK_QUEUE,
+    INFO_LOGGER,
+    RELATIVE_MODELS_PATH
+)
 from .choices import FEATURE_FIELDS_CHOICES, FEATURE_EXTRACTOR_CHOICES
 
 
