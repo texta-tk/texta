@@ -18,7 +18,6 @@ class AnnotatorViewset(mixins.CreateModelMixin,
                        mixins.DestroyModelMixin,
                        viewsets.GenericViewSet,
                        BulkDelete):
-    queryset = Annotator.objects.all()
     serializer_class = AnnotatorSerializer
     permission_classes = (
         ProjectAccessInApplicationsAllowed,
