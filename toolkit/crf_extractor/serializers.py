@@ -51,6 +51,8 @@ class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin
 class ApplyCRFExtractorSerializer(FieldParseSerializer, IndicesSerializerMixin):
     mlp_fields = serializers.ListField(child=serializers.CharField())
     query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)
+
+    # should turn this into mixin!
     es_timeout = serializers.IntegerField(default=DEFAULT_ES_TIMEOUT, help_text=f"Elasticsearch scroll timeout in minutes. Default:{DEFAULT_ES_TIMEOUT}.")
     bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=DEFAULT_BULK_SIZE, help_text=f"How many documents should be sent towards Elasticsearch at once. Default:{DEFAULT_BULK_SIZE}.")
     max_chunk_bytes = serializers.IntegerField(min_value=1, default=DEFAULT_MAX_CHUNK_BYTES, help_text=f"Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors. Default:{DEFAULT_MAX_CHUNK_BYTES}.")

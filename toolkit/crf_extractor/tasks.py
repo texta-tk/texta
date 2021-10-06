@@ -109,10 +109,10 @@ def train_crf_task(crf_id: int):
             "model_size": round(float(os.path.getsize(model_full_path)) / 1000000, 1),  # bytes to mb
             "plot": str(image_path),
         }
-
-
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(e)
+        crf_object = CRFExtractorObject.objects.get(pk=object_id)
+        task_object = crf_object.task
         task_object.add_error(str(e))
         task_object.update_status(Task.STATUS_FAILED)
         raise e
@@ -159,21 +159,6 @@ def apply_crf_extractor(crf_id: int, mlp_document: dict):
     return prediction
 
 
-def to_texta_fact(results: List[dict], field: str):
-    new_facts = []
-    for result in results:
-        for fact_name, fact_value in result.items():
-            new_fact = {
-                "fact": fact_name,
-                "str_val": fact_value,
-                "doc_path": field + "text",
-                # need to get real spans!!
-                "spans": json.dumps([[0, 0]])
-            }
-            new_facts.append(new_fact)
-    return new_facts
-
-
 def update_generator(generator: ElasticSearcher, ec: ElasticCore, mlp_fields: List[str], object_id: int, extractor: CRFExtractor = None):
     for i, scroll_batch in enumerate(generator):
         logging.getLogger(INFO_LOGGER).info(f"Appyling CRFExtractor with ID {object_id} to batch {i + 1}...")
@@ -182,11 +167,7 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, mlp_fields: Li
             existing_facts = hit.get("texta_facts", [])
 
             for mlp_field in mlp_fields:
-                result = extractor.tag(hit, field_name=mlp_field)
-
-                # do this in package instead!!!
-                new_facts = to_texta_fact(result, mlp_field)
-
+                new_facts = extractor.tag(hit, field_name=mlp_field)
                 if new_facts:
                     existing_facts.extend(new_facts)
 
