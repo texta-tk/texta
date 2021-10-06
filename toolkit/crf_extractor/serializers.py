@@ -21,7 +21,7 @@ class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin
         help_text='Filter the documents used in training. Default: All.',
         default=EMPTY_QUERY,
     )
-    mlp_field = serializers.CharField(help_text='Text field used to build the model.')
+    mlp_field = serializers.CharField(help_text='MLP field used to build the model.')
     labels = serializers.JSONField(
         default=["GPE", "ORG", "PER", "LOC"],
         help_text="List of labels used to train the extraction model. Default: ['GPE', 'ORG', 'PER', 'LOC']"
