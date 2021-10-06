@@ -109,7 +109,7 @@ def train_crf_task(crf_id: int):
         }
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(e)
-        crf_object = CRFExtractorObject.objects.get(pk=object_id)
+        crf_object = CRFExtractorObject.objects.get(pk=crf_id)
         task_object = crf_object.task
         task_object.add_error(str(e))
         task_object.update_status(Task.STATUS_FAILED)

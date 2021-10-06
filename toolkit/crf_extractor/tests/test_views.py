@@ -11,14 +11,9 @@ from toolkit.helper_functions import reindex_test_dataset
 from toolkit.crf_extractor.models import CRFExtractor
 from toolkit.test_settings import (
     CRF_TEST_FIELD,
-    CRF_TEST_FIELD_CHOICE,
     TEST_KEEP_PLOT_FILES,
-    TEST_MATCH_TEXT,
-    TEST_QUERY,
     TEST_VERSION_PREFIX,
-    VERSION_NAMESPACE,
     CRF_TEST_INDEX,
-    TEST_FIELD_CHOICE
 )
 from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.tools.core import ElasticCore
