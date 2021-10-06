@@ -10,19 +10,22 @@ from rest_framework.response import Response
 from celery.result import allow_join_result
 from django.db import transaction
 
-from .models import CRFExtractor
-from .serializers import CRFExtractorSerializer, CRFExtractorTagTextSerializer, ApplyCRFExtractorSerializer
-from .tasks import apply_crf_extractor, apply_crf_extractor_to_index
-
+from toolkit.settings import CELERY_MLP_TASK_QUEUE, CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.core.project.models import Project
 from toolkit.elastic.index.models import Index
 from toolkit.core.task.models import Task
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.mlp.tasks import apply_mlp_on_list
-from toolkit.settings import CELERY_MLP_TASK_QUEUE, CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.view_constants import BulkDelete
-
+from toolkit.exceptions import NonExistantModelError, SerializerNotValid
+from .tasks import apply_crf_extractor, apply_crf_extractor_to_index
+from .models import CRFExtractor
+from .serializers import (
+    CRFExtractorSerializer,
+    CRFExtractorTagTextSerializer,
+    ApplyCRFExtractorSerializer
+)
 
 
 class CRFExtractorFilter(filters.FilterSet):
@@ -144,7 +147,6 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             extractor.task = Task.objects.create(crfextractor=extractor, status=Task.STATUS_CREATED)
             extractor.save()
 
-            project = Project.objects.get(pk=project_pk)
             indices = [index["name"] for index in serializer.validated_data["indices"]]
             mlp_fields = serializer.validated_data["mlp_fields"]
             query = serializer.validated_data["query"]
