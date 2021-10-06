@@ -1,9 +1,5 @@
 from texta_lexicon_matcher.lexicon_matcher import SUPPORTED_MATCH_TYPES, SUPPORTED_OPERATORS
 
-DEFAULT_ES_TIMEOUT = 10
-DEFAULT_BULK_SIZE = 100
-DEFAULT_MAX_CHUNK_BYTES = 104857600
-
 PRIORITY_CHOICES = (
     ("first_span", "first_span"),
     ("last_span", "last_span"),
