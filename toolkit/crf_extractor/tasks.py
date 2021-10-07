@@ -1,5 +1,4 @@
 from celery.decorators import task
-from elasticsearch.helpers import streaming_bulk
 from typing import List
 import pathlib
 import logging
@@ -244,16 +243,11 @@ def apply_crf_extractor_to_index(
             extractor=extractor
         )
         # perform updates
-        for success, info in streaming_bulk(
-            client=ec.es,
-            actions=actions,
-            refresh="wait_for",
-            chunk_size=bulk_size,
-            max_chunk_bytes=max_chunk_bytes,
-            max_retries=3
-            ):
-            if not success:
-                logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
+        try:
+            # as we have defined indices in actions there is no need to do it again (None)
+            ElasticDocument(None).bulk_update(actions)
+        except Exception as e:
+            logging.getLogger(ERROR_LOGGER).exception(e)
         # all done
         crf_object.task.complete()
         return True
