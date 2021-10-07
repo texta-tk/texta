@@ -44,10 +44,6 @@ TestBack:
   # Tests back-end locally
   before_script:
     - source activate texta-rest
-    
-    # DO NOT MERGE THIS!!!!!
-    - pip install texta-crf-extractor
-
     - python import_test_data.py -es $TEXTA_ES_URL
     - python migrate.py
   stage: test-back
