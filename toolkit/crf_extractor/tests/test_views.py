@@ -55,7 +55,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
         url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/embeddings/'
         payload = {
             "description": "TestEmbedding",
-            "fields": ["text.lemmas"],
+            "fields": ["text_mlp.lemmas"],
             "max_vocab": 10000,
             "min_freq": 1,
             "num_dimensions": 100
@@ -174,7 +174,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
         url = f'{self.url}{test_tagger_id}/apply_to_index/'
         payload = {
             "description": "apply crf test task",
-            "mlp_fields": ["text"],
+            "mlp_fields": ["text_mlp"],
             "indices": [{"name": self.test_index_copy}],
         }
         response = self.client.post(url, payload, format='json')

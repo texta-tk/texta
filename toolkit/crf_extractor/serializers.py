@@ -29,7 +29,10 @@ class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin
         default=["GPE", "ORG", "PER", "LOC"],
         help_text="List of labels used to train the extraction model. Default: ['GPE', 'ORG', 'PER', 'LOC']"
     )
-    num_iter = serializers.IntegerField(default=100)
+    num_iter = serializers.IntegerField(
+        default=100,
+        help_text="Number of iterations used in training."
+    )
     test_size = serializers.FloatField(
         default=0.3,
         help_text="Proportion of documents reserved for testing the model. Default: 0.3."
