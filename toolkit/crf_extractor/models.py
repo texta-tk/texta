@@ -9,6 +9,7 @@ from django.core import serializers
 from django.contrib.auth.models import User
 from django.db import models, transaction
 from django.http import HttpResponse
+from django.dispatch import receiver
 from multiselectfield import MultiSelectField
 
 from texta_crf_extractor.crf_extractor import CRFExtractor as Extractor
@@ -174,3 +175,18 @@ class CRFExtractor(models.Model):
     def apply_loaded_extractor(self, extractor: Extractor, mlp_document):
         result = extractor.tag(mlp_document)
         return result
+
+
+@receiver(models.signals.post_delete, sender=CRFExtractor)
+def auto_delete_crfextractor_on_delete(sender, instance: CRFExtractor, **kwargs):
+    """
+    Delete resources on the file-system upon TorchTagger deletion.
+    Triggered on individual model object and queryset TorchTagger deletion.
+    """
+    if instance.model:
+        if os.path.isfile(instance.model.path):
+            os.remove(instance.model.path)
+
+    if instance.plot:
+        if os.path.isfile(instance.plot.path):
+            os.remove(instance.plot.path)

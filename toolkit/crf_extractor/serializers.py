@@ -7,7 +7,9 @@ from toolkit.serializer_constants import (
     IndicesSerializerMixin,
     ElasticScrollMixIn,
     ProjectResourceUrlSerializer,
-    ProjectFilteredPrimaryKeyRelatedField
+    ProjectFilteredPrimaryKeyRelatedField,
+    QUERY_HELPTEXT,
+    DESCRIPTION_HELPTEXT
 )
 from toolkit.embedding.models import Embedding
 from .models import CRFExtractor
@@ -15,12 +17,13 @@ from .choices import FEATURE_FIELDS_CHOICES, FEATURE_EXTRACTOR_CHOICES
 
 
 class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
-    description = serializers.CharField(help_text='Description for the CRFExtractor model.')
+    description = serializers.CharField(help_text=DESCRIPTION_HELPTEXT)
     author = UserSerializer(read_only=True)
     query = serializers.JSONField(
-        help_text='Filter the documents used in training. Default: All.',
+        help_text=QUERY_HELPTEXT,
         default=EMPTY_QUERY,
     )
+
     mlp_field = serializers.CharField(help_text='MLP field used to build the model.')
     labels = serializers.JSONField(
         default=["GPE", "ORG", "PER", "LOC"],

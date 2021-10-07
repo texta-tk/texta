@@ -73,6 +73,7 @@ def train_crf_task(crf_id: int):
             indices=indices,
             callback_progress=show_progress,
             text_processor=None,
+            field_data=[mlp_field, "texta_facts"],
             output=ElasticSearcher.OUT_DOC,
             flatten=False
         )
