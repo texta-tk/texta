@@ -12,6 +12,10 @@ TEST_INDEX_LARGE = "texta_test_index_large"
 TEST_INDEX_EVALUATOR = "texta_test_index_evaluator"
 REINDEXER_TEST_INDEX = "reindexer_test_index"
 
+CRF_TEST_INDEX = "texta_crf_test_index"
+CRF_TEST_FIELD = "text_mlp"
+CRF_TEST_FIELD_CHOICE = [CRF_TEST_FIELD]
+
 REINDEXER_VALIDATION_TEST_INDEX_1 = "test_*_index"
 REINDEXER_VALIDATION_TEST_INDEX_2 = "test_:_index"
 REINDEXER_VALIDATION_TEST_INDEX_3 = "test_#_index"

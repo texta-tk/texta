@@ -51,6 +51,7 @@ dependencies:
       - texta-torch-tagger==1.*
       - texta-bert-tagger==2.3.*
       - texta-face-analyzer==0.*
+      - texta-crf-extractor==1.*
       - torch==1.5.*
       - torchtext==0.6.*
       - pyjwt<2

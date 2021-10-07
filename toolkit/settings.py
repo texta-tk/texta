@@ -93,6 +93,7 @@ INSTALLED_APPS = [
     "toolkit.summarizer",
     "toolkit.celery_management",
     "toolkit.rakun_keyword_extractor",
+    "toolkit.crf_extractor",
     # TEXTA Extension Apps
     # "docscraper",
     # THIRD PARTY
@@ -384,7 +385,7 @@ ALLOW_BERT_MODEL_DOWNLOADS = env.bool("TEXTA_ALLOW_BERT_MODEL_DOWNLOADS", defaul
 RELATIVE_PROJECT_DATA_PATH = env("TOOLKIT_PROJECT_DATA_PATH", default=os.path.join(DATA_DIR, "projects"))
 
 # Different types of models
-MODEL_TYPES = ["embedding", "tagger", "torchtagger", "bert_tagger"]
+MODEL_TYPES = ["embedding", "tagger", "torchtagger", "bert_tagger", "crf"]
 
 # Ensure all the folders exists before downloading the resources.
 prepare_mandatory_directories(
