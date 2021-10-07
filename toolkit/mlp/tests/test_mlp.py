@@ -42,7 +42,7 @@ class MLPListsTests(APITestCase):
         response = self.client.post(self.url, data=self.payload, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         for doc in response.data:
-            mlp = doc["text"]
+            mlp = doc["text_mlp"]
             self.assertTrue("texta_facts" in doc)
             self.assertTrue("text" in mlp and mlp["text"])
             self.assertTrue("lemmas" in mlp and mlp["lemmas"])
@@ -63,7 +63,7 @@ class MLPListsTests(APITestCase):
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         demanded_keys = ["text", "lemmas", "language"]
         for doc in response.data:
-            mlp = doc["text"]
+            mlp = doc["text_mlp"]
             for key in mlp.keys():
                 self.assertTrue(key in demanded_keys)
 
