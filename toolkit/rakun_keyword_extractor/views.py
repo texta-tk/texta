@@ -77,7 +77,7 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
 
             add_spans = serializer.validated_data["add_spans"]
 
-            args = (pk, indices, fields, query, bulk_size, es_timeout, fact_name, add_spans)
+            args = (pk, indices, fields, query, es_timeout, bulk_size, fact_name, add_spans)
             transaction.on_commit(lambda: apply_rakun_extractor_to_index.apply_async(args=args))
 
             message = "Started process of applying Rakun with id: {}".format(rakun_object.id)
@@ -189,7 +189,7 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         final_keywords = []
         keyword_detector = rakun_object.load_rakun_keyword_detector()
         for field in fields:
-            text = flattened_doc.get(field, None)
+            text = flattened_doc.get(field, "")
             results["document"][field] = text
             keywords = rakun_object.get_rakun_keywords(keyword_detector=keyword_detector, texts=[text], field_path=field, fact_name=rakun_object.description, fact_value="", add_spans=False)
 
