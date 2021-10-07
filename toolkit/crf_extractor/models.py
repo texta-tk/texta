@@ -14,6 +14,7 @@ from django.dispatch import receiver
 from multiselectfield import MultiSelectField
 
 from texta_crf_extractor.crf_extractor import CRFExtractor as Extractor
+from texta_crf_extractor.exceptions import ModelLoadFailedError
 
 from toolkit.embedding.models import Embedding
 from toolkit.constants import MAX_DESC_LEN
@@ -169,7 +170,7 @@ class CRFExtractor(models.Model):
         loaded = extractor.load_django(self)
         # check if model gets loaded
         if not loaded:
-            return None
+            raise ModelLoadFailedError()
         return extractor
 
 
