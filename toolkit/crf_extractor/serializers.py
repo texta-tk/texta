@@ -1,5 +1,6 @@
 import json
-from rest_framework import serializers, fields
+from rest_framework import serializers
+from texta_crf_extractor.feature_extraction import DEFAULT_LAYERS, DEFAULT_EXTRACTORS
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.serializer_constants import (
@@ -27,7 +28,7 @@ class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin
     mlp_field = serializers.CharField(help_text='MLP field used to build the model.')
     labels = serializers.JSONField(
         default=["GPE", "ORG", "PER", "LOC"],
-        help_text="List of labels used to train the extraction model. Default: ['GPE', 'ORG', 'PER', 'LOC']"
+        help_text="List of labels used to train the extraction model."
     )
     num_iter = serializers.IntegerField(
         default=100,
@@ -35,36 +36,36 @@ class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin
     )
     test_size = serializers.FloatField(
         default=0.3,
-        help_text="Proportion of documents reserved for testing the model. Default: 0.3."
+        help_text="Proportion of documents reserved for testing the model."
     )
-    c1 = serializers.FloatField(default=1.0, help_text="Coefficient for L1 penalty. Default: 1.0.")
-    c2 = serializers.FloatField(default=1.0, help_text="Coefficient for L2 penalty. Default: 1.0.")
+    c1 = serializers.FloatField(default=1.0, help_text="Coefficient for L1 penalty.")
+    c2 = serializers.FloatField(default=1.0, help_text="Coefficient for L2 penalty.")
     bias = serializers.BooleanField(
         default=True,
-        help_text="Capture the proportion of a given label in the training set. Default: True"
+        help_text="Capture the proportion of a given label in the training set."
     )
     window_size = serializers.IntegerField(
         default=2,
-        help_text="Number of words before and after the observed word analyzed. Default: 2.",
+        help_text="Number of words before and after the observed word analyzed.",
         )
     suffix_len = serializers.CharField(
         default=json.dumps((2,2)),
-        help_text="Number of characters (min, max) used for word suffixes as features. Default: (2, 2)"
+        help_text="Number of characters (min, max) used for word suffixes as features."
         )
-    feature_fields = fields.MultipleChoiceField(
+    feature_fields = serializers.MultipleChoiceField(
         choices=FEATURE_FIELDS_CHOICES,
-        default=FEATURE_FIELDS_CHOICES,
-        help_text=f"Layers (MLP subfields) used as features for the observed word. Default: {FEATURE_FIELDS_CHOICES}"
+        default=DEFAULT_LAYERS,
+        help_text="Layers (MLP subfields) used as features for the observed word."
     )
-    context_feature_fields = fields.MultipleChoiceField(
+    context_feature_fields = serializers.MultipleChoiceField(
         choices=FEATURE_FIELDS_CHOICES,
-        default=FEATURE_FIELDS_CHOICES,
-        help_text=f"Layers (MLP subfields) used as features for the context of the observed word. Default: {FEATURE_FIELDS_CHOICES}"
+        default=DEFAULT_LAYERS,
+        help_text="Layers (MLP subfields) used as features for the context of the observed word."
     )
-    feature_extractors = fields.MultipleChoiceField(
+    feature_extractors = serializers.MultipleChoiceField(
         choices=FEATURE_EXTRACTOR_CHOICES,
-        default=FEATURE_EXTRACTOR_CHOICES,
-        help_text=f"Feature extractors used for the observed word and it's context. Default: {FEATURE_EXTRACTOR_CHOICES}"
+        default=DEFAULT_EXTRACTORS,
+        help_text="Feature extractors used for the observed word and it's context."
     )
     embedding = ProjectFilteredPrimaryKeyRelatedField(
         queryset=Embedding.objects,
@@ -72,7 +73,7 @@ class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin
         read_only=False,
         allow_null=True,
         default=None,
-        help_text="Embedding to use for finding similar words for the observed word and it's context. Default = None"
+        help_text="Embedding to use for finding similar words for the observed word and it's context."
     )
     url = serializers.SerializerMethodField()
 
