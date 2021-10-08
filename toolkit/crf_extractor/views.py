@@ -110,6 +110,14 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         return Response({"id": crf_id, "message": "Successfully imported model and associated files."}, status=status.HTTP_201_CREATED)
 
 
+    @action(detail=True, methods=['post'])
+    def retrain_extractor(self, request, pk=None, project_pk=None):
+        """Starts retraining task for the Extractor model."""
+        instance = self.get_object()
+        instance.train()
+        return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
+
+
     @action(detail=True, methods=['post'], serializer_class=CRFExtractorTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
         serializer = CRFExtractorTagTextSerializer(data=request.data)

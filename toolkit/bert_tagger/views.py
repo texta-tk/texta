@@ -90,7 +90,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
     def retrain_tagger(self, request, pk=None, project_pk=None):
         """Starts retraining task for the BertTagger model."""
         instance = self.get_object()
-        train_bert_tagger.apply_async(args=(instance.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
+        instance.train()
         return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
 
 
