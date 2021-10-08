@@ -2,6 +2,7 @@ import json
 from rest_framework import serializers
 from texta_crf_extractor.feature_extraction import DEFAULT_LAYERS, DEFAULT_EXTRACTORS
 from toolkit.core.user_profile.serializers import UserSerializer
+from toolkit.core.task.serializers import TaskSerializer
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.serializer_constants import (
     FieldParseSerializer,
@@ -75,6 +76,7 @@ class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin
         default=None,
         help_text="Embedding to use for finding similar words for the observed word and it's context."
     )
+    task = TaskSerializer(read_only=True)
     url = serializers.SerializerMethodField()
 
 
@@ -84,7 +86,7 @@ class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin
             'id', 'url', 'author', 'description', 'query', 'indices', 'mlp_field',
             'window_size', 'test_size', 'num_iter', 'c1', 'c2', 'bias', 'suffix_len',
             'labels', 'feature_fields', 'context_feature_fields', 'feature_extractors',
-            'embedding'
+            'embedding', 'task', 'precision', 'recall', 'f1_score'
         )
         read_only_fields = ()
         fields_to_parse = ('fields',)

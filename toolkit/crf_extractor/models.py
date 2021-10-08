@@ -61,6 +61,11 @@ class CRFExtractor(models.Model):
 
     embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE, default=None, null=True)
 
+    precision = models.FloatField(default=None, null=True)
+    recall = models.FloatField(default=None, null=True)
+    f1_score = models.FloatField(default=None, null=True)
+    confusion_matrix = models.TextField(default="[]", null=True, blank=True)
+
     model = models.FileField(null=True, verbose_name='', default=None, max_length=MAX_DESC_LEN)
     model_size = models.FloatField(default=None, null=True)
     plot = models.FileField(upload_to='data/media', null=True, verbose_name='')
@@ -159,19 +164,22 @@ class CRFExtractor(models.Model):
 
     def load_extractor(self):
         """Loading model from disc."""
-        # load embedding
-        if self.embedding:
-            embedding = self.embedding.get_embedding()
-            embedding.load_django(self.embedding)
-        else:
-            embedding = False
-        # load extractor model
-        extractor = Extractor(embedding=embedding)
-        loaded = extractor.load_django(self)
-        # check if model gets loaded
-        if not loaded:
-            raise ModelLoadFailedError()
-        return extractor
+        try:
+            # load embedding
+            if self.embedding:
+                embedding = self.embedding.get_embedding()
+                embedding.load_django(self.embedding)
+            else:
+                embedding = False
+            # load extractor model
+            extractor = Extractor(embedding=embedding)
+            loaded = extractor.load_django(self)
+            # check if model gets loaded
+            if not loaded:
+                raise ModelLoadFailedError()
+            return extractor
+        except Exception as e:
+            raise ModelLoadFailedError(str(e))
 
 
     def apply_loaded_extractor(self, extractor: Extractor, mlp_document):
