@@ -76,6 +76,7 @@ def train_crf_task(crf_id: int):
             output=ElasticSearcher.OUT_DOC,
             flatten=False
         )
+
         # create config
         config = CRFConfig(
             labels = json.loads(crf_object.labels),
@@ -86,10 +87,10 @@ def train_crf_task(crf_id: int):
             bias = crf_object.bias,
             window_size = crf_object.window_size,
             suffix_len = tuple(json.loads(crf_object.suffix_len)),
-            context_feature_layers = crf_object.context_feature_fields,
-            context_feature_extractors = crf_object.context_feature_extractors,
-            feature_layers = crf_object.feature_fields,
-            feature_extractors = crf_object.feature_extractors
+            context_feature_layers = list(crf_object.context_feature_fields),
+            context_feature_extractors = list(crf_object.context_feature_extractors),
+            feature_layers = list(crf_object.feature_fields),
+            feature_extractors = list(crf_object.feature_extractors)
         )
         # start training
         logging.getLogger(INFO_LOGGER).info(f"Training the model for CRFExtractor with ID: {crf_id}!")
