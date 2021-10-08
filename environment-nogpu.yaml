@@ -52,7 +52,7 @@ dependencies:
       - texta-face-analyzer==0.*
       - texta-crf-extractor==1.*
       - torchtext==0.6.*
-      - torch==1.5.0+cpu
+      - torch==1.7.1+cpu
       - -f https://download.pytorch.org/whl/torch_stable.html
       - pyjwt<2
       - beautifulsoup4
