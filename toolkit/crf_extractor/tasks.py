@@ -68,7 +68,7 @@ def train_crf_task(crf_id: int):
         # scroll docs
         logging.getLogger(INFO_LOGGER).info(f"Scrolling data for CRFExtractor with ID: {crf_id}!")
         documents = ElasticSearcher(
-            query=json.loads(crf_object.query),
+            query=crf_object.get_query(),
             indices=indices,
             callback_progress=show_progress,
             text_processor=None,
@@ -79,14 +79,14 @@ def train_crf_task(crf_id: int):
 
         # create config
         config = CRFConfig(
-            labels = json.loads(crf_object.labels),
+            labels = crf_object.get_labels(),
             num_iter = crf_object.num_iter,
             test_size = crf_object.test_size,
             c1 = crf_object.c1,
             c2 = crf_object.c2,
             bias = crf_object.bias,
             window_size = crf_object.window_size,
-            suffix_len = tuple(json.loads(crf_object.suffix_len)),
+            suffix_len = crf_object.get_suffix_len(),
             context_feature_layers = list(crf_object.context_feature_fields),
             context_feature_extractors = list(crf_object.context_feature_extractors),
             feature_layers = list(crf_object.feature_fields),

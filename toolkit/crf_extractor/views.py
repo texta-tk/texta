@@ -63,8 +63,8 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         extractor: CRFExtractor = serializer.save(
             author=self.request.user,
             project=project,
-            query=json.dumps(serializer.validated_data['query']),
-            labels=json.dumps(serializer.validated_data['labels'])
+            labels=json.dumps(serializer.validated_data['labels']),
+            suffix_len=json.dumps(serializer.validated_data['suffix_len'])
         )
 
         for index in Index.objects.filter(name__in=indices, is_open=True):

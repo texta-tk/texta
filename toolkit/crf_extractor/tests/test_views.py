@@ -1,11 +1,13 @@
 import pathlib
 from time import sleep
 from io import BytesIO
+import json
 
 from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
+from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.core.task.models import Task
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.crf_extractor.models import CRFExtractor
@@ -14,6 +16,7 @@ from toolkit.test_settings import (
     TEST_KEEP_PLOT_FILES,
     TEST_VERSION_PREFIX,
     CRF_TEST_INDEX,
+    TEST_INDEX
 )
 from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.elastic.tools.core import ElasticCore
@@ -32,6 +35,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
     Tests CRF Extractor.
     """
     def setUp(self):
+        self.test_incorrect_index_name = TEST_INDEX
         self.test_index_name = CRF_TEST_INDEX
         self.test_index_copy = reindex_test_dataset(from_index=CRF_TEST_INDEX)
         self.user = create_test_user('crfOwner', 'my@email.com', 'pw')
@@ -89,6 +93,8 @@ class CRFExtractorViewTests(APITransactionTestCase):
             payload = {
                     "description": "TestCRF",
                     "test_size": 0.2,
+                    "suffix_len": [2,3],
+                    "query": json.dumps(EMPTY_QUERY),
                     "feature_fields": ["lemmas", "pos_tags", "text"],
                     "feature_context_fields": ["lemmas", "pos_tags", "text"],
                     "labels": ["GPE", "ORG", "PER"],
@@ -112,6 +118,9 @@ class CRFExtractorViewTests(APITransactionTestCase):
             self.assertTrue(created.task is not None)
             # Check if gets trained and completed
             self.assertEqual(created.task.status, Task.STATUS_COMPLETED)
+
+            crf_response = self.client.get(f"{self.url}{created.pk}/")
+            print_output("test_crf_object_view", crf_response.data)
 
 
     def run_list_features(self):
@@ -199,3 +208,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
 
 
 # TODO: test training with incorrect fields & labels
+
+# TODO: tests for retraining the model.
+
+# TODO: test for incorrect MLP field.

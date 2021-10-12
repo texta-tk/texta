@@ -18,19 +18,22 @@ from .models import CRFExtractor
 from .choices import FEATURE_FIELDS_CHOICES, FEATURE_EXTRACTOR_CHOICES
 
 
-class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
+class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
     description = serializers.CharField(help_text=DESCRIPTION_HELPTEXT)
     author = UserSerializer(read_only=True)
     query = serializers.JSONField(
         help_text=QUERY_HELPTEXT,
-        default=EMPTY_QUERY,
+        default=json.dumps(EMPTY_QUERY),
+        required=False
     )
 
     mlp_field = serializers.CharField(help_text='MLP field used to build the model.')
+
     labels = serializers.JSONField(
         default=["GPE", "ORG", "PER", "LOC"],
         help_text="List of labels used to train the extraction model."
     )
+    
     num_iter = serializers.IntegerField(
         default=100,
         help_text="Number of iterations used in training."
@@ -49,7 +52,7 @@ class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin
         default=2,
         help_text="Number of words before and after the observed word analyzed.",
         )
-    suffix_len = serializers.CharField(
+    suffix_len = serializers.JSONField(
         default=json.dumps((2,2)),
         help_text="Number of characters (min, max) used for word suffixes as features."
         )
@@ -89,14 +92,14 @@ class CRFExtractorSerializer(serializers.ModelSerializer, IndicesSerializerMixin
             'embedding', 'task', 'precision', 'recall', 'f1_score'
         )
         read_only_fields = ()
-        fields_to_parse = ('fields',)
+        fields_to_parse = ('labels', 'suffix_len')
 
 
 class ApplyCRFExtractorSerializer(FieldParseSerializer, IndicesSerializerMixin, ElasticScrollMixIn):
     mlp_fields = serializers.ListField(child=serializers.CharField())
     query = serializers.JSONField(
         help_text='Filter the documents which to scroll and apply to.',
-        default=EMPTY_QUERY
+        default=json.dumps(EMPTY_QUERY)
     )
 
 

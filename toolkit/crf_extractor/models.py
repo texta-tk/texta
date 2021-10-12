@@ -40,7 +40,8 @@ class CRFExtractor(models.Model):
     author = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     indices = models.ManyToManyField(Index, default=None)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
-
+    embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE, default=None, null=True)
+    # training params
     labels = models.TextField(default=json.dumps(["GPE", "ORG", "PER", "LOC"]))
     num_iter = models.IntegerField(default=100)
     test_size = models.FloatField(default=0.3)
@@ -49,7 +50,6 @@ class CRFExtractor(models.Model):
     bias = models.BooleanField(default=True)
     window_size = models.IntegerField(default=2)
     suffix_len = models.TextField(default=json.dumps((2,2)))
-    
     # this is the main field used for training
     mlp_field = models.CharField(default="text", max_length=MAX_DESC_LEN)
     # these are the parsed feature fields
@@ -58,18 +58,27 @@ class CRFExtractor(models.Model):
     # these are used feature extractors
     feature_extractors = MultiSelectField(choices=FEATURE_EXTRACTOR_CHOICES)
     context_feature_extractors = MultiSelectField(choices=FEATURE_EXTRACTOR_CHOICES)
-
-    embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE, default=None, null=True)
-
+    # training output
     precision = models.FloatField(default=None, null=True)
     recall = models.FloatField(default=None, null=True)
     f1_score = models.FloatField(default=None, null=True)
     confusion_matrix = models.TextField(default="[]", null=True, blank=True)
-
     model = models.FileField(null=True, verbose_name='', default=None, max_length=MAX_DESC_LEN)
     model_size = models.FloatField(default=None, null=True)
     plot = models.FileField(upload_to='data/media', null=True, verbose_name='')
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
+
+
+    def get_labels(self):
+        return json.loads(self.labels)
+
+
+    def get_query(self):
+        return json.loads(self.query)
+
+
+    def get_suffix_len(self):
+        return json.loads(self.suffix_len)
 
 
     def generate_name(self, name="crf"):
