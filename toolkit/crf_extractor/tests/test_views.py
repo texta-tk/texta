@@ -144,6 +144,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
+            self.assertTrue(response.data["texta_facts"])
 
 
     def run_test_export_import(self):
