@@ -165,7 +165,7 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ),
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.NamespaceVersioning",
-    "DEFAULT_VERSION": "v1",
+    "DEFAULT_VERSION": "v2",
     "ALLOWED_VERSIONS": ["v1", "v2"],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         # For DRF API browser pages
