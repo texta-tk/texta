@@ -119,9 +119,6 @@ class CRFExtractorViewTests(APITransactionTestCase):
             # Check if gets trained and completed
             self.assertEqual(created.task.status, Task.STATUS_COMPLETED)
 
-            crf_response = self.client.get(f"{self.url}{created.pk}/")
-            print_output("test_crf_object_view", crf_response.data)
-
 
     def run_list_features(self):
         for test_tagger_id in self.test_crf_ids:
@@ -131,7 +128,8 @@ class CRFExtractorViewTests(APITransactionTestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
-            self.assertTrue(len(response.data["positive"]))      
+            self.assertTrue(len(response.data["features"]["positive"]))
+            self.assertTrue(len(response.data["features"]["negative"]))   
 
 
     def run_tag_text(self):

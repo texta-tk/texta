@@ -185,9 +185,8 @@ def update_generator(
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
             existing_facts = hit.get("texta_facts", [])
-
             for mlp_field in mlp_fields:
-                new_facts = extractor.tag(hit, field_name=mlp_field)
+                new_facts = extractor.tag(hit, field_name=mlp_field)["texta_facts"]
                 if new_facts:
                     existing_facts.extend(new_facts)
 
