@@ -45,8 +45,7 @@ class CRFExtractor(models.Model):
     labels = models.TextField(default=json.dumps(["GPE", "ORG", "PER", "LOC"]))
     num_iter = models.IntegerField(default=100)
     test_size = models.FloatField(default=0.3)
-    c1 = models.FloatField(default=1.0)
-    c2 = models.FloatField(default=1.0)
+    c_values = models.TextField(default=json.dumps([0.001, 0.1, 0.5]))
     bias = models.BooleanField(default=True)
     window_size = models.IntegerField(default=2)
     suffix_len = models.TextField(default=json.dumps((2,2)))
@@ -59,6 +58,8 @@ class CRFExtractor(models.Model):
     feature_extractors = MultiSelectField(choices=FEATURE_EXTRACTOR_CHOICES)
     context_feature_extractors = MultiSelectField(choices=FEATURE_EXTRACTOR_CHOICES)
     # training output
+    best_c1 = models.FloatField(default=None, null=True)
+    best_c2 = models.FloatField(default=None, null=True)
     precision = models.FloatField(default=None, null=True)
     recall = models.FloatField(default=None, null=True)
     f1_score = models.FloatField(default=None, null=True)
@@ -79,6 +80,10 @@ class CRFExtractor(models.Model):
 
     def get_suffix_len(self):
         return json.loads(self.suffix_len)
+
+
+    def get_c_values(self):
+        return json.loads(self.c_values)
 
 
     def generate_name(self, name="crf"):

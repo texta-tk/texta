@@ -82,8 +82,7 @@ def train_crf_task(crf_id: int):
             labels = crf_object.get_labels(),
             num_iter = crf_object.num_iter,
             test_size = crf_object.test_size,
-            c1 = crf_object.c1,
-            c2 = crf_object.c2,
+            c_values = crf_object.get_c_values(),
             bias = crf_object.bias,
             window_size = crf_object.window_size,
             suffix_len = crf_object.get_suffix_len(),
@@ -106,6 +105,7 @@ def train_crf_task(crf_id: int):
         # pass results to next task
         return {
             "id": crf_id,
+            "best_c_values": extractor.best_c_values,
             "extractor_path": relative_model_path,
             "precision": float(report.precision),
             "recall": float(report.recall),
@@ -137,6 +137,8 @@ def save_crf_results(result_data: dict):
         # update status to saving
         show_progress.update_step('saving')
         show_progress.update_view(0)
+        crf_object.best_c1 = result_data["best_c_values"][0]
+        crf_object.best_c2 = result_data["best_c_values"][1]
         crf_object.model.name = result_data["extractor_path"]
         crf_object.precision = result_data["precision"]
         crf_object.recall = result_data["recall"]

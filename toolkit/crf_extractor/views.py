@@ -64,6 +64,7 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             author=self.request.user,
             project=project,
             labels=json.dumps(serializer.validated_data['labels']),
+            c_values=json.dumps(serializer.validated_data['c_values']),
             suffix_len=json.dumps(serializer.validated_data['suffix_len'])
         )
 

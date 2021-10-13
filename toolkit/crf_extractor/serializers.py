@@ -33,7 +33,12 @@ class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, 
         default=["GPE", "ORG", "PER", "LOC"],
         help_text="List of labels used to train the extraction model."
     )
-    
+
+    c_values = serializers.JSONField(
+        default=[0.001, 0.1, 0.5],
+        help_text="List of C-values to test during training. Best will be used."
+    )
+
     num_iter = serializers.IntegerField(
         default=100,
         help_text="Number of iterations used in training."
@@ -42,8 +47,7 @@ class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, 
         default=0.3,
         help_text="Proportion of documents reserved for testing the model."
     )
-    c1 = serializers.FloatField(default=1.0, help_text="Coefficient for L1 penalty.")
-    c2 = serializers.FloatField(default=1.0, help_text="Coefficient for L2 penalty.")
+
     bias = serializers.BooleanField(
         default=True,
         help_text="Capture the proportion of a given label in the training set."
@@ -87,12 +91,12 @@ class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, 
         model = CRFExtractor
         fields = (
             'id', 'url', 'author', 'description', 'query', 'indices', 'mlp_field',
-            'window_size', 'test_size', 'num_iter', 'c1', 'c2', 'bias', 'suffix_len',
+            'window_size', 'test_size', 'num_iter', 'best_c1', 'best_c2', 'bias', 'suffix_len',
             'labels', 'feature_fields', 'context_feature_fields', 'feature_extractors',
-            'embedding', 'task', 'precision', 'recall', 'f1_score'
+            'embedding', 'task', 'precision', 'recall', 'f1_score', 'c_values'
         )
         read_only_fields = ()
-        fields_to_parse = ('labels', 'suffix_len')
+        fields_to_parse = ('labels', 'suffix_len', 'c_values')
 
 
 class ApplyCRFExtractorSerializer(FieldParseSerializer, IndicesSerializerMixin, ElasticScrollMixIn):

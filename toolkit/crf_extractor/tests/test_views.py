@@ -94,6 +94,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
                     "description": "TestCRF",
                     "test_size": 0.2,
                     "suffix_len": [2,3],
+                    "c_values": [0.01, 0.1],
                     "query": json.dumps(EMPTY_QUERY),
                     "feature_fields": ["lemmas", "pos_tags", "text"],
                     "feature_context_fields": ["lemmas", "pos_tags", "text"],
