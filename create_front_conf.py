@@ -13,8 +13,7 @@ TEXTA_HOSTED_FILE_FIELD = os.getenv("TEXTA_HOSTED_FILE_FIELD", "properties.hoste
 
 config = {
     "apiHost": TEXTA_API_URL,
-    "apiBasePath": "/api/v1",
-    "apiBasePath2": "/api/v2",
+    "apiBasePath": "/api/v2",
     "logging": True,
     "fileFieldReplace": TEXTA_HOSTED_FILE_FIELD,
     "useCloudFoundryUAA": USE_UAA,
