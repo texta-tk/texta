@@ -60,7 +60,7 @@ class ProjectViewTests(APITestCase):
 
 
     def test_get_fields(self):
-        url = f'{self.project_url}/get_fields/'
+        url = f'{self.project_url}/elastic/get_fields/'
         response = self.client.get(url)
         print_output('get_fields:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -69,7 +69,7 @@ class ProjectViewTests(APITestCase):
 
 
     def test_get_facts(self):
-        url = f'{self.project_url}/get_facts/'
+        url = f'{self.project_url}/elastic/get_facts/'
         response = self.client.post(url)
         print_output('get_facts:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -78,7 +78,7 @@ class ProjectViewTests(APITestCase):
 
 
     def test_get_facts_with_indices(self):
-        url = f'{self.project_url}/get_facts/'
+        url = f'{self.project_url}/elastic/get_facts/'
         response = self.client.post(url, format="json", data={"indices": [{"name": TEST_INDEX}]})
         print_output('get_facts:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -88,7 +88,7 @@ class ProjectViewTests(APITestCase):
 
     def test_search(self):
         payload = {"match_text": "jeesus", "size": 1}
-        url = f'{self.project_url}/search/'
+        url = f'{self.project_url}/elastic/search/'
         response = self.client.post(url, payload)
         print_output('search:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -98,7 +98,7 @@ class ProjectViewTests(APITestCase):
 
     def test_search_match_phrase_empty_result(self):
         payload = {"match_text": "jeesus tuleb ja tapab kõik ära", "match_type": "phrase"}
-        url = f'{self.project_url}/search/'
+        url = f'{self.project_url}/elastic/search/'
         response = self.client.post(url, payload)
         print_output('search:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -210,7 +210,7 @@ class ProjectViewTests(APITestCase):
 
 
     def test_search_by_query(self):
-        url = f'{self.project_url}/search_by_query/'
+        url = f'{self.project_url}/elastic/search_by_query/'
         # check that project user has access and response is success
         self.client.login(username='project_user', password='pw')
         payload = {"query": TEST_QUERY}
@@ -292,7 +292,7 @@ class ProjectViewTests(APITestCase):
 
 
     def test_document_count(self):
-        url = reverse("v1:project-count-indices", kwargs={"pk": self.project.pk})
+        url = reverse("v2:project-count-indices", kwargs={"pk": self.project.pk})
         response = self.client.post(url, data={"indices": [TEST_INDEX]}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, int))
@@ -300,13 +300,13 @@ class ProjectViewTests(APITestCase):
 
 
     def test_document_count_with_false_indies(self):
-        url = reverse("v1:project-count-indices", kwargs={"pk": self.project.pk})
+        url = reverse("v2:project-count-indices", kwargs={"pk": self.project.pk})
         response = self.client.post(url, data={"indices": [TEST_INDEX + "_potato"]}, format="json")
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
 
 
     def test_document_count_with_zero_input(self):
-        url = reverse("v1:project-count-indices", kwargs={"pk": self.project.pk})
+        url = reverse("v2:project-count-indices", kwargs={"pk": self.project.pk})
         response = self.client.post(url, data={"indices": []}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         self.assertTrue(response.data == 0)

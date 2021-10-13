@@ -147,7 +147,7 @@ class SearchQueryTaggerIndexViewTests(APITestCase):
         self.new_test_index_name = f"ttk_test_query_tagger_{uuid.uuid4().hex[:5]}"
         self.project = project_creation("SearchQueryTaggerTestProject", self.new_test_index_name, self.user)
         self.project.users.add(self.user)
-        self.url = reverse("v1:search_query_tagger-list", kwargs={"project_pk": self.project.pk})
+        self.url = reverse("v2:search_query_tagger-list", kwargs={"project_pk": self.project.pk})
 
         self.uuid = "adasda-5874856a-das4das98f5"
         self.document = {

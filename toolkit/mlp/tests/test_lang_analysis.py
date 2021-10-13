@@ -23,7 +23,7 @@ class ApplyLangViewsTests(APITransactionTestCase):
         self.project = project_creation("langDetectProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
         self.client.login(username='langDetectUser', password='pw')
-        self.url = reverse("v1:lang_index-list", kwargs={"project_pk": self.project.pk})
+        self.url = reverse("v2:lang_index-list", kwargs={"project_pk": self.project.pk})
 
 
     def tearDown(self) -> None:
@@ -106,7 +106,7 @@ class ApplyLangViewsTests(APITransactionTestCase):
             "query": "foo"
         }
         response = self.client.post(self.url, data=payload, format="json")
-        print_output("test_with_invalid_queries_v1:response.data", response.data)
+        print_output("test_with_invalid_queries_v2:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
 
         payload = {
