@@ -49,7 +49,7 @@ class RegexTaggerViewTests(APITransactionTestCase):
         self.police, self.medic, self.firefighter = ids
 
         # Create copy of test index
-        self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
+        self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/elastic/reindexer/'
         # Generate name for new index containing random id to make sure it doesn't already exist
         self.test_index_copy = f"test_apply_regex_tagger_{uuid.uuid4().hex}"
 

@@ -3,7 +3,7 @@ from rest_framework.test import APIClient, APITestCase
 
 from toolkit.test_settings import TEST_INDEX, TEST_VERSION_PREFIX
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
-from toolkit.urls_v1 import project_router
+from toolkit.urls_v2 import project_router
 
 
 class ProjectPermissionsTests(APITestCase):

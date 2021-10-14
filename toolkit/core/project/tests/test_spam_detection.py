@@ -14,7 +14,7 @@ class TestSpamDetection(TestCase):
         cls.user = create_test_user('spamdetector', 'my@email.com', 'pw')
         cls.project = project_creation("spamDetector", TEST_INDEX, cls.user)
         cls.project.users.add(cls.user)
-        cls.url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/get_spam/'
+        cls.url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/elastic/get_spam/'
 
 
     def setUp(self):

@@ -108,7 +108,7 @@ class ReindexerViewTests(APITransactionTestCase):
                 "indices": [self.test_index_name],
                 "new_index": REINDEXER_VALIDATION_TEST_INDEX
             }
-            url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
+            url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/elastic/reindexer/'
             self.check_new_index_validation(url, new_index_validation_payload)
 
         for payload in (
@@ -121,7 +121,7 @@ class ReindexerViewTests(APITransactionTestCase):
                 random_docs_payload,
                 update_field_type_payload
         ):
-            url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
+            url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/elastic/reindexer/'
             self.run_create_reindexer_task_signal(self.project, url, payload)
 
 

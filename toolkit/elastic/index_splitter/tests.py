@@ -30,7 +30,7 @@ class IndexSplitterViewTests(APITransactionTestCase):
         self.project = project_creation("IndexSplittingTestProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
 
-        self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/index_splitter/'
+        self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/elastic/index_splitter/'
 
         self.client.login(username=self.default_username, password=self.default_password)
         self.ec = ElasticCore()

@@ -143,7 +143,7 @@ UAA_LOGOUT_URI = env("TEXTA_UAA_LOGOUT_URI", default=f"{UAA_URL}/logout.do")
 UAA_AUTHORIZE_URI = env("TEXTA_UAA_AUTHORIZE_URI", default=f"{UAA_URL}/oauth/authorize")
 
 # Callback URL defined on the UAA server, to which the user will be redirected after logging in on UAA
-UAA_REDIRECT_URI = env("TEXTA_UAA_REDIRECT_URI", default="http://localhost:8000/api/v1/uaa/callback")
+UAA_REDIRECT_URI = env("TEXTA_UAA_REDIRECT_URI", default="http://localhost:8000/api/v2/uaa/callback")
 # TEXTA front URL where the user will be redirected after the redirect_uri
 # Default value is for when running the front-end separately.
 UAA_FRONT_REDIRECT_URL = env("TEXTA_UAA_FRONT_REDIRECT_URL", default="http://localhost:4200/oauth/uaa")
