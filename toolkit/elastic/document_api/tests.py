@@ -13,7 +13,7 @@ from rest_framework.test import APITestCase, APITransactionTestCase
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.settings import TEXTA_TAGS_KEY
-from toolkit.test_settings import TEST_QUERY, VERSION_NAMESPACE
+from toolkit.test_settings import TEST_FIELD, TEST_QUERY, VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -311,10 +311,11 @@ class FactManagementApplicationTests(APITransactionTestCase):
         self.project = project_creation("FactManagementApplicationTests", self.test_index_name, self.user)
 
         self.uuid = uuid.uuid1().hex
+        self.content = "miks sa oled loll!?"
         self.source = {
-            "comment_content_lemmas": "miks sa oled loll!?",
+            TEST_FIELD: self.content,
             TEXTA_TAGS_KEY: [
-                {"str_val": "politsei", "fact": "ORG", "spans": json.dumps([[0, 0]]), "doc_path": "hello"}
+                {"str_val": "politsei", "fact": "ORG", "spans": json.dumps([[0, 0]]), "doc_path": "hello"},
             ]
         }
         self.ec = ElasticCore()
@@ -323,12 +324,18 @@ class FactManagementApplicationTests(APITransactionTestCase):
         self.client.login(username='first_user', password='pw')
 
 
+    def tearDown(self) -> None:
+        self.ec.es.indices.delete(index=self.test_index_name, ignore=[400, 404])
+
+
     def test_delete_facts_by_query(self):
         url = reverse("v2:delete_facts_by_query-list", kwargs=self.kwargs)
         payload = {
             "description": "testing wether this deletes facts",
-            "query": TEST_QUERY,
-            "facts": [{"str_val": "politsei", "fact": "ORG", "spans": json.dumps([[0, 0]]), "doc_path": "hello"}],
+            "query": {"query": {'ids': {"values": [self.uuid]}}},
+            "facts": [
+                {"str_val": "politsei", "fact": "ORG", "spans": json.dumps([[0, 0]]), "doc_path": "hello"},
+            ],
             "indices": [{"name": self.test_index_name}]
         }
         response = self.client.post(url, data=payload, format="json")
@@ -338,7 +345,7 @@ class FactManagementApplicationTests(APITransactionTestCase):
         # Check whether the document itself got changed.
         document = self.ec.es.get(index=self.test_index_name, doc_type="_doc", id=self.uuid)["_source"]
         # Assure that the content isn't overwritten by some mishap.
-        self.assertTrue(document["comment_content_lemmas"] == "miks sa oled loll!?")
+        self.assertTrue(document[TEST_FIELD] == "miks sa oled loll!?")
         # Fact field should still stay in the document, it should just be empty.
         self.assertTrue(TEXTA_TAGS_KEY in document)
         facts = document.get(TEXTA_TAGS_KEY, [])
