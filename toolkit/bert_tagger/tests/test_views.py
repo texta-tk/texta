@@ -745,4 +745,4 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         end_2 = time()-start_2
         # Test if second attempt faster
         print_output('test_bert_tagger_persistent speed:', (end_1, end_2))
-        assert end_1-end_2 > 0.05
+        assert end_2 < end_1

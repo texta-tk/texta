@@ -76,7 +76,7 @@ class BertTagger(models.Model):
     use_sentence_shuffle = models.BooleanField(default=choices.DEFAULT_USE_SENTENCE_SHUFFLE)
     balance_to_max_limit = models.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT)
 
-    model = models.FileField(null=True, verbose_name='', default=None)
+    model = models.FileField(null=True, verbose_name='', default=None, max_length=MAX_DESC_LEN)
     plot = models.FileField(upload_to='data/media', null=True, verbose_name='')
 
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)

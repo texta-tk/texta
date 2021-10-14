@@ -19,7 +19,7 @@ class CeleryLemmatizer:
     def lemmatize(self, text):
         with allow_join_result():
             mlp = apply_mlp_on_list.apply_async(kwargs={"texts": [text], "analyzers": ["lemmas"]}, queue=CELERY_MLP_TASK_QUEUE).get()
-            lemmas = mlp[0]["text"]["lemmas"]
+            lemmas = mlp[0]["text_mlp"]["lemmas"]
             return lemmas
 
 

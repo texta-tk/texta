@@ -2,7 +2,7 @@
 import json
 import os
 
-from toolkit.settings import UAA_PROJECT_ADMIN_SCOPE, UAA_SCOPES, USE_UAA, UAA_URL, UAA_REDIRECT_URI, UAA_CLIENT_ID
+from toolkit.settings import UAA_AUTHORIZE_URI, UAA_CLIENT_ID, UAA_LOGOUT_URI, UAA_OAUTH_TOKEN_URI, UAA_PROJECT_ADMIN_SCOPE, UAA_REDIRECT_URI, UAA_SCOPES, UAA_URL, USE_UAA
 
 
 # Parse env variables
@@ -21,11 +21,12 @@ config = {
     "uaaConf": {
         "uaaURL": f"{UAA_URL}",
         "redirect_uri": UAA_REDIRECT_URI,
+        "logout_uri": UAA_LOGOUT_URI,
+        "authorize_uri": UAA_AUTHORIZE_URI,
         "client_id": UAA_CLIENT_ID,
         "scope": UAA_SCOPES,
         "admin_scope": UAA_PROJECT_ADMIN_SCOPE,
         "response_type": "code",
-
     }
 }
 # print output

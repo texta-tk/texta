@@ -9,23 +9,26 @@ from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.elastic.tools.aggregator import ElasticAggregator
 from toolkit.helper_functions import get_downloaded_bert_models
-from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, ProjectFilteredPrimaryKeyRelatedField
+from toolkit.serializer_constants import (
+    FieldParseSerializer,
+    IndicesSerializerMixin,
+    ProjectResourceUrlSerializer,
+    ProjectFilteredPrimaryKeyRelatedField,
+    ElasticScrollMixIn
+)
 from toolkit.settings import ALLOW_BERT_MODEL_DOWNLOADS, BERT_PRETRAINED_MODEL_DIRECTORY
 from toolkit.validator_constants import validate_pos_label
 
-class ApplyTaggerSerializer(FieldParseSerializer, IndicesSerializerMixin):
+class ApplyTaggerSerializer(FieldParseSerializer, IndicesSerializerMixin, ElasticScrollMixIn):
     description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
     new_fact_name = serializers.CharField(required=True, help_text="Used as fact name when applying the tagger.")
     new_fact_value = serializers.CharField(required=False, default="", help_text="NB! Only applicable for binary taggers! Used as fact value when applying the tagger. Defaults to tagger description (binary) / tagger result (multiclass).")
     fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
     query = serializers.JSONField(help_text="Filter the documents which to scroll and apply to.", default=EMPTY_QUERY)
-    es_timeout = serializers.IntegerField(default=choices.DEFAULT_ES_TIMEOUT, help_text=f"Elasticsearch scroll timeout in minutes. Default = {choices.DEFAULT_ES_TIMEOUT}.")
-    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=choices.DEFAULT_BULK_SIZE, help_text=f"How many documents should be sent towards Elasticsearch at once. Default = {choices.DEFAULT_BULK_SIZE}.")
-    max_chunk_bytes = serializers.IntegerField(min_value=1, default=choices.DEFAULT_MAX_CHUNK_BYTES, help_text=f"Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors. Default = {choices.DEFAULT_MAX_CHUNK_BYTES}.")
 
 
 class BertDownloaderSerializer(serializers.Serializer):
-    bert_model = serializers.CharField(required=True, help_text=f'BERT model to download.')
+    bert_model = serializers.CharField(required=True, help_text='BERT model to download.')
 
 
 class EpochReportSerializer(serializers.Serializer):
@@ -44,11 +47,10 @@ class TagRandomDocSerializer(IndicesSerializerMixin):
 
 class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
     author = UserSerializer(read_only=True)
-    fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
+    fields = serializers.ListField(child=serializers.CharField(), help_text='Fields used to build the model.')
     query = serializers.JSONField(required=False, help_text='Query in JSON format', default=json.dumps(EMPTY_QUERY))
-    #indices = IndexSerializer(many=True, default=[])
-    fact_name = serializers.CharField(default=None, required=False, help_text=f'Fact name used to filter tags (fact values). Default = None')
-    pos_label = serializers.CharField(default="", required=False, allow_blank=True, help_text=f'Fact value used as positive label while evaluating the results. This is needed only, if the selected fact has exactly two possible values. Default = ""')
+    fact_name = serializers.CharField(default=None, required=False, help_text='Fact name used to filter tags (fact values). Default = None')
+    pos_label = serializers.CharField(default="", required=False, allow_blank=True, help_text='Fact value used as positive label while evaluating the results. This is needed only, if the selected fact has exactly two possible values. Default = ""')
 
     checkpoint_model = ProjectFilteredPrimaryKeyRelatedField(queryset=BertTagger.objects, many=False, read_only=False, allow_null=True, default=None, help_text=f'Previously fine-tuned BERT model. Select this, if you wish to further fine-tune it with additional data and/or new parameters. Default = None')
 

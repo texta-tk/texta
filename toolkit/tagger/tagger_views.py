@@ -20,8 +20,7 @@ from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, SerializerNotValid
 from toolkit.helper_functions import add_finite_url_to_feedback, load_stop_words
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
-from toolkit.serializer_constants import (
-    ProjectResourceImportModelSerializer)
+from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.serializers import (ApplyTaggerSerializer, StopWordSerializer, TagRandomDocSerializer, TaggerListFeaturesSerializer, TaggerMultiTagSerializer, TaggerSerializer, TaggerTagDocumentSerializer, TaggerTagTextSerializer)
