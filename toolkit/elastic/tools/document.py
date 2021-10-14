@@ -5,7 +5,6 @@ from typing import List
 import elasticsearch
 from elasticsearch.helpers import bulk
 from elasticsearch_dsl import Q, Search
-
 from texta_mlp.mlp import MLP
 
 from toolkit.elastic.decorators import elastic_connection
@@ -210,7 +209,7 @@ class ElasticDocument:
 
 
     @elastic_connection
-    def bulk_update(self, actions, refresh="wait_for", chunk_size=100):
+    def bulk_update(self, actions, refresh="wait_for", chunk_size=100, request_timeout=30):
         """
         Intermediary function to commit bulk updates.
         This function doesn't have actions processing because it's easier to use
@@ -229,11 +228,11 @@ class ElasticDocument:
         Returns: Elasticsearch response to the request.
         """
         actions = self.add_type_to_docs(actions)
-        return bulk(client=self.core.es, actions=actions, refresh=refresh, request_timeout=30, chunk_size=chunk_size)
+        return bulk(client=self.core.es, actions=actions, refresh=refresh, request_timeout=request_timeout, chunk_size=chunk_size)
 
 
     @elastic_connection
-    def add(self, doc):
+    def add(self, doc: dict):
         """
         Adds document to ES.
         """

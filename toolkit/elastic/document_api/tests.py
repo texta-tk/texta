@@ -331,7 +331,7 @@ class FactManagementApplicationTests(APITransactionTestCase):
     def test_delete_facts_by_query(self):
         url = reverse("v2:delete_facts_by_query-list", kwargs=self.kwargs)
         payload = {
-            "description": "testing wether this deletes facts",
+            "description": "testing whether this deletes facts",
             "query": {"query": {'ids': {"values": [self.uuid]}}},
             "facts": [
                 {"str_val": "politsei", "fact": "ORG", "spans": json.dumps([[0, 0]]), "doc_path": "hello"},
@@ -341,21 +341,21 @@ class FactManagementApplicationTests(APITransactionTestCase):
         response = self.client.post(url, data=payload, format="json")
         print_output("test_delete_facts_by_query:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
-
         # Check whether the document itself got changed.
         document = self.ec.es.get(index=self.test_index_name, doc_type="_doc", id=self.uuid)["_source"]
         # Assure that the content isn't overwritten by some mishap.
-        self.assertTrue(document[TEST_FIELD] == "miks sa oled loll!?")
+        self.assertTrue(document[TEST_FIELD] == self.content)
         # Fact field should still stay in the document, it should just be empty.
         self.assertTrue(TEXTA_TAGS_KEY in document)
         facts = document.get(TEXTA_TAGS_KEY, [])
+        print_output("test_delete_facts_by_query:document", document)
         self.assertTrue(facts == [])
 
 
     def test_update_facts_by_query(self):
         url = reverse("v2:edit_facts_by_query-list", kwargs=self.kwargs)
         payload = {
-            "description": "testing wether this deletes facts",
+            "description": "testing whether this updates facts",
             "query": TEST_QUERY,
             "target_facts": [{"str_val": "politsei", "fact": "ORG", "spans": json.dumps([[0, 0]]), "doc_path": "hello"}],
             "fact": {"str_val": "Eesti Politsei", "fact": "ORG", "spans": json.dumps([[0, 0]]), "doc_path": "hello"},
@@ -369,7 +369,7 @@ class FactManagementApplicationTests(APITransactionTestCase):
         document = self.ec.es.get(index=self.test_index_name, doc_type="_doc", id=self.uuid)["_source"]
 
         # Assure that the content isn't overwritten by some mishap.
-        self.assertTrue(document["comment_content_lemmas"] == "miks sa oled loll!?")
+        self.assertTrue(document[TEST_FIELD] == self.content)
         facts = document.get(TEXTA_TAGS_KEY, [])
         facts = [fact for fact in facts if fact["str_val"] == "Eesti Politsei"]
         # Ensure that only the relevant portions have been changed.
