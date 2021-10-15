@@ -277,18 +277,21 @@ class TaggerViewTests(APITransactionTestCase):
 
     def run_tag_text(self, test_tagger_ids: List[int]):
         """Tests the endpoint for the tag_text action"""
-        payload = {"text": "This is some test text for the Tagger Test"}
+        payloads = [
+            {"text": "This is some test text for the Tagger Test"},
+            {"text": "test"}
+            ]
+        for payload in payloads:
+            for test_tagger_id in test_tagger_ids:
+                tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
+                response = self.client.post(tag_text_url, payload)
+                print_output('test_tag_text:response.data', response.data)
 
-        for test_tagger_id in test_tagger_ids:
-            tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
-            response = self.client.post(tag_text_url, payload)
-            print_output('test_tag_text:response.data', response.data)
-
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-            # Check if response data is not empty, but a result instead
-            self.assertTrue(response.data)
-            self.assertTrue('result' in response.data)
-            self.assertTrue('probability' in response.data)
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+                # Check if response data is not empty, but a result instead
+                self.assertTrue(response.data)
+                self.assertTrue('result' in response.data)
+                self.assertTrue('probability' in response.data)
 
 
     def run_tag_text_result_check(self, test_tagger_ids: List[int]):

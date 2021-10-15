@@ -251,7 +251,7 @@ class Tagger(models.Model):
             logging.getLogger(INFO_LOGGER).info(f"Adding feedback for Tagger id: {self.pk}")
             project_pk = self.project.pk
             feedback_object = Feedback(project_pk, model_object=self)
-            processed_text = tagger.text_processor.process(content)[0]
+            processed_text = tagger.text_processor.process(content)
             feedback_id = feedback_object.store(processed_text, prediction)
             feedback_url = f'/projects/{project_pk}/taggers/{self.pk}/feedback/'
             prediction['feedback'] = {'id': feedback_id, 'url': feedback_url}
