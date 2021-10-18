@@ -43,7 +43,7 @@ dependencies:
       - xlrd==1.2.0
       - dill
       - texta-anonymizer==1.*
-      - texta-mlp==1.14.*
+      - texta-mlp==1.15.*
       - texta-lexicon-matcher==1.*
       - texta-tools==1.*
       - texta-tagger==1.*
@@ -60,3 +60,4 @@ dependencies:
       - sumy
       - django-environ
       - mrakun
+      - pelecanus
