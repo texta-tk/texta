@@ -22,6 +22,7 @@ from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializer
 class ExportSearcherResultsSerializer(serializers.Serializer):
     indices = serializers.ListField(child=serializers.CharField(), default=[])
     query = serializers.JSONField(help_text="Which query results to fetch.", default=EMPTY_QUERY)
+    fields = serializers.ListField(child=serializers.CharField(), default=[])
 
 
 class ProjectSearchByQuerySerializer(serializers.Serializer):
