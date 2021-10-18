@@ -8,21 +8,12 @@ from texta_mlp.mlp import MLP
 
 from toolkit.base_tasks import BaseTask, QuietTransactionAwareTask, TransactionAwareTask
 from toolkit.core.task.models import Task
-from toolkit.elastic.tools.document import ESDocObject, ElasticDocument
+from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.helper_functions import chunks_iter
 from toolkit.mlp.helpers import process_lang_actions
 from toolkit.mlp.models import ApplyLangWorker, MLPWorker
-from toolkit.settings import (
-    CELERY_LONG_TERM_TASK_QUEUE,
-    CELERY_MLP_TASK_QUEUE,
-    DEFAULT_MLP_LANGUAGE_CODES,
-    ERROR_LOGGER,
-    INFO_LOGGER,
-    MLP_MODEL_DIRECTORY,
-    MLP_USE_GPU
-    )
-from toolkit.settings import (CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE, DEFAULT_MLP_LANGUAGE_CODES, ERROR_LOGGER, INFO_LOGGER, MLP_BATCH_SIZE, MLP_MODEL_DIRECTORY, TEXTA_TAGS_KEY)
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE, DEFAULT_MLP_LANGUAGE_CODES, ERROR_LOGGER, INFO_LOGGER, MLP_BATCH_SIZE, MLP_MODEL_DIRECTORY, MLP_USE_GPU, TEXTA_TAGS_KEY
 from toolkit.tools.show_progress import ShowProgress
 
 
@@ -70,39 +61,45 @@ def get_mlp_object(mlp_id: int):
     return mlp_object
 
 
-def apply_mlp_on_document(document: ESDocObject, analyzers: List[str], field_data: List[str], mlp_id: int):
+def apply_mlp_on_documents(documents: List[dict], analyzers: List[str], field_data: List[str], mlp_id: int):
     # Apply MLP
     try:
         load_mlp()
-        document.apply_mlp(mlp, analyzers, field_data)
-        return document
+        documents = mlp.process_docs(documents, analyzers=analyzers, doc_paths=field_data)
+        return documents
 
     except Exception as e:
         # In case MLP fails, add error to document
+        worker: MLPWorker = MLPWorker.objects.get(pk=mlp_id)
         logging.getLogger(ERROR_LOGGER).error(str(e))
-        document.add_field("mlp_error", str(e))
-        return document
+        worker.task.add_error(str(e))
+        return documents
 
 
-def update_document_in_es(document: ESDocObject):
+def update_documents_in_es(documents: List[dict]):
     """
-    Updates the document inside Elasticsearch, either with the MLP results or the
+    Updates the documents inside Elasticsearch, either with the MLP results or the
     error messages.
 
-    :param document: Wrapper for the Elasticsearch document.
+    :param documents: Full Elasticsearch documents..
     """
-    try:
-        document.update()
-    except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
+    ed = ElasticDocument(index=None)
+    ed.bulk_update(actions=documents)
+
+
+def unite_source_with_meta(meta_docs, source_docs):
+    container = []
+    for index, document in enumerate(source_docs):
+        container.append({**meta_docs[index], "_source": document})
+    return container
 
 
 @task(name="apply_mlp_on_es_doc", base=QuietTransactionAwareTask, queue=CELERY_MLP_TASK_QUEUE, bind=True)
-def apply_mlp_on_es_docs(self, documents: List[str], mlp_id: int):
+def apply_mlp_on_es_docs(self, source_and_meta_docs: List[str], mlp_id: int):
     """
     Applies MLP on documents received by previous tasks and updates them in Elasticsearch.
     :param self: Reference to the Celery Task object of this task, courtesy of the bind parameter in the decorator.
-    :param documents: List of Elasticsearch document ID's to pull from Elasticsearch.
+    :param source_and_meta_docs: List of Elasticsearch document ID's to pull from Elasticsearch.
     :param mlp_id: ID of the MLPObject which contains progress.
     """
     mlp_object = get_mlp_object(mlp_id)
@@ -119,15 +116,15 @@ def apply_mlp_on_es_docs(self, documents: List[str], mlp_id: int):
 
     # retrieve document from ES
     document_wrapper = ElasticDocument(index=None)
-    documents = document_wrapper.get_bulk(doc_ids=documents, fields=field_data)
+    source_and_meta_docs = document_wrapper.get_bulk(doc_ids=source_and_meta_docs, fields=field_data)
 
-    for document in documents:
-        document = ESDocObject(document=document)
-        apply_mlp_on_document(document, analyzers, field_data, mlp_id)
-        update_document_in_es(document)
+    source_documents = [doc["_source"] for doc in source_and_meta_docs]
+    mlp_docs = apply_mlp_on_documents(source_documents, analyzers, field_data, mlp_id)
+    es_documents = unite_source_with_meta(source_and_meta_docs, mlp_docs)
+    update_documents_in_es(es_documents)
 
     # Update progress
-    task_object.update_progress_iter(len(documents))
+    task_object.update_progress_iter(len(source_and_meta_docs))
     return True
 
 
