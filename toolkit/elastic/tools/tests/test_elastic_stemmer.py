@@ -12,7 +12,7 @@ class ElasticStemmerViewTests(APITransactionTestCase):
     def setUp(self):
         self.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
         self.client.login(username='taggerOwner', password='pw')
-        self.url = f'{TEST_VERSION_PREFIX}/snowball/'
+        self.url = f'{TEST_VERSION_PREFIX}/elastic/snowball/'
 
 
     def test_stem_english(self):

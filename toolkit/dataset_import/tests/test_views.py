@@ -17,7 +17,7 @@ class DatasetImportViewTests(APITransactionTestCase):
         self.user = create_test_user('Owner', 'my@email.com', 'pw')
         self.project = project_creation("testImportDatasetProject", None, self.user)
         self.project.users.add(self.user)
-        self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/dataset_imports/'
+        self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/elastic/dataset_imports/'
         self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
         self.created_indices = []
         self.client.login(username='Owner', password='pw')

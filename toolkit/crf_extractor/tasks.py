@@ -68,7 +68,7 @@ def train_crf_task(crf_id: int):
         # scroll docs
         logging.getLogger(INFO_LOGGER).info(f"Scrolling data for CRFExtractor with ID: {crf_id}!")
         documents = ElasticSearcher(
-            query=json.loads(crf_object.query),
+            query=crf_object.get_query(),
             indices=indices,
             callback_progress=show_progress,
             text_processor=None,
@@ -76,20 +76,20 @@ def train_crf_task(crf_id: int):
             output=ElasticSearcher.OUT_DOC,
             flatten=False
         )
+
         # create config
         config = CRFConfig(
-            labels = json.loads(crf_object.labels),
+            labels = crf_object.get_labels(),
             num_iter = crf_object.num_iter,
             test_size = crf_object.test_size,
-            c1 = crf_object.c1,
-            c2 = crf_object.c2,
+            c_values = crf_object.get_c_values(),
             bias = crf_object.bias,
             window_size = crf_object.window_size,
-            suffix_len = tuple(json.loads(crf_object.suffix_len)),
-            context_feature_layers = crf_object.context_feature_fields,
-            context_feature_extractors = crf_object.context_feature_extractors,
-            feature_layers = crf_object.feature_fields,
-            feature_extractors = crf_object.feature_extractors
+            suffix_len = crf_object.get_suffix_len(),
+            context_feature_layers = list(crf_object.context_feature_fields),
+            context_feature_extractors = list(crf_object.context_feature_extractors),
+            feature_layers = list(crf_object.feature_fields),
+            feature_extractors = list(crf_object.feature_extractors)
         )
         # start training
         logging.getLogger(INFO_LOGGER).info(f"Training the model for CRFExtractor with ID: {crf_id}!")
@@ -105,6 +105,7 @@ def train_crf_task(crf_id: int):
         # pass results to next task
         return {
             "id": crf_id,
+            "best_c_values": extractor.best_c_values,
             "extractor_path": relative_model_path,
             "precision": float(report.precision),
             "recall": float(report.recall),
@@ -136,6 +137,8 @@ def save_crf_results(result_data: dict):
         # update status to saving
         show_progress.update_step('saving')
         show_progress.update_view(0)
+        crf_object.best_c1 = result_data["best_c_values"][0]
+        crf_object.best_c2 = result_data["best_c_values"][1]
         crf_object.model.name = result_data["extractor_path"]
         crf_object.precision = result_data["precision"]
         crf_object.recall = result_data["recall"]
@@ -184,9 +187,8 @@ def update_generator(
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
             existing_facts = hit.get("texta_facts", [])
-
             for mlp_field in mlp_fields:
-                new_facts = extractor.tag(hit, field_name=mlp_field)
+                new_facts = extractor.tag(hit, field_name=mlp_field)["texta_facts"]
                 if new_facts:
                     existing_facts.extend(new_facts)
 

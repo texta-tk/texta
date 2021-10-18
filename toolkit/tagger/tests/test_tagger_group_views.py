@@ -38,7 +38,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
         self.new_fact_name_tag_limit = "TEST_TAGGER_GROUP_NAME_LIMITED_TAGS"
 
         # Create copy of test index
-        self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
+        self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/elastic/reindexer/'
         # Generate name for new index containing random id to make sure it doesn't already exist
         self.test_index_copy = f"test_apply_tagger_group_{uuid.uuid4().hex}"
 

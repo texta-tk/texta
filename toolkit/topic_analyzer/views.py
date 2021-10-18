@@ -58,7 +58,7 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         serializer.is_valid()
 
         cluster = Cluster.objects.get(pk=kwargs["pk"])
-        clustering_object = ClusteringResult.objects.get(pk=kwargs["clustering_pk"])
+        clustering_object = ClusteringResult.objects.get(pk=kwargs["topic_analyzer_pk"])
 
         fields = json.loads(cluster.fields)
         stop_words = json.loads(clustering_object.stop_words)
@@ -326,7 +326,7 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         serializer = ClusteringIdsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        clustering_obj = ClusteringResult.objects.get(pk=kwargs["clustering_pk"])
+        clustering_obj = ClusteringResult.objects.get(pk=kwargs["topic_analyzer_pk"])
         cluster_obj = clustering_obj.cluster_result.get(pk=kwargs["pk"])
 
         # JSON fields.
