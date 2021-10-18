@@ -97,7 +97,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
                     "c_values": [0.01, 0.1],
                     "query": json.dumps(EMPTY_QUERY),
                     "feature_fields": ["lemmas", "pos_tags", "text"],
-                    "feature_context_fields": ["lemmas", "pos_tags", "text"],
+                    "context_feature_fields": ["lemmas", "pos_tags", "text"],
                     "labels": ["GPE", "ORG", "PER"],
                     "mlp_field": CRF_TEST_FIELD,
                     "indices": [{"name": self.test_index_name}],

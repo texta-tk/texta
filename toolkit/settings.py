@@ -355,6 +355,9 @@ DEFAULT_BERT_MODELS = env.list("TEXTA_BERT_MODELS", default=["bert-base-multilin
 # default MLP languages
 DEFAULT_MLP_LANGUAGE_CODES = env.list("TEXTA_LANGUAGE_CODES", default=[])
 
+# Enable GPU usage in MLP
+MLP_USE_GPU = env.bool("TEXTA_MLP_USE_GPU", default=False)
+
 # default DS choices
 DEFAULT_TEXTA_DATASOURCE_CHOICES = parse_tuple_env_headers("TEXTA_DATASOURCE_CHOICES", [
     ('emails', 'emails'),
