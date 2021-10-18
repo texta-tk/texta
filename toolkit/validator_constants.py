@@ -1,7 +1,9 @@
 import json
 
 from django.core.exceptions import ValidationError
+
 from toolkit.elastic.tools.aggregator import ElasticAggregator
+
 
 def validate_pos_label(data):
     """ For Tagger, TorchTagger and BertTagger.

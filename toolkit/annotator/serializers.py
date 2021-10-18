@@ -8,10 +8,8 @@ from toolkit.annotator.models import Annotator, BinaryAnnotatorConfiguration, En
 from toolkit.core.project.models import Project
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.models import Index
-from toolkit.elastic.index.serializers import IndexSerializer
-from toolkit.elastic.tools.searcher import EMPTY_QUERY, ElasticSearcher
-from toolkit.elastic.validators import check_for_existence
-from toolkit.serializer_constants import FieldValidationSerializer
+from toolkit.elastic.tools.searcher import ElasticSearcher
+from toolkit.serializer_constants import FieldParseSerializer, ToolkitTaskSerializer
 
 
 ANNOTATION_MAPPING = {
@@ -64,24 +62,12 @@ class EntityAnnotatorConfigurationSerializer(serializers.ModelSerializer):
         fields = ("fact_name",)
 
 
-class AnnotatorSerializer(FieldValidationSerializer, serializers.ModelSerializer):
+class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serializers.ModelSerializer):
     binary_configuration = BinaryAnnotatorConfigurationSerializer(required=False)
     multilabel_configuration = MultilabelAnnotatorConfigurationSerializer(required=False)
     entity_configuration = EntityAnnotatorConfigurationSerializer(required=False)
     url = serializers.SerializerMethodField()
     annotator_users = UserSerializer(many=True, read_only=True)
-    author = UserSerializer(read_only=True)
-
-    query = serializers.JSONField(help_text='Query in JSON format', required=False, default=json.dumps(EMPTY_QUERY))
-
-    indices = IndexSerializer(
-        many=True,
-        default=[],
-        help_text="Which indices to use for this procedure.",
-        validators=[
-            check_for_existence
-        ]
-    )
 
 
     def get_url(self, obj):
@@ -119,6 +105,7 @@ class AnnotatorSerializer(FieldValidationSerializer, serializers.ModelSerializer
 
         indices = [index["name"] for index in validated_data["indices"]]
         indices = project_obj.get_available_or_all_project_indices(indices)
+        fields = validated_data.pop("fields")
         validated_data.pop("indices")
 
         configuration = self.__get_configurations(validated_data)
@@ -129,6 +116,7 @@ class AnnotatorSerializer(FieldValidationSerializer, serializers.ModelSerializer
             author=request.user,
             project=project_obj,
             total=total,
+            fields=json.dumps(fields),
             **configuration,
         )
 
@@ -166,7 +154,7 @@ class AnnotatorSerializer(FieldValidationSerializer, serializers.ModelSerializer
             'author',
             'description',
             'indices',
-            'field',
+            'fields',
             'query',
             'annotation_type',
             'annotator_users',
@@ -184,3 +172,4 @@ class AnnotatorSerializer(FieldValidationSerializer, serializers.ModelSerializer
             "es_timeout"
         )
         read_only_fields = ["annotator_users", "author", "total", "annotated", "validated", "skipped", "created_at", "modified_at", "completed_at"]
+        fields_to_parse = ("fields", "query",)

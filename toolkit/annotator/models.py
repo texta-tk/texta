@@ -2,17 +2,15 @@ import json
 from typing import List, Optional
 
 from django.contrib.auth.models import User
-from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 # Create your models here.
 from django.db.models import F
 
-from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.document import ESDocObject
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
-from toolkit.serializer_constants import BULK_SIZE_HELPTEXT, DESCRIPTION_HELPTEXT, ES_TIMEOUT_HELPTEXT, INDICES_HELPTEXT, PROJECT_HELPTEXT, QUERY_HELPTEXT
+from toolkit.model_constants import TaskModel
+from toolkit.settings import DESCRIPTION_CHAR_LIMIT
 
 
 ANNOTATION_CHOICES = (
@@ -21,17 +19,13 @@ ANNOTATION_CHOICES = (
     ("entity", "entity")
 )
 
-CHAR_LIMIT = 100
-ES_TIMEOUT_MAX = 100
-ES_BULK_SIZE_MAX = 500
-
 
 class Category(models.Model):
-    value = models.CharField(max_length=CHAR_LIMIT)
+    value = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
 
 
 class Label(models.Model):
-    value = models.CharField(max_length=CHAR_LIMIT)
+    value = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
 
 
 class Labelset(models.Model):
@@ -44,27 +38,20 @@ class MultilabelAnnotatorConfiguration(models.Model):
 
 
 class BinaryAnnotatorConfiguration(models.Model):
-    fact_name = models.CharField(max_length=CHAR_LIMIT, help_text="Sets the value for the fact name for all annotated documents.")
+    fact_name = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, help_text="Sets the value for the fact name for all annotated documents.")
     # Change these to a Label value.
-    pos_value = models.CharField(max_length=CHAR_LIMIT, help_text="Sets the name for a fact value for positive documents.")
-    neg_value = models.CharField(max_length=CHAR_LIMIT, help_text="Sets the name for a fact value for negative documents.")
+    pos_value = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, help_text="Sets the name for a fact value for positive documents.")
+    neg_value = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, help_text="Sets the name for a fact value for negative documents.")
 
 
 class EntityAnnotatorConfiguration(models.Model):
-    fact_name = models.CharField(max_length=CHAR_LIMIT, help_text="Name of the fact which will be added.")
+    fact_name = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, help_text="Name of the fact which will be added.")
 
 
-class Annotator(models.Model):
-    description = models.CharField(max_length=MAX_DESC_LEN, help_text=DESCRIPTION_HELPTEXT)
-
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, help_text=PROJECT_HELPTEXT)
-    query = models.TextField(default=json.dumps(EMPTY_QUERY), help_text=QUERY_HELPTEXT)
-    field = models.TextField(default=None, help_text="Which field to parse the content from.")
-    indices = models.ManyToManyField(Index, default=[], help_text=INDICES_HELPTEXT)
-    annotation_type = models.CharField(max_length=CHAR_LIMIT, choices=ANNOTATION_CHOICES, help_text="Which type of annotation does the user wish to perform")
+class Annotator(TaskModel):
+    annotation_type = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, choices=ANNOTATION_CHOICES, help_text="Which type of annotation does the user wish to perform")
 
     annotator_users = models.ManyToManyField(User, default=None, related_name="annotators", help_text="Who are the users who will be annotating.")
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
 
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     modified_at = models.DateTimeField(auto_now=True, null=True)
@@ -96,31 +83,6 @@ class Annotator(models.Model):
         default=None,
         help_text="Settings for entity type annotations."
     )
-
-    bulk_size = models.IntegerField(default=100, help_text=BULK_SIZE_HELPTEXT, validators=[MinValueValidator(0), MaxValueValidator(ES_BULK_SIZE_MAX)])
-    es_timeout = models.IntegerField(default=10, help_text=ES_TIMEOUT_HELPTEXT, validators=[MinValueValidator(0), MaxValueValidator(ES_TIMEOUT_MAX)])
-
-
-    def get_available_or_all_indices(self, indices: List[str] = None) -> List[str]:
-        """
-        Used in views where the user can select the indices they wish to use.
-        Returns a list of index names from the ones that are in the project
-        and in the indices parameter or all of the indices if it's None or empty.
-        """
-        if indices:
-            indices = self.indices.filter(name__in=indices, is_open=True)
-            if not indices:
-                indices = self.project.indices.all()
-        else:
-            indices = self.indices.all()
-
-        indices = [index.name for index in indices]
-        indices = list(set(indices))  # Leave only unique names just in case.
-        return indices
-
-
-    def get_indices(self):
-        return [index.name for index in self.indices.filter(is_open=True)]
 
 
     def add_pos_label(self, document_id: str):
