@@ -12,7 +12,6 @@ from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_SHORT_TERM_TASK
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.topic_analyzer.clustering import ClusterContent, Clustering
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
-from toolkit.topic_analyzer.serializers import ClusteringSerializer
 
 
 @task(name="tag_cluster", bind=True, base=TransactionAwareTask, queue=CELERY_SHORT_TERM_TASK_QUEUE)
@@ -44,22 +43,21 @@ def perform_data_clustering(clustering_id):
     clustering_model = ClusteringResult.objects.get(id=clustering_id)
 
     try:
-        serializer = ClusteringSerializer(clustering_model)
 
-        num_clusters = serializer.data["num_cluster"]
-        clustering_algorithm = serializer.data["clustering_algorithm"]
-        stop_words = serializer.data["stop_words"]
+        num_clusters = clustering_model.num_cluster
+        clustering_algorithm = clustering_model.clustering_algorithm
+        stop_words = json.loads(clustering_model.stop_words)
         indices = clustering_model.get_indices()
-        query = serializer.data["query"]
-        ignored_ids = serializer.data["ignored_ids"]
-        fields = serializer.data["fields"]
-        display_fields = serializer.data["display_fields"]
-        document_limit = serializer.data["document_limit"]
-        vectorizer = serializer.data["vectorizer"]
-        num_dims = serializer.data["num_dims"]
-        use_lsi = serializer.data["use_lsi"]
-        num_topics = serializer.data["num_topics"]
-        significant_words_filter = serializer.data["significant_words_filter"]
+        query = json.loads(clustering_model.query)
+        ignored_ids = json.loads(clustering_model.ignored_ids)
+        fields = json.loads(clustering_model.fields)
+        display_fields = json.loads(clustering_model.display_fields)
+        document_limit = clustering_model.document_limit
+        vectorizer = clustering_model.vectorizer
+        num_dims = clustering_model.num_dims
+        use_lsi = clustering_model.use_lsi
+        num_topics = clustering_model.num_topics
+        significant_words_filter = clustering_model.significant_words_filter
 
         # Removing stopwords, ignored ids while fetching the documents.
         show_progress = ShowProgress(clustering_model.task, multiplier=1)

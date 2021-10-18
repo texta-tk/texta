@@ -6,6 +6,7 @@ from rest_framework.exceptions import ValidationError
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.validators import (
@@ -19,7 +20,7 @@ from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUr
 
 
 class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
-    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
+    author = UserSerializer(read_only=True)
     url = serializers.SerializerMethodField()
     scroll_size = serializers.IntegerField(min_value=0, max_value=10000, required=False)  # Max value stems from Elasticsearch max doc count limitation.
     description = serializers.CharField(help_text='Describe your re-indexing task', required=True, allow_blank=False)
@@ -51,7 +52,7 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
 
     class Meta:
         model = Reindexer
-        fields = ('id', 'url', 'author_username', 'description', 'indices', 'scroll_size', 'fields', 'query', 'new_index', 'random_size', 'field_type', 'add_facts_mapping', 'task')
+        fields = ('id', 'url', 'author', 'description', 'indices', 'scroll_size', 'fields', 'query', 'new_index', 'random_size', 'field_type', 'add_facts_mapping', 'task')
         fields_to_parse = ('fields', 'field_type', 'indices')
 
 

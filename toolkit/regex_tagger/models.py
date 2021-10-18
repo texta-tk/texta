@@ -93,7 +93,8 @@ class RegexTagger(models.Model):
                             "fact": self.description if not fact_name else fact_name,
                             "str_val": match["str_val"] if not fact_value else fact_value,
                             "spans": json.dumps([match["span"]]) if add_spans else json.dumps([[0,0]]),
-                            "doc_path": field
+                            "doc_path": field,
+                            "sent_index": 0
                         }
                         if add_source:
                             new_fact.update({"source": source_string})
@@ -157,9 +158,9 @@ class RegexTaggerGroup(models.Model):
                     matcher = load_matcher(tagger)
                     matches = matcher.get_matches(text)
                     if field_path:
-                        texta_facts = [{"str_val": tagger.description, "spans": json.dumps([match["span"]]), "fact": self.description, "doc_path": field_path} for match in matches]
+                        texta_facts = [{"str_val": tagger.description, "spans": json.dumps([match["span"]]), "fact": self.description, "doc_path": field_path, "sent_index": 0} for match in matches]
                     else:
-                        texta_facts = [{"str_val": tagger.description, "spans": json.dumps([match["span"]]), "fact": self.description} for match in matches]
+                        texta_facts = [{"str_val": tagger.description, "spans": json.dumps([match["span"]]), "fact": self.description,"sent_index": 0} for match in matches]
                     results.extend(texta_facts)
         return results
 

@@ -35,7 +35,7 @@ SEARCHER_FOLDER_KEY = "searcher"
 # ES_URL = get_core_setting("ES_URL")
 
 CORE_SETTINGS = {
-    "TEXTA_ES_URL": env("TEXTA_ES_URL", default="http://elastic-dev.texta.ee:9200"),
+    "TEXTA_ES_URL": env("TEXTA_ES_URL", default="http://localhost:9200"),
     "TEXTA_ES_PREFIX": env("TEXTA_ES_PREFIX", default=""),
     "TEXTA_ES_USERNAME": env("TEXTA_ES_USER", default=""),
     "TEXTA_ES_PASSWORD": env("TEXTA_ES_PASSWORD", default=""),
@@ -92,6 +92,8 @@ INSTALLED_APPS = [
     "toolkit.evaluator",
     "toolkit.summarizer",
     "toolkit.celery_management",
+    "toolkit.rakun_keyword_extractor",
+    "toolkit.crf_extractor",
     # TEXTA Extension Apps
     # "docscraper",
     # THIRD PARTY
@@ -133,11 +135,18 @@ UAA_PROJECT_ADMIN_SCOPE = env.str("TEXTA_UAA_PROJECT_ADMIN_SCOPE", default="text
 UAA_TEXTA_SCOPE_PREFIX = env.str("TEXTA_UAA_SCOPE_PREFIX", default="texta")
 
 # UAA server URL
-UAA_URL = env("TEXTA_UAA_URL", default="http://localhost:8080")
+UAA_URL = env("TEXTA_UAA_URL", default="http://localhost:8080/uaa")
+
+UAA_OAUTH_TOKEN_URI = env("TEXTA_UAA_OAUTH_URI", default=f"{UAA_URL}/oauth/token")
+UAA_USERINFO_URI = env("TEXTA_UAA_USERINFO_URI", default=f"{UAA_URL}/userinfo")
+UAA_LOGOUT_URI = env("TEXTA_UAA_LOGOUT_URI", default=f"{UAA_URL}/logout.do")
+UAA_AUTHORIZE_URI = env("TEXTA_UAA_AUTHORIZE_URI", default=f"{UAA_URL}/oauth/authorize")
+
 # Callback URL defined on the UAA server, to which the user will be redirected after logging in on UAA
 UAA_REDIRECT_URI = env("TEXTA_UAA_REDIRECT_URI", default="http://localhost:8000/api/v1/uaa/callback")
 # TEXTA front URL where the user will be redirected after the redirect_uri
-UAA_FRONT_REDIRECT_URL = env("TEXTA_UAA_FRONT_REDIRECT_URL", default="http://localhost:4200/oauth")
+# Default value is for when running the front-end separately.
+UAA_FRONT_REDIRECT_URL = env("TEXTA_UAA_FRONT_REDIRECT_URL", default="http://localhost:4200/oauth/uaa")
 # OAuth client application (eg texta_toolkit) id and secret.
 UAA_CLIENT_ID = env("TEXTA_UAA_CLIENT_ID", default="login")
 UAA_CLIENT_SECRET = env("TEXTA_UAA_CLIENT_SECRET", default="loginsecret")
@@ -156,7 +165,7 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ),
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.NamespaceVersioning",
-    "DEFAULT_VERSION": "v2",
+    "DEFAULT_VERSION": "v1",
     "ALLOWED_VERSIONS": ["v1", "v2"],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         # For DRF API browser pages
@@ -324,6 +333,8 @@ BERT_CACHE_DIR = os.path.join(CACHE_DIR, "bert")
 # tk trained models dir
 MODELS_DIR_DEFAULT = os.path.join(DATA_DIR, "models")
 RELATIVE_MODELS_PATH = env("TEXTA_RELATIVE_MODELS_DIR", default=MODELS_DIR_DEFAULT)
+# Facebook Model Suffix
+FACEBOOK_MODEL_SUFFIX = env("FACEBOOK_MODEL_SUFFIX", default="facebook")
 # MLP model dir
 MLP_MODEL_DIRECTORY = env("TEXTA_MLP_MODEL_DIRECTORY_PATH", default=os.path.join(EXTERNAL_DATA_DIR, "mlp"))
 # BERT pretrained models
@@ -380,7 +391,7 @@ ALLOW_BERT_MODEL_DOWNLOADS = env.bool("TEXTA_ALLOW_BERT_MODEL_DOWNLOADS", defaul
 RELATIVE_PROJECT_DATA_PATH = env("TOOLKIT_PROJECT_DATA_PATH", default=os.path.join(DATA_DIR, "projects"))
 
 # Different types of models
-MODEL_TYPES = ["embedding", "tagger", "torchtagger", "bert_tagger"]
+MODEL_TYPES = ["embedding", "tagger", "torchtagger", "bert_tagger", "crf"]
 
 # Ensure all the folders exists before downloading the resources.
 prepare_mandatory_directories(

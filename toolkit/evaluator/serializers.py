@@ -4,11 +4,12 @@ from rest_framework import serializers
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.tools.searcher import EMPTY_QUERY
 from toolkit.evaluator import choices
 from toolkit.evaluator.models import Evaluator
 from toolkit.evaluator.validators import (validate_average_function, validate_fact, validate_fact_value, validate_fact_values_in_sync, validate_metric_restrictions)
-from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer
+from toolkit.serializer_constants import IndicesSerializerMixin, ProjectResourceUrlSerializer
 
 
 class FilteredAverageSerializer(serializers.Serializer):
@@ -26,7 +27,7 @@ class IndividualResultsSerializer(serializers.Serializer):
 
 
 class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin):
-    author_username = serializers.CharField(source="author.profile.get_display_name", read_only=True)
+    author = UserSerializer(read_only=True)
     query = serializers.JSONField(required=False, help_text="Query in JSON format", default=json.dumps(EMPTY_QUERY))
 
     true_fact = serializers.CharField(required=True, help_text=f"Fact name used as true label for mulilabel evaluation.")
@@ -90,7 +91,7 @@ class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSeriali
 
     class Meta:
         model = Evaluator
-        fields = ("url", "author_username", "id", "description", "indices", "query", "true_fact", "predicted_fact", "true_fact_value", "predicted_fact_value",
+        fields = ("url", "author", "id", "description", "indices", "query", "true_fact", "predicted_fact", "true_fact_value", "predicted_fact_value",
                   "average_function", "f1_score", "precision", "recall", "accuracy", "confusion_matrix", "n_true_classes", "n_predicted_classes", "n_total_classes",
                   "evaluation_type", "scroll_size", "es_timeout", "scores_imprecise", "score_after_scroll", "document_count", "add_individual_results", "plot", "task")
 

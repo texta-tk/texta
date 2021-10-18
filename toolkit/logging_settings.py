@@ -1,5 +1,10 @@
 # Separator used to join different logged features.
+import logging
+
+
 LOGGING_SEPARATOR = " - "
+
+
 def setup_logging(info_log_file_name, error_log_file_name, info_logger, error_logger):
     return {
         "version": 1,
@@ -7,7 +12,7 @@ def setup_logging(info_log_file_name, error_log_file_name, info_logger, error_lo
         "formatters": {
             "simple": {
                 "format": "\n"
-                + LOGGING_SEPARATOR.join(
+                          + LOGGING_SEPARATOR.join(
                     [
                         "%(levelname)s",
                         "%(module)s",
@@ -36,7 +41,7 @@ def setup_logging(info_log_file_name, error_log_file_name, info_logger, error_lo
             },
             "detailed_error": {
                 "format": "\n"
-                + LOGGING_SEPARATOR.join(
+                          + LOGGING_SEPARATOR.join(
                     [
                         "%(levelname)s",
                         "%(module)s",
@@ -81,6 +86,10 @@ def setup_logging(info_log_file_name, error_log_file_name, info_logger, error_lo
                 "level": "ERROR",
                 "handlers": ["console", "error_file"],
             },
+            "elasticsearch": {
+                "level": logging.WARN,
+                "handles": ["console"]
+            },
             # Big parent of all the Django loggers, MOST (not all) of this will get overwritten.
             # https://docs.djangoproject.com/en/2.1/topics/logging/#topic-logging-parts-loggers
             "django": {"handlers": ["console", "error_file"], "level": "ERROR"},
@@ -95,7 +104,7 @@ def setup_logging(info_log_file_name, error_log_file_name, info_logger, error_lo
             # HTTP 5XX responses are logged as ERROR messages, 4XX responses are logged as WARNING messages,
             # everything else is logged as INFO.
             "django.server": {
-                "handlers": ["console",  "error_file"],
+                "handlers": ["console", "error_file"],
                 "level": "ERROR",
                 "propagate": False,
             },

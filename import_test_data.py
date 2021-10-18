@@ -35,6 +35,12 @@ parser.add_argument(
     help='The final index name of the evaluation testing index, that will be added to Elasticsearch. If an old index exists, IT WILL BE DELETED!'
 )
 parser.add_argument(
+    '-ci',
+    type=str,
+    default='texta_crf_test_index',
+    help='The final index name of the evaluation testing index, that will be added to Elasticsearch. If an old index exists, IT WILL BE DELETED!'
+)
+parser.add_argument(
     '-lg',
     type=bool,
     default=False,
@@ -59,6 +65,11 @@ dataset_params = {
         "url": url_prefix + "elastic_data/texta_test_index.zip",
         "file_name": "texta_test_index"
     },
+    "crf": {
+        "index": args.ci,
+        "url": url_prefix + "elastic_data/texta_crf_test_index.zip",
+        "file_name": "texta_crf_test_index"
+    },
     "ev": {
         "index": args.ei,
         "url": url_prefix + "elastic_data/texta_test_index_evaluator.zip",
@@ -80,7 +91,8 @@ FACT_MAPPING = {
                 'fact': {'type': 'keyword'},
                 'num_val': {'type': 'long'},
                 'spans': {'type': 'keyword'},
-                'str_val': {'type': 'keyword'}
+                'str_val': {'type': 'keyword'},
+                'sent_index': {'type': 'long'},
             }
         }
     }
@@ -136,6 +148,8 @@ def main():
         import_docs(dataset_params["sm"])
         print("Processing evaluator dataset:")
         import_docs(dataset_params["ev"])
+        print("Processing CRF dataset")
+        import_docs(dataset_params["crf"])
         if LARGE is True:
             print("Processing large dataset:")
             import_docs(dataset_params["lg"])

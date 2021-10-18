@@ -229,8 +229,8 @@ class ElasticCore:
                 mapping = Mapping.from_es(index=index, using=self.es)
                 properties = {field: mapping[field].to_dict() for field in mapping}  # Only works for ES7 clusters.
                 properties = properties if properties else self.handle_es6_mapping(mapping.to_dict())
-
-                for field in self._decode_mapping_structure(properties):
+                fields = self._decode_mapping_structure(properties)
+                for field in fields:
                     index_with_field = {'index': index, 'path': field['path'], 'type': field['type']}
                     out.append(index_with_field)
         return out
@@ -258,8 +258,14 @@ class ElasticCore:
                 sub_structure = v['properties']
                 path_list = root_path[:]
                 path_list.append(k)
+                # detect MLP base fields in doc
+                if k.endswith('_mlp'):
+                    mlp_mapping = [{'path': '.'.join(path_list), 'type': 'mlp'}]
+                    mapping_data.extend(mlp_mapping)
+                # go deeper
                 sub_mapping = self._decode_mapping_structure(sub_structure, root_path=path_list)
                 mapping_data.extend(sub_mapping)
+            # this is the end
             else:
                 path_list = root_path[:]
                 path_list.append(k)
@@ -348,6 +354,7 @@ class ElasticCore:
                 "str_val": Keyword(),
                 "doc_path": Keyword(),
                 "num_val": Long(),
+                "sent_index": Long()
             }
         )
 

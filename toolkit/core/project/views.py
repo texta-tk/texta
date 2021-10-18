@@ -5,6 +5,7 @@ import elasticsearch
 import elasticsearch_dsl
 import rest_framework.filters as drf_filters
 from django.contrib.auth.models import User
+from django.db.models import Q
 from django.urls import reverse
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
@@ -400,10 +401,11 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         project: Project = self.get_object()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        users_names = serializer.validated_data["users"]
-        users = User.objects.filter(username__in=users_names)
+        users = [str(user) for user in serializer.validated_data["users"]]
+        user_filter = Q(username__in=users)
+        users = User.objects.filter(user_filter)
         project.users.add(*users)
-        return Response({"detail": f"Added users '{str(users_names)}' into the project!"})
+        return Response({"detail": f"Added users '{str([user for user in users])}' into the project!"})
 
 
     @action(detail=True, methods=['post'], serializer_class=HandleUsersSerializer, permission_classes=[AuthorProjAdminSuperadminAllowed])
@@ -411,10 +413,11 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         project: Project = self.get_object()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        users_names = serializer.validated_data["users"]
-        users = User.objects.filter(username__in=users_names)
+        users = [str(user) for user in serializer.validated_data["users"]]
+        user_filter = Q(username__in=users)
+        users = User.objects.filter(user_filter)
         project.users.remove(*users)
-        return Response({"detail": f"Removed users '{str(users_names)}' into the project!"})
+        return Response({"detail": f"Removed users '{str([user for user in users])}' from the project!"})
 
 
     @action(detail=True, methods=['post'], serializer_class=HandleProjectAdministratorsSerializer, permission_classes=[AuthorProjAdminSuperadminAllowed])
@@ -422,10 +425,11 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         project: Project = self.get_object()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        users_names = serializer.validated_data["project_admins"]
-        users = User.objects.filter(username__in=users_names)
+        users = [str(user) for user in serializer.validated_data["project_admins"]]
+        user_filter = Q(username__in=users)
+        users = User.objects.filter(user_filter)
         project.administrators.add(*users)
-        return Response({"detail": f"Added project administrators '{str(users_names)}' into the project!"})
+        return Response({"detail": f"Added project administrators '{str([user for user in users])}' into the project!"})
 
 
     @action(detail=True, methods=['post'], serializer_class=HandleProjectAdministratorsSerializer, permission_classes=[AuthorProjAdminSuperadminAllowed])
@@ -433,10 +437,11 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         project: Project = self.get_object()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        users_names = serializer.validated_data["project_admins"]
-        users = User.objects.filter(username__in=users_names)
+        users = [str(user) for user in serializer.validated_data["project_admins"]]
+        user_filter = Q(username__in=users)
+        users = User.objects.filter(user_filter)
         project.administrators.remove(*users)
-        return Response({"detail": f"Removed project administrators '{str(users_names)}' into the project!"})
+        return Response({"detail": f"Removed project administrators '{str([user for user in users])}' from the project!"})
 
 
     @action(detail=True, methods=['post'], serializer_class=CountIndicesSerializer, permission_classes=[ExtraActionAccessInApplications])

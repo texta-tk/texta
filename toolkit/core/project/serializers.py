@@ -91,11 +91,11 @@ class HandleIndicesSerializer(serializers.Serializer):
 
 
 class HandleUsersSerializer(serializers.Serializer):
-    users = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), )
+    users = serializers.ListField(help_text="ID's or usernames of the users you wish to manage.")
 
 
 class HandleProjectAdministratorsSerializer(serializers.Serializer):
-    project_admins = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), )
+    project_admins = serializers.ListField(help_text="ID's or usernames of the users you wish to manage.")
 
 
 class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
@@ -110,7 +110,7 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
     administrators = UserSerializer(many=True, default=serializers.CurrentUserDefault(), read_only=True)
     administrators_write = serializers.ListField(child=serializers.CharField(validators=[check_if_username_exist]), write_only=True, default=[], help_text="Usernames of users that should be given Project Administrator permissions.")
 
-    author_username = serializers.CharField(source='author.profile.get_display_name', read_only=True)
+    author = UserSerializer(read_only=True)
 
     resources = serializers.SerializerMethodField()
     resource_count = serializers.SerializerMethodField()
@@ -195,8 +195,8 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ('url', 'id', 'title', 'author_username', 'administrators_write', 'administrators', 'users', 'users_write', 'indices', 'indices_write', 'scopes', 'resources', 'resource_count',)
-        read_only_fields = ('author_username', 'resources',)
+        fields = ('url', 'id', 'title', 'author', 'administrators_write', 'administrators', 'users', 'users_write', 'indices', 'indices_write', 'scopes', 'resources', 'resource_count',)
+        read_only_fields = ('author', 'resources',)
         fields_to_parse = ("scopes",)
 
 
@@ -231,7 +231,9 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
                 'mlp_index',
                 'lang_index',
                 'evaluators',
-                'summarizer_index'
+                'summarizer_index',
+                'rakun_extractors',
+                'crf_extractors'
             )
         elif api_version == 'v1':
             resources = (
@@ -256,7 +258,9 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
                 'lang_index',
                 'evaluators',
                 'summarizer_index',
-                'apply_analyzers'
+                'apply_analyzers',
+                'rakun_extractors',
+                'crf_extractors'
             )
 
         for resource_name in resources:

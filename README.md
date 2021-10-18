@@ -192,7 +192,7 @@ https://elasticsearch-py.readthedocs.io/en/6.3.1/connection.html#elasticsearch.U
 * TEXTA_UAA_REDIRECT_URI - URI into which the user will be redirected after a successful UAA login (
   Default: http://localhost:8000/api/v1/uaa/callback).
 * TEXTA_UAA_FRONT_REDIRECT_URL - Configuration for the front end to determine where it will redirect the user after a
-  successful login with UAA by Toolkit (Default: http://localhost:4200/oauth)
+  successful login with UAA by Toolkit (Default: http://localhost:4200/oauth/uaa)
 * TEXTA_UAA_CLIENT_ID - UAA client ID for authenticating the TEXTA Toolkit application for UAA. ***Must be kept
   secret***
 * TEXTA_UAA_CLIENT_SECRET - Password for authenticating the TEXTA Toolkit application with UAA. ***Must be kept

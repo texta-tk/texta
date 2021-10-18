@@ -1,13 +1,11 @@
 # Service URLs
 TEXTA_ES_URL=http://texta-elasticsearch:9200
 TEXTA_REDIS_URL=redis://texta-redis:6379/0
-TEXTA_API_URL=http://localhost
+TEXTA_API_URL=http://texta-rest
 
 # ETC
-TEXTA_TEST_LIVE_SERVER_PORT=7000
 TEXTA_DEBUG=False
 TEXTA_LANGUAGE_CODES=et,en,ru
-TEXTA_DATASOURCE_CHOICES=[["emails", "emails"], ["news articles", "news articles"], ["comments", "comments"], ["court decisions", "court decisions"], ["tweets", "tweets"], ["forum posts", "forum posts"], ["formal documents", "formal documents"], ["other", "other"]]
 
 # DB settings for TK
 DJANGO_DATABASE_ENGINE=django.db.backends.mysql
@@ -18,32 +16,7 @@ DJANGO_DATABASE_HOST=texta-mariadb
 DJANGO_DATABASE_PORT=3306
 
 # UAA settings for TK
-TEXTA_USE_UAA=True
-TEXTA_UAA_REDIRECT_URI=http://localhost:80/api/v1/uaa/callback
-TEXTA_UAA_FRONT_REDIRECT_URL=http://localhost/oauth
-TEXTA_UAA_URL=http://172.17.0.1:8080/uaa
-
-# UUA settings for UUA server & TK
-TEXTA_UAA_CLIENT_ID=login
-TEXTA_UAA_CLIENT_SECRET=loginsecret
-
-# UUA settings for for UAA Server
-TEXTA_UAA_USER=test
-TEXTA_UAA_EMAIL=test@test.com
-TEXTA_UAA_PWD=test
-
-# Elastic authentication
-# Only usable with the X-Pack security
-#TEXTA_ES_USER=elastic
-#TEXTA_ES_PASSWORD=changeme
-
-# Allow users to download BERT models
-TEXTA_ALLOW_BERT_MODEL_DOWNLOADS=True
-
-# Worker settings
-TEXTA_SHORT_TASK_WORKERS=2
-TEXTA_LONG_TASK_WORKERS=4
-TEXTA_MLP_TASK_WORKERS=2
-TEXTA_SHORT_MAX_TASKS=10
-TEXTA_LONG_MAX_TASKS=10
-TEXTA_MLP_MAX_TASKS=10
+TEXTA_USE_UAA=true
+TEXTA_UAA_REDIRECT_URI=http://texta-rest/api/v1/uaa/callback
+TEXTA_UAA_FRONT_REDIRECT_URL=http://texta-rest/oauth/uaa
+TEXTA_UAA_URL=http://texta-uaa:8080/uaa

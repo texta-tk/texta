@@ -7,7 +7,14 @@ from rest_framework import serializers
 from toolkit.core.project.models import Project
 from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.elastic.validators import check_for_existence
+from toolkit.choice_constants import DEFAULT_ES_TIMEOUT, DEFAULT_BULK_SIZE, DEFAULT_MAX_CHUNK_BYTES
 
+# Helptext constants to ensure consistent values inside Toolkit.
+BULK_SIZE_HELPTEXT = "How many documents should be sent into Elasticsearch in a single batch for update."
+ES_TIMEOUT_HELPTEXT = "How many seconds should be allowed for the the update request to Elasticsearch."
+DESCRIPTION_HELPTEXT = "Description of the task to distinguish it from others."
+QUERY_HELPTEXT = "Elasticsearch query for subsetting in JSON format"
+FIELDS_HELPTEXT = "Which fields to parse the content from."
 
 class EmptySerializer(serializers.Serializer):
     pass
@@ -87,7 +94,18 @@ class ProjectFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
         if not request or not queryset:
             return None
         return queryset.filter(project=view.kwargs["project_pk"])
-        
+
+
+class ProjectFasttextFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
+    def get_queryset(self):
+        request = self.context.get("request", None)
+        view = self.context.get("view", None)
+        queryset = super(ProjectFasttextFilteredPrimaryKeyRelatedField, self).get_queryset()
+        if not request or not queryset:
+            return None
+        return queryset.filter(project=view.kwargs["project_pk"]).filter(embedding_type="FastTextEmbedding")
+
+
 # Subclassing serializers.Serializer is necessary for some magical reason,
 # without it, the ModelSerializers behavior takes precedence no matter how you subclass it.
 class IndicesSerializerMixin(serializers.Serializer):
@@ -98,4 +116,22 @@ class IndicesSerializerMixin(serializers.Serializer):
         validators=[
             check_for_existence
         ]
+    )
+
+
+class ElasticScrollMixIn(serializers.Serializer):
+    es_timeout = serializers.IntegerField(
+        default=DEFAULT_ES_TIMEOUT,
+        help_text=f"Elasticsearch scroll timeout in minutes. Default:{DEFAULT_ES_TIMEOUT}."
+    )
+    bulk_size = serializers.IntegerField(
+        min_value=1,
+        max_value=10000,
+        default=DEFAULT_BULK_SIZE,
+        help_text=f"How many documents should be sent towards Elasticsearch at once. Default:{DEFAULT_BULK_SIZE}."
+    )
+    max_chunk_bytes = serializers.IntegerField(
+        min_value=1,
+        default=DEFAULT_MAX_CHUNK_BYTES,
+        help_text=f"Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors. Default:{DEFAULT_MAX_CHUNK_BYTES}."
     )

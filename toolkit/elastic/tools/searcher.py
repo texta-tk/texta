@@ -5,7 +5,6 @@ from elasticsearch_dsl import Search
 from elasticsearch_dsl.query import MoreLikeThis
 
 from toolkit.elastic.tools.core import ElasticCore, elastic_connection
-from toolkit.settings import TEXTA_TAGS_KEY
 
 
 ES_SCROLL_SIZE = 500
@@ -37,6 +36,7 @@ class ElasticSearcher:
                  text_processor=None,
                  score_threshold=0.0,
                  timeout='10m',
+                 flatten=True,
                  scroll_timeout: str = None):
         """
 
@@ -45,6 +45,7 @@ class ElasticSearcher:
         :param query: Query for Elasticsearch.
         :param scroll_size: How many items should be pulled with each scroll request.
         :param output: Constant for determine document output.
+        :param flatten: Whether to flatten output document or not.
         :param callback_progress: Function to call after each successful scroll request.
         :param scroll_limit: Number of maximum documents that are returned from the scrolling process.
         :param ignore_ids: Iterable of Elasticsearch document ID's which are not returned.
@@ -62,6 +63,7 @@ class ElasticSearcher:
         self.score_threshold = score_threshold
         self.ignore_ids = ignore_ids
         self.output = output
+        self.flatten = flatten
         self.callback_progress = callback_progress
         self.text_processor = text_processor
         self.timeout = timeout
@@ -157,8 +159,9 @@ class ElasticSearcher:
         index = doc['_index']
         highlight = doc['highlight'] if 'highlight' in doc else {}
         doc = doc['_source']
-        new_doc = self.core.flatten(doc)
-        return new_doc, index, highlight
+        if self.flatten:
+            doc = self.core.flatten(doc)
+        return doc, index, highlight
 
 
     def _decode_doc(self, doc, field_path=None):
@@ -274,10 +277,8 @@ class ElasticSearcher:
                         if hit['_id'] not in self.ignore_ids:
                             num_scrolled += 1
                             parsed_doc = self._parse_doc(hit)
-
                             if self.output == self.OUT_META:
                                 yield hit
-
                             elif self.output == self.OUT_TEXT:
                                 for field in parsed_doc.values():
                                     if self.text_processor:
