@@ -252,7 +252,7 @@ def get_mlp(tagger_group_id: int, text: str, lemmatize: bool = False, use_ner: b
 
     # lemmatize
     if lemmatize and mlp_result:
-        text = mlp_result["text"]["lemmas"]
+        text = mlp_result["text_mlp"]["lemmas"]
         lemmas_exists = True if text.strip() else False
         logging.getLogger(INFO_LOGGER).info(f"[Get MLP] Lemmatization result exists: {lemmas_exists}")
 
