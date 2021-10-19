@@ -230,6 +230,21 @@ class ElasticSearcher:
             return response
 
 
+    def resolve_field_data(self) -> List[str]:
+        """
+        Ensure that regardless of the fields inserted, it also always returns the facts
+        to avoid problems with other applications.
+        """
+        if not self.field_data:
+            return ["*"]
+        elif self.field_data and TEXTA_TAGS_KEY not in self.field_data:
+            return self.field_data + [TEXTA_TAGS_KEY]
+        elif self.field_data and TEXTA_TAGS_KEY in self.field_data:
+            return self.field_data
+        else:
+            return ["*"]
+
+
     # batch search makes an inital search, and then keeps pulling batches of results, until none are left.
     @elastic_connection
     def scroll(self):
@@ -242,7 +257,7 @@ class ElasticSearcher:
                 self.callback_progress.update_view(0)
                 self.callback_progress.n_count = 0
 
-            field_data = self.field_data + [TEXTA_TAGS_KEY] if TEXTA_TAGS_KEY not in self.field_data else self.field_data
+            field_data = self.resolve_field_data()
             if self.output == self.OUT_META:
                 page = self.core.es.search(index=self.indices, body=self.query, scroll=self.scroll_timeout, _source_excludes=["*"], size=self.scroll_size)
             else:
