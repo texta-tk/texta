@@ -15,6 +15,7 @@ from multiselectfield import MultiSelectField
 
 from texta_crf_extractor.crf_extractor import CRFExtractor as Extractor
 from texta_crf_extractor.exceptions import ModelLoadFailedError
+from texta_crf_extractor.config import CRFConfig
 
 from toolkit.embedding.models import Embedding
 from toolkit.constants import MAX_DESC_LEN
@@ -176,6 +177,22 @@ class CRFExtractor(models.Model):
         return {"model": self.model.path, "plot": self.plot.path}
 
 
+    def get_crf_config(self):
+        return CRFConfig(
+            labels = self.get_labels(),
+            num_iter = self.num_iter,
+            test_size = self.test_size,
+            c_values = self.get_c_values(),
+            bias = self.bias,
+            window_size = self.window_size,
+            suffix_len = self.get_suffix_len(),
+            context_feature_layers = list(self.context_feature_fields),
+            context_feature_extractors = list(self.context_feature_extractors),
+            feature_layers = list(self.feature_fields),
+            feature_extractors = list(self.feature_extractors)
+        )
+
+
     def load_extractor(self):
         """Loading model from disc."""
         try:
@@ -185,8 +202,10 @@ class CRFExtractor(models.Model):
                 embedding.load_django(self.embedding)
             else:
                 embedding = False
+            # load config
+            config = self.get_crf_config()
             # load extractor model
-            extractor = Extractor(embedding=embedding)
+            extractor = Extractor(config=config, embedding=embedding)
             loaded = extractor.load_django(self)
             # check if model gets loaded
             if not loaded:
