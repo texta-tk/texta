@@ -7,7 +7,6 @@ import json
 import os
 
 from texta_crf_extractor.crf_extractor import CRFExtractor
-from texta_crf_extractor.config import CRFConfig
 
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.core.task.models import Task
@@ -78,19 +77,7 @@ def train_crf_task(crf_id: int):
         )
 
         # create config
-        config = CRFConfig(
-            labels = crf_object.get_labels(),
-            num_iter = crf_object.num_iter,
-            test_size = crf_object.test_size,
-            c_values = crf_object.get_c_values(),
-            bias = crf_object.bias,
-            window_size = crf_object.window_size,
-            suffix_len = crf_object.get_suffix_len(),
-            context_feature_layers = list(crf_object.context_feature_fields),
-            context_feature_extractors = list(crf_object.context_feature_extractors),
-            feature_layers = list(crf_object.feature_fields),
-            feature_extractors = list(crf_object.feature_extractors)
-        )
+        config = crf_object.get_crf_config()
         # start training
         logging.getLogger(INFO_LOGGER).info(f"Training the model for CRFExtractor with ID: {crf_id}!")
         # create extractor
