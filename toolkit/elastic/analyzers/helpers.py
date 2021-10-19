@@ -8,6 +8,7 @@ from toolkit.elastic.choices import map_iso_to_snowball
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.settings import INFO_LOGGER, MLP_MODEL_DIRECTORY
 from toolkit.tools.lemmatizer import ElasticAnalyzer
+from toolkit.mlp.helpers import parse_doc_texts
 
 
 def apply_stemming(texts: List[str], mlp: MLP, strip_html: bool, detect_lang: bool = False, stemmer_lang: str = None, tokenizer="standard"):
@@ -57,7 +58,7 @@ def process_analyzer_actions(
             # This will be a list of texts.
             source = item["_source"]
             for field in fields_to_parse:
-                texts = mlp.parse_doc_texts(doc_path=field, document=source)
+                texts = parse_doc_texts(doc_path=field, document=source)
                 if "stemmer" in analyzers:
                     stemmed_texts = apply_stemming(texts, mlp=mlp, strip_html=strip_html, detect_lang=detect_lang, stemmer_lang=snowball_language, tokenizer=tokenizer)
                     if stemmed_texts:
