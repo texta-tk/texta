@@ -1,4 +1,5 @@
 import os
+import json
 import pathlib
 
 from django.urls import reverse
@@ -207,6 +208,18 @@ class ProjectViewTests(APITestCase):
         payload = {"indices": [TEST_INDEX], "query": {"this": "is invalid"}}
         response = self.client.post(self.export_url, data=payload, format="json")
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+
+    def test_search_export_with_all_fields(self):
+        payload = {"indices": [TEST_INDEX], "fields": []}
+        response = self.client.post(self.export_url, data=payload, format="json")
+        print_output("test_search_export_with_all_fields:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+        hosted_url = response.data
+        file_name = hosted_url.split("/")[-1]
+        path = pathlib.Path(RELATIVE_PROJECT_DATA_PATH) / str(self.project.pk) / SEARCHER_FOLDER_KEY / file_name
+        file_size = os.path.getsize(path)
+        self.assertTrue(file_size > 1)
 
 
     def test_search_by_query(self):
