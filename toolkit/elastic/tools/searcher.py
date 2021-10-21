@@ -5,6 +5,7 @@ from elasticsearch_dsl import Search
 from elasticsearch_dsl.query import MoreLikeThis
 
 from toolkit.elastic.tools.core import ElasticCore, elastic_connection
+from toolkit.settings import TEXTA_TAGS_KEY
 
 
 ES_SCROLL_SIZE = 500
@@ -229,16 +230,39 @@ class ElasticSearcher:
             return response
 
 
+    def resolve_field_data(self) -> List[str]:
+        """
+        Ensure that regardless of the fields inserted, it also always returns the facts
+        to avoid problems with other applications.
+        """
+        if not self.field_data:
+            return ["*"]
+        elif self.field_data and TEXTA_TAGS_KEY not in self.field_data:
+            return self.field_data + [TEXTA_TAGS_KEY]
+        elif self.field_data and TEXTA_TAGS_KEY in self.field_data:
+            return self.field_data
+        else:
+            return ["*"]
+
+
     # batch search makes an inital search, and then keeps pulling batches of results, until none are left.
     @elastic_connection
     def scroll(self):
         scroll_id = None
+
         try:
+
             # Zero-out the progress in case the same ElasticSearch instance is used twice while iterating through the dataset
             if self.callback_progress:
                 self.callback_progress.update_view(0)
                 self.callback_progress.n_count = 0
-            page = self.core.es.search(index=self.indices, body=self.query, scroll=self.scroll_timeout, size=self.scroll_size)
+
+            field_data = self.resolve_field_data()
+            if self.output == self.OUT_META:
+                page = self.core.es.search(index=self.indices, body=self.query, scroll=self.scroll_timeout, _source_excludes=["*"], size=self.scroll_size)
+            else:
+                page = self.core.es.search(index=self.indices, body=self.query, scroll=self.scroll_timeout, _source=field_data, size=self.scroll_size)
+
             scroll_id = page['_scroll_id']
             current_page = 0
             # set page size
