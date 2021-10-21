@@ -5,7 +5,6 @@ from typing import List
 import elasticsearch
 from elasticsearch.helpers import bulk
 from elasticsearch_dsl import Q, Search
-
 from texta_mlp.mlp import MLP
 
 from toolkit.elastic.decorators import elastic_connection
@@ -19,11 +18,11 @@ class ESDocObject:
     """
 
 
-    def __init__(self, document_id, index: str):
+    def __init__(self, document_id=None, index: str = None, document=None):
         self.core = ElasticCore()
         self.document_id = document_id
         self.index = index
-        self.document = self.get()
+        self.document = self.get() if document_id else document
 
 
     @elastic_connection
@@ -66,7 +65,7 @@ class ESDocObject:
         return self.core.es.update(
             index=self.document["_index"],
             doc_type=self.document["_type"],
-            id=self.document_id,
+            id=self.document["_id"] or self.document_id,
             body={"doc": self.document["_source"]},
             refresh="wait_for",
             retry_on_conflict=retry_on_conflict

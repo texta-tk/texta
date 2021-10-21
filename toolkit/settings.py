@@ -282,6 +282,12 @@ ES_CONNECTION_PARAMETERS = {
 }
 
 # CELERY
+
+# Amount of documents processed in a single task.
+# Consider that processed text might be the size of a simple comment
+# or a whole article.
+MLP_BATCH_SIZE = env.int("TEXTA_MLP_BATCH_SIZE", default=25)
+
 BROKER_URL = env('TEXTA_REDIS_URL', default='redis://localhost:6379')
 CELERY_RESULT_BACKEND = BROKER_URL
 CELERY_ACCEPT_CONTENT = ["application/json"]
