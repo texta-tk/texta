@@ -162,7 +162,6 @@ def download_mlp_requirements(model_directory: str, supported_langs: List[str], 
     from texta_mlp.mlp import MLP, ENTITY_MAPPER_DATA_URLS
     MLP.download_entity_mapper_resources(model_directory, entity_mapper_urls=ENTITY_MAPPER_DATA_URLS, logger=logger)
     MLP.download_stanza_resources(model_directory, supported_langs=supported_langs, logger=logger)
-    MLP.download_concatenator_resources(model_directory, logger=logger)
 
 
 def download_bert_requirements(model_directory: str, supported_models: List[str], cache_directory: str, logger=None, num_labels: int = None):
