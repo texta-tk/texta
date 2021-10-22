@@ -65,7 +65,9 @@ class ExportSearchView(APIView):
             indices = model.get_available_or_all_project_indices(serializer.validated_data["indices"])
             indices = ",".join(indices)
 
-            original_query = elasticsearch_dsl.Search().from_dict(query)
+            fields = serializer.validated_data["fields"]
+
+            original_query = elasticsearch_dsl.Search().from_dict(query).source(fields)
             with_es = original_query.using(ElasticCore().es)
             index_limitation = with_es.index(indices)
             limit_by_n_docs = index_limitation.extra(size=10000)
