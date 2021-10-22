@@ -174,6 +174,9 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         # retrieve rakun fields
         fields = serializer.validated_data["fields"]
 
+        # retrieve param add_spans
+        add_spans = serializer.validated_data["add_spans"]
+
         # retrieve random document
         random_doc = ElasticSearcher(indices=indices).random_documents(size=1)[0]
         flattened_doc = ElasticCore(check_connection=False).flatten(random_doc)
@@ -191,7 +194,7 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         for field in fields:
             text = flattened_doc.get(field, "")
             results["document"][field] = text
-            keywords = rakun_object.get_rakun_keywords(keyword_detector=keyword_detector, texts=[text], field_path=field, fact_name=rakun_object.description, fact_value="", add_spans=False)
+            keywords = rakun_object.get_rakun_keywords(keyword_detector=keyword_detector, texts=[text], field_path=field, fact_name=rakun_object.description, fact_value="", add_spans=add_spans)
 
             if keywords:
                 final_keywords.extend(keywords)

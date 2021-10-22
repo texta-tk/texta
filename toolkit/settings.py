@@ -282,6 +282,12 @@ ES_CONNECTION_PARAMETERS = {
 }
 
 # CELERY
+
+# Amount of documents processed in a single task.
+# Consider that processed text might be the size of a simple comment
+# or a whole article.
+MLP_BATCH_SIZE = env.int("TEXTA_MLP_BATCH_SIZE", default=25)
+
 BROKER_URL = env('TEXTA_REDIS_URL', default='redis://localhost:6379')
 CELERY_RESULT_BACKEND = BROKER_URL
 CELERY_ACCEPT_CONTENT = ["application/json"]
@@ -357,6 +363,8 @@ DEFAULT_MLP_LANGUAGE_CODES = env.list("TEXTA_LANGUAGE_CODES", default=[])
 
 # Enable GPU usage in MLP
 MLP_USE_GPU = env.bool("TEXTA_MLP_USE_GPU", default=False)
+# Select GPU device if more than one
+MLP_GPU_DEVICE_ID = env.int("TEXTA_MLP_GPU_DEVICE_ID", default=0)
 
 # default DS choices
 DEFAULT_TEXTA_DATASOURCE_CHOICES = parse_tuple_env_headers("TEXTA_DATASOURCE_CHOICES", [
