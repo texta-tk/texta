@@ -1,4 +1,4 @@
-image: docker.texta.ee/texta/texta-rest-base-image:latest
+image: docker.texta.ee/texta/texta-rest-base-image:2.46.0
 
 variables:
   # Elastic
