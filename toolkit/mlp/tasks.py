@@ -13,7 +13,7 @@ from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.helper_functions import chunks_iter
 from toolkit.mlp.helpers import process_lang_actions
 from toolkit.mlp.models import ApplyLangWorker, MLPWorker
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE, DEFAULT_MLP_LANGUAGE_CODES, ERROR_LOGGER, INFO_LOGGER, MLP_BATCH_SIZE, MLP_MODEL_DIRECTORY, MLP_USE_GPU, TEXTA_TAGS_KEY
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE, DEFAULT_MLP_LANGUAGE_CODES, ERROR_LOGGER, INFO_LOGGER, MLP_BATCH_SIZE, MLP_MODEL_DIRECTORY, MLP_USE_GPU, TEXTA_TAGS_KEY, MLP_GPU_DEVICE_ID
 from toolkit.tools.show_progress import ShowProgress
 
 
@@ -26,10 +26,11 @@ def load_mlp():
     if mlp is None:
         mlp = MLP(
             language_codes=DEFAULT_MLP_LANGUAGE_CODES,
-            default_language_code="et",
+            default_language_code="en",
             resource_dir=MLP_MODEL_DIRECTORY,
             logging_level="info",
-            use_gpu=MLP_USE_GPU
+            use_gpu=MLP_USE_GPU,
+            gpu_device_id=MLP_GPU_DEVICE_ID
         )
 
 

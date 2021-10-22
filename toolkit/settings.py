@@ -363,6 +363,8 @@ DEFAULT_MLP_LANGUAGE_CODES = env.list("TEXTA_LANGUAGE_CODES", default=[])
 
 # Enable GPU usage in MLP
 MLP_USE_GPU = env.bool("TEXTA_MLP_USE_GPU", default=False)
+# Select GPU device if more than one
+MLP_GPU_DEVICE_ID = env.int("TEXTA_MLP_GPU_DEVICE_ID", default=0)
 
 # default DS choices
 DEFAULT_TEXTA_DATASOURCE_CHOICES = parse_tuple_env_headers("TEXTA_DATASOURCE_CHOICES", [
