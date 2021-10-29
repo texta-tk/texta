@@ -213,4 +213,4 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
             "es_timeout"
         )
         read_only_fields = ["annotator_users", "author", "total", "annotated", "validated", "skipped", "created_at", "modified_at", "completed_at"]
-        fields_to_parse = ("fields", "query",)
+        fields_to_parse = ("fields",)

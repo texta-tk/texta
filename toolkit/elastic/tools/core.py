@@ -384,9 +384,12 @@ class ElasticCore:
         :return:
         """
 
+        # TODO This can be written a bit better using elasticsearch_dsl query syntax to avoid pulling dicts from querys etc.
         negative_queries = [Q("exists", field="processed_timestamp_utc"), Q("exists", field="skipped_timestamp_utc")]
-        s = Q("bool", must_not=negative_queries, must=[Q(query["query"])])
-        return s.to_dict()
+        search = elasticsearch_dsl.Search()
+        restriction = Q("bool", must_not=negative_queries, must=[Q(query["query"])])
+        search = search.query(restriction)
+        return search.to_dict()
 
 
     def get_annotation_validation_query(self, query: dict):
