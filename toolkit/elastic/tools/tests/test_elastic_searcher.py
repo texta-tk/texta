@@ -24,7 +24,7 @@ class TestElasticSearcher(TestCase):
         self.run_search()
         self.run_iterator()
         self.run_count_with_nonexisting_index()
-        self.different_outputs()
+        self.run_different_outputs()
 
 
     def run_update_field_data(self):
@@ -66,19 +66,19 @@ class TestElasticSearcher(TestCase):
         self.assertTrue(isinstance(last_hit, dict))
         self.assertTrue(TEST_FIELD in last_hit)
 
-
-    def different_outputs(self):
+    # TODO OUT_TEXT_WITH_ID needs to be checked as it returns None.
+    def run_different_outputs(self):
         """Tests Elasticsearcher outputs in iterator"""
         elastic_searcher = ElasticSearcher(indices=[self.test_index_name], field_data=TEST_FIELD_CHOICE, output=ElasticSearcher.OUT_TEXT)
-        self.assertTrue(list(elastic_searcher)[0], str)
+        self.assertTrue(isinstance(list(elastic_searcher)[0], str))
         elastic_searcher = ElasticSearcher(indices=[self.test_index_name], field_data=TEST_FIELD_CHOICE, output=ElasticSearcher.OUT_TEXT, text_processor=TextProcessor(sentences=True, remove_stop_words=True, words_as_list=True))
-        self.assertTrue(list(elastic_searcher)[0], str)
+        self.assertTrue(isinstance(list(elastic_searcher)[0], str))
         elastic_searcher = ElasticSearcher(indices=[self.test_index_name], field_data=TEST_FIELD_CHOICE, output=ElasticSearcher.OUT_TEXT_WITH_ID)
         self.assertTrue(elastic_searcher, dict)
         elastic_searcher = ElasticSearcher(indices=[self.test_index_name], field_data=TEST_FIELD_CHOICE, output=ElasticSearcher.OUT_DOC)
-        self.assertTrue(elastic_searcher, dict)
+        self.assertTrue(isinstance(list(elastic_searcher)[0], dict))
         elastic_searcher = ElasticSearcher(indices=[self.test_index_name], field_data=TEST_FIELD_CHOICE, output=ElasticSearcher.OUT_DOC_WITH_ID)
-        self.assertTrue(elastic_searcher, dict)
+        self.assertTrue(isinstance(list(elastic_searcher)[0], dict))
 
 
     def run_count_with_nonexisting_index(self):
