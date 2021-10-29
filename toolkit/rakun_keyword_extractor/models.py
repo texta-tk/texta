@@ -112,7 +112,7 @@ class RakunExtractor(models.Model):
                 if add_spans:
                     # Find all positions of the keyword in text
                     spans = [[m.start(), m.end()] for m in
-                             re.finditer(re.escape(rakun_keyword), re.escape(text), re.IGNORECASE)]
+                             re.finditer(re.escape(rakun_keyword), text, re.IGNORECASE)]
                 else:
                     spans = [[0, 0]]
 
