@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from toolkit.annotator.models import Annotator, Comment, Labelset
-from toolkit.annotator.serializers import AnnotatorSerializer, BinaryAnnotationSerializer, CommentSerializer, DocumentIDSerializer, EntityAnnotationSerializer, LabelsetSerializer, MultilabelAnnotationSerializer, ValidateDocumentSerializer
+from toolkit.annotator.serializers import AnnotatorProjectSerializer, AnnotatorSerializer, BinaryAnnotationSerializer, CommentSerializer, DocumentIDSerializer, EntityAnnotationSerializer, LabelsetSerializer, MultilabelAnnotationSerializer, ValidateDocumentSerializer
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import EmptySerializer
 from toolkit.view_constants import BulkDelete
@@ -149,3 +149,16 @@ class AnnotatorViewset(mixins.CreateModelMixin,
 
     def get_queryset(self):
         return Annotator.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
+
+
+class AnnotatorProjectViewset(mixins.ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = AnnotatorProjectSerializer
+    permission_classes = (
+        permissions.IsAuthenticated,
+    )
+
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+
+
+    def get_queryset(self):
+        return Annotator.objects.filter(annotator_users=self.request.user).order_by('-id')

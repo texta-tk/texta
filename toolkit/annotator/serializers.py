@@ -215,3 +215,12 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
         )
         read_only_fields = ["annotator_users", "author", "total", "annotated", "validated", "skipped", "created_at", "modified_at", "completed_at"]
         fields_to_parse = ("fields",)
+
+
+class AnnotatorProjectSerializer(AnnotatorSerializer):
+
+
+    def to_representation(self, instance: Annotator):
+        result = super(AnnotatorProjectSerializer, self).to_representation(instance)
+        result["project_pk"] = instance.project.pk
+        return result
