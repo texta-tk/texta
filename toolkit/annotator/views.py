@@ -5,11 +5,30 @@ from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.annotator.models import Annotator
-from toolkit.annotator.serializers import AnnotatorSerializer, BinaryAnnotationSerializer, DocumentIDSerializer, EntityAnnotationSerializer, MultilabelAnnotationSerializer
+from toolkit.annotator.models import Annotator, Labelset
+from toolkit.annotator.serializers import AnnotatorSerializer, BinaryAnnotationSerializer, CommentSerializer, DocumentIDSerializer, EntityAnnotationSerializer, LabelsetSerializer, MultilabelAnnotationSerializer, ValidateDocumentSerializer
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import EmptySerializer
 from toolkit.view_constants import BulkDelete
+
+
+class LabelsetViewset(mixins.CreateModelMixin,
+                      mixins.ListModelMixin,
+                      mixins.RetrieveModelMixin,
+                      mixins.DestroyModelMixin,
+                      viewsets.GenericViewSet,
+                      BulkDelete):
+    serializer_class = LabelsetSerializer
+    permission_classes = (
+        ProjectAccessInApplicationsAllowed,
+        permissions.IsAuthenticated,
+    )
+
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+
+
+    def get_queryset(self):
+        return Labelset.objects.filter().order_by('-id')
 
 
 class AnnotatorViewset(mixins.CreateModelMixin,
@@ -56,12 +75,16 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         return Response({"detail": f"Skipped document with ID: {serializer.validated_data['document_id']}"})
 
 
-    @action(detail=True, methods=["POST"], serializer_class=DocumentIDSerializer)
+    @action(detail=True, methods=["POST"], serializer_class=ValidateDocumentSerializer)
     def validate_document(self, request, pk=None, project_pk=None):
-        serializer: DocumentIDSerializer = self.get_serializer(data=request.data)
+        serializer: ValidateDocumentSerializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         annotator: Annotator = self.get_object()
-        annotator.validate_document(serializer.validated_data["document_id"])
+        annotator.validate_document(
+            document_id=serializer.validated_data["document_id"],
+            facts=serializer.validated_data["facts"],
+            is_valid=serializer.validated_data["is_valid"]
+        )
         return Response({"detail": f"Validated document with ID: {serializer.validated_data['document_id']}"})
 
 
@@ -101,6 +124,15 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         serializer.is_valid(raise_exception=True)
         annotator: Annotator = self.get_object()
         annotator.add_labels(serializer.validated_data["document_id"], serializer.validated_data["labels"])
+        return Response({"detail": f"Annotated document with ID: {serializer.validated_data['document_id']} with the neg label '{annotator.binary_configuration.neg_value}'"})
+
+
+    @action(detail=True, methods=["POST"], serializer_class=CommentSerializer)
+    def add_comment(self, request, pk=None, project_pk=None):
+        serializer: CommentSerializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        annotator: Annotator = self.get_object()
+        annotator.add_comment(document_id=serializer.validated_data["document_id"], comment=serializer.validated_data["text"], user=request.user)
         return Response({"detail": f"Annotated document with ID: {serializer.validated_data['document_id']} with the neg label '{annotator.binary_configuration.neg_value}'"})
 
 

@@ -21,11 +21,19 @@ ANNOTATION_CHOICES = (
 
 
 class Category(models.Model):
-    value = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
+    value = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, unique=True)
+
+
+    def __str__(self):
+        return self.value
 
 
 class Label(models.Model):
-    value = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
+    value = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, unique=True)
+
+
+    def __str__(self):
+        return self.value
 
 
 class Labelset(models.Model):
@@ -129,7 +137,12 @@ class Annotator(TaskModel):
         self.update_progress()
 
 
-    def validate_document(self, document_id: str) -> bool:
+    def __split_fact(self, fact: dict):
+        fact_name, value, spans, field, fact_id = fact["fact"], fact.get("str_val") or fact.get("num_val"), fact.get("spans"), fact.get("doc_path"), fact.get("id", "")
+        return fact_name, value, spans, field, fact_id
+
+
+    def validate_document(self, document_id: str, facts: List[dict], is_valid: bool, user=None) -> bool:
         """
         Edits the Elasticsearch documents validation timestamp and the progress in the model.
         :param document_id: Elasticsearch document ID of the comment in question.
@@ -141,12 +154,27 @@ class Annotator(TaskModel):
         ed.update()
         self.skipped = F('validated') + 1
         self.save(update_fields=["validated"])
+
+        for fact in facts:
+            fact_name, value, spans, field, fact_id = self.__split_fact(fact)
+            Validation.objects.get_or_create(
+                fact_id=fact_id,
+                fact_key=fact_name,
+                document_id=document_id,
+                fact_value=value,
+                is_valid=is_valid,
+                user=user,
+                annotation_job=self
+            )
+
         return True
 
 
-    def add_entity(self, document_id: str, spans: List, fact_name: str, fact_value: str):
+    def add_entity(self, document_id: str, spans: List, fact_name: str, field: str, fact_value: str):
         """
         Adds an entity label to Elasticsearch documents during entity annotations.
+        :param meta: Contains overall information like ES document meta, fact contents and userinfo.
+        :param field: Which field was used to annotate.
         :param document_id: Elasticsearch document ID of the comment in question.
         :param spans: At which position in the text does the label belong to.
         :param fact_name: Which fact name to give to the Elasticsearch document.
@@ -156,7 +184,7 @@ class Annotator(TaskModel):
         indices = self.get_indices()
         ed = ESDocObject(document_id=document_id, index=indices)
         first, last = spans
-        ed.add_fact(fact_value=fact_value, fact_name=fact_name, doc_path=self.field, spans=json.dumps([first, last]))
+        ed.add_fact(fact_value=fact_value, fact_name=fact_name, doc_path=field, spans=json.dumps([first, last]))
         ed.add_annotated()
         ed.update()
         self.update_progress()
@@ -196,9 +224,10 @@ class Annotator(TaskModel):
         return True
 
 
-    def add_comment(self, document_id: str, comment: str) -> bool:
+    def add_comment(self, document_id: str, comment: str, user: User) -> bool:
         """
         Adds an annotators comment into the document in question.
+        :param user: Django user who did the comment.
         :param comment: Comment to be stores inside the Elasticsearch document.
         :param document_id: Elasticsearch document ID of the comment in question.
         :return:
@@ -207,6 +236,9 @@ class Annotator(TaskModel):
         ed = ESDocObject(document_id=document_id, index=indices)
         ed.add_comment(comment)
         ed.update()
+
+        Comment.objects.create(annotation_job=self, text=comment, document_id=document_id, user=user)
+
         return True
 
 
@@ -268,3 +300,50 @@ class Annotator(TaskModel):
         ec = ElasticCore()
         for index in indices:
             ec.add_annotator_mapping(index)
+
+
+class Comment(models.Model):
+    text = models.TextField()
+    document_id = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    annotation_job = models.ForeignKey(Annotator, on_delete=models.SET_NULL, null=True)
+
+
+    def __str__(self):
+        return f"{self.user.username}: {self.text} @{str(self.created_at)}"
+
+
+class Annotation(models.Model):
+    fact_id = models.TextField(unique=True)
+    fact_key = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
+    document_id = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
+    spans = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, default=json.dumps([[0, 0]]))  # TODO Change max length to something reasonable.
+    field = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
+    fact_value = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    annotation_job = models.ForeignKey(Annotator, on_delete=models.SET_NULL, null=True)
+
+
+    def to_fact(self):
+        return {
+            "str_val": self.fact_value,
+            "fact": self.fact_key,
+            "spans": json.loads(self.spans),
+            "doc_path": self.field
+        }
+
+
+class Validation(models.Model):
+    fact_id = models.TextField(db_index=True)
+    fact_key = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
+    document_id = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
+    fact_value = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
+    is_valid = models.BooleanField()
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    annotation_job = models.ForeignKey(Annotator, on_delete=models.SET_NULL, null=True)

@@ -366,7 +366,7 @@ class ElasticCore:
                 "processed_timestamp_utc": Date(),
                 "skipped_timestamp_utc": Date(),
                 "validated_timestamp_utc": Date(),
-                "comments": Keyword(multi=True),
+                "commented_timestamp_utc": Date()
             }
         )
 

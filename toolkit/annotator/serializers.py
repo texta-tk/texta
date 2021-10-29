@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from toolkit.annotator.models import Annotator, BinaryAnnotatorConfiguration, EntityAnnotatorConfiguration, MultilabelAnnotatorConfiguration
+from toolkit.annotator.models import Annotator, BinaryAnnotatorConfiguration, Category, Comment, EntityAnnotatorConfiguration, Label, Labelset, MultilabelAnnotatorConfiguration
 from toolkit.core.project.models import Project
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.models import Index
@@ -19,13 +19,54 @@ ANNOTATION_MAPPING = {
 }
 
 
+class LabelsetSerializer(serializers.Serializer):
+    category = serializers.CharField()
+    values = serializers.ListSerializer(child=serializers.CharField())
+
+
+    def create(self, validated_data):
+        category = validated_data["category"]
+        values = validated_data["values"]
+
+        category, is_created = Category.objects.get_or_create(value=category)
+        value_container = []
+        for value in values:
+            label, is_created = Label.objects.get_or_create(value=value)
+            value_container.append(label)
+
+        labelset, is_created = Labelset.objects.get_or_create(category=category)
+        labelset.values.add(*value_container)
+
+        return labelset
+
+
 class DocumentIDSerializer(serializers.Serializer):
     document_id = serializers.CharField()
+
+
+class ValidateDocumentSerializer(serializers.Serializer):
+    document_id = serializers.CharField()
+    facts = serializers.JSONField()
+    is_valid = serializers.BooleanField()
 
 
 class MultilabelAnnotationSerializer(serializers.Serializer):
     document_id = serializers.CharField()
     labels = serializers.ListSerializer(child=serializers.CharField())
+
+
+class CommentSerializer(serializers.Serializer):
+    text = serializers.CharField()
+    user = UserSerializer()
+    document_id = serializers.CharField()
+
+
+    def to_representation(self, instance: Comment):
+        return {
+            "text": self.text,
+            "user": self.user.display_name,
+            "document_id": self.document_id
+        }
 
 
 class BinaryAnnotationSerializer(serializers.Serializer):
