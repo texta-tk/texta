@@ -5,7 +5,7 @@ from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.annotator.models import Annotator, Labelset
+from toolkit.annotator.models import Annotator, Comment, Labelset
 from toolkit.annotator.serializers import AnnotatorSerializer, BinaryAnnotationSerializer, CommentSerializer, DocumentIDSerializer, EntityAnnotationSerializer, LabelsetSerializer, MultilabelAnnotationSerializer, ValidateDocumentSerializer
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import EmptySerializer
@@ -132,8 +132,19 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         serializer: CommentSerializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         annotator: Annotator = self.get_object()
-        annotator.add_comment(document_id=serializer.validated_data["document_id"], comment=serializer.validated_data["text"], user=request.user)
-        return Response({"detail": f"Annotated document with ID: {serializer.validated_data['document_id']} with the neg label '{annotator.binary_configuration.neg_value}'"})
+        document_id = serializer.validated_data["document_id"]
+        annotator.add_comment(document_id=document_id, comment=serializer.validated_data["text"], user=request.user)
+        return Response({"detail": f"Successfully added comment to the document for document with ID: {document_id}."})
+
+
+    @action(detail=True, methods=["POST"], serializer_class=DocumentIDSerializer)
+    def get_comments(self, request, pk=None, project_pk=None):
+        serializer: DocumentIDSerializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        document_id = serializer.validated_data["document_id"]
+        comments = Comment.objects.filter(document_id=document_id).order_by("-created_at")[:10]
+        data = CommentSerializer(comments, many=True).data
+        return Response({"count": len(data), "results": data})
 
 
     def get_queryset(self):

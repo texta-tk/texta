@@ -56,16 +56,17 @@ class MultilabelAnnotationSerializer(serializers.Serializer):
 
 
 class CommentSerializer(serializers.Serializer):
-    text = serializers.CharField()
-    user = UserSerializer()
     document_id = serializers.CharField()
+    user = UserSerializer(read_only=True, default=serializers.CurrentUserDefault())
+    text = serializers.CharField()
 
 
     def to_representation(self, instance: Comment):
         return {
-            "text": self.text,
-            "user": self.user.display_name,
-            "document_id": self.document_id
+            "user": instance.user.username,
+            "text": instance.text,
+            "document_id": instance.document_id,
+            "created_at": instance.created_at
         }
 
 
