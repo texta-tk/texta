@@ -265,8 +265,11 @@ class ESDocObject:
     @elastic_connection
     def random_document(indices, query=EMPTY_QUERY):
         ec = ElasticCore()
-        s = elasticsearch_dsl.Search.from_dict(query).using(ec.es).index(indices)
-        s = s.query("function_score", random_score={})
+        s = elasticsearch_dsl.Search(using=ec.es, index=indices)
+        query = query.get("query", None) or query
+        existing_query = Q(query)  # TODO Depending on whether you pull annotated or normal this becomes messy, fix later.
+        random_query = Q("function_score", random_score={})
+        s = s.query("bool", must=[existing_query, random_query])
         s = s.source(exclude=["*"])
         s = s.extra(size=1)
         hits = s.execute()

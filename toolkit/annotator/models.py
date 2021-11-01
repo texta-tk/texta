@@ -70,6 +70,8 @@ class Annotator(TaskModel):
     skipped = models.IntegerField(default=0, help_text="How many documents of the total have been skipped.")
     validated = models.IntegerField(default=0, help_text="How many documents of the total have been validated.")
 
+    target_field = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, default='', help_text="Which Elasticsearch document field you use base the annotation on.")
+
     binary_configuration = models.ForeignKey(
         BinaryAnnotatorConfiguration,
         on_delete=models.SET_NULL,
@@ -101,7 +103,7 @@ class Annotator(TaskModel):
         """
         indices = self.get_indices()
         ed = ESDocObject(document_id=document_id, index=indices)
-        ed.add_fact(fact_value=self.binary_configuration.pos_value, fact_name=self.binary_configuration.fact_name, doc_path=self.field)
+        ed.add_fact(fact_value=self.binary_configuration.pos_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field)
         ed.add_annotated()
         ed.update()
         self.update_progress()
@@ -115,7 +117,7 @@ class Annotator(TaskModel):
         """
         indices = self.get_indices()
         ed = ESDocObject(document_id=document_id, index=indices)
-        ed.add_fact(fact_value=self.binary_configuration.neg_value, fact_name=self.binary_configuration.fact_name, doc_path=self.field)
+        ed.add_fact(fact_value=self.binary_configuration.neg_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field)
         ed.add_annotated()
         ed.update()
         self.update_progress()
@@ -131,7 +133,7 @@ class Annotator(TaskModel):
         indices = self.get_indices()
         ed = ESDocObject(document_id=document_id, index=indices)
         for label in labels:
-            ed.add_fact(fact_value=label, fact_name=self.multilabel_configuration.labelset.category.value, doc_path=self.field)
+            ed.add_fact(fact_value=label, fact_name=self.multilabel_configuration.labelset.category.value, doc_path=self.target_field)
         ed.add_annotated()
         ed.update()
         self.update_progress()
@@ -145,6 +147,9 @@ class Annotator(TaskModel):
     def validate_document(self, document_id: str, facts: List[dict], is_valid: bool, user=None) -> bool:
         """
         Edits the Elasticsearch documents validation timestamp and the progress in the model.
+        :param user:
+        :param is_valid:
+        :param facts:
         :param document_id: Elasticsearch document ID of the comment in question.
         :return:
         """
@@ -173,7 +178,6 @@ class Annotator(TaskModel):
     def add_entity(self, document_id: str, spans: List, fact_name: str, field: str, fact_value: str):
         """
         Adds an entity label to Elasticsearch documents during entity annotations.
-        :param meta: Contains overall information like ES document meta, fact contents and userinfo.
         :param field: Which field was used to annotate.
         :param document_id: Elasticsearch document ID of the comment in question.
         :param spans: At which position in the text does the label belong to.
@@ -320,7 +324,7 @@ class Annotation(models.Model):
     fact_key = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
     document_id = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
     spans = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, default=json.dumps([[0, 0]]))  # TODO Change max length to something reasonable.
-    field = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
+    target_field = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
     fact_value = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -333,7 +337,7 @@ class Annotation(models.Model):
             "str_val": self.fact_value,
             "fact": self.fact_key,
             "spans": json.loads(self.spans),
-            "doc_path": self.field
+            "doc_path": self.target_field
         }
 
 

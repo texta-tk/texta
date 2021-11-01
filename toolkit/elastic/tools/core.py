@@ -385,7 +385,7 @@ class ElasticCore:
         """
 
         # TODO This can be written a bit better using elasticsearch_dsl query syntax to avoid pulling dicts from querys etc.
-        negative_queries = [Q("exists", field="processed_timestamp_utc"), Q("exists", field="skipped_timestamp_utc")]
+        negative_queries = [Q("exists", field="texta_annotator.processed_timestamp_utc"), Q("exists", field="texta_annotator.skipped_timestamp_utc")]
         search = elasticsearch_dsl.Search()
         restriction = Q("bool", must_not=negative_queries, must=[Q(query["query"])])
         search = search.query(restriction)
@@ -400,8 +400,8 @@ class ElasticCore:
         :return:
         """
 
-        negative_queries = [Q("exists", field="skipped_timestamp_utc"), Q("exists", field="validated_timestamp_utc")]
-        positive_queries = [Q(query["query"]), Q("exists", field="processed_timestamp_utc")]
+        negative_queries = [Q("exists", field="texta_annotator.skipped_timestamp_utc"), Q("exists", field="texta_annotator.validated_timestamp_utc")]
+        positive_queries = [Q(query["query"]), Q("exists", field="texta_annotator.processed_timestamp_utc")]
         s = Q("bool", must_not=negative_queries, must=positive_queries)
         return s.to_dict()
 

@@ -148,6 +148,7 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
         indices = [index["name"] for index in validated_data["indices"]]
         indices = project_obj.get_available_or_all_project_indices(indices)
         fields = validated_data.pop("fields")
+
         validated_data.pop("indices")
 
         configuration = self.__get_configurations(validated_data)
@@ -196,6 +197,7 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
             'author',
             'description',
             'indices',
+            'target_field',
             'fields',
             'query',
             'annotation_type',
