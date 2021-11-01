@@ -13,7 +13,7 @@ from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.helper_functions import chunks_iter
 from toolkit.mlp.helpers import process_lang_actions
 from toolkit.mlp.models import ApplyLangWorker, MLPWorker
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE, DEFAULT_MLP_LANGUAGE_CODES, ERROR_LOGGER, INFO_LOGGER, MLP_BATCH_SIZE, MLP_MODEL_DIRECTORY, MLP_USE_GPU, TEXTA_TAGS_KEY, MLP_GPU_DEVICE_ID
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE, DEFAULT_MLP_LANGUAGE_CODES, ERROR_LOGGER, INFO_LOGGER, MLP_BATCH_SIZE, MLP_GPU_DEVICE_ID, MLP_MODEL_DIRECTORY, MLP_USE_GPU, TEXTA_TAGS_KEY
 from toolkit.tools.show_progress import ShowProgress
 
 
@@ -91,7 +91,9 @@ def update_documents_in_es(documents: List[dict]):
 def unite_source_with_meta(meta_docs, source_docs):
     container = []
     for index, document in enumerate(source_docs):
-        container.append({**meta_docs[index], "_source": document})
+        document = {**meta_docs[index], "_op_type": "update", "doc": document}
+        del document["_source"]
+        container.append(document)
     return container
 
 
