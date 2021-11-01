@@ -7,8 +7,10 @@ from rest_framework.response import Response
 
 from toolkit.annotator.models import Annotator, Comment, Labelset
 from toolkit.annotator.serializers import AnnotatorProjectSerializer, AnnotatorSerializer, BinaryAnnotationSerializer, CommentSerializer, DocumentIDSerializer, EntityAnnotationSerializer, LabelsetSerializer, MultilabelAnnotationSerializer, ValidateDocumentSerializer
+from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import EmptySerializer
+from toolkit.settings import TEXTA_ANNOTATOR_KEY
 from toolkit.view_constants import BulkDelete
 
 
@@ -54,6 +56,25 @@ class AnnotatorViewset(mixins.CreateModelMixin,
             return Response(document)
         else:
             return Response({"detail": "No more documents left!"}, status=status.HTTP_404_NOT_FOUND)
+
+
+    # TODO Put this inside the model for a more common standard.
+    @action(detail=True, methods=["POST"], serializer_class=DocumentIDSerializer)
+    def pull_document_by_id(self, request, pk=None, project_pk=None):
+        annotator: Annotator = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        ed = ElasticDocument(index=annotator.get_indices())
+        document_id = serializer.validated_data["document_id"]
+        document = ed.get(document_id)
+        if document:
+            meta_dict = document["_source"].get(TEXTA_ANNOTATOR_KEY, {})
+            meta_dict["comment_count"] = Comment.objects.filter(document_id=document_id).count()
+            document["_source"][TEXTA_ANNOTATOR_KEY] = meta_dict
+            return Response(document)
+        else:
+            return Response({"message": "No such document!"}, status=status.HTTP_404_NOT_FOUND)
 
 
     @action(detail=True, methods=["POST"], serializer_class=EmptySerializer)

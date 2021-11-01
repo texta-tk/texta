@@ -304,15 +304,6 @@ class ESDocObject:
         self.document["_source"]["texta_facts"] = existing_facts
 
 
-    def add_comment(self, comment: str):
-        source = self.document["_source"]
-        annotation_dict = source.get(TEXTA_ANNOTATOR_KEY, {})
-        comments = annotation_dict.get("comments", [])
-        comments.append(comment)
-        annotation_dict["comments"] = comments
-        self.document["_source"][TEXTA_ANNOTATOR_KEY] = annotation_dict
-
-
     # TODO These three can be unified into a more general function.
     def add_skipped(self):
         source = self.document["_source"]

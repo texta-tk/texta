@@ -236,13 +236,7 @@ class Annotator(TaskModel):
         :param document_id: Elasticsearch document ID of the comment in question.
         :return:
         """
-        indices = self.get_indices()
-        ed = ESDocObject(document_id=document_id, index=indices)
-        ed.add_comment(comment)
-        ed.update()
-
         Comment.objects.create(annotation_job=self, text=comment, document_id=document_id, user=user)
-
         return True
 
 
