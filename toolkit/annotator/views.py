@@ -48,15 +48,28 @@ class AnnotatorViewset(mixins.CreateModelMixin,
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
 
 
+    def _enrich_document_with_meta(self, document: dict, annotator: Annotator):
+
+        # Add comment count to the elastic document
+        document_id = document["_id"]
+        meta_dict = document["_source"].get(TEXTA_ANNOTATOR_KEY, {})
+        meta_dict["comment_count"] = Comment.objects.filter(document_id=document_id).count()
+
+        # Add counts of things to the document.
+        meta_dict["total_count"] = annotator.total
+        meta_dict["annotated_count"] = annotator.annotated
+        meta_dict["skipped_count"] = annotator.skipped
+        meta_dict["validated_count"] = annotator.validated
+        document["_source"][TEXTA_ANNOTATOR_KEY] = meta_dict
+        return document
+
+
     @action(detail=True, methods=["POST"], serializer_class=EmptySerializer)
     def pull_document(self, request, pk=None, project_pk=None):
         annotator: Annotator = self.get_object()
         document = annotator.pull_document()
         if document:
-            document_id = document["_id"]
-            meta_dict = document["_source"].get(TEXTA_ANNOTATOR_KEY, {})
-            meta_dict["comment_count"] = Comment.objects.filter(document_id=document_id).count()
-            document["_source"][TEXTA_ANNOTATOR_KEY] = meta_dict
+            document = self._enrich_document_with_meta(document, annotator)
             return Response(document)
         else:
             return Response({"detail": "No more documents left!"}, status=status.HTTP_404_NOT_FOUND)
@@ -73,9 +86,7 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         document_id = serializer.validated_data["document_id"]
         document = ed.get(document_id)
         if document:
-            meta_dict = document["_source"].get(TEXTA_ANNOTATOR_KEY, {})
-            meta_dict["comment_count"] = Comment.objects.filter(document_id=document_id).count()
-            document["_source"][TEXTA_ANNOTATOR_KEY] = meta_dict
+            document = self._enrich_document_with_meta(document, annotator)
             return Response(document)
         else:
             return Response({"message": "No such document!"}, status=status.HTTP_404_NOT_FOUND)
@@ -86,6 +97,7 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         annotator: Annotator = self.get_object()
         document = annotator.pull_annotated_document()
         if document:
+            document = self._enrich_document_with_meta(document, annotator)
             return Response(document)
         else:
             return Response({"detail": "No more documents left!"}, status=status.HTTP_404_NOT_FOUND)
