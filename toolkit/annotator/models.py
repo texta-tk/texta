@@ -194,7 +194,7 @@ class Annotator(TaskModel):
         self.update_progress()
 
 
-    def pull_document(self) -> Optional[bool]:
+    def pull_document(self) -> Optional[dict]:
         """
         Function for returning a new Elasticsearch document for annotation.
         :return:

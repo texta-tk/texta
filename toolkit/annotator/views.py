@@ -53,6 +53,10 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         annotator: Annotator = self.get_object()
         document = annotator.pull_document()
         if document:
+            document_id = document["_id"]
+            meta_dict = document["_source"].get(TEXTA_ANNOTATOR_KEY, {})
+            meta_dict["comment_count"] = Comment.objects.filter(document_id=document_id).count()
+            document["_source"][TEXTA_ANNOTATOR_KEY] = meta_dict
             return Response(document)
         else:
             return Response({"detail": "No more documents left!"}, status=status.HTTP_404_NOT_FOUND)
