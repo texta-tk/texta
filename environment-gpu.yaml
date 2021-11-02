@@ -47,7 +47,7 @@ dependencies:
       - texta-mlp==1.15.*
       - texta-lexicon-matcher==1.*
       - texta-tools==1.*
-      - texta-elastic-tools==0.0.2
+      - texta-elastic-tools==0.0.*
       - texta-tagger==1.*
       - texta-torch-tagger==1.*
       - texta-bert-tagger==2.3.*
