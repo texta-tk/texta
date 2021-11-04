@@ -8,7 +8,7 @@ from texta_tools.text_processor import TextProcessor
 
 from toolkit.base_tasks import BaseTask
 from toolkit.core.task.models import Task
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.tools.lemmatizer import ElasticAnalyzer
 from toolkit.embedding.models import Embedding
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, FACEBOOK_MODEL_SUFFIX

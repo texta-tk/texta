@@ -6,7 +6,7 @@ from django.db import models
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 
 

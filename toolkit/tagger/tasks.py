@@ -15,12 +15,12 @@ from texta_tools.embedding import W2VEmbedding
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.core import ElasticCore
 from toolkit.elastic.tools.data_sample import DataSample
-from toolkit.elastic.tools.document import ElasticDocument
+from texta_elastic.document import ElasticDocument
 from toolkit.elastic.tools.feedback import Feedback
-from toolkit.elastic.tools.query import Query
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.query import Query
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import add_finite_url_to_feedback, get_indices_from_object, load_stop_words
 from toolkit.mlp.tasks import apply_mlp_on_list

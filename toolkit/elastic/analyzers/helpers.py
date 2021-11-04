@@ -5,7 +5,7 @@ from texta_mlp.document import Document
 from texta_mlp.mlp import MLP
 
 from toolkit.elastic.choices import map_iso_to_snowball
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.settings import INFO_LOGGER, MLP_MODEL_DIRECTORY
 from toolkit.tools.lemmatizer import ElasticAnalyzer
 from toolkit.mlp.helpers import parse_doc_texts

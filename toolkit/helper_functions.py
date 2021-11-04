@@ -271,7 +271,7 @@ def reindex_test_dataset(query: dict = None, from_index: Optional[str] = None, h
     :param hex_size: How many random characters should there be in the new indexes name.
     :return: Name of the newly generated index.
     """
-    from toolkit.elastic.tools.core import ElasticCore
+    from texta_elastic.core import ElasticCore
     from toolkit.test_settings import TEST_INDEX
 
     from_index = from_index if from_index else TEST_INDEX

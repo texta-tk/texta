@@ -26,7 +26,7 @@ class AnonymizerViewTests(APITestCase):
 
 
     def tearDown(self) -> None:
-        from toolkit.elastic.tools.core import ElasticCore
+        from texta_elastic.core import ElasticCore
         ElasticCore().delete_index(index=self.test_index_name, ignore=[400, 404])
 
 

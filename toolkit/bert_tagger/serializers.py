@@ -6,8 +6,8 @@ from toolkit.bert_tagger import choices
 from toolkit.bert_tagger.models import BertTagger
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
-from toolkit.elastic.tools.aggregator import ElasticAggregator
+from texta_elastic.searcher import EMPTY_QUERY
+from texta_elastic.aggregator import ElasticAggregator
 from toolkit.helper_functions import get_downloaded_bert_models
 from toolkit.serializer_constants import (
     FieldParseSerializer,

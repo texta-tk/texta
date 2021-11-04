@@ -1,5 +1,5 @@
 # CHOICES FOR CORE APP
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.core import ElasticCore
 from toolkit.settings import CORE_SETTINGS
 
 STATUS_CREATED = 'created'

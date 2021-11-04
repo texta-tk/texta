@@ -14,8 +14,8 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import GeneralTextSerializer
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.core import ElasticCore
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.helper_functions import load_stop_words
 from toolkit.exceptions import SerializerNotValid
 

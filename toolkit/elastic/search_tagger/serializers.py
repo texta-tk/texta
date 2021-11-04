@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework import serializers
 
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.serializer_constants import BULK_SIZE_HELPTEXT, DESCRIPTION_HELPTEXT, ES_TIMEOUT_HELPTEXT, FIELDS_HELPTEXT, FieldValidationSerializer, IndicesSerializerMixin, QUERY_HELPTEXT
 from toolkit.settings import REST_FRAMEWORK
 from .models import SearchFieldsTagger, SearchQueryTagger

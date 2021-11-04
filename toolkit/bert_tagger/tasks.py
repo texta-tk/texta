@@ -12,9 +12,9 @@ from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.elastic.tools.data_sample import DataSample
 from toolkit.elastic.tools.feedback import Feedback
-from toolkit.elastic.tools.searcher import ElasticSearcher
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.document import ElasticDocument
+from texta_elastic.searcher import ElasticSearcher
+from texta_elastic.core import ElasticCore
+from texta_elastic.document import ElasticDocument
 from toolkit.tools.plots import create_tagger_plot
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, BERT_PRETRAINED_MODEL_DIRECTORY, BERT_FINETUNED_MODEL_DIRECTORY, BERT_CACHE_DIR, INFO_LOGGER, ERROR_LOGGER

@@ -7,7 +7,7 @@ from texta_mlp.mlp import SUPPORTED_ANALYZERS
 from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.mlp.models import ApplyLangWorker, MLPWorker
 from toolkit.serializer_constants import FieldValidationSerializer, IndicesSerializerMixin
 from toolkit.settings import REST_FRAMEWORK

@@ -3,7 +3,7 @@ from unittest import skipIf
 from django.test import override_settings
 from rest_framework.test import APITransactionTestCase
 
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.core import ElasticCore
 from toolkit.test_settings import *
 from toolkit.tools.utils_for_tests import create_test_user, project_creation
 

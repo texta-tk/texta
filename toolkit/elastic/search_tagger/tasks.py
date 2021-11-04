@@ -7,9 +7,9 @@ from celery.decorators import task
 from toolkit.base_tasks import TransactionAwareTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.search_tagger.models import SearchFieldsTagger, SearchQueryTagger
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.document import ElasticDocument
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.core import ElasticCore
+from texta_elastic.document import ElasticDocument
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER
 from toolkit.tools.show_progress import ShowProgress
 

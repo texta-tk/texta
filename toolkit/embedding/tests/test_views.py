@@ -7,8 +7,8 @@ from django.test import TransactionTestCase, override_settings
 from rest_framework import status
 
 from toolkit.core.task.models import Task
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.core import ElasticCore
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.settings import RELATIVE_MODELS_PATH
