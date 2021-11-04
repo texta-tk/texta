@@ -13,7 +13,7 @@ from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.core.user_profile.validators import check_if_username_exist
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import IndexSerializer
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.validators import check_for_existence
 from toolkit.helper_functions import wrap_in_list
 from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin

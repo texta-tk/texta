@@ -1,5 +1,5 @@
 # CHOICES FOR EMBEDDING APP
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.core import ElasticCore
 from toolkit.elastic.tools.data_sample import ES6_SNOWBALL_MAPPING, ES7_SNOWBALL_MAPPING
 
 

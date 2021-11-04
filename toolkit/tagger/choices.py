@@ -1,6 +1,6 @@
 from texta_tagger.pipeline import get_pipeline_builder
 
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.core import ElasticCore
 
 
 def get_field_choices():

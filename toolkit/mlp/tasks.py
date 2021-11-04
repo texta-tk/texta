@@ -8,8 +8,8 @@ from texta_mlp.mlp import MLP
 
 from toolkit.base_tasks import BaseTask, QuietTransactionAwareTask, TransactionAwareTask
 from toolkit.core.task.models import Task
-from toolkit.elastic.tools.document import ElasticDocument
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.document import ElasticDocument
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.helper_functions import chunks_iter
 from toolkit.mlp.helpers import process_lang_actions
 from toolkit.mlp.models import ApplyLangWorker, MLPWorker

@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 
-from toolkit.elastic.tools.document import ElasticDocument
+from texta_elastic.document import ElasticDocument
 from toolkit.helper_functions import chunks
 
 

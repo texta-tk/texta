@@ -7,7 +7,7 @@ from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.core.task.models import Task
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.crf_extractor.models import CRFExtractor
@@ -18,8 +18,8 @@ from toolkit.test_settings import (
     CRF_TEST_INDEX,
     TEST_INDEX
 )
-from toolkit.elastic.tools.aggregator import ElasticAggregator
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.core import ElasticCore
 from toolkit.settings import RELATIVE_MODELS_PATH
 from toolkit.tools.utils_for_tests import (
     create_test_user,

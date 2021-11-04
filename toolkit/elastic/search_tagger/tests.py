@@ -7,7 +7,7 @@ from elasticsearch_dsl import Search
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from toolkit.elastic.tools.document import ElasticDocument
+from texta_elastic.document import ElasticDocument
 from toolkit.test_settings import VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
@@ -42,7 +42,7 @@ class SearchFieldsTaggerIndexViewTests(APITestCase):
 
 
     def tearDown(self) -> None:
-        from toolkit.elastic.tools.core import ElasticCore
+        from texta_elastic.core import ElasticCore
         ElasticCore().delete_index(index=self.new_test_index_name, ignore=[400, 404])
 
 
@@ -163,7 +163,7 @@ class SearchQueryTaggerIndexViewTests(APITestCase):
 
 
     def tearDown(self) -> None:
-        from toolkit.elastic.tools.core import ElasticCore
+        from texta_elastic.core import ElasticCore
         ElasticCore().delete_index(index=self.new_test_index_name, ignore=[400, 404])
 
 

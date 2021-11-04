@@ -26,7 +26,7 @@ class Index(models.Model):
 
     @staticmethod
     def check_and_create(indices: str):
-        from toolkit.elastic.tools.core import ElasticCore
+        from texta_elastic.core import ElasticCore
         ec = ElasticCore()
 
         if isinstance(indices, list):

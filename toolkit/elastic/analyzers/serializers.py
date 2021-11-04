@@ -6,7 +6,7 @@ from rest_framework.exceptions import ValidationError
 
 from .models import ApplyESAnalyzerWorker
 from ..choices import DEFAULT_ELASTIC_TOKENIZER, DEFAULT_SNOWBALL_LANGUAGE, ELASTIC_TOKENIZERS, get_snowball_choices
-from ..tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 from ...core.task.serializers import TaskSerializer
 from ...core.user_profile.serializers import UserSerializer
 from ...serializer_constants import FieldValidationSerializer, IndicesSerializerMixin

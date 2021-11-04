@@ -8,11 +8,11 @@ from toolkit.base_tasks import TransactionAwareTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.choices import LABEL_DISTRIBUTION
 from toolkit.elastic.index_splitter.models import IndexSplitter
-from toolkit.elastic.tools.aggregator import ElasticAggregator
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.document import ElasticDocument
-from toolkit.elastic.tools.mapping_tools import update_field_types, update_mapping
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.core import ElasticCore
+from texta_elastic.document import ElasticDocument
+from texta_elastic.mapping_tools import update_field_types, update_mapping
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.settings import ERROR_LOGGER, INFO_LOGGER
 from toolkit.tools.show_progress import ShowProgress
 

@@ -10,9 +10,9 @@ from texta_crf_extractor.crf_extractor import CRFExtractor
 
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.core.task.models import Task
-from toolkit.elastic.tools.searcher import ElasticSearcher
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.document import ElasticDocument
+from texta_elastic.searcher import ElasticSearcher
+from texta_elastic.core import ElasticCore
+from texta_elastic.document import ElasticDocument
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.helper_functions import get_indices_from_object
 from toolkit.tools.plots import create_tagger_plot

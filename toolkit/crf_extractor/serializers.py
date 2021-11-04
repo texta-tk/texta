@@ -3,7 +3,7 @@ from rest_framework import serializers
 from texta_crf_extractor.feature_extraction import DEFAULT_LAYERS, DEFAULT_EXTRACTORS
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.serializer_constants import (
     FieldParseSerializer,
     IndicesSerializerMixin,

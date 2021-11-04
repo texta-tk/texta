@@ -21,8 +21,8 @@ from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 from toolkit.topic_analyzer.serializers import ClusterSerializer, ClusteringIdsSerializer, ClusteringSerializer, TransferClusterDocumentsSerializer
 from .clustering import ClusterContent
 from .tasks import tag_cluster
-from ..elastic.tools.document import ElasticDocument
-from ..elastic.tools.searcher import ElasticSearcher
+from texta_elastic.document import ElasticDocument
+from texta_elastic.searcher import ElasticSearcher
 from ..elastic.tools.serializers import ElasticFactSerializer, ElasticMoreLikeThisSerializer
 from ..pagination import PageNumberPaginationDataOnly
 from ..permissions.project_permissions import ProjectAccessInApplicationsAllowed

@@ -11,9 +11,9 @@ from rest_framework.test import APITransactionTestCase
 
 from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
-from toolkit.elastic.tools.aggregator import ElasticAggregator
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.core import ElasticCore
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.test_settings import (TEST_FACT_NAME, TEST_FIELD, TEST_FIELD_CHOICE, TEST_KEEP_PLOT_FILES, TEST_QUERY, TEST_TAGGER_GROUP, TEST_VERSION_PREFIX, VERSION_NAMESPACE)

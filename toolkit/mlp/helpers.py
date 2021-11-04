@@ -6,8 +6,8 @@ from pelecanus import PelicanJson
 from texta_mlp.document import Document
 from texta_mlp.mlp import MLP
 
-from toolkit.elastic.tools.document import ElasticDocument
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.document import ElasticDocument
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.settings import INFO_LOGGER, NAN_LANGUAGE_TOKEN_KEY
 
 

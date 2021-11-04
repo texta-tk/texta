@@ -13,8 +13,8 @@ from texta_bert_tagger.tagger import BertTagger
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
 from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
-from toolkit.elastic.tools.aggregator import ElasticAggregator
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.core import ElasticCore
 from toolkit.helper_functions import (
     download_bert_requirements,
     get_downloaded_bert_models,

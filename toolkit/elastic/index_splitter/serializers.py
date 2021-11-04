@@ -7,7 +7,7 @@ from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.choices import LABEL_DISTRIBUTION
 from toolkit.elastic.index_splitter.models import IndexSplitter
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.core import ElasticCore
 from toolkit.elastic.validators import (
     check_for_banned_beginning_chars,
     check_for_colons,

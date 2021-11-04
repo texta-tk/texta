@@ -15,7 +15,7 @@ from toolkit.elastic.index.serializers import (
     AddTextaFactsMapping,
     IndexBulkDeleteSerializer, IndexSerializer, IndexUpdateSerializer
 )
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.core import ElasticCore
 from toolkit.permissions.project_permissions import IsSuperUser
 from toolkit.settings import TEXTA_TAGS_KEY
 from datetime import datetime

@@ -5,7 +5,7 @@ from rest_framework import serializers
 from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.evaluator import choices
 from toolkit.evaluator.models import Evaluator
 from toolkit.evaluator.validators import (validate_average_function, validate_fact, validate_fact_value, validate_fact_values_in_sync, validate_metric_restrictions)
