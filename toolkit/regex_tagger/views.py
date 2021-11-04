@@ -153,6 +153,8 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         # filter again
         if serializer.validated_data['taggers']:
             regex_taggers = tagger_objects.filter(pk__in=serializer.validated_data['taggers'])
+        else:
+            regex_taggers = tagger_objects.all()
 
         text = serializer.validated_data["text"]
 

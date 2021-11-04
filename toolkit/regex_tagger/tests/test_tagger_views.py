@@ -284,24 +284,31 @@ class RegexTaggerViewTests(APITransactionTestCase):
         url = reverse(f"{VERSION_NAMESPACE}:regex_tagger-multitag-text", kwargs={"project_pk": self.project.pk})
         # tagger_url = f'{self.url}multitag_text/'
         ### test matching text
-        payload = {
-            "text": "maja teisel korrusel toimus põleng ning ohver sai tõsiseid vigastusi.",
-            "taggers": [self.police, self.medic, self.firefighter]
-        }
-        response = self.client.post(url, payload, format="json")
-        print_output('test_regex_tagger_multitag_text:response.data', response.data)
-        # check if we found anything
-        tags = [res["tag"] for res in response.data]
-        self.assertEqual(len(response.data), 2)
-        self.assertTrue("tagger_id" in response.data[0])
-        self.assertTrue("tag" in response.data[0])
-        self.assertTrue("matches" in response.data[0])
-        self.assertEqual(len(response.data[0]["matches"]), 1)
-        self.assertEqual(len(response.data[1]["matches"]), 1)
-        self.assertTrue("str_val" in response.data[0]["matches"][0])
-        self.assertTrue("span" in response.data[0]["matches"][0])
-        self.assertTrue("kiirabi" in tags)
-        self.assertTrue("tuletõrje" in tags)
+        payloads = [
+            {
+                "text": "maja teisel korrusel toimus põleng ning ohver sai tõsiseid vigastusi.",
+                "taggers": [self.police, self.medic, self.firefighter]
+            },
+            {
+                "text": "maja teisel korrusel toimus põleng ning ohver sai tõsiseid vigastusi."
+            },
+        ]
+
+        for payload in payloads:
+            response = self.client.post(url, payload, format="json")
+            print_output('test_regex_tagger_multitag_text:response.data', response.data)
+            # check if we found anything
+            tags = [res["tag"] for res in response.data]
+            self.assertEqual(len(response.data), 2)
+            self.assertTrue("tagger_id" in response.data[0])
+            self.assertTrue("tag" in response.data[0])
+            self.assertTrue("matches" in response.data[0])
+            self.assertEqual(len(response.data[0]["matches"]), 1)
+            self.assertEqual(len(response.data[1]["matches"]), 1)
+            self.assertTrue("str_val" in response.data[0]["matches"][0])
+            self.assertTrue("span" in response.data[0]["matches"][0])
+            self.assertTrue("kiirabi" in tags)
+            self.assertTrue("tuletõrje" in tags)
 
 
     def run_test_create_and_update_regex_tagger(self):
