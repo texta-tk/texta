@@ -75,7 +75,7 @@ class AnnotatorViewset(mixins.CreateModelMixin,
             return Response({"detail": "No more documents left!"}, status=status.HTTP_404_NOT_FOUND)
 
 
-    # TODO Put this inside the model for a more common standard.
+    # TODO Put the functional logic inside the model for a more common standard.
     @action(detail=True, methods=["POST"], serializer_class=DocumentIDSerializer)
     def pull_document_by_id(self, request, pk=None, project_pk=None):
         annotator: Annotator = self.get_object()
@@ -103,6 +103,7 @@ class AnnotatorViewset(mixins.CreateModelMixin,
             return Response({"detail": "No more documents left!"}, status=status.HTTP_404_NOT_FOUND)
 
 
+    # TODO Make sure that if an already skipped document is skipped nothing particular changes.
     @action(detail=True, methods=["POST"], serializer_class=DocumentIDSerializer)
     def skip_document(self, request, pk=None, project_pk=None):
         serializer: DocumentIDSerializer = self.get_serializer(data=request.data)
@@ -139,19 +140,21 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         return Response({"detail": f"Skipped document with ID: {serializer.validated_data['document_id']}"})
 
 
+    # TODO Add in a check for duplicated and make sure the count does not go over total.
     @action(detail=True, methods=["POST"], serializer_class=BinaryAnnotationSerializer)
     def annotate_binary(self, request, pk=None, project_pk=None):
         serializer: BinaryAnnotationSerializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         annotator: Annotator = self.get_object()
         choice = serializer.validated_data["annotation_type"]
+        index = serializer.validated_data["index"]
 
         if choice == "pos":
-            annotator.add_pos_label(serializer.validated_data["document_id"])
+            annotator.add_pos_label(serializer.validated_data["document_id"], index=index)
             return Response({"detail": f"Annotated document with ID: {serializer.validated_data['document_id']} with the pos label '{annotator.binary_configuration.pos_value}'"})
 
         elif choice == "neg":
-            annotator.add_neg_label(serializer.validated_data["document_id"])
+            annotator.add_neg_label(serializer.validated_data["document_id"], index=index)
             return Response({"detail": f"Annotated document with ID: {serializer.validated_data['document_id']} with the neg label '{annotator.binary_configuration.neg_value}'"})
 
 

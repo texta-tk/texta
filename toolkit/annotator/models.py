@@ -95,28 +95,29 @@ class Annotator(TaskModel):
     )
 
 
-    def add_pos_label(self, document_id: str):
+    def add_pos_label(self, document_id: str, index: str):
         """
         Adds a positive label to the Elasticsearch document for Binary annotation.
+        :param index: Which index does said Elasticsearch document reside in.
         :param document_id: Elasticsearch document ID of the comment in question.
         :return:
         """
-        indices = self.get_indices()
-        ed = ESDocObject(document_id=document_id, index=indices)
+        ed = ESDocObject(document_id=document_id, index=index)
         ed.add_fact(fact_value=self.binary_configuration.pos_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field)
         ed.add_annotated()
         ed.update()
         self.update_progress()
 
 
-    def add_neg_label(self, document_id: str):
+    def add_neg_label(self, document_id: str, index: str):
         """
         Adds a negative label to the Elasticsearch document for Binary annotation.
+        :param index: Which index does said Elasticsearch document reside in.
         :param document_id: Elasticsearch document ID of the comment in question.
         :return:
         """
         indices = self.get_indices()
-        ed = ESDocObject(document_id=document_id, index=indices)
+        ed = ESDocObject(document_id=document_id, index=index)
         ed.add_fact(fact_value=self.binary_configuration.neg_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field)
         ed.add_annotated()
         ed.update()
@@ -245,8 +246,9 @@ class Annotator(TaskModel):
         Wrapper function for updating the progress after each annotation.
         :return:
         """
-        self.annotated = F('annotated') + 1
-        self.save(update_fields=["annotated"])
+        if self.annotated != self.total:
+            self.annotated = F('annotated') + 1
+            self.save(update_fields=["annotated"])
 
 
     def pull_skipped_documents(self):

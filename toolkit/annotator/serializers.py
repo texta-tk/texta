@@ -72,6 +72,8 @@ class CommentSerializer(serializers.Serializer):
 
 class BinaryAnnotationSerializer(serializers.Serializer):
     document_id = serializers.CharField()
+    index = serializers.CharField()
+    doc_type = serializers.CharField(default="_doc")
     annotation_type = serializers.ChoiceField(choices=(
         ("pos", "pos"),
         ("neg", "neg"))

@@ -297,7 +297,7 @@ class ESDocObject:
 
 
     def add_fact(self, fact_name, fact_value, doc_path, spans=json.dumps([[0, 0]])):
-        fact = {"str_val": fact_value, "fact_name": fact_name, "doc_path": doc_path, "spans": spans}
+        fact = {"str_val": fact_value, "fact": fact_name, "doc_path": doc_path, "spans": spans}
         existing_facts = self.document["_source"].get("texta_facts", [])
         existing_facts.append(fact)
         existing_facts = ElasticDocument.remove_duplicate_facts(existing_facts)
