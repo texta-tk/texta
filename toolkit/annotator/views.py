@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from toolkit.annotator.models import Annotator, Comment, Labelset
-from toolkit.annotator.serializers import AnnotatorProjectSerializer, AnnotatorSerializer, BinaryAnnotationSerializer, CommentSerializer, DocumentIDSerializer, EntityAnnotationSerializer, LabelsetSerializer, MultilabelAnnotationSerializer, ValidateDocumentSerializer
+from toolkit.annotator.serializers import AnnotatorProjectSerializer, AnnotatorSerializer, BinaryAnnotationSerializer, CommentSerializer, DocumentEditSerializer, DocumentIDSerializer, EntityAnnotationSerializer, LabelsetSerializer, MultilabelAnnotationSerializer, ValidateDocumentSerializer
 from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import EmptySerializer
@@ -104,12 +104,12 @@ class AnnotatorViewset(mixins.CreateModelMixin,
 
 
     # TODO Make sure that if an already skipped document is skipped nothing particular changes.
-    @action(detail=True, methods=["POST"], serializer_class=DocumentIDSerializer)
+    @action(detail=True, methods=["POST"], serializer_class=DocumentEditSerializer)
     def skip_document(self, request, pk=None, project_pk=None):
         serializer: DocumentIDSerializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         annotator: Annotator = self.get_object()
-        annotator.skip_document(serializer.validated_data["document_id"])
+        annotator.skip_document(serializer.validated_data["document_id"], serializer.validated_data["index"])
         return Response({"detail": f"Skipped document with ID: {serializer.validated_data['document_id']}"})
 
 
@@ -140,7 +140,6 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         return Response({"detail": f"Skipped document with ID: {serializer.validated_data['document_id']}"})
 
 
-    # TODO Add in a check for duplicated and make sure the count does not go over total.
     @action(detail=True, methods=["POST"], serializer_class=BinaryAnnotationSerializer)
     def annotate_binary(self, request, pk=None, project_pk=None):
         serializer: BinaryAnnotationSerializer = self.get_serializer(data=request.data)

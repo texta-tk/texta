@@ -9,6 +9,7 @@ from toolkit.annotator.models import Annotator
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.helper_functions import reindex_test_dataset
+from toolkit.settings import TEXTA_ANNOTATOR_KEY
 from toolkit.test_settings import TEST_FIELD, TEST_MATCH_TEXT, TEST_QUERY
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
@@ -39,6 +40,7 @@ class BinaryAnnotatorTests(APITestCase):
         self.run_that_query_limits_pulled_document()
         doc_id_with_comment = self.run_adding_comment_to_document()
         self.run_pulling_comment_for_document(doc_id_with_comment)
+        self.run_check_proper_skipping_functionality()
         self.run_annotating_to_the_end()
 
 
@@ -114,10 +116,12 @@ class BinaryAnnotatorTests(APITestCase):
         model_object = Annotator.objects.get(pk=self.annotator["id"])
         total = model_object.total
         annotated = model_object.annotated
+        skipped = model_object.skipped
+        validated = model_object.validated
 
         annotation_url = reverse("v2:annotator-annotate-binary", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
 
-        for i in range(total - annotated + 1):
+        for i in range(total - annotated - skipped - validated + 1):
             random_document = self._pull_random_document()
             payload = {"annotation_type": "pos", "document_id": random_document["_id"], "index": random_document["_index"]}
             annotation_response = self.client.post(annotation_url, data=payload, format="json")
@@ -175,6 +179,18 @@ class BinaryAnnotatorTests(APITestCase):
         content = random_document["_source"]
         print_output("run_that_query_limits_pulled_document:source", content)
         self.assertTrue(TEST_MATCH_TEXT in content.get(TEST_FIELD, ""))
+
+
+    def run_check_proper_skipping_functionality(self):
+        random_document = self._pull_random_document()
+        skip_url = reverse("v2:annotator-skip-document", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
+        doc_index = random_document["_index"]
+        doc_id = random_document["_id"]
+        response = self.client.post(skip_url, data={"document_id": doc_id, "index": doc_index}, format="json")
+        print_output("run_check_proper_skipping_functionality:response.status", response.status_code)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        elastic_doc = self.ec.es.get(index=doc_index, id=doc_id)
+        self.assertTrue(elastic_doc["_source"][TEXTA_ANNOTATOR_KEY]["skipped_timestamp_utc"], None)
 
 
     def run_that_double_skipped_document_wont_be_counted(self):

@@ -44,6 +44,11 @@ class DocumentIDSerializer(serializers.Serializer):
     document_id = serializers.CharField()
 
 
+class DocumentEditSerializer(serializers.Serializer):
+    document_id = serializers.CharField()
+    index = serializers.CharField()
+
+
 class ValidateDocumentSerializer(serializers.Serializer):
     document_id = serializers.CharField()
     facts = serializers.JSONField()

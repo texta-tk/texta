@@ -214,14 +214,14 @@ class Annotator(TaskModel):
             return None
 
 
-    def skip_document(self, document_id: str) -> bool:
+    def skip_document(self, document_id: str, index: str) -> bool:
         """
         Add the skip label to the document and update the progress accordingly.
         :param document_id: Elasticsearch document ID of the comment in question.
         :return:
         """
         indices = self.get_indices()
-        ed = ESDocObject(document_id=document_id, index=indices)
+        ed = ESDocObject(document_id=document_id, index=index)
         ed.add_skipped()
         ed.update()
         self.skipped = F('skipped') + 1
@@ -315,35 +315,14 @@ class Comment(models.Model):
         return f"{self.user.username}: {self.text} @{str(self.created_at)}"
 
 
-class Annotation(models.Model):
-    fact_id = models.TextField(unique=True)
-    fact_key = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
+class Record(models.Model):
     document_id = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
-    spans = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, default=json.dumps([[0, 0]]))  # TODO Change max length to something reasonable.
-    target_field = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
-    fact_value = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
+    index = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
+
+    annotated_fact = models.TextField(default=json.dumps({}))
+    is_skipped = models.BooleanField(default=False)
+    is_validated = models.BooleanField(default=True)
+
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
-    annotation_job = models.ForeignKey(Annotator, on_delete=models.SET_NULL, null=True)
-
-
-    def to_fact(self):
-        return {
-            "str_val": self.fact_value,
-            "fact": self.fact_key,
-            "spans": json.loads(self.spans),
-            "doc_path": self.target_field
-        }
-
-
-class Validation(models.Model):
-    fact_id = models.TextField(db_index=True)
-    fact_key = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
-    document_id = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
-    fact_value = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
-    is_valid = models.BooleanField()
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
     annotation_job = models.ForeignKey(Annotator, on_delete=models.SET_NULL, null=True)
