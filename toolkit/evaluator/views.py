@@ -77,7 +77,7 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
 
         query = json.loads(serializer.validated_data["query"])
 
-        new_task = Task.objects.create(evaluator=evaluator, status="created")
+        new_task = Task.objects.create(evaluator=evaluator, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
         evaluator.task = new_task
         evaluator.save()
 

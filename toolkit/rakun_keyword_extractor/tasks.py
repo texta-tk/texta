@@ -4,6 +4,7 @@ from celery.decorators import task
 from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
 from texta_elastic.searcher import ElasticSearcher
+from toolkit.core.task.models import Task
 from toolkit.base_tasks import TransactionAwareTask
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
@@ -82,4 +83,4 @@ def apply_rakun_extractor_to_index(self, object_id: int, indices: List[str], fie
         logging.getLogger(ERROR_LOGGER).exception(e)
         error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
         rakun_extractor_object.task.add_error(error_message)
-        rakun_extractor_object.task.update_status(rakun_extractor_object.task.STATUS_FAILED)
+        rakun_extractor_object.task.update_status(Task.STATUS_FAILED)

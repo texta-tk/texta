@@ -153,7 +153,7 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             serializer.is_valid(raise_exception=True)
 
             extractor = self.get_object()
-            extractor.task = Task.objects.create(crfextractor=extractor, status=Task.STATUS_CREATED)
+            extractor.task = Task.objects.create(crfextractor=extractor, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
             extractor.save()
 
             indices = [index["name"] for index in serializer.validated_data["indices"]]

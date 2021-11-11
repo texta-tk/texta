@@ -35,7 +35,7 @@ class ApplyESAnalyzerWorker(models.Model):
     def process(self):
         from toolkit.elastic.analyzers.tasks import apply_analyzers_on_indices
 
-        new_task = Task.objects.create(applyesanalyzerworker=self, status='created')
+        new_task = Task.objects.create(applyesanalyzerworker=self, status='created', task_type=Task.TYPE_APPLY)
         self.task = new_task
         self.save()
 

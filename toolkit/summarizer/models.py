@@ -30,7 +30,7 @@ class Summarizer(models.Model):
     def process(self):
         from toolkit.summarizer.tasks import apply_summarizer_on_index, start_summarizer_worker, end_summarizer_task
 
-        new_task = Task.objects.create(summarizer=self, status='created')
+        new_task = Task.objects.create(summarizer=self, status='created', task_type=Task.TYPE_APPLY)
         self.task = new_task
         self.save()
 

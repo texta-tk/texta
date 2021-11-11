@@ -343,7 +343,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             serializer.is_valid(raise_exception=True)
 
             tagger_object = self.get_object()
-            tagger_object.task = Task.objects.create(tagger=tagger_object, status=Task.STATUS_CREATED)
+            tagger_object.task = Task.objects.create(tagger=tagger_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
             tagger_object.save()
 
             project = Project.objects.get(pk=project_pk)
