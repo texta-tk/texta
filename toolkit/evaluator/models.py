@@ -89,7 +89,7 @@ class Evaluator(models.Model):
 
                 evaluator_model = Evaluator(**evaluator_json)
 
-                evaluator_model.task = Task.objects.create(evaluator=evaluator_model, status=Task.STATUS_COMPLETED)
+                evaluator_model.task = Task.objects.create(evaluator=evaluator_model, status=Task.STATUS_COMPLETED, task_type=Task.TYPE_APPLY)
                 evaluator_model.author = User.objects.get(id=request.user.id)
                 evaluator_model.project = Project.objects.get(id=pk)
 

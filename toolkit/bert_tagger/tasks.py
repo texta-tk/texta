@@ -106,7 +106,7 @@ def train_bert_tagger(tagger_id, testing=False):
 
         # if no checkpoint model is given, train a new model
         else:
-            logging.getLogger(INFO_LOGGER).info(f"No checkpoint model detected, training a new model...")
+            logging.getLogger(INFO_LOGGER).info("No checkpoint model detected, training a new model...")
             # NB! saving pretrained models must be disabled!
             tagger = BertTagger(
                 allow_standard_output = choices.DEFAULT_ALLOW_STANDARD_OUTPUT,

@@ -57,7 +57,7 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             serializer.is_valid(raise_exception=True)
 
             rakun_object: RakunExtractor = self.get_object()
-            rakun_object.task = Task.objects.create(rakunextractor=rakun_object, status=Task.STATUS_CREATED)
+            rakun_object.task = Task.objects.create(rakunextractor=rakun_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
             rakun_object.save()
 
             project = Project.objects.get(pk=project_pk)

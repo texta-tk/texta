@@ -43,7 +43,7 @@ class IndexSplitter(models.Model):
         return json.loads(self.custom_distribution)
 
     def start_task(self):
-        new_task = Task.objects.create(indexsplitter=self, status='created')
+        new_task = Task.objects.create(indexsplitter=self, status='created', task_type=Task.TYPE_APPLY)
         self.task = new_task
         self.save()
         from toolkit.elastic.index_splitter.tasks import index_splitting_task

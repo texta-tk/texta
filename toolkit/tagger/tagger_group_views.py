@@ -319,7 +319,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
             serializer.is_valid(raise_exception=True)
 
             tagger_group_object = self.get_object()
-            tagger_group_object.task = Task.objects.create(taggergroup=tagger_group_object, status=Task.STATUS_CREATED)
+            tagger_group_object.task = Task.objects.create(taggergroup=tagger_group_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
             tagger_group_object.save()
 
             if not get_redis_status()['alive']:
