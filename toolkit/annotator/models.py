@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from typing import List, Optional
 
 from django.contrib.auth.models import User
@@ -66,8 +67,6 @@ class Annotator(TaskModel):
     completed_at = models.DateTimeField(null=True, default=None)
 
     total = models.IntegerField(default=0, help_text="How many documents are going to be annotated.")
-    annotated = models.IntegerField(default=0, help_text="How many documents of the total have been annotated.")
-    skipped = models.IntegerField(default=0, help_text="How many documents of the total have been skipped.")
     validated = models.IntegerField(default=0, help_text="How many documents of the total have been validated.")
 
     target_field = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, default='', help_text="Which Elasticsearch document field you use base the annotation on.")
@@ -95,43 +94,69 @@ class Annotator(TaskModel):
     )
 
 
-    def add_pos_label(self, document_id: str, index: str):
+    @property
+    def annotated(self):
+        restraint = Record.objects.filter(annotated_utc__isnull=False, skipped_utc__isnull=True)
+        return restraint.count()
+
+
+    @property
+    def skipped(self):
+        restraint = Record.objects.filter(annotated_utc__isnull=True, skipped_utc__isnull=False)
+        return restraint.count()
+
+
+    def add_pos_label(self, document_id: str, index: str, user_pk):
         """
         Adds a positive label to the Elasticsearch document for Binary annotation.
+        :param user_pk:
         :param index: Which index does said Elasticsearch document reside in.
         :param document_id: Elasticsearch document ID of the comment in question.
         :return:
         """
         ed = ESDocObject(document_id=document_id, index=index)
-        ed.add_fact(fact_value=self.binary_configuration.pos_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field)
-        ed.add_annotated()
+        fact = ed.add_fact(fact_value=self.binary_configuration.pos_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field)
         ed.update()
-        self.update_progress()
+        ed.add_annotated()
+        self.generate_record(document_id, index=index, user_pk=user_pk, fact=fact, do_annotate=True, fact_id=fact["id"])
 
 
-    def add_neg_label(self, document_id: str, index: str):
+    def generate_record(self, document_id, index, user_pk, fact=None, fact_id=None, do_annotate=False, do_skip=False):
+        user = User.objects.get(pk=user_pk)
+        record, is_created = Record.objects.get_or_create(document_id=document_id, index=index, user=user, annotation_job=self)
+        if do_annotate:
+            record.fact = json.dumps(fact)
+            record.fact_id = fact_id
+            record.annotated_utc = datetime.utcnow()
+        if do_skip:
+            record.skipped_utc = datetime.utcnow()
+        record.save()
+
+
+    def add_neg_label(self, document_id: str, index: str, user_pk):
         """
         Adds a negative label to the Elasticsearch document for Binary annotation.
+        :param user_pk:
         :param index: Which index does said Elasticsearch document reside in.
         :param document_id: Elasticsearch document ID of the comment in question.
         :return:
         """
         ed = ESDocObject(document_id=document_id, index=index)
-        ed.add_fact(fact_value=self.binary_configuration.neg_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field)
+        fact = ed.add_fact(fact_value=self.binary_configuration.neg_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field)
         ed.add_annotated()
         ed.update()
-        self.update_progress()
+        self.generate_record(document_id, index=index, user_pk=user_pk, fact=fact, do_annotate=True, fact_id=fact["id"])
 
 
-    def add_labels(self, document_id: str, labels: List[str]):
+    def add_labels(self, document_id: str, labels: List[str], index: str):
         """
         Adds a label to Elasticsearch documents during multilabel annotations.
+        :param index:
         :param document_id: Elasticsearch document ID of the comment in question.
         :param labels: Which labels to add into the document.
         :return:
         """
-        indices = self.get_indices()
-        ed = ESDocObject(document_id=document_id, index=indices)
+        ed = ESDocObject(document_id=document_id, index=index)
         for label in labels:
             ed.add_fact(fact_value=label, fact_name=self.multilabel_configuration.labelset.category.value, doc_path=self.target_field)
         ed.add_annotated()
@@ -144,28 +169,10 @@ class Annotator(TaskModel):
         return fact_name, value, spans, field, fact_id
 
 
-    def validate_document(self, document_id: str, facts: List[dict], is_valid: bool, user=None) -> bool:
-        """
-        Edits the Elasticsearch documents validation timestamp and the progress in the model.
-        :param user:
-        :param is_valid:
-        :param facts:
-        :param document_id: Elasticsearch document ID of the comment in question.
-        :return:
-        """
-        indices = self.get_indices()
-        ed = ESDocObject(document_id=document_id, index=indices)
-        ed.add_validated()
-        ed.update()
-        self.skipped = F('validated') + 1
-        self.save(update_fields=["validated"])
-
-        return True
-
-
-    def add_entity(self, document_id: str, spans: List, fact_name: str, field: str, fact_value: str):
+    def add_entity(self, document_id: str, spans: List, fact_name: str, field: str, fact_value: str, index: str):
         """
         Adds an entity label to Elasticsearch documents during entity annotations.
+        :param index:
         :param field: Which field was used to annotate.
         :param document_id: Elasticsearch document ID of the comment in question.
         :param spans: At which position in the text does the label belong to.
@@ -173,8 +180,7 @@ class Annotator(TaskModel):
         :param fact_value: Which fact value to give to the Elasticsearch document.
         :return:
         """
-        indices = self.get_indices()
-        ed = ESDocObject(document_id=document_id, index=indices)
+        ed = ESDocObject(document_id=document_id, index=index)
         first, last = spans
         ed.add_fact(fact_value=fact_value, fact_name=fact_name, doc_path=field, spans=json.dumps([first, last]))
         ed.add_annotated()
@@ -201,18 +207,18 @@ class Annotator(TaskModel):
             return None
 
 
-    def skip_document(self, document_id: str, index: str) -> bool:
+    def skip_document(self, document_id: str, index: str, user_pk: str) -> bool:
         """
         Add the skip label to the document and update the progress accordingly.
+        :param index:
         :param document_id: Elasticsearch document ID of the comment in question.
         :return:
         """
-        indices = self.get_indices()
         ed = ESDocObject(document_id=document_id, index=index)
         ed.add_skipped()
         ed.update()
-        self.skipped = F('skipped') + 1
-        self.save(update_fields=["skipped"])
+        self.generate_record(document_id, index=index, user_pk=user_pk, do_skip=True)
+
         return True
 
 
@@ -305,10 +311,12 @@ class Comment(models.Model):
 class Record(models.Model):
     document_id = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, db_index=True)
     index = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
+    fact_id = models.TextField(default=None, null=True, db_index=True)
 
-    fact_id = models.TextField(db_index=True)
     fact = models.TextField(default=json.dumps({}))
-    is_skipped = models.BooleanField(default=False)
+
+    annotated_utc = models.DateTimeField(default=None, null=True)
+    skipped_utc = models.DateTimeField(default=None, null=True)
 
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)

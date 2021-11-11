@@ -313,7 +313,7 @@ class ESDocObject:
         existing_facts.append(fact)
         existing_facts = ElasticDocument.remove_duplicate_facts(existing_facts)
         self.document["_source"]["texta_facts"] = existing_facts
-
+        return fact
 
     # TODO These three can be unified into a more general function.
     def add_skipped(self):

@@ -129,7 +129,7 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         serializer: DocumentIDSerializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         annotator: Annotator = self.get_object()
-        annotator.skip_document(serializer.validated_data["document_id"], serializer.validated_data["index"])
+        annotator.skip_document(serializer.validated_data["document_id"], serializer.validated_data["index"], user_pk=request.user.pk)
         return Response({"detail": f"Skipped document with ID: {serializer.validated_data['document_id']}"})
 
 
@@ -155,7 +155,8 @@ class AnnotatorViewset(mixins.CreateModelMixin,
             document_id=serializer.validated_data["document_id"],
             fact_name=serializer.validated_data["fact_name"],
             fact_value=serializer.validated_data["fact_value"],
-            spans=serializer.validated_data["spans"]
+            spans=serializer.validated_data["spans"],
+            index=serializer.validated_data["index"]
         )
         return Response({"detail": f"Skipped document with ID: {serializer.validated_data['document_id']}"})
 
@@ -169,11 +170,11 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         index = serializer.validated_data["index"]
 
         if choice == "pos":
-            annotator.add_pos_label(serializer.validated_data["document_id"], index=index)
+            annotator.add_pos_label(serializer.validated_data["document_id"], index=index, user_pk=request.user.pk)
             return Response({"detail": f"Annotated document with ID: {serializer.validated_data['document_id']} with the pos label '{annotator.binary_configuration.pos_value}'"})
 
         elif choice == "neg":
-            annotator.add_neg_label(serializer.validated_data["document_id"], index=index)
+            annotator.add_neg_label(serializer.validated_data["document_id"], index=index, user_pk=request.user.pk)
             return Response({"detail": f"Annotated document with ID: {serializer.validated_data['document_id']} with the neg label '{annotator.binary_configuration.neg_value}'"})
 
 
@@ -182,7 +183,7 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         serializer: MultilabelAnnotationSerializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         annotator: Annotator = self.get_object()
-        annotator.add_labels(serializer.validated_data["document_id"], serializer.validated_data["labels"])
+        annotator.add_labels(serializer.validated_data["document_id"], serializer.validated_data["labels"], index=serializer.validated_data["index"])
         return Response({"detail": f"Annotated document with ID: {serializer.validated_data['document_id']} with the neg label '{annotator.binary_configuration.neg_value}'"})
 
 

@@ -57,6 +57,7 @@ class ValidateDocumentSerializer(serializers.Serializer):
 
 class MultilabelAnnotationSerializer(serializers.Serializer):
     document_id = serializers.CharField()
+    index = serializers.CharField()
     labels = serializers.ListSerializer(child=serializers.CharField())
 
 
@@ -87,6 +88,7 @@ class BinaryAnnotationSerializer(serializers.Serializer):
 
 class EntityAnnotationSerializer(serializers.Serializer):
     document_id = serializers.CharField()
+    index = serializers.CharField()
     # Add proper validation for the structure here.
     spans = serializers.ListSerializer(child=serializers.IntegerField(), default=[0, 0])
     fact_name = serializers.CharField()
