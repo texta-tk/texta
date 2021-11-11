@@ -408,6 +408,20 @@ class ElasticCore:
         return s.to_dict()
 
 
+    def get_skipped_annotation_query(self, query: dict):
+        """
+        Return a query dictionary for the annotator for documents that lack the given field
+        within a limited subset for validation.
+        :param query: Dictionary of an Elasticsearch query as an additional restriction.
+        :return:
+        """
+
+        negative_queries = [Q("exists", field="texta_annotator.processed_timestamp_utc"), Q("exists", field="texta_annotator.validated_timestamp_utc")]
+        positive_queries = [Q(query["query"]), Q("exists", field="texta_annotator.skipped_timestamp_utc")]
+        s = Q("bool", must_not=negative_queries, must=positive_queries)
+        return s.to_dict()
+
+
     def flatten(self, d, parent_key='', sep='.'):
         """
         From: https://stackoverflow.com/questions/6027558/flatten-nested-dictionaries-compressing-keys

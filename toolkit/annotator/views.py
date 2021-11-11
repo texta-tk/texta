@@ -5,14 +5,29 @@ from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.annotator.models import Annotator, Comment, Labelset
-from toolkit.annotator.serializers import AnnotatorProjectSerializer, AnnotatorSerializer, BinaryAnnotationSerializer, CommentSerializer, DocumentEditSerializer, DocumentIDSerializer, EntityAnnotationSerializer, LabelsetSerializer, MultilabelAnnotationSerializer, ValidateDocumentSerializer
+from toolkit.annotator.models import Annotator, Comment, Labelset, Record
+from toolkit.annotator.serializers import AnnotatorProjectSerializer, AnnotatorSerializer, BinaryAnnotationSerializer, CommentSerializer, DocumentEditSerializer, DocumentIDSerializer, EntityAnnotationSerializer, LabelsetSerializer, MultilabelAnnotationSerializer, RecordSerializer, \
+    ValidateDocumentSerializer
 from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import EmptySerializer
 from toolkit.settings import TEXTA_ANNOTATOR_KEY
 from toolkit.view_constants import BulkDelete
+
+
+class RecordViewset(mixins.ListModelMixin, viewsets.GenericViewSet, BulkDelete):
+    serializer_class = RecordSerializer
+    permission_classes = (
+        ProjectAccessInApplicationsAllowed,
+        permissions.IsAuthenticated,
+    )
+
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+
+
+    def get_queryset(self):
+        return Record.objects.filter().order_by('-id')
 
 
 class LabelsetViewset(mixins.CreateModelMixin,
@@ -82,7 +97,6 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         return document
 
 
-    # TODO Flatten all fields like in Searcher.
     @action(detail=True, methods=["POST"], serializer_class=EmptySerializer)
     def pull_document(self, request, pk=None, project_pk=None):
         annotator: Annotator = self.get_object()
@@ -122,8 +136,17 @@ class AnnotatorViewset(mixins.CreateModelMixin,
             return Response({"detail": "No more documents left!"}, status=status.HTTP_404_NOT_FOUND)
 
 
-    # TODO Make sure that if an already skipped document is skipped nothing particular changes.
-    # TODO Skipped document count doesn't decrease when annotating it.
+    @action(detail=True, methods=["POST"], serializer_class=EmptySerializer)
+    def pull_skipped(self, request, pk=None, project_pk=None):
+        annotator: Annotator = self.get_object()
+        document = annotator.pull_skipped_document()
+        if document:
+            document = self._process_document_output(document, annotator)
+            return Response(document)
+        else:
+            return Response({"detail": "No more documents left!"}, status=status.HTTP_404_NOT_FOUND)
+
+
     @action(detail=True, methods=["POST"], serializer_class=DocumentEditSerializer)
     def skip_document(self, request, pk=None, project_pk=None):
         serializer: DocumentIDSerializer = self.get_serializer(data=request.data)

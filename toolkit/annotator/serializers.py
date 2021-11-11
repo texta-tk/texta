@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from toolkit.annotator.models import Annotator, BinaryAnnotatorConfiguration, Category, Comment, EntityAnnotatorConfiguration, Label, Labelset, MultilabelAnnotatorConfiguration
+from toolkit.annotator.models import Annotator, BinaryAnnotatorConfiguration, Category, Comment, EntityAnnotatorConfiguration, Label, Labelset, MultilabelAnnotatorConfiguration, Record
 from toolkit.core.project.models import Project
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.models import Index
@@ -17,6 +17,20 @@ ANNOTATION_MAPPING = {
     "multilabel": MultilabelAnnotatorConfiguration,
     "binary": BinaryAnnotatorConfiguration
 }
+
+
+class RecordSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance: Record):
+        data = super(RecordSerializer, self).to_representation(instance)
+        data["fact"] = json.loads(data["fact"])
+        data["username"] = instance.user.username
+        return data
+
+
+    class Meta:
+        model = Record
+        fields = "__all__"
 
 
 class LabelsetSerializer(serializers.Serializer):

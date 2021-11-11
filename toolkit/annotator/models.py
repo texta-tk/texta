@@ -4,14 +4,15 @@ from typing import List, Optional
 
 from django.contrib.auth.models import User
 from django.db import models
-# Create your models here.
-from django.db.models import F
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.document import ESDocObject
 from toolkit.model_constants import TaskModel
 from toolkit.settings import DESCRIPTION_CHAR_LIMIT
+
+
+# Create your models here.
 
 
 ANNOTATION_CHOICES = (
@@ -106,7 +107,7 @@ class Annotator(TaskModel):
         return restraint.count()
 
 
-    def add_pos_label(self, document_id: str, index: str, user_pk):
+    def add_pos_label(self, document_id: str, index: str, user_pk: int):
         """
         Adds a positive label to the Elasticsearch document for Binary annotation.
         :param user_pk:
@@ -116,8 +117,8 @@ class Annotator(TaskModel):
         """
         ed = ESDocObject(document_id=document_id, index=index)
         fact = ed.add_fact(fact_value=self.binary_configuration.pos_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field)
-        ed.update()
         ed.add_annotated()
+        ed.update()
         self.generate_record(document_id, index=index, user_pk=user_pk, fact=fact, do_annotate=True, fact_id=fact["id"])
 
 
@@ -125,10 +126,12 @@ class Annotator(TaskModel):
         user = User.objects.get(pk=user_pk)
         record, is_created = Record.objects.get_or_create(document_id=document_id, index=index, user=user, annotation_job=self)
         if do_annotate:
+            record.skipped_utc = None
             record.fact = json.dumps(fact)
             record.fact_id = fact_id
             record.annotated_utc = datetime.utcnow()
         if do_skip:
+            record.annotated_utc = None
             record.skipped_utc = datetime.utcnow()
         record.save()
 
@@ -161,7 +164,6 @@ class Annotator(TaskModel):
             ed.add_fact(fact_value=label, fact_name=self.multilabel_configuration.labelset.category.value, doc_path=self.target_field)
         ed.add_annotated()
         ed.update()
-        self.update_progress()
 
 
     def __split_fact(self, fact: dict):
@@ -185,7 +187,6 @@ class Annotator(TaskModel):
         ed.add_fact(fact_value=fact_value, fact_name=fact_name, doc_path=field, spans=json.dumps([first, last]))
         ed.add_annotated()
         ed.update()
-        self.update_progress()
 
 
     def pull_document(self) -> Optional[dict]:
@@ -210,6 +211,7 @@ class Annotator(TaskModel):
     def skip_document(self, document_id: str, index: str, user_pk: str) -> bool:
         """
         Add the skip label to the document and update the progress accordingly.
+        :param user_pk:
         :param index:
         :param document_id: Elasticsearch document ID of the comment in question.
         :return:
@@ -234,22 +236,23 @@ class Annotator(TaskModel):
         return True
 
 
-    def update_progress(self):
-        """
-        Wrapper function for updating the progress after each annotation.
-        :return:
-        """
-        if self.annotated != self.total:
-            self.annotated = F('annotated') + 1
-            self.save(update_fields=["annotated"])
-
-
-    def pull_skipped_documents(self):
+    def pull_skipped_document(self):
         """
         Returns all the documents that are marked for skipping.
         :return:
         """
-        pass
+        from toolkit.elastic.tools.core import ElasticCore
+
+        ec = ElasticCore()
+        json_query = json.loads(self.query)
+        indices = self.get_indices()
+        query = ec.get_skipped_annotation_query(json_query)
+        document = ESDocObject.random_document(indices=indices, query=query)
+        # At one point in time, the documents will rune out.
+        if document:
+            return document.document
+        else:
+            return None
 
 
     def pull_annotated_document(self) -> Optional[dict]:
