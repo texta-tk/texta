@@ -343,6 +343,8 @@ class ElasticCore:
         m = Mapping()
         texta_facts = Nested(
             properties={
+                "id": Keyword(),
+                "source": Keyword(),
                 "spans": Keyword(),
                 "fact": Keyword(),
                 "str_val": Keyword(),
@@ -404,6 +406,7 @@ class ElasticCore:
         positive_queries = [Q(query["query"]), Q("exists", field="texta_annotator.processed_timestamp_utc")]
         s = Q("bool", must_not=negative_queries, must=positive_queries)
         return s.to_dict()
+
 
     def flatten(self, d, parent_key='', sep='.'):
         """

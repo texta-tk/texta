@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+import uuid
 from typing import List
 
 import elasticsearch
@@ -296,8 +297,18 @@ class ESDocObject:
         return True
 
 
+    @staticmethod
+    def generate_fact_template(source="annotator"):
+        """
+        Pre-generates some fields to be added as a fact in the context of the annotator.
+        :return:
+        """
+        return {"id": str(uuid.uuid4()), "source": source}
+
+
     def add_fact(self, fact_name, fact_value, doc_path, spans=json.dumps([[0, 0]])):
-        fact = {"str_val": fact_value, "fact": fact_name, "doc_path": doc_path, "spans": spans}
+        template_fact = self.generate_fact_template()
+        fact = {**template_fact, "str_val": fact_value, "fact": fact_name, "doc_path": doc_path, "spans": spans}
         existing_facts = self.document["_source"].get("texta_facts", [])
         existing_facts.append(fact)
         existing_facts = ElasticDocument.remove_duplicate_facts(existing_facts)

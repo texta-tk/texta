@@ -7,6 +7,7 @@ from rest_framework.response import Response
 
 from toolkit.annotator.models import Annotator, Comment, Labelset
 from toolkit.annotator.serializers import AnnotatorProjectSerializer, AnnotatorSerializer, BinaryAnnotationSerializer, CommentSerializer, DocumentEditSerializer, DocumentIDSerializer, EntityAnnotationSerializer, LabelsetSerializer, MultilabelAnnotationSerializer, ValidateDocumentSerializer
+from toolkit.elastic.tools.core import ElasticCore
 from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import EmptySerializer
@@ -64,12 +65,30 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         return document
 
 
+    def _flatten_document(self, document):
+        ec = ElasticCore()
+        source = document.get("_source")
+        annotator_meta = source.pop(TEXTA_ANNOTATOR_KEY)
+        flattened_source = ec.flatten(source)
+        # Skip the annotator meta when flattening and then attach it back.
+        flattened_source[TEXTA_ANNOTATOR_KEY] = annotator_meta
+        document["_source"] = flattened_source
+        return document
+
+
+    def _process_document_output(self, document, annotator):
+        document = self._enrich_document_with_meta(document, annotator)
+        document = self._flatten_document(document)
+        return document
+
+
+    # TODO Flatten all fields like in Searcher.
     @action(detail=True, methods=["POST"], serializer_class=EmptySerializer)
     def pull_document(self, request, pk=None, project_pk=None):
         annotator: Annotator = self.get_object()
         document = annotator.pull_document()
         if document:
-            document = self._enrich_document_with_meta(document, annotator)
+            document = self._process_document_output(document, annotator)
             return Response(document)
         else:
             return Response({"detail": "No more documents left!"}, status=status.HTTP_404_NOT_FOUND)
@@ -86,7 +105,7 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         document_id = serializer.validated_data["document_id"]
         document = ed.get(document_id)
         if document:
-            document = self._enrich_document_with_meta(document, annotator)
+            document = self._process_document_output(document, annotator)
             return Response(document)
         else:
             return Response({"message": "No such document!"}, status=status.HTTP_404_NOT_FOUND)
@@ -97,13 +116,14 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         annotator: Annotator = self.get_object()
         document = annotator.pull_annotated_document()
         if document:
-            document = self._enrich_document_with_meta(document, annotator)
+            document = self._process_document_output(document, annotator)
             return Response(document)
         else:
             return Response({"detail": "No more documents left!"}, status=status.HTTP_404_NOT_FOUND)
 
 
     # TODO Make sure that if an already skipped document is skipped nothing particular changes.
+    # TODO Skipped document count doesn't decrease when annotating it.
     @action(detail=True, methods=["POST"], serializer_class=DocumentEditSerializer)
     def skip_document(self, request, pk=None, project_pk=None):
         serializer: DocumentIDSerializer = self.get_serializer(data=request.data)

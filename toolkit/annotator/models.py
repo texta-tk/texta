@@ -116,7 +116,6 @@ class Annotator(TaskModel):
         :param document_id: Elasticsearch document ID of the comment in question.
         :return:
         """
-        indices = self.get_indices()
         ed = ESDocObject(document_id=document_id, index=index)
         ed.add_fact(fact_value=self.binary_configuration.neg_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field)
         ed.add_annotated()
@@ -160,18 +159,6 @@ class Annotator(TaskModel):
         ed.update()
         self.skipped = F('validated') + 1
         self.save(update_fields=["validated"])
-
-        for fact in facts:
-            fact_name, value, spans, field, fact_id = self.__split_fact(fact)
-            Validation.objects.get_or_create(
-                fact_id=fact_id,
-                fact_key=fact_name,
-                document_id=document_id,
-                fact_value=value,
-                is_valid=is_valid,
-                user=user,
-                annotation_job=self
-            )
 
         return True
 
@@ -316,12 +303,12 @@ class Comment(models.Model):
 
 
 class Record(models.Model):
-    document_id = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
+    document_id = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, db_index=True)
     index = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
 
-    annotated_fact = models.TextField(default=json.dumps({}))
+    fact_id = models.TextField(db_index=True)
+    fact = models.TextField(default=json.dumps({}))
     is_skipped = models.BooleanField(default=False)
-    is_validated = models.BooleanField(default=True)
 
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
