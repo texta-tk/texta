@@ -9,16 +9,16 @@ from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from texta_elastic.core import ElasticCore
+from texta_elastic.searcher import ElasticSearcher
 
 from toolkit.bert_tagger import choices
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
 from toolkit.bert_tagger.serializers import (ApplyTaggerSerializer, BertDownloaderSerializer, BertTagTextSerializer, BertTaggerSerializer, EpochReportSerializer, TagRandomDocSerializer)
-from toolkit.bert_tagger.tasks import apply_tagger, apply_tagger_to_index, train_bert_tagger
+from toolkit.bert_tagger.tasks import apply_tagger, apply_tagger_to_index
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from texta_elastic.core import ElasticCore
-from texta_elastic.searcher import ElasticSearcher
 from toolkit.exceptions import DownloadingModelsNotAllowedError, InvalidModelIdentifierError, NonExistantModelError, ProjectValidationFailed
 from toolkit.helper_functions import add_finite_url_to_feedback, download_bert_requirements, get_downloaded_bert_models
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
@@ -59,14 +59,12 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
         serializer_query = serializer.validated_data.get("query")
 
-
         if isinstance(serializer_query, str):
             # If query is passed as JSON string to the serializer
             query = serializer_query
         else:
             # If query is passed as raw JSON to the serializer
             query = json.dumps(serializer_query)
-
 
         tagger: BertTaggerObject = serializer.save(
             author=self.request.user,
