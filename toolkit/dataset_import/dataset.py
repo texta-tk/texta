@@ -64,6 +64,11 @@ class Dataset:
 
         # add documents to ES
         es_doc = ElasticDocument(self.index)
+        # create index
+        es_doc.core.create_index(self.index)
+        # add mapping for texta facts
+        es_doc.core.add_texta_facts_mapping(self.index)
+        # get records
         chunk_size = 500
         records = [{k: v for k, v in record.items() if pd.Series(v).notna().all()} for record in records]
         record_chunks = list(chunks(records, chunk_size))
