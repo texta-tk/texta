@@ -68,7 +68,9 @@ class AnnotatorViewset(mixins.CreateModelMixin,
 
         # Add comment count to the elastic document
         document_id = document["_id"]
-        meta_dict = document["_source"].get(TEXTA_ANNOTATOR_KEY, {})
+        meta_list = document["_source"].get(TEXTA_ANNOTATOR_KEY, [])
+        job_list = [document for document in meta_list if document["job_id"] == annotator.pk]
+        meta_dict = job_list[0] if len(job_list) > 0 else {}
         meta_dict["comment_count"] = Comment.objects.filter(document_id=document_id).count()
 
         # Add counts of things to the document.
@@ -152,7 +154,7 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         serializer: DocumentIDSerializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         annotator: Annotator = self.get_object()
-        annotator.skip_document(serializer.validated_data["document_id"], serializer.validated_data["index"], user_pk=request.user.pk)
+        annotator.skip_document(serializer.validated_data["document_id"], serializer.validated_data["index"], user=request.user)
         return Response({"detail": f"Skipped document with ID: {serializer.validated_data['document_id']}"})
 
 
@@ -193,11 +195,11 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         index = serializer.validated_data["index"]
 
         if choice == "pos":
-            annotator.add_pos_label(serializer.validated_data["document_id"], index=index, user_pk=request.user.pk)
+            annotator.add_pos_label(serializer.validated_data["document_id"], index=index, user=request.user)
             return Response({"detail": f"Annotated document with ID: {serializer.validated_data['document_id']} with the pos label '{annotator.binary_configuration.pos_value}'"})
 
         elif choice == "neg":
-            annotator.add_neg_label(serializer.validated_data["document_id"], index=index, user_pk=request.user.pk)
+            annotator.add_neg_label(serializer.validated_data["document_id"], index=index, user=request.user)
             return Response({"detail": f"Annotated document with ID: {serializer.validated_data['document_id']} with the neg label '{annotator.binary_configuration.neg_value}'"})
 
 

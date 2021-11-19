@@ -315,12 +315,19 @@ class ESDocObject:
         self.document["_source"]["texta_facts"] = existing_facts
         return fact
 
+
     # TODO These three can be unified into a more general function.
-    def add_skipped(self):
+    def add_skipped(self, annotator_model, user):
         source = self.document["_source"]
-        annotation_dict = source.get(TEXTA_ANNOTATOR_KEY, {})
-        annotation_dict["skipped_timestamp_utc"] = datetime.datetime.utcnow()
-        self.document["_source"][TEXTA_ANNOTATOR_KEY] = annotation_dict
+        annotation_dicts = source.get(TEXTA_ANNOTATOR_KEY, [])
+        job_dicts = [annotation_dict for annotation_dict in annotation_dicts if annotation_dict.get("job_id", None)]
+        job_dict = job_dicts[0] if len(job_dicts) > 0 else {}
+        job_dict["job_id"] = annotator_model.pk
+        job_dict["user"] = user.username
+        job_dict["skipped_timestamp_utc"] = datetime.datetime.utcnow()
+        if not job_dicts:
+            annotation_dicts.append(job_dict)
+        self.document["_source"][TEXTA_ANNOTATOR_KEY] = annotation_dicts
 
 
     def add_validated(self):
@@ -330,11 +337,17 @@ class ESDocObject:
         self.document["_source"][TEXTA_ANNOTATOR_KEY] = annotation_dict
 
 
-    def add_annotated(self):
+    def add_annotated(self, annotator_model, user):
         source = self.document["_source"]
-        annotation_dict = source.get(TEXTA_ANNOTATOR_KEY, {})
-        annotation_dict["processed_timestamp_utc"] = datetime.datetime.utcnow()
-        self.document["_source"][TEXTA_ANNOTATOR_KEY] = annotation_dict
+        annotation_dicts = source.get(TEXTA_ANNOTATOR_KEY, [])
+        job_dicts = [annotation_dict for annotation_dict in annotation_dicts if annotation_dict.get("job_id", None)]
+        job_dict = job_dicts[0] if len(job_dicts) > 0 else {}
+        job_dict["job_id"] = annotator_model.pk
+        job_dict["user"] = user.username
+        job_dict["processed_timestamp_utc"] = datetime.datetime.utcnow()
+        if not job_dicts:
+            annotation_dicts.append(job_dict)
+        self.document["_source"][TEXTA_ANNOTATOR_KEY] = annotation_dicts
 
 
     @elastic_connection

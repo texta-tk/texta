@@ -76,21 +76,12 @@ class BinaryAnnotatorTests(APITestCase):
     def run_binary_annotation(self):
         annotation_url = reverse("v2:annotator-annotate-binary", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
 
-        random_document = self._pull_random_document()
-        document_id = random_document["_id"]
-        index = random_document["_index"]
-        annotation_payloads = [
-            {
-                "annotation_type": "pos",
-                "document_id": document_id,
-                "index": index
-            },
-            {
-                "annotation_type": "neg",
-                "document_id": document_id,
-                "index": index
-            }
-        ]
+        annotation_payloads = []
+        for i in range(2):
+            random_document = self._pull_random_document()
+            annotation_payloads.append(
+                {"index": random_document["_index"], "document_id": random_document["_id"], "doc_type": "_doc", "annotation_type": "pos"}
+            )
 
         for index_count, payload in enumerate(annotation_payloads):
             annotation_response = self.client.post(annotation_url, data=payload, format="json")
@@ -103,7 +94,7 @@ class BinaryAnnotatorTests(APITestCase):
             self.assertTrue(model_object.annotated == index_count + 1)
 
             # Check that document was actually edited.
-            es_doc = self.ec.es.get(index=index, id=document_id)["_source"]
+            es_doc = self.ec.es.get(index=payload["index"], id=payload["document_id"])["_source"]
             facts = es_doc["texta_facts"]
             self.assertTrue(model_object.binary_configuration.fact_name in [fact["fact"] for fact in facts])
             if payload["annotation_type"] == "pos":
@@ -121,7 +112,7 @@ class BinaryAnnotatorTests(APITestCase):
 
         annotation_url = reverse("v2:annotator-annotate-binary", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
 
-        for i in range(total - annotated - skipped - validated + 1):
+        for i in range(total - annotated - skipped - validated):
             random_document = self._pull_random_document()
             payload = {"annotation_type": "pos", "document_id": random_document["_id"], "index": random_document["_index"]}
             annotation_response = self.client.post(annotation_url, data=payload, format="json")
@@ -190,8 +181,15 @@ class BinaryAnnotatorTests(APITestCase):
         print_output("run_check_proper_skipping_functionality:response.status", response.status_code)
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         elastic_doc = self.ec.es.get(index=doc_index, id=doc_id)
-        self.assertTrue(elastic_doc["_source"][TEXTA_ANNOTATOR_KEY]["skipped_timestamp_utc"], None)
+
+        annotator_list = elastic_doc["_source"][TEXTA_ANNOTATOR_KEY]
+        annotator_dict = [dictionary for dictionary in annotator_list if dictionary["job_id"] == self.annotator["id"]][0]
+        self.assertTrue(annotator_dict["skipped_timestamp_utc"])
 
 
     def run_that_double_skipped_document_wont_be_counted(self):
         pass
+
+
+
+

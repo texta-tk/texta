@@ -6,7 +6,7 @@ import elasticsearch
 import elasticsearch_dsl
 import requests
 from elasticsearch import Elasticsearch
-from elasticsearch_dsl import Date, Keyword, Long, Mapping, Nested, Object, Q
+from elasticsearch_dsl import Date, Keyword, Long, Mapping, Nested, Q
 from rest_framework.exceptions import ValidationError
 
 from toolkit.elastic.decorators import elastic_connection
@@ -363,8 +363,9 @@ class ElasticCore:
     @elastic_connection
     def add_annotator_mapping(self, index: str):
         m = Mapping()
-        texta_annotator = Object(
+        texta_annotator = Nested(
             properties={
+                "job_id": Long(),
                 "processed_timestamp_utc": Date(),
                 "skipped_timestamp_utc": Date(),
                 "validated_timestamp_utc": Date(),
@@ -378,18 +379,24 @@ class ElasticCore:
         self.es.indices.put_mapping(body=mapping, index=index, doc_type=doc_type, include_type_name=True)
 
 
-    def get_annotation_query(self, query: dict):
+    def get_annotation_query(self, query: dict, job_pk: int):
         """
         Return a query dictionary for the annotator for documents that lack the given field
         within a limited subset.
+        :param job_pk:
         :param query: Dictionary of an Elasticsearch query as an additional restriction.
         :return:
         """
 
         # TODO This can be written a bit better using elasticsearch_dsl query syntax to avoid pulling dicts from querys etc.
-        negative_queries = [Q("exists", field="texta_annotator.processed_timestamp_utc"), Q("exists", field="texta_annotator.skipped_timestamp_utc")]
+        negative_queries = [
+            Q('nested', path=TEXTA_ANNOTATOR_KEY, query=Q("match", **{f"{TEXTA_ANNOTATOR_KEY}.job_id": job_pk})),
+            Q('nested', path=TEXTA_ANNOTATOR_KEY, query=Q("exists", field="texta_annotator.processed_timestamp_utc")),
+            Q('nested', path=TEXTA_ANNOTATOR_KEY, query=Q("exists", field="texta_annotator.skipped_timestamp_utc"))
+        ]
+        positive_queries = [Q(query["query"])]
         search = elasticsearch_dsl.Search()
-        restriction = Q("bool", must_not=negative_queries, must=[Q(query["query"])])
+        restriction = Q("bool", must_not=negative_queries, must=positive_queries)
         search = search.query(restriction)
         return search.to_dict()
 
@@ -408,16 +415,24 @@ class ElasticCore:
         return s.to_dict()
 
 
-    def get_skipped_annotation_query(self, query: dict):
+    def get_skipped_annotation_query(self, query: dict, job_pk: int):
         """
         Return a query dictionary for the annotator for documents that lack the given field
         within a limited subset for validation.
+        :param job_pk:
         :param query: Dictionary of an Elasticsearch query as an additional restriction.
         :return:
         """
 
-        negative_queries = [Q("exists", field="texta_annotator.processed_timestamp_utc"), Q("exists", field="texta_annotator.validated_timestamp_utc")]
-        positive_queries = [Q(query["query"]), Q("exists", field="texta_annotator.skipped_timestamp_utc")]
+        negative_queries = [
+            Q('nested', path=TEXTA_ANNOTATOR_KEY, query=Q("exists", field="texta_annotator.processed_timestamp_utc")),
+            Q('nested', path=TEXTA_ANNOTATOR_KEY, query=Q("exists", field="texta_annotator.validated_timestamp_utc"))
+        ]
+        positive_queries = [
+            Q(query["query"]),
+            Q('nested', path=TEXTA_ANNOTATOR_KEY, query=Q("match", **{f"{TEXTA_ANNOTATOR_KEY}.job_id": job_pk})),
+            Q('nested', path=TEXTA_ANNOTATOR_KEY, query=Q("exists", field="texta_annotator.skipped_timestamp_utc"))
+        ]
         s = Q("bool", must_not=negative_queries, must=positive_queries)
         return s.to_dict()
 

@@ -107,7 +107,7 @@ class Annotator(TaskModel):
         return restraint.count()
 
 
-    def add_pos_label(self, document_id: str, index: str, user_pk: int):
+    def add_pos_label(self, document_id: str, index: str, user):
         """
         Adds a positive label to the Elasticsearch document for Binary annotation.
         :param user_pk:
@@ -117,9 +117,9 @@ class Annotator(TaskModel):
         """
         ed = ESDocObject(document_id=document_id, index=index)
         fact = ed.add_fact(fact_value=self.binary_configuration.pos_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field)
-        ed.add_annotated()
+        ed.add_annotated(annotator_model=self, user=user)
         ed.update()
-        self.generate_record(document_id, index=index, user_pk=user_pk, fact=fact, do_annotate=True, fact_id=fact["id"])
+        self.generate_record(document_id, index=index, user_pk=user.pk, fact=fact, do_annotate=True, fact_id=fact["id"])
 
 
     def generate_record(self, document_id, index, user_pk, fact=None, fact_id=None, do_annotate=False, do_skip=False):
@@ -136,19 +136,18 @@ class Annotator(TaskModel):
         record.save()
 
 
-    def add_neg_label(self, document_id: str, index: str, user_pk):
+    def add_neg_label(self, document_id: str, index: str, user):
         """
         Adds a negative label to the Elasticsearch document for Binary annotation.
-        :param user_pk:
         :param index: Which index does said Elasticsearch document reside in.
         :param document_id: Elasticsearch document ID of the comment in question.
         :return:
         """
         ed = ESDocObject(document_id=document_id, index=index)
         fact = ed.add_fact(fact_value=self.binary_configuration.neg_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field)
-        ed.add_annotated()
+        ed.add_annotated(self, user)
         ed.update()
-        self.generate_record(document_id, index=index, user_pk=user_pk, fact=fact, do_annotate=True, fact_id=fact["id"])
+        self.generate_record(document_id, index=index, user_pk=user.pk, fact=fact, do_annotate=True, fact_id=fact["id"])
 
 
     def add_labels(self, document_id: str, labels: List[str], index: str):
@@ -199,7 +198,7 @@ class Annotator(TaskModel):
         ec = ElasticCore()
         json_query = json.loads(self.query)
         indices = self.get_indices()
-        query = ec.get_annotation_query(json_query)
+        query = ec.get_annotation_query(json_query, job_pk=self.pk)
         document = ESDocObject.random_document(indices=indices, query=query)
         # At one point in time, the documents will rune out.
         if document:
@@ -208,18 +207,18 @@ class Annotator(TaskModel):
             return None
 
 
-    def skip_document(self, document_id: str, index: str, user_pk: str) -> bool:
+    def skip_document(self, document_id: str, index: str, user) -> bool:
         """
         Add the skip label to the document and update the progress accordingly.
-        :param user_pk:
+        :param user:
         :param index:
         :param document_id: Elasticsearch document ID of the comment in question.
         :return:
         """
         ed = ESDocObject(document_id=document_id, index=index)
-        ed.add_skipped()
+        ed.add_skipped(self, user)
         ed.update()
-        self.generate_record(document_id, index=index, user_pk=user_pk, do_skip=True)
+        self.generate_record(document_id, index=index, user_pk=user.pk, do_skip=True)
 
         return True
 
@@ -246,7 +245,7 @@ class Annotator(TaskModel):
         ec = ElasticCore()
         json_query = json.loads(self.query)
         indices = self.get_indices()
-        query = ec.get_skipped_annotation_query(json_query)
+        query = ec.get_skipped_annotation_query(json_query, self.pk)
         document = ESDocObject.random_document(indices=indices, query=query)
         # At one point in time, the documents will rune out.
         if document:
