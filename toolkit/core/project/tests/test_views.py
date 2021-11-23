@@ -1,13 +1,15 @@
 import os
-import json
 import pathlib
+import uuid
 
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
+from texta_elastic.core import ElasticCore
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.index.models import Index
+from toolkit.helper_functions import reindex_test_dataset
 from toolkit.settings import RELATIVE_PROJECT_DATA_PATH, SEARCHER_FOLDER_KEY
 from toolkit.test_settings import REINDEXER_TEST_INDEX, TEST_FACT_NAME, TEST_FIELD, TEST_INDEX, TEST_MATCH_TEXT, TEST_QUERY, TEST_VERSION_PREFIX, VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
@@ -31,6 +33,7 @@ class ProjectViewTests(APITestCase):
     def setUp(self):
         # Create a new project_user, all project extra actions need to be permissible for this project_user.
         self.user = create_test_user(name='user', password='pw')
+        self.test_index_name = reindex_test_dataset()
         self.project_user = create_test_user(name='project_user', password='pw')
         self.admin = create_test_user(name='admin', password='pw')
         self.admin.is_superuser = True
@@ -76,6 +79,21 @@ class ProjectViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue(TEST_FACT_NAME in [field['name'] for field in response.data])
+
+
+    def test_get_facts_with_exclude_zero_spans(self):
+        doc_id = str(uuid.uuid4())
+        ec = ElasticCore()
+        ec.es.index(index=self.test_index_name, id=doc_id, body={"texta_facts": [{"str_val": "dracula", "fact": "TEEMA", "spans": "[[0,0]]", "doc_path": "comment_content"}, {"str_val": "kurivaim", "fact": "TEEMA", "spans": "[[1,2]]", "doc_path": "comment_content"}]})
+        url = f'{self.project_url}/elastic/get_facts/'
+        response = self.client.post(url, data={"exclude_zero_spans": True}, format="json")
+        print_output('test_get_facts_with_exclude_zero_spans:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue(TEST_FACT_NAME in [field['name'] for field in response.data])
+        self.assertTrue("kurivaim" in response.data[0]["values"])
+        self.assertTrue("dracula" not in response.data[0]["values"])
+        ec.es.delete(index=self.test_index_name, id=doc_id)
 
 
     def test_get_facts_with_indices(self):
@@ -208,6 +226,7 @@ class ProjectViewTests(APITestCase):
         payload = {"indices": [TEST_INDEX], "query": {"this": "is invalid"}}
         response = self.client.post(self.export_url, data=payload, format="json")
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+
 
     def test_search_export_with_all_fields(self):
         payload = {"indices": [TEST_INDEX], "fields": []}
@@ -451,17 +470,17 @@ class ProjectViewTests(APITestCase):
         self.assertTrue(response.status_code == status.HTTP_200_OK)
 
 
-    def test_project_creation_with_scope(self):
-        pass
-
-
-    def test_updating_scopes(self):
-        pass
-
-
-    def test_that_normal_users_can_only_add_scopes_they_are_in(self):
-        pass
-
-
-    def test_that_admins_can_pick_any_scope_they_want_to(self):
-        pass
+    # def test_project_creation_with_scope(self):
+    #     pass
+    #
+    #
+    # def test_updating_scopes(self):
+    #     pass
+    #
+    #
+    # def test_that_normal_users_can_only_add_scopes_they_are_in(self):
+    #     pass
+    #
+    #
+    # def test_that_admins_can_pick_any_scope_they_want_to(self):
+    #     pass
