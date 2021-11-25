@@ -6,7 +6,7 @@ import gensim
 
 from texta_tools.text_processor import TextProcessor
 
-from toolkit.base_tasks import BaseTask
+from toolkit.base_tasks import TransactionAwareTask
 from toolkit.core.task.models import Task
 from texta_elastic.searcher import ElasticSearcher
 from toolkit.tools.lemmatizer import ElasticAnalyzer
@@ -14,18 +14,18 @@ from toolkit.embedding.models import Embedding
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, FACEBOOK_MODEL_SUFFIX
 
 from toolkit.tools.show_progress import ShowProgress
-from toolkit.helper_functions import get_indices_from_object
+from toolkit.helper_functions import get_indices_from_object, chunks_iter
 
 
-@task(name="train_embedding", base=BaseTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
-def train_embedding(embedding_id):
+@task(name="train_embedding", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
+def train_embedding(self, embedding_id: int):
     # retrieve embedding & task objects
     embedding_object = Embedding.objects.get(pk=embedding_id)
     task_object = embedding_object.task
-    show_progress = ShowProgress(task_object, multiplier=1)
-    show_progress.update_step('training')
-    show_progress.update_view(0)
     try:
+        show_progress = ShowProgress(task_object, multiplier=1)
+        show_progress.update_step('training')
+        show_progress.update_view(0)
         # retrieve indices from project 
         indices = get_indices_from_object(embedding_object)
         field_data = json.loads(embedding_object.fields)
@@ -45,7 +45,11 @@ def train_embedding(embedding_id):
                                     scroll_limit=max_documents,
                                     text_processor=TextProcessor(sentences=True, remove_stop_words=True, words_as_list=True, lemmatizer=snowball_lemmatizer),
                                     output=ElasticSearcher.OUT_TEXT)
+
+        task_object.save()
         # create embedding object & train
+        show_progress.update_step('training')
+        show_progress.update_view(0)
         embedding = embedding_object.get_embedding()
         embedding.train(sentences, use_phraser=use_phraser)
 
@@ -55,6 +59,7 @@ def train_embedding(embedding_id):
 
         # save model
         show_progress.update_step('saving')
+        show_progress.update_view(0)
         full_model_path, relative_model_path = embedding_object.generate_name("embedding")
         embedding.save(full_model_path)
 

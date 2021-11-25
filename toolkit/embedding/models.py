@@ -7,7 +7,7 @@ import zipfile
 
 from django.contrib.auth.models import User
 from django.core import serializers
-from django.db import models
+from django.db import models, transaction
 from django.dispatch import receiver
 from django.http import HttpResponse
 from texta_tools.embedding import FastTextEmbedding, W2VEmbedding
@@ -199,7 +199,7 @@ class Embedding(models.Model):
         self.task = new_task
         self.save()
         from toolkit.embedding.tasks import train_embedding
-        train_embedding.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
+        transaction.on_commit(lambda: train_embedding.s(self.pk).apply_async(queue=CELERY_LONG_TERM_TASK_QUEUE))
 
 
     def __str__(self):

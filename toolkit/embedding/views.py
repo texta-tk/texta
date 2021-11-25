@@ -13,12 +13,14 @@ from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.index.models import Index
+from toolkit.embedding.tasks import train_embedding
 from toolkit.embedding.models import Embedding
 from toolkit.embedding.serializers import EmbeddingPredictSimilarWordsSerializer, EmbeddingSerializer
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, SerializerNotValid
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import GeneralTextSerializer, ProjectResourceImportModelSerializer
 from toolkit.view_constants import BulkDelete
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 
 
 class EmbeddingFilter(filters.FilterSet):
