@@ -473,7 +473,7 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
             ## Set the evaluation type in the model
             evaluator_object.evaluation_type = "multilabel"
 
-        classes.sort(key=lambda x: x[0].lower())
+            classes.sort(key=lambda x: x[0].lower())
 
         # Get number of documents in the query to estimate memory imprint
         n_docs = searcher.count()
