@@ -7,13 +7,11 @@ channels:
   - menpo
 
 dependencies:
-  - python=3.7
+  - python=3.8
   - pip
-  - pandas=1.1.5
-  - scikit-learn==0.22.*
+  - lxml
   - matplotlib
   - graphviz
-  - gensim==3.*
   - pydot
   - psutil
   - pynvml
@@ -45,9 +43,9 @@ dependencies:
       - texta-anonymizer==1.*
       - texta-mlp==1.15.*
       - texta-lexicon-matcher==1.*
-      - texta-tools==1.*
-      - texta-elastic-tools==0.0.*
-      - texta-tagger==1.*
+      - texta-tools==2.*
+      - texta-elastic-tools==1.*
+      - texta-tagger==2.*
       - texta-torch-tagger==1.*
       - texta-bert-tagger==2.3.*
       - texta-face-analyzer==0.*
