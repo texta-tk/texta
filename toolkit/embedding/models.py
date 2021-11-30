@@ -10,7 +10,7 @@ from django.core import serializers
 from django.db import models
 from django.dispatch import receiver
 from django.http import HttpResponse
-from texta_tools.embedding import FastTextEmbedding, W2VEmbedding
+from texta_embedding.embedding import FastTextEmbedding, W2VEmbedding
 
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project

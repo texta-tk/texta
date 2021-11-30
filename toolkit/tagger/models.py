@@ -14,7 +14,7 @@ from django.db import models, transaction
 from django.dispatch import receiver
 from django.http import HttpResponse
 
-from texta_tools.embedding import W2VEmbedding
+from texta_embedding.embedding import W2VEmbedding
 from texta_tagger.tagger import Tagger as TextTagger
 
 from toolkit.constants import MAX_DESC_LEN

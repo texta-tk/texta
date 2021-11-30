@@ -7,7 +7,7 @@ from django.db import connections
 from elasticsearch.helpers import streaming_bulk
 from texta_torch_tagger.tagger import TorchTagger
 from texta_tools.text_processor import TextProcessor
-from texta_tools.embedding import W2VEmbedding
+from texta_embedding.embedding import W2VEmbedding
 from texta_tools.mlp_analyzer import get_mlp_analyzer
 
 from toolkit.core.task.models import Task

@@ -10,7 +10,7 @@ from celery.decorators import task
 from celery.result import allow_join_result
 from elasticsearch.helpers import streaming_bulk
 from texta_tagger.tagger import Tagger as TextTagger
-from texta_tools.embedding import W2VEmbedding
+from texta_embedding.embedding import W2VEmbedding
 
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.core.task.models import Task
