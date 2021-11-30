@@ -7,12 +7,11 @@ from texta_elastic.searcher import ElasticSearcher
 from toolkit.core.task.models import Task
 from toolkit.base_tasks import TransactionAwareTask
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER
-from toolkit.rakun_keyword_extractor.models import RakunExtractor
+from toolkit.rakun_keyword_extractor.models import RakunExtractor, RakunDetectorWrapper
 from toolkit.tools.show_progress import ShowProgress
-from mrakun import RakunDetector
 
 
-def update_generator(keyword_detector: RakunDetector, generator: ElasticSearcher, ec: ElasticCore, fields: List[str], rakun_extractor_object: RakunExtractor, fact_name: str, fact_value: str, add_spans: bool):
+def update_generator(keyword_detector: RakunDetectorWrapper, generator: ElasticSearcher, ec: ElasticCore, fields: List[str], rakun_extractor_object: RakunExtractor, fact_name: str, fact_value: str, add_spans: bool):
     for scroll_batch in generator:
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]

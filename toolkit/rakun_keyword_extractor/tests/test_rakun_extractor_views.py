@@ -104,16 +104,16 @@ class RakunViewTest(APITransactionTestCase):
                 }
         for rakun_id in self.ids:
             rakun_apply_to_index_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{rakun_id}/apply_to_index/'
-            print_output(f"Apply Rakun to Index for ID: {rakun_id}", None)
             response = self.client.post(rakun_apply_to_index_url, index_payload)
+            print_output(f"Apply Rakun to Index for ID: {rakun_id}", response.json())
             self.assertTrue(response.status_code == status.HTTP_201_CREATED)
 
     def run_test_rakun_extractor_duplicate(self):
         duplicate_payload = {}
         for rakun_id in self.ids:
             rakun_duplicate_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{rakun_id}/duplicate/'
-            print_output(f"Duplicate Rakun for ID: {rakun_id}", None)
             response = self.client.post(rakun_duplicate_url, duplicate_payload)
+            print_output(f"Duplicate Rakun for ID: {rakun_id}", response.json())
             self.assertTrue(response.status_code == status.HTTP_200_OK)
 
     def run_test_rakun_extractor_from_random_doc(self):
@@ -123,8 +123,8 @@ class RakunViewTest(APITransactionTestCase):
                 }
         for rakun_id in self.ids:
             rakun_random_doc_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{rakun_id}/extract_from_random_doc/'
-            print_output(f"Rakun extract from random doc for ID: {rakun_id}", None)
             response = self.client.post(rakun_random_doc_url, random_payload)
+            print_output(f"Rakun extract from random doc for ID: {rakun_id}", response.json())
             self.assertTrue(response.status_code == status.HTTP_200_OK)
 
     def run_test_rakun_extractor_from_text(self):
@@ -133,8 +133,8 @@ class RakunViewTest(APITransactionTestCase):
         }
         for rakun_id in self.ids:
             rakun_text_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{rakun_id}/extract_from_text/'
-            print_output(f"Rakun extract from text for ID: {rakun_id}", None)
             response = self.client.post(rakun_text_url, text_payload)
+            print_output(f"Rakun extract from text for ID: {rakun_id}", response.json())
             self.assertTrue(response.status_code == status.HTTP_200_OK)
 
     def run_test_rakun_extractor_stopwords(self):
@@ -144,8 +144,8 @@ class RakunViewTest(APITransactionTestCase):
         }
         for rakun_id in self.ids:
             rakun_stopwords_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{rakun_id}/stop_words/'
-            print_output(f"Rakun stopwords for ID: {rakun_id}", None)
             response = self.client.post(rakun_stopwords_url, stopwords_payload)
+            print_output(f"Rakun stopwords for ID: {rakun_id}", response.json())
             self.assertTrue(response.status_code == status.HTTP_200_OK)
 
     def run_test_rakun_extractor_edit(self):
@@ -155,6 +155,6 @@ class RakunViewTest(APITransactionTestCase):
             }
         for rakun_id in self.ids:
             rakun_edit_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{rakun_id}/'
-            print_output(f"Editing Rakun Extractor for ID: {rakun_id}", None)
             response = self.client.put(rakun_edit_url, rakun_extractor_edit_payload)
+            print_output(f"Editing Rakun Extractor for ID: {rakun_id}", response.json())
             self.assertTrue(response.status_code == status.HTTP_200_OK)
