@@ -390,9 +390,7 @@ class ElasticCore:
 
         # TODO This can be written a bit better using elasticsearch_dsl query syntax to avoid pulling dicts from querys etc.
         negative_queries = [
-            Q('nested', path=TEXTA_ANNOTATOR_KEY, query=Q("match", **{f"{TEXTA_ANNOTATOR_KEY}.job_id": job_pk})),
-            Q('nested', path=TEXTA_ANNOTATOR_KEY, query=Q("exists", field="texta_annotator.processed_timestamp_utc")),
-            Q('nested', path=TEXTA_ANNOTATOR_KEY, query=Q("exists", field="texta_annotator.skipped_timestamp_utc"))
+            Q('nested', path=TEXTA_ANNOTATOR_KEY, query=Q("match", **{f"{TEXTA_ANNOTATOR_KEY}.job_id": job_pk}))
         ]
         positive_queries = [Q(query["query"])]
         search = elasticsearch_dsl.Search()
