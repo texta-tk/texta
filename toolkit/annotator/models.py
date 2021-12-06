@@ -97,7 +97,7 @@ class Annotator(TaskModel):
 
     @property
     def annotated(self):
-        restraint = Record.objects.filter(annotated_utc__isnull=False, skipped_utc__isnull=True)
+        restraint = Record.objects.filter(annotated_utc__isnull=False, skipped_utc__isnull=True, annotation_job=self)
         return restraint.count()
 
 
