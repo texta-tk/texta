@@ -340,15 +340,12 @@ class ESDocObject:
     def add_annotated(self, annotator_model, user):
         source = self.document["_source"]
         annotation_dicts = source.get(TEXTA_ANNOTATOR_KEY, [])
-        job_dicts = [annotation_dict for annotation_dict in annotation_dicts if annotation_dict.get("job_id", None)]
-        job_dict = job_dicts[0] if len(job_dicts) > 0 else {}
+        job_dict = {}
         job_dict["job_id"] = annotator_model.pk
         job_dict["user"] = user.username
         job_dict["processed_timestamp_utc"] = datetime.datetime.utcnow()
-        if not job_dicts:
-            annotation_dicts.append(job_dict)
+        annotation_dicts.append(job_dict)
         self.document["_source"][TEXTA_ANNOTATOR_KEY] = annotation_dicts
-
 
     @elastic_connection
     def update(self, retry_on_conflict=3, refresh="wait_for"):
