@@ -34,6 +34,16 @@ class RecordSerializer(serializers.ModelSerializer):
 
 
 class LabelsetSerializer(serializers.Serializer):
+
+    def to_representation(self, instance: Labelset):
+        data = super(LabelsetSerializer, self).to_representation(instance)
+        data["id"] = instance.category.id
+        return data
+
+    class Meta:
+        model = Labelset
+        fields = "__all__"
+
     category = serializers.CharField()
     values = serializers.ListSerializer(child=serializers.CharField())
 
