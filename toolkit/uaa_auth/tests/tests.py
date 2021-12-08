@@ -2,7 +2,6 @@ import unittest
 from urllib.parse import parse_qs, urlparse
 
 import bs4
-import jwt
 import json
 import requests
 from rest_framework.test import APILiveServerTestCase
@@ -48,7 +47,7 @@ class UAATests(APILiveServerTestCase):
     def create_users(self):
         # Encode the redirect_uri
         encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
-        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=openid texta.* uaa.admin&redirect_uri={encoded_redirect_uri}'
+        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=openid texta.admin uaa.admin&redirect_uri={encoded_redirect_uri}'
 
         # Get the csrf token from the login page HTML
         html_resp = requests.get(uaa_login_url)
@@ -156,7 +155,7 @@ class UAATests(APILiveServerTestCase):
     def create_groups(self):
         # Encode the redirect_uri
         encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
-        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=openid texta.* uaa.admin&redirect_uri={encoded_redirect_uri}'
+        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=openid texta.admin uaa.admin&redirect_uri={encoded_redirect_uri}'
 
         # Get the csrf token from the login page HTML
         html_resp = requests.get(uaa_login_url)
@@ -246,7 +245,7 @@ class UAATests(APILiveServerTestCase):
     def create_project1(self):
         # Encode the redirect_uri
         encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
-        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=openid texta.ou&redirect_uri={encoded_redirect_uri}'
+        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=openid texta.admin&redirect_uri={encoded_redirect_uri}'
 
         # Get the csrf token from the login page HTML
         html_resp = requests.get(uaa_login_url)
@@ -454,7 +453,7 @@ class UAATests(APILiveServerTestCase):
 
         # Encode the redirect_uri
         encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
-        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=openid texta.* uaa.admin&redirect_uri={encoded_redirect_uri}'
+        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=openid texta.admin uaa.admin&redirect_uri={encoded_redirect_uri}'
 
         # Get the csrf token from the login page HTML
         html_resp = requests.get(uaa_login_url)
@@ -581,7 +580,7 @@ class UAATests(APILiveServerTestCase):
         '''
         # Encode the redirect_uri
         encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
-        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=texta.* openid texta.admin&redirect_uri={encoded_redirect_uri}'
+        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=texta.admin openid texta.admin&redirect_uri={encoded_redirect_uri}'
 
         # Get the csrf token from the login page HTML
         html_resp = requests.get(uaa_login_url)
@@ -636,7 +635,7 @@ class UAATests(APILiveServerTestCase):
         '''
         # Encode the redirect_uri
         encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
-        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=texta.* openid texta.admin&redirect_uri={encoded_redirect_uri}'
+        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=texta.admin openid texta.admin&redirect_uri={encoded_redirect_uri}'
 
         # Get the csrf token from the login page HTML
         html_resp = requests.get(uaa_login_url)
@@ -693,7 +692,7 @@ class UAATests(APILiveServerTestCase):
         '''
         # Encode the redirect_uri
         encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
-        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=texta.* openid texta.admin&redirect_uri={encoded_redirect_uri}'
+        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=texta.admin openid texta.admin&redirect_uri={encoded_redirect_uri}'
 
         # Get the csrf token from the login page HTML
         html_resp = requests.get(uaa_login_url)
@@ -823,7 +822,7 @@ class UAATests(APILiveServerTestCase):
         '''
         # Encode the redirect_uri
         encoded_redirect_uri = requests.utils.quote(UAA_REDIRECT_URI)
-        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=openid texta.ou&redirect_uri={encoded_redirect_uri}'
+        uaa_login_url = f'{UAA_URL}/oauth/authorize?response_type=code&client_id={UAA_CLIENT_ID}&scope=openid texta.admin&redirect_uri={encoded_redirect_uri}'
 
         # Get the csrf token from the login page HTML
         html_resp = requests.get(uaa_login_url)
@@ -843,7 +842,7 @@ class UAATests(APILiveServerTestCase):
         try:
             # POST to the login.do endpoint to trigger the redirect_uri callback in the view.
             login_resp = requests.post(f'{UAA_URL}/login.do', headers=headers, data=body)
-            print_output("run_callback_login_resp", login_resp)
+            print_output("run_callback_login_resp_for_normal_user", login_resp.content)
         except requests.exceptions.ConnectionError as e:
             # The callback view redirects the user back to the frontend,
             # since frontend is not running during tests, it will throw a ConnectionError.
@@ -879,4 +878,3 @@ class UAATests(APILiveServerTestCase):
         response = self.client.login(username="normaluser", password="pw")
         print_output("normal user login", response)
         self.assertTrue(response)
-
