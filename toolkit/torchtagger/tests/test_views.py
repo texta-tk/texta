@@ -129,6 +129,7 @@ class TorchTaggerViewTests(APITransactionTestCase):
         payload = {
             "description": "TestTorchTaggerTraining",
             "fields": TEST_FIELD_CHOICE,
+            "query": json.dumps(TEST_QUERY),
             "maximum_sample_size": 500,
             "model_architecture": self.torch_models[0],
             "num_epochs": 3,
@@ -237,7 +238,7 @@ class TorchTaggerViewTests(APITransactionTestCase):
             "query": json.dumps(TEST_BIN_FACT_QUERY),
             "pos_label": "invalid_fact_val"
         }
-        response = self.client.post(self.url, invalid_payload_1, format='json')
+        response = self.client.post(self.url, invalid_payload_2, format='json')
         print_output('test_create_binary_multiclass_torchtagger_using_fact_name_invalid_pos_label:response.data', response.data)
         # Check if creating the Tagger fails with status code 400
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
