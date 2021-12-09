@@ -104,6 +104,7 @@ Toolkit is installed:
   (Default: "/data/models").
 * TEXTA_LANGUAGE_CODES - Comma separated string of Stanza supported language codes to use for Multilingual Processing.
   (Default: "").
+* TEXTA_MLP_USE_GPU - Use GPU to speed up MLP (Default: False).
 * TEXTA_MLP_MODEL_DIRECTORY_PATH - Relative path to the directory into which Stanza models will be stored under the "
   stanza" folder (setting this to ./home/texta will create ./home/texta/stanza which contains subfolders for every
   language like ./home/texta/stanza/et etc). (Default: "./data/external/mlp").
@@ -190,7 +191,7 @@ https://elasticsearch-py.readthedocs.io/en/6.3.1/connection.html#elasticsearch.U
 
 * TEXTA_UAA_URL - URI for the UAA service (Default: http://localhost:8080).
 * TEXTA_UAA_REDIRECT_URI - URI into which the user will be redirected after a successful UAA login (
-  Default: http://localhost:8000/api/v1/uaa/callback).
+  Default: http://localhost:8000/api/v2/uaa/callback).
 * TEXTA_UAA_FRONT_REDIRECT_URL - Configuration for the front end to determine where it will redirect the user after a
   successful login with UAA by Toolkit (Default: http://localhost:4200/oauth/uaa)
 * TEXTA_UAA_CLIENT_ID - UAA client ID for authenticating the TEXTA Toolkit application for UAA. ***Must be kept

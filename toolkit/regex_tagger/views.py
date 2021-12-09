@@ -11,9 +11,9 @@ from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.document import ElasticDocument
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.core import ElasticCore
+from texta_elastic.document import ElasticDocument
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup
 from toolkit.regex_tagger.serializers import (
@@ -153,6 +153,8 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         # filter again
         if serializer.validated_data['taggers']:
             regex_taggers = tagger_objects.filter(pk__in=serializer.validated_data['taggers'])
+        else:
+            regex_taggers = tagger_objects.all()
 
         text = serializer.validated_data["text"]
 
@@ -279,7 +281,7 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
             serializer.is_valid(raise_exception=True)
 
             tagger_object: RegexTagger = self.get_object()
-            tagger_object.task = Task.objects.create(regextagger=tagger_object, status=Task.STATUS_CREATED)
+            tagger_object.task = Task.objects.create(regextagger=tagger_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
             tagger_object.save()
 
             project = Project.objects.get(pk=project_pk)

@@ -1,6 +1,6 @@
 from texta_tagger.pipeline import get_pipeline_builder
 
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.core import ElasticCore
 
 
 def get_field_choices():
@@ -81,10 +81,6 @@ DEFAULT_LEMMATIZE = False
 DEFAULT_IGNORE_NUMBERS = True
 
 DEFAULT_OVERWRITE_EXISTING_STOPWORDS = True
-
-DEFAULT_ES_TIMEOUT = 10
-DEFAULT_BULK_SIZE = 100
-DEFAULT_MAX_CHUNK_BYTES = 104857600
 
 DEFAULT_BALANCE = False
 DEFAULT_BALANCE_TO_MAX_LIMIT = False

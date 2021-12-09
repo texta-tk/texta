@@ -7,7 +7,7 @@ from rest_framework.exceptions import ValidationError
 from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.core import ElasticCore
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.validators import (
     check_for_banned_beginning_chars,

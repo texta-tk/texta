@@ -10,8 +10,8 @@ from rest_framework.test import APITransactionTestCase
 
 from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
-from toolkit.elastic.tools.aggregator import ElasticAggregator
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.core import ElasticCore
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.regex_tagger.models import RegexTagger
 from toolkit.test_settings import (TEST_FIELD, TEST_INTEGER_FIELD, TEST_QUERY, TEST_VERSION_PREFIX, VERSION_NAMESPACE)
@@ -49,7 +49,7 @@ class RegexTaggerViewTests(APITransactionTestCase):
         self.police, self.medic, self.firefighter = ids
 
         # Create copy of test index
-        self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
+        self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/elastic/reindexer/'
         # Generate name for new index containing random id to make sure it doesn't already exist
         self.test_index_copy = f"test_apply_regex_tagger_{uuid.uuid4().hex}"
 
@@ -284,24 +284,31 @@ class RegexTaggerViewTests(APITransactionTestCase):
         url = reverse(f"{VERSION_NAMESPACE}:regex_tagger-multitag-text", kwargs={"project_pk": self.project.pk})
         # tagger_url = f'{self.url}multitag_text/'
         ### test matching text
-        payload = {
-            "text": "maja teisel korrusel toimus põleng ning ohver sai tõsiseid vigastusi.",
-            "taggers": [self.police, self.medic, self.firefighter]
-        }
-        response = self.client.post(url, payload, format="json")
-        print_output('test_regex_tagger_multitag_text:response.data', response.data)
-        # check if we found anything
-        tags = [res["tag"] for res in response.data]
-        self.assertEqual(len(response.data), 2)
-        self.assertTrue("tagger_id" in response.data[0])
-        self.assertTrue("tag" in response.data[0])
-        self.assertTrue("matches" in response.data[0])
-        self.assertEqual(len(response.data[0]["matches"]), 1)
-        self.assertEqual(len(response.data[1]["matches"]), 1)
-        self.assertTrue("str_val" in response.data[0]["matches"][0])
-        self.assertTrue("span" in response.data[0]["matches"][0])
-        self.assertTrue("kiirabi" in tags)
-        self.assertTrue("tuletõrje" in tags)
+        payloads = [
+            {
+                "text": "maja teisel korrusel toimus põleng ning ohver sai tõsiseid vigastusi.",
+                "taggers": [self.police, self.medic, self.firefighter]
+            },
+            {
+                "text": "maja teisel korrusel toimus põleng ning ohver sai tõsiseid vigastusi."
+            },
+        ]
+
+        for payload in payloads:
+            response = self.client.post(url, payload, format="json")
+            print_output('test_regex_tagger_multitag_text:response.data', response.data)
+            # check if we found anything
+            tags = [res["tag"] for res in response.data]
+            self.assertEqual(len(response.data), 2)
+            self.assertTrue("tagger_id" in response.data[0])
+            self.assertTrue("tag" in response.data[0])
+            self.assertTrue("matches" in response.data[0])
+            self.assertEqual(len(response.data[0]["matches"]), 1)
+            self.assertEqual(len(response.data[1]["matches"]), 1)
+            self.assertTrue("str_val" in response.data[0]["matches"][0])
+            self.assertTrue("span" in response.data[0]["matches"][0])
+            self.assertTrue("kiirabi" in tags)
+            self.assertTrue("tuletõrje" in tags)
 
 
     def run_test_create_and_update_regex_tagger(self):

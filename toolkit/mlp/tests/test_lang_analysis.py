@@ -5,8 +5,8 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.core import ElasticCore
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.settings import NAN_LANGUAGE_TOKEN_KEY
 from toolkit.test_settings import (TEST_FIELD, VERSION_NAMESPACE)
@@ -23,11 +23,11 @@ class ApplyLangViewsTests(APITransactionTestCase):
         self.project = project_creation("langDetectProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
         self.client.login(username='langDetectUser', password='pw')
-        self.url = reverse("v1:lang_index-list", kwargs={"project_pk": self.project.pk})
+        self.url = reverse("v2:lang_index-list", kwargs={"project_pk": self.project.pk})
 
 
     def tearDown(self) -> None:
-        from toolkit.elastic.tools.core import ElasticCore
+        from texta_elastic.core import ElasticCore
         ElasticCore().delete_index(index=self.test_index_name, ignore=[400, 404])
 
 
@@ -106,7 +106,7 @@ class ApplyLangViewsTests(APITransactionTestCase):
             "query": "foo"
         }
         response = self.client.post(self.url, data=payload, format="json")
-        print_output("test_with_invalid_queries_v1:response.data", response.data)
+        print_output("test_with_invalid_queries_v2:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
 
         payload = {

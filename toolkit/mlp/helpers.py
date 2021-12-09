@@ -1,13 +1,36 @@
 import logging
 from typing import List
 from celery.task.control import inspect
+from pelecanus import PelicanJson
 
 from texta_mlp.document import Document
 from texta_mlp.mlp import MLP
 
-from toolkit.elastic.tools.document import ElasticDocument
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.document import ElasticDocument
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.settings import INFO_LOGGER, NAN_LANGUAGE_TOKEN_KEY
+
+
+def parse_doc_texts(doc_path: str, document: dict) -> list:
+    """
+    Function for parsing text values from a nested dictionary given a field path.
+    :param doc_path: Dot separated path of fields to the value we wish to parse.
+    :param document: Document to be worked on.
+    :return: List of text fields that will be processed by MLP.
+    """
+    wrapper = PelicanJson(document)
+    doc_path_as_list = doc_path.split(".")
+    content = wrapper.safe_get_nested_value(doc_path_as_list, default=[])
+    if content and isinstance(content, str):
+        return [content]
+    # Check that content is non-empty list and there are only stings in the list.
+    elif content and isinstance(content, list) and all([isinstance(list_content, str) for list_content in content]):
+        return content
+    # In case the field path is faulty and it gives you a dictionary instead.
+    elif isinstance(content, dict):
+        return []
+    else:
+        return []
 
 
 def process_mlp_actions(generator: ElasticSearcher, analyzers: List[str], field_data: List[str], mlp_class: MLP, mlp_id: int):
@@ -60,7 +83,7 @@ def process_lang_actions(generator: ElasticSearcher, field: str, worker_id: int,
         for item in document_batch:
             # This will be a list of texts.
             source = item["_source"]
-            texts = mlp_class.parse_doc_texts(field, source)
+            texts = parse_doc_texts(field, source)
             texts = texts if texts else [""]
             for text in texts:
                 # This can be either a str or None

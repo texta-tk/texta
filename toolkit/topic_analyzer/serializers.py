@@ -6,7 +6,7 @@ from rest_framework import serializers
 
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin
 from toolkit.settings import REST_FRAMEWORK
 from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS

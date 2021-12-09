@@ -5,30 +5,23 @@ import pathlib
 import secrets
 import tempfile
 import zipfile
-from typing import List, Union, Dict
+from typing import Dict, List, Union
 
 from django.contrib.auth.models import User
 from django.core import serializers
 from django.db import models, transaction
 from django.dispatch import receiver
 from django.http import HttpResponse
-
 from texta_bert_tagger.tagger import BertTagger as TextBertTagger
+from texta_elastic.searcher import EMPTY_QUERY
 
 from toolkit.bert_tagger import choices
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
-from toolkit.settings import (
-    BASE_DIR,
-    BERT_FINETUNED_MODEL_DIRECTORY,
-    CELERY_LONG_TERM_TASK_QUEUE,
-    BERT_PRETRAINED_MODEL_DIRECTORY,
-    BERT_CACHE_DIR
-)
 from toolkit.elastic.tools.feedback import Feedback
+from toolkit.settings import (BASE_DIR, BERT_CACHE_DIR, BERT_FINETUNED_MODEL_DIRECTORY, BERT_PRETRAINED_MODEL_DIRECTORY, CELERY_LONG_TERM_TASK_QUEUE)
 
 
 class BertTagger(models.Model):
@@ -51,6 +44,8 @@ class BertTagger(models.Model):
     num_examples = models.TextField(default=json.dumps({}), null=True)
 
     # BERT params
+    use_gpu = models.BooleanField(default=True)
+
     num_epochs = models.IntegerField(default=choices.DEFAULT_NUM_EPOCHS)
     split_ratio = models.FloatField(default=choices.DEFAULT_TRAINING_SPLIT)
     maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE)
@@ -76,7 +71,7 @@ class BertTagger(models.Model):
     use_sentence_shuffle = models.BooleanField(default=choices.DEFAULT_USE_SENTENCE_SHUFFLE)
     balance_to_max_limit = models.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT)
 
-    model = models.FileField(null=True, verbose_name='', default=None)
+    model = models.FileField(null=True, verbose_name='', default=None, max_length=MAX_DESC_LEN)
     plot = models.FileField(upload_to='data/media', null=True, verbose_name='')
 
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
@@ -199,12 +194,12 @@ class BertTagger(models.Model):
         """Load BERT tagger from disc."""
         # NB! Saving pretrained models must be disabled!
         tagger = TextBertTagger(
-            allow_standard_output = choices.DEFAULT_ALLOW_STANDARD_OUTPUT,
-            save_pretrained = False,
-            pretrained_models_dir = BERT_PRETRAINED_MODEL_DIRECTORY,
-            use_gpu = choices.DEFAULT_USE_GPU,
-            #logger = logging.getLogger(INFO_LOGGER),
-            cache_dir = BERT_CACHE_DIR
+            allow_standard_output=choices.DEFAULT_ALLOW_STANDARD_OUTPUT,
+            save_pretrained=False,
+            pretrained_models_dir=BERT_PRETRAINED_MODEL_DIRECTORY,
+            use_gpu=choices.DEFAULT_USE_GPU,
+            # logger = logging.getLogger(INFO_LOGGER),
+            cache_dir=BERT_CACHE_DIR
         )
         tagger.load(self.model.path)
         # use state dict for binary taggers
@@ -215,8 +210,7 @@ class BertTagger(models.Model):
         return tagger
 
 
-
-    def apply_loaded_tagger(self, tagger: TextBertTagger, tagger_input: Union[str, Dict], input_type: str = "text", feedback: bool=False):
+    def apply_loaded_tagger(self, tagger: TextBertTagger, tagger_input: Union[str, Dict], input_type: str = "text", feedback: bool = False):
         """Apply loaded BERT tagger to doc or text."""
         # tag doc or text
         if input_type == 'doc':
@@ -237,7 +231,6 @@ class BertTagger(models.Model):
             feedback_url = f'/projects/{project_pk}/bert_taggers/{self.pk}/feedback/'
             prediction['feedback'] = {'id': feedback_id, 'url': feedback_url}
         return prediction
-
 
 
 @receiver(models.signals.post_delete, sender=BertTagger)

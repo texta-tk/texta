@@ -15,8 +15,8 @@ from rest_framework.response import Response
 from toolkit.core.health.utils import get_redis_status
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.core import ElasticCore
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, SerializerNotValid
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
@@ -319,7 +319,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
             serializer.is_valid(raise_exception=True)
 
             tagger_group_object = self.get_object()
-            tagger_group_object.task = Task.objects.create(taggergroup=tagger_group_object, status=Task.STATUS_CREATED)
+            tagger_group_object.task = Task.objects.create(taggergroup=tagger_group_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
             tagger_group_object.save()
 
             if not get_redis_status()['alive']:

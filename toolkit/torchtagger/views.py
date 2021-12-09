@@ -12,8 +12,8 @@ from rest_framework.response import Response
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.core import ElasticCore
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed
 from toolkit.helper_functions import add_finite_url_to_feedback
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
@@ -77,7 +77,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
     def retrain_tagger(self, request, pk=None, project_pk=None):
         """Starts retraining task for the TorchTagger model."""
         instance = self.get_object()
-        train_torchtagger.apply_async(args=(instance.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
+        instance.train()
         return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
 
 
@@ -184,7 +184,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             serializer.is_valid(raise_exception=True)
 
             tagger_object = self.get_object()
-            tagger_object.task = Task.objects.create(torchtagger=tagger_object, status=Task.STATUS_CREATED)
+            tagger_object.task = Task.objects.create(torchtagger=tagger_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
             tagger_object.save()
 
             project = Project.objects.get(pk=project_pk)

@@ -11,8 +11,8 @@ from texta_lexicon_matcher.lexicon_matcher import LexiconMatcher
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.document import ElasticDocument
+from texta_elastic.core import ElasticCore
+from texta_elastic.document import ElasticDocument
 from toolkit.settings import TEXTA_TAGS_KEY
 
 from toolkit.regex_tagger import choices

@@ -1,7 +1,7 @@
 import logging
 from typing import List
 from .sumy import Sumy
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.settings import INFO_LOGGER
 
 

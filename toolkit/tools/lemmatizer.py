@@ -5,7 +5,7 @@ from celery.result import allow_join_result
 from elasticsearch.client import IndicesClient
 from texta_tools.text_splitter import TextSplitter
 
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.core import ElasticCore
 from toolkit.mlp.tasks import apply_mlp_on_list
 from toolkit.settings import CELERY_MLP_TASK_QUEUE, ERROR_LOGGER
 
@@ -19,7 +19,7 @@ class CeleryLemmatizer:
     def lemmatize(self, text):
         with allow_join_result():
             mlp = apply_mlp_on_list.apply_async(kwargs={"texts": [text], "analyzers": ["lemmas"]}, queue=CELERY_MLP_TASK_QUEUE).get()
-            lemmas = mlp[0]["text"]["lemmas"]
+            lemmas = mlp[0]["text_mlp"]["lemmas"]
             return lemmas
 
 

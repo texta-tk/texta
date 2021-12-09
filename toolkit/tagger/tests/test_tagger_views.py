@@ -13,8 +13,8 @@ from rest_framework.test import APITransactionTestCase
 
 from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
-from toolkit.elastic.tools.aggregator import ElasticAggregator
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.core import ElasticCore
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.settings import RELATIVE_MODELS_PATH
 from toolkit.tagger.models import Tagger
@@ -48,7 +48,7 @@ class TaggerViewTests(APITransactionTestCase):
         self.new_fact_value = "TEST_TAGGER_VALUE"
 
         # Create copy of test index
-        self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
+        self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/elastic/reindexer/'
         # Generate name for new index containing random id to make sure it doesn't already exist
         self.test_index_copy = f"test_apply_tagger_{uuid.uuid4().hex}"
 
@@ -277,18 +277,21 @@ class TaggerViewTests(APITransactionTestCase):
 
     def run_tag_text(self, test_tagger_ids: List[int]):
         """Tests the endpoint for the tag_text action"""
-        payload = {"text": "This is some test text for the Tagger Test"}
+        payloads = [
+            {"text": "This is some test text for the Tagger Test"},
+            {"text": "test"}
+            ]
+        for payload in payloads:
+            for test_tagger_id in test_tagger_ids:
+                tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
+                response = self.client.post(tag_text_url, payload)
+                print_output('test_tag_text:response.data', response.data)
 
-        for test_tagger_id in test_tagger_ids:
-            tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
-            response = self.client.post(tag_text_url, payload)
-            print_output('test_tag_text:response.data', response.data)
-
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-            # Check if response data is not empty, but a result instead
-            self.assertTrue(response.data)
-            self.assertTrue('result' in response.data)
-            self.assertTrue('probability' in response.data)
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+                # Check if response data is not empty, but a result instead
+                self.assertTrue(response.data)
+                self.assertTrue('result' in response.data)
+                self.assertTrue('probability' in response.data)
 
 
     def run_tag_text_result_check(self, test_tagger_ids: List[int]):

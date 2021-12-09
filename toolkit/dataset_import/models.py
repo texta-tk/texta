@@ -26,7 +26,7 @@ class DatasetImport(models.Model):
 
 
     def start_import(self):
-        new_task = Task.objects.create(datasetimport=self, status='created')
+        new_task = Task.objects.create(datasetimport=self, status='created', task_type=Task.TYPE_IMPORT)
         self.task = new_task
         self.save()
         from toolkit.dataset_import.tasks import import_dataset

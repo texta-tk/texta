@@ -12,6 +12,10 @@ TEST_INDEX_LARGE = "texta_test_index_large"
 TEST_INDEX_EVALUATOR = "texta_test_index_evaluator"
 REINDEXER_TEST_INDEX = "reindexer_test_index"
 
+CRF_TEST_INDEX = "texta_crf_test_index"
+CRF_TEST_FIELD = "text_mlp"
+CRF_TEST_FIELD_CHOICE = [CRF_TEST_FIELD]
+
 REINDEXER_VALIDATION_TEST_INDEX_1 = "test_*_index"
 REINDEXER_VALIDATION_TEST_INDEX_2 = "test_:_index"
 REINDEXER_VALIDATION_TEST_INDEX_3 = "test_#_index"
@@ -49,7 +53,7 @@ TEST_DATASETS = (
     os.path.join(TEST_DATA_DIR, "import_test_data.xlsx"),
 )
 TEST_IMPORT_DATASET = "texta-test-import-dataset"
-VERSION_NAMESPACE = "v1"
+VERSION_NAMESPACE = "v2"
 TEST_VERSION_PREFIX = f"/api/{VERSION_NAMESPACE}"
 
 TEST_UAA_USERNAME = 'test'

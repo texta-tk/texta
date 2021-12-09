@@ -94,6 +94,7 @@ INSTALLED_APPS = [
     "toolkit.summarizer",
     "toolkit.celery_management",
     "toolkit.rakun_keyword_extractor",
+    "toolkit.crf_extractor",
     "toolkit.annotator",
     # TEXTA Extension Apps
     # "docscraper",
@@ -144,7 +145,7 @@ UAA_LOGOUT_URI = env("TEXTA_UAA_LOGOUT_URI", default=f"{UAA_URL}/logout.do")
 UAA_AUTHORIZE_URI = env("TEXTA_UAA_AUTHORIZE_URI", default=f"{UAA_URL}/oauth/authorize")
 
 # Callback URL defined on the UAA server, to which the user will be redirected after logging in on UAA
-UAA_REDIRECT_URI = env("TEXTA_UAA_REDIRECT_URI", default="http://localhost:8000/api/v1/uaa/callback")
+UAA_REDIRECT_URI = env("TEXTA_UAA_REDIRECT_URI", default="http://localhost:8000/api/v2/uaa/callback")
 # TEXTA front URL where the user will be redirected after the redirect_uri
 # Default value is for when running the front-end separately.
 UAA_FRONT_REDIRECT_URL = env("TEXTA_UAA_FRONT_REDIRECT_URL", default="http://localhost:4200/oauth/uaa")
@@ -166,7 +167,7 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ),
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.NamespaceVersioning",
-    "DEFAULT_VERSION": "v1",
+    "DEFAULT_VERSION": "v2",
     "ALLOWED_VERSIONS": ["v1", "v2"],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         # For DRF API browser pages
@@ -288,6 +289,12 @@ ES_CONNECTION_PARAMETERS = {
 }
 
 # CELERY
+
+# Amount of documents processed in a single task.
+# Consider that processed text might be the size of a simple comment
+# or a whole article.
+MLP_BATCH_SIZE = env.int("TEXTA_MLP_BATCH_SIZE", default=25)
+
 BROKER_URL = env('TEXTA_REDIS_URL', default='redis://localhost:6379')
 CELERY_RESULT_BACKEND = BROKER_URL
 CELERY_ACCEPT_CONTENT = ["application/json"]
@@ -361,6 +368,11 @@ DEFAULT_BERT_MODELS = env.list("TEXTA_BERT_MODELS", default=["bert-base-multilin
 # default MLP languages
 DEFAULT_MLP_LANGUAGE_CODES = env.list("TEXTA_LANGUAGE_CODES", default=[])
 
+# Enable GPU usage in MLP
+MLP_USE_GPU = env.bool("TEXTA_MLP_USE_GPU", default=False)
+# Select GPU device if more than one
+MLP_GPU_DEVICE_ID = env.int("TEXTA_MLP_GPU_DEVICE_ID", default=0)
+
 # default DS choices
 DEFAULT_TEXTA_DATASOURCE_CHOICES = parse_tuple_env_headers("TEXTA_DATASOURCE_CHOICES", [
     ('emails', 'emails'),
@@ -391,7 +403,7 @@ ALLOW_BERT_MODEL_DOWNLOADS = env.bool("TEXTA_ALLOW_BERT_MODEL_DOWNLOADS", defaul
 RELATIVE_PROJECT_DATA_PATH = env("TOOLKIT_PROJECT_DATA_PATH", default=os.path.join(DATA_DIR, "projects"))
 
 # Different types of models
-MODEL_TYPES = ["embedding", "tagger", "torchtagger", "bert_tagger"]
+MODEL_TYPES = ["embedding", "tagger", "torchtagger", "bert_tagger", "crf"]
 
 # Ensure all the folders exists before downloading the resources.
 prepare_mandatory_directories(

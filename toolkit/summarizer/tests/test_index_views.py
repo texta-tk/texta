@@ -3,7 +3,7 @@ import json
 from django.urls import reverse
 from rest_framework.test import APITestCase
 from toolkit.tools.utils_for_tests import create_test_user, project_creation, print_output
-from toolkit.elastic.tools.document import ElasticDocument
+from texta_elastic.document import ElasticDocument
 from rest_framework import status
 
 
@@ -29,7 +29,7 @@ class SummarizerIndexViewTests(APITestCase):
         self.client.login(username='user', password='pw')
 
     def tearDown(self) -> None:
-        from toolkit.elastic.tools.core import ElasticCore
+        from texta_elastic.core import ElasticCore
         ElasticCore().delete_index(index="test_summarizer_index", ignore=[400, 404])
 
     def test(self):

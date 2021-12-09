@@ -14,7 +14,7 @@ from django.db import models, transaction
 from django.dispatch import receiver
 from django.http import HttpResponse
 
-from texta_tools.embedding import W2VEmbedding
+from texta_embedding.embedding import W2VEmbedding
 from texta_tagger.tagger import Tagger as TextTagger
 
 from toolkit.constants import MAX_DESC_LEN
@@ -23,7 +23,7 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choices
 from toolkit.elastic.index.models import Index
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, RELATIVE_MODELS_PATH
 from toolkit.helper_functions import load_stop_words
@@ -251,7 +251,7 @@ class Tagger(models.Model):
             logging.getLogger(INFO_LOGGER).info(f"Adding feedback for Tagger id: {self.pk}")
             project_pk = self.project.pk
             feedback_object = Feedback(project_pk, model_object=self)
-            processed_text = tagger.text_processor.process(content)[0]
+            processed_text = tagger.text_processor.process(content)
             feedback_id = feedback_object.store(processed_text, prediction)
             feedback_url = f'/projects/{project_pk}/taggers/{self.pk}/feedback/'
             prediction['feedback'] = {'id': feedback_id, 'url': feedback_url}

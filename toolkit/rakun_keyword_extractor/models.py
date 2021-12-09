@@ -17,6 +17,14 @@ from mrakun import RakunDetector
 from toolkit.helper_functions import load_stop_words
 
 
+class RakunDetectorWrapper(RakunDetector):
+    """
+    A wrapper to fix Rakun compatability with Gensim4.
+    """
+    def calculate_embedding_distance(self, key1, key2):
+        return self.model.similarity(key1, key2)
+
+
 class RakunExtractor(models.Model):
     MODEL_TYPE = 'rakun_extractor'
     MODEL_JSON_NAME = "model.json"
@@ -54,7 +62,7 @@ class RakunExtractor(models.Model):
         return json_obj
 
     def apply_rakun(self):
-        new_task = Task.objects.create(rakunextractor=self, status='created')
+        new_task = Task.objects.create(rakunextractor=self, status='created', task_type=Task.TYPE_APPLY)
         self.task = new_task
         self.save()
         from toolkit.rakun_keyword_extractor.tasks import start_rakun_task, apply_rakun_extractor_to_index
@@ -98,10 +106,10 @@ class RakunExtractor(models.Model):
 
     def load_rakun_keyword_detector(self):
         HYPERPARAMETERS = self.hyperparameters
-        keyword_detector = RakunDetector(HYPERPARAMETERS)
+        keyword_detector = RakunDetectorWrapper(HYPERPARAMETERS)
         return keyword_detector
 
-    def get_rakun_keywords(self, keyword_detector: RakunDetector, texts: List[str], field_path: str, fact_name: str = "", fact_value: str = "", add_spans: bool=False):
+    def get_rakun_keywords(self, keyword_detector: RakunDetectorWrapper, texts: List[str], field_path: str, fact_name: str = "", fact_value: str = "", add_spans: bool=False):
         new_facts = []
         for text in texts:
             results = keyword_detector.find_keywords(text, input_type="text")
@@ -112,7 +120,7 @@ class RakunExtractor(models.Model):
                 if add_spans:
                     # Find all positions of the keyword in text
                     spans = [[m.start(), m.end()] for m in
-                             re.finditer(re.escape(rakun_keyword), re.escape(text), re.IGNORECASE)]
+                             re.finditer(re.escape(rakun_keyword), text, re.IGNORECASE)]
                 else:
                     spans = [[0, 0]]
 

@@ -1,17 +1,17 @@
 import logging
 from typing import List
 from celery.decorators import task
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.document import ElasticDocument
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.core import ElasticCore
+from texta_elastic.document import ElasticDocument
+from texta_elastic.searcher import ElasticSearcher
+from toolkit.core.task.models import Task
 from toolkit.base_tasks import TransactionAwareTask
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER
-from toolkit.rakun_keyword_extractor.models import RakunExtractor
+from toolkit.rakun_keyword_extractor.models import RakunExtractor, RakunDetectorWrapper
 from toolkit.tools.show_progress import ShowProgress
-from mrakun import RakunDetector
 
 
-def update_generator(keyword_detector: RakunDetector, generator: ElasticSearcher, ec: ElasticCore, fields: List[str], rakun_extractor_object: RakunExtractor, fact_name: str, fact_value: str, add_spans: bool):
+def update_generator(keyword_detector: RakunDetectorWrapper, generator: ElasticSearcher, ec: ElasticCore, fields: List[str], rakun_extractor_object: RakunExtractor, fact_name: str, fact_value: str, add_spans: bool):
     for scroll_batch in generator:
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
@@ -48,10 +48,9 @@ def start_rakun_task(self, object_id: int):
 @task(name="apply_rakun_extractor_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
 def apply_rakun_extractor_to_index(self, object_id: int, indices: List[str], fields: List[str], query: dict, es_timeout: int, bulk_size: int, fact_name: str, add_spans: bool):
     """Apply Rakun Keyword Extractor to index."""
+    logging.getLogger(INFO_LOGGER).info(f"Starting task 'apply_rakun_extractor_to_index' with ID: {object_id}!")
+    rakun_extractor_object = RakunExtractor.objects.get(id=object_id)
     try:
-        logging.getLogger(INFO_LOGGER).info(f"Starting task 'apply_rakun_extractor_to_index' with ID: {object_id}!")
-        rakun_extractor_object = RakunExtractor.objects.get(id=object_id)
-
         progress = ShowProgress(rakun_extractor_object.task)
 
         # retrieve fields
@@ -83,4 +82,4 @@ def apply_rakun_extractor_to_index(self, object_id: int, indices: List[str], fie
         logging.getLogger(ERROR_LOGGER).exception(e)
         error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
         rakun_extractor_object.task.add_error(error_message)
-        rakun_extractor_object.task.update_status(task.STATUS_FAILED)
+        rakun_extractor_object.task.update_status(Task.STATUS_FAILED)

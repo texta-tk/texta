@@ -2,7 +2,7 @@ import json
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.rakun_keyword_extractor import choices
 from toolkit.rakun_keyword_extractor.models import RakunExtractor

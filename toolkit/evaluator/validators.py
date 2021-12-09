@@ -4,7 +4,7 @@ from typing import List
 
 from django.core.exceptions import ValidationError
 
-from toolkit.elastic.tools.aggregator import ElasticAggregator
+from texta_elastic.aggregator import ElasticAggregator
 from toolkit.evaluator import choices
 
 

@@ -1,4 +1,4 @@
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.core import ElasticCore
 
 
 '''For storing constant variables'''

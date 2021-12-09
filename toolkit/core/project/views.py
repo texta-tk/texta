@@ -31,13 +31,13 @@ from toolkit.core.project.serializers import (
 )
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import IndexSerializer
-from toolkit.elastic.tools.aggregator import ElasticAggregator
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.document import ElasticDocument
-from toolkit.elastic.tools.query import Query
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.core import ElasticCore
+from texta_elastic.document import ElasticDocument
+from texta_elastic.query import Query
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.elastic.tools.serializers import ElasticScrollSerializer
-from toolkit.elastic.tools.spam_detector import SpamDetector
+from texta_elastic.spam_detector import SpamDetector
 from toolkit.exceptions import InvalidInputDocument, ProjectValidationFailed, SerializerNotValid
 from toolkit.helper_functions import hash_string
 from toolkit.permissions.project_permissions import (AuthorProjAdminSuperadminAllowed, ExtraActionAccessInApplications, OnlySuperadminAllowed, ProjectAccessInApplicationsAllowed, ProjectEditAccessAllowed)
@@ -65,7 +65,9 @@ class ExportSearchView(APIView):
             indices = model.get_available_or_all_project_indices(serializer.validated_data["indices"])
             indices = ",".join(indices)
 
-            original_query = elasticsearch_dsl.Search().from_dict(query)
+            fields = serializer.validated_data["fields"]
+
+            original_query = elasticsearch_dsl.Search().from_dict(query).source(fields)
             with_es = original_query.using(ElasticCore().es)
             index_limitation = with_es.index(indices)
             limit_by_n_docs = index_limitation.extra(size=10000)

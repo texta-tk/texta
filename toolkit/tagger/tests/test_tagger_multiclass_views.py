@@ -9,8 +9,8 @@ from rest_framework.test import APITransactionTestCase
 
 from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
-from toolkit.elastic.tools.aggregator import ElasticAggregator
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.core import ElasticCore
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.tagger.models import Tagger
 from toolkit.test_settings import (
@@ -54,7 +54,7 @@ class TaggerViewTests(APITransactionTestCase):
         self.new_fact_name = "TEST_MULTICLASS_TAGGER_NAME"
 
         # Create copy of test index
-        self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
+        self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/elastic/reindexer/'
         # Generate name for new index containing random id to make sure it doesn't already exist
         self.test_index_copy = f"test_apply_multiclass_tagger_{uuid.uuid4().hex}"
 

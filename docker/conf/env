@@ -17,6 +17,6 @@ DJANGO_DATABASE_PORT=3306
 
 # UAA settings for TK
 TEXTA_USE_UAA=true
-TEXTA_UAA_REDIRECT_URI=http://texta-rest/api/v1/uaa/callback
+TEXTA_UAA_REDIRECT_URI=http://texta-rest/api/v2/uaa/callback
 TEXTA_UAA_FRONT_REDIRECT_URL=http://texta-rest/oauth/uaa
 TEXTA_UAA_URL=http://texta-uaa:8080/uaa

@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
 from toolkit.core.task.models import Task
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.core import ElasticCore
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.tagger.models import Tagger
 from toolkit.test_settings import (TEST_FIELD_UNLEMMATIZED_CHOICE, TEST_KEEP_PLOT_FILES, TEST_VERSION_PREFIX)

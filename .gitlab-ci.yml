@@ -7,7 +7,7 @@ variables:
   TEXTA_REDIS_URL: redis://redis:6379
   # UAA
   TEXTA_USE_UAA: "True"
-  TEXTA_UAA_REDIRECT_URI: http://localhost:8000/api/v1/uaa/callback
+  TEXTA_UAA_REDIRECT_URI: http://localhost:8000/api/v2/uaa/callback
   TEXTA_UAA_USER: test
   TEXTA_UAA_EMAIL: test@test.com
   TEXTA_UAA_PWD: test
@@ -24,7 +24,7 @@ variables:
   TEXTA_EXTERNAL_DATA_DIR: /cache
 
 services:
-  - name: redis:latest
+  - name: redis:5.0
   - name: docker.texta.ee/texta/texta-uaa:latest
     alias: texta-uaa
   - name: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2

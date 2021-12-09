@@ -4,8 +4,8 @@ from typing import List, Optional
 from celery.decorators import task
 from toolkit.core.task.models import Task
 from toolkit.base_tasks import TransactionAwareTask
-from toolkit.elastic.tools.document import ElasticDocument
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.document import ElasticDocument
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.summarizer.helpers import process_actions
 from toolkit.summarizer.models import Summarizer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, ERROR_LOGGER

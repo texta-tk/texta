@@ -13,14 +13,14 @@ from django.db import models, transaction
 from django.dispatch import receiver
 from django.http import HttpResponse
 
-from texta_tools.embedding import W2VEmbedding
+from texta_embedding.embedding import W2VEmbedding
 from texta_torch_tagger.tagger import TorchTagger as TextTorchTagger
 
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
 from toolkit.torchtagger import choices

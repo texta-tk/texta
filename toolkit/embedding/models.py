@@ -10,14 +10,14 @@ from django.core import serializers
 from django.db import models
 from django.dispatch import receiver
 from django.http import HttpResponse
-from texta_tools.embedding import FastTextEmbedding, W2VEmbedding
+from texta_embedding.embedding import FastTextEmbedding, W2VEmbedding
 
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE
 from toolkit.elastic.index.models import Index
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.choices import FASTTEXT_EMBEDDING, W2V_EMBEDDING
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
 
@@ -34,6 +34,8 @@ class Embedding(models.Model):
     num_dimensions = models.IntegerField(default=100)
     max_documents = models.IntegerField(default=0)
     min_freq = models.IntegerField(default=10)
+    window_size = models.IntegerField(default=1)
+    num_epochs = models.IntegerField(default=1)
     vocab_size = models.IntegerField(default=0)
     use_phraser = models.BooleanField(default=True)
     snowball_language = models.CharField(default=DEFAULT_SNOWBALL_LANGUAGE, null=True, max_length=MAX_DESC_LEN)
@@ -111,11 +113,20 @@ class Embedding(models.Model):
         Returns embedding object based on embedding type.
         """
         if self.embedding_type == FASTTEXT_EMBEDDING:
-            return FastTextEmbedding()
+            return FastTextEmbedding(min_freq=self.min_freq,
+                                     num_dimensions=self.num_dimensions,
+                                     window=self.window_size,
+                                     num_epochs=self.num_epochs)
         elif self.embedding_type == W2V_EMBEDDING:
-            return W2VEmbedding()
+            return W2VEmbedding(min_freq=self.min_freq,
+                                num_dimensions=self.num_dimensions,
+                                window=self.window_size,
+                                num_epochs=self.num_epochs)
         else:
-            return W2VEmbedding()
+            return W2VEmbedding(min_freq=self.min_freq,
+                                num_dimensions=self.num_dimensions,
+                                window=self.window_size,
+                                num_epochs=self.num_epochs)
 
 
     def get_indices(self):
