@@ -7,7 +7,7 @@ from django.db import models
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.index.models import Index
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.serializer_constants import BULK_SIZE_HELPTEXT, ES_TIMEOUT_HELPTEXT, INDICES_HELPTEXT
 from toolkit.settings import DESCRIPTION_CHAR_LIMIT, ES_BULK_SIZE_MAX, ES_TIMEOUT_MAX
 
