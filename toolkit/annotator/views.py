@@ -8,8 +8,8 @@ from rest_framework.response import Response
 from toolkit.annotator.models import Annotator, Comment, Labelset, Record
 from toolkit.annotator.serializers import AnnotatorProjectSerializer, AnnotatorSerializer, BinaryAnnotationSerializer, CommentSerializer, DocumentEditSerializer, DocumentIDSerializer, EntityAnnotationSerializer, LabelsetSerializer, MultilabelAnnotationSerializer, RecordSerializer, \
     ValidateDocumentSerializer
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.document import ElasticDocument
+from texta_elastic.core import ElasticCore
+from texta_elastic.document import ElasticDocument
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import EmptySerializer
 from toolkit.settings import TEXTA_ANNOTATOR_KEY

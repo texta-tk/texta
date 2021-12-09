@@ -7,7 +7,7 @@ from rest_framework.test import APITestCase
 
 from toolkit.annotator.models import Annotator
 from toolkit.elastic.index.models import Index
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.core import ElasticCore
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.settings import TEXTA_ANNOTATOR_KEY
 from toolkit.test_settings import TEST_FIELD, TEST_MATCH_TEXT, TEST_QUERY

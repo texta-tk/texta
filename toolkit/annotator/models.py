@@ -193,7 +193,7 @@ class Annotator(TaskModel):
         Function for returning a new Elasticsearch document for annotation.
         :return:
         """
-        from toolkit.elastic.tools.core import ElasticCore
+        from texta_elastic.core import ElasticCore
 
         ec = ElasticCore()
         json_query = json.loads(self.query)
@@ -240,7 +240,7 @@ class Annotator(TaskModel):
         Returns all the documents that are marked for skipping.
         :return:
         """
-        from toolkit.elastic.tools.core import ElasticCore
+        from texta_elastic.core import ElasticCore
 
         ec = ElasticCore()
         json_query = json.loads(self.query)
@@ -259,7 +259,7 @@ class Annotator(TaskModel):
         Returns an already annotated document for validation purposes.
         :return:
         """
-        from toolkit.elastic.tools.core import ElasticCore
+        from texta_elastic.core import ElasticCore
 
         ec = ElasticCore()
         json_query = json.loads(self.query)
@@ -290,7 +290,7 @@ class Annotator(TaskModel):
         :param indices: Which indices to target for the schemas.
         :return:
         """
-        from toolkit.elastic.tools.core import ElasticCore
+        from texta_elastic.core import ElasticCore
 
         ec = ElasticCore()
         for index in indices:

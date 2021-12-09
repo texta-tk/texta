@@ -8,7 +8,7 @@ from toolkit.annotator.models import Annotator, BinaryAnnotatorConfiguration, Ca
 from toolkit.core.project.models import Project
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.models import Index
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.serializer_constants import FieldParseSerializer, ToolkitTaskSerializer
 
 
