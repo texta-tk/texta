@@ -7,7 +7,7 @@ from django.db import models
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.index.models import Index
-from toolkit.elastic.tools.document import ESDocObject
+from texta_elastic.document import ESDocObject
 from toolkit.model_constants import TaskModel
 from toolkit.settings import DESCRIPTION_CHAR_LIMIT
 
