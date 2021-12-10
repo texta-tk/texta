@@ -1,5 +1,6 @@
 # Create your tests here.
 import json
+import time
 
 from django.urls import reverse
 from rest_framework import status
@@ -75,15 +76,21 @@ class BinaryAnnotatorTests(APITestCase):
 
     def run_binary_annotation(self):
         annotation_url = reverse("v2:annotator-annotate-binary", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
-
+        print_output("run_binary_annotation:annotation_url", annotation_url)
         annotation_payloads = []
         for i in range(2):
             random_document = self._pull_random_document()
             annotation_payloads.append(
                 {"index": random_document["_index"], "document_id": random_document["_id"], "doc_type": "_doc", "annotation_type": "pos"}
             )
-
+        print_output("annotation_document_before_0", annotation_payloads[0]['document_id'])
+        print_output("annotation_document_before_1", annotation_payloads[1]['document_id'])
+        while annotation_payloads[0]['document_id'] == annotation_payloads[1]['document_id']:
+            random_document = self._pull_random_document()
+            annotation_payloads[1] = {"index": random_document["_index"], "document_id": random_document["_id"], "doc_type": "_doc", "annotation_type": "pos"}
+        print_output("run_binary_annotation:annotation_payloads", annotation_payloads)
         for index_count, payload in enumerate(annotation_payloads):
+            print_output(f"run_binary_annotation:annotation_payload{index_count}", payload['document_id'])
             annotation_response = self.client.post(annotation_url, data=payload, format="json")
             # Test for response success.
             print_output("run_binary_annotation:response.status", annotation_response.status_code)
@@ -91,6 +98,8 @@ class BinaryAnnotatorTests(APITestCase):
 
             # Test that progress is updated properly.
             model_object = Annotator.objects.get(pk=self.annotator["id"])
+            print_output("run_binary_annotation:annotator_model_obj", model_object.annotated)
+            print_output("run_binary_annotation:binary_index_count", index_count)
             self.assertTrue(model_object.annotated == index_count + 1)
 
             # Check that document was actually edited.
