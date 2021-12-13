@@ -2,6 +2,8 @@ from django.conf.urls import url
 from django.urls import include, path
 from rest_framework_nested import routers
 
+from toolkit.annotator.urls import router as annotator_router
+from toolkit.annotator.views import AnnotatorProjectViewset
 from toolkit.anonymizer.urls import router as anonymizer_router
 from toolkit.bert_tagger.urls import router as bert_tagger_router
 from toolkit.celery_management.views import CeleryQueueCount, CeleryStats, PurgeTasks, QueueDetailStats
@@ -36,11 +38,11 @@ from toolkit.embedding.urls import embedding_router
 from toolkit.evaluator.urls import router as evaluator_router
 from toolkit.mlp.urls import mlp_router
 from toolkit.mlp.views import LangDetectView, MLPListProcessor, MlpDocsProcessor
+from toolkit.rakun_keyword_extractor.urls import router as rakun_extractor_router
 from toolkit.regex_tagger.urls import router as regex_tagger_router
 from toolkit.summarizer.urls import router as summarizer_router
 from toolkit.summarizer.views import SummarizerSummarize
 from toolkit.tagger.urls import router as tagger_router
-from toolkit.rakun_keyword_extractor.urls import router as rakun_extractor_router
 from toolkit.tools.swagger import schema_view
 from toolkit.topic_analyzer.views import ClusterViewSet, TopicAnalyzerViewset
 from toolkit.torchtagger.urls import router as torchtagger_router
@@ -49,6 +51,7 @@ from toolkit.uaa_auth.views import RefreshUAATokenView, UAAView
 
 
 router = routers.DefaultRouter()
+router.register("annotator_projectlist", AnnotatorProjectViewset, basename="annotator-project-list")
 router.register(r'projects', ProjectViewSet, basename='project')
 router.register('users', profile_views.UserViewSet, basename='user')
 router.register('core_variables', CoreVariableViewSet, basename='corevariable')
@@ -58,6 +61,7 @@ project_router = routers.NestedDefaultRouter(router, r'projects', lookup='projec
 project_router.registry.extend(embedding_router.registry)
 project_router.registry.extend(embedding_router.registry)
 project_router.registry.extend(tagger_router.registry)
+project_router.registry.extend(annotator_router.registry)
 project_router.registry.extend(rakun_extractor_router.registry)
 project_router.registry.extend(core_router.registry)
 project_router.registry.extend(torchtagger_router.registry)

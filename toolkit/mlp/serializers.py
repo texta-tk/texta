@@ -9,7 +9,7 @@ from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
 from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.mlp.models import ApplyLangWorker, MLPWorker
-from toolkit.serializer_constants import FieldValidationSerializer, IndicesSerializerMixin
+from toolkit.serializer_constants import FieldsValidationSerializerMixin, IndicesSerializerMixin
 from toolkit.settings import REST_FRAMEWORK
 
 
@@ -30,7 +30,7 @@ class MLPDocsSerializer(serializers.Serializer):
     )
 
 
-class MLPWorkerSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldValidationSerializer):
+class MLPWorkerSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldsValidationSerializerMixin):
     author = UserSerializer(read_only=True)
     description = serializers.CharField()
     task = TaskSerializer(read_only=True, required=False)
@@ -73,7 +73,7 @@ class LangDetectSerializer(serializers.Serializer):
     text = serializers.CharField()
 
 
-class ApplyLangOnIndicesSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldValidationSerializer):
+class ApplyLangOnIndicesSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldsValidationSerializerMixin):
     description = serializers.CharField()
     author = UserSerializer(read_only=True)
     task = TaskSerializer(read_only=True, required=False)

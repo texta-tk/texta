@@ -46,6 +46,7 @@ CORE_SETTINGS = {
 EVALUATOR_MEMORY_BUFFER_RATIO = 0.5
 
 TEXTA_TAGS_KEY = "texta_facts"
+TEXTA_ANNOTATOR_KEY = "texta_annotator"
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -94,6 +95,7 @@ INSTALLED_APPS = [
     "toolkit.celery_management",
     "toolkit.rakun_keyword_extractor",
     "toolkit.crf_extractor",
+    "toolkit.annotator",
     # TEXTA Extension Apps
     # "docscraper",
     # THIRD PARTY
@@ -268,6 +270,11 @@ STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 ELASTIC_CLUSTER_VERSION = env.int("TEXTA_ELASTIC_VERSION", default=7)
+
+DESCRIPTION_CHAR_LIMIT = 100
+ES_TIMEOUT_MAX = 100
+ES_BULK_SIZE_MAX = 500
+
 
 # OTHER ELASTICSEARCH OPTIONS
 ES_CONNECTION_PARAMETERS = {
