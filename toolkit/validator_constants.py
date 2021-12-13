@@ -3,6 +3,7 @@ import json
 from django.core.exceptions import ValidationError
 from texta_elastic.aggregator import ElasticAggregator
 
+
 def validate_pos_label(data):
     """ For Tagger, TorchTagger and BertTagger.
     Checks if the inserted pos label is present in the fact values.

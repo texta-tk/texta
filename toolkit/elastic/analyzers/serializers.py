@@ -9,10 +9,10 @@ from ..choices import DEFAULT_ELASTIC_TOKENIZER, DEFAULT_SNOWBALL_LANGUAGE, ELAS
 from texta_elastic.searcher import EMPTY_QUERY
 from ...core.task.serializers import TaskSerializer
 from ...core.user_profile.serializers import UserSerializer
-from ...serializer_constants import FieldValidationSerializer, IndicesSerializerMixin
+from ...serializer_constants import FieldsValidationSerializerMixin, IndicesSerializerMixin
 
 
-class ApplyESAnalyzerWorkerSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldValidationSerializer):
+class ApplyESAnalyzerWorkerSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldsValidationSerializerMixin):
     author = UserSerializer(read_only=True)
     query = serializers.JSONField(help_text='Query in JSON format', default=json.dumps(EMPTY_QUERY))
     fields = serializers.ListField(child=serializers.CharField(), required=False, allow_empty=False, help_text="Which field to stem.")

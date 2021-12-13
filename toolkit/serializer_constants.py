@@ -1,20 +1,29 @@
 import json
 import re
 from collections import OrderedDict
+from json import JSONDecodeError
 
 from rest_framework import serializers
 
 from toolkit.core.project.models import Project
+from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.serializers import IndexSerializer
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.validators import check_for_existence
 from toolkit.choice_constants import DEFAULT_ES_TIMEOUT, DEFAULT_BULK_SIZE, DEFAULT_MAX_CHUNK_BYTES
 
 # Helptext constants to ensure consistent values inside Toolkit.
+from toolkit.settings import ES_BULK_SIZE_MAX, ES_TIMEOUT_MAX
+
+
 BULK_SIZE_HELPTEXT = "How many documents should be sent into Elasticsearch in a single batch for update."
 ES_TIMEOUT_HELPTEXT = "How many seconds should be allowed for the the update request to Elasticsearch."
 DESCRIPTION_HELPTEXT = "Description of the task to distinguish it from others."
 QUERY_HELPTEXT = "Elasticsearch query for subsetting in JSON format"
 FIELDS_HELPTEXT = "Which fields to parse the content from."
+PROJECT_HELPTEXT = "Which Project this item belongs to."
+INDICES_HELPTEXT = "Which indices to query from Elasticsearch"
+
 
 class EmptySerializer(serializers.Serializer):
     pass
@@ -37,7 +46,7 @@ class ProjectResourceUrlSerializer():
         return resource_url
 
 
-class FieldValidationSerializer:
+class FieldsValidationSerializerMixin:
 
     def validate_fields(self, value):
         """ check if selected fields are present in the project and raise error on None
@@ -51,7 +60,19 @@ class FieldValidationSerializer:
         return value
 
 
-class FieldParseSerializer(FieldValidationSerializer):
+class FieldValidationSerializerMixin:
+
+
+    def validate_field(self, value):
+        project_id = self.context['view'].kwargs['project_pk']
+        project_obj = Project.objects.get(id=project_id)
+        project_fields = set(project_obj.get_elastic_fields(path_list=True))
+        if not value or not {value}.issubset(project_fields):
+            raise serializers.ValidationError(f'Entered field not in current project fields: {project_fields}')
+        return value
+
+
+class FieldParseSerializer(FieldsValidationSerializerMixin):
     """
     For serializers that need to override to_representation and parse fields
     Serializers overriden with FieldParseSerializer will validate, if field input
@@ -65,7 +86,10 @@ class FieldParseSerializer(FieldValidationSerializer):
         fields_to_parse = self.Meta.fields_to_parse
         for field in fields_to_parse:
             if getattr(model_obj, field):
-                result[field] = json.loads(getattr(model_obj, field))
+                try:
+                    result[field] = json.loads(getattr(model_obj, field))
+                except JSONDecodeError:
+                    result[field] = getattr(model_obj, field)
         return OrderedDict([(key, result[key]) for key in result])
 
 
@@ -112,7 +136,7 @@ class IndicesSerializerMixin(serializers.Serializer):
     indices = IndexSerializer(
         many=True,
         default=[],
-        help_text="Which indices to use for this procedure.",
+        help_text=INDICES_HELPTEXT,
         validators=[
             check_for_existence
         ]
@@ -135,3 +159,12 @@ class ElasticScrollMixIn(serializers.Serializer):
         default=DEFAULT_MAX_CHUNK_BYTES,
         help_text=f"Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors. Default:{DEFAULT_MAX_CHUNK_BYTES}."
     )
+
+class ToolkitTaskSerializer(IndicesSerializerMixin, FieldsValidationSerializerMixin):
+    description = serializers.CharField(max_length=100, help_text=DESCRIPTION_HELPTEXT)
+    author = UserSerializer(read_only=True)
+    fields = serializers.ListField(child=serializers.CharField(), help_text=FIELDS_HELPTEXT)
+    query = serializers.JSONField(required=False, help_text=QUERY_HELPTEXT, default=json.dumps(EMPTY_QUERY))
+
+    bulk_size = serializers.IntegerField(default=100, min_value=0, max_value=ES_BULK_SIZE_MAX, help_text=BULK_SIZE_HELPTEXT)
+    es_timeout = serializers.IntegerField(default=10, min_value=0, max_value=ES_TIMEOUT_MAX, help_text=ES_TIMEOUT_HELPTEXT)
