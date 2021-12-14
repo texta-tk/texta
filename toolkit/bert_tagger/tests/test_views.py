@@ -738,10 +738,12 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         # First try
         start_1 = time_ns()
         response = self.client.post(f'{self.url}{self.test_tagger_id}/tag_text/', payload)
+        print_output("test_bert_tagger_persistent:response_1", response)
         end_1 = time_ns()-start_1
         # Second try
         start_2 = time_ns()
         response = self.client.post(f'{self.url}{self.test_tagger_id}/tag_text/', payload)
+        print_output("test_bert_tagger_persistent:response_2", response)
         end_2 = time_ns()-start_2
         # Test if second attempt faster
         print_output('test_bert_tagger_persistent speed:', (end_1, end_2))
