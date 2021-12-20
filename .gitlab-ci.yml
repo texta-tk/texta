@@ -60,7 +60,7 @@ BuildTestImage:
   # Builds back image for front tests
   stage: build-test-image
   tags:
-    - docker
+    - with-docker
   script:
     - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD docker.texta.ee  
     - docker build --compress --force-rm --no-cache -t docker.texta.ee/texta/texta-rest/test:latest -f ./docker/Dockerfile .
