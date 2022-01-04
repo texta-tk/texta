@@ -24,7 +24,7 @@ variables:
   TEXTA_EXTERNAL_DATA_DIR: /cache
 
 services:
-  - name: redis:5.0
+  - name: redis:5
   - name: docker.texta.ee/texta/texta-uaa:latest
     alias: texta-uaa
   - name: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
@@ -60,7 +60,7 @@ BuildTestImage:
   # Builds back image for front tests
   stage: build-test-image
   tags:
-    - docker
+    - with-docker
   script:
     - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD docker.texta.ee  
     - docker build --compress --force-rm --no-cache -t docker.texta.ee/texta/texta-rest/test:latest -f ./docker/Dockerfile .

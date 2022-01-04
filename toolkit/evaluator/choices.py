@@ -17,7 +17,7 @@ DEFAULT_MAX_AGGREGATION_SIZE = 10000
 # Max number of classes to calculate the confusion matrix.
 # If the number of classes exceeds the allowed limit,
 # an empty matrix is returned
-DEFAULT_MAX_CONFUSION_CLASSES = 50
+DEFAULT_MAX_CONFUSION_CLASSES = 70
 
 
 # Default min and max count of a label to display its results

@@ -3,7 +3,7 @@ import os
 import pathlib
 import uuid
 from io import BytesIO
-from time import sleep, time
+from time import sleep, time_ns
 
 from django.test import override_settings
 from rest_framework import status
@@ -736,13 +736,17 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
             "persistent": True
         }
         # First try
-        start_1 = time()
+        start_1 = time_ns()
         response = self.client.post(f'{self.url}{self.test_tagger_id}/tag_text/', payload)
-        end_1 = time()-start_1
+        end_1 = time_ns()-start_1
+
+        # Give time for persistent taggers to load
+        sleep(1)
+
         # Second try
-        start_2 = time()
+        start_2 = time_ns()
         response = self.client.post(f'{self.url}{self.test_tagger_id}/tag_text/', payload)
-        end_2 = time()-start_2
+        end_2 = time_ns()-start_2
         # Test if second attempt faster
         print_output('test_bert_tagger_persistent speed:', (end_1, end_2))
         assert end_2 < end_1
