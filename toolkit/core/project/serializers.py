@@ -214,7 +214,6 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
                 'elastic/reindexer',
                 'elastic/index_splitter',
                 'elastic/dataset_imports',
-                'elastic/face_analyzer',
                 'elastic/search_query_tagger',
                 'elastic/search_fields_tagger',
                 'elastic/scroll',

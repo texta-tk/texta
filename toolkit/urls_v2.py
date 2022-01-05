@@ -28,7 +28,6 @@ from toolkit.dataset_import.views import DatasetImportViewSet
 from toolkit.docparser.views import DocparserView
 from toolkit.elastic.analyzers.views import ApplyEsAnalyzerOnIndices, SnowballProcessor
 from toolkit.elastic.document_importer.views import DocumentImportView, DocumentInstanceView, UpdateSplitDocument
-from toolkit.elastic.face_analyzer.views import FaceAnalyzerViewSet
 from toolkit.elastic.index.views import ElasticGetIndices
 from toolkit.elastic.index_splitter.views import IndexSplitterViewSet
 from toolkit.elastic.reindexer.views import ReindexerViewSet
@@ -75,7 +74,6 @@ project_router.registry.extend(crf_router.registry)
 
 # elastic resources
 project_router.register('elastic/dataset_imports', DatasetImportViewSet, basename='dataset_import')
-project_router.register('elastic/face_analyzer', FaceAnalyzerViewSet, basename='face_analyzer')
 project_router.register('elastic/reindexer', ReindexerViewSet, basename='reindexer')
 project_router.register('elastic/dataset_imports', DatasetImportViewSet, basename='dataset_import')
 project_router.register('elastic/index_splitter', IndexSplitterViewSet, basename='index_splitter')
