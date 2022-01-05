@@ -49,7 +49,6 @@ dependencies:
       - texta-tagger==2.*
       - texta-torch-tagger==2.*
       - texta-bert-tagger==2.3.*
-      - texta-face-analyzer==0.*
       - texta-crf-extractor==1.*
       - torch==1.7.1+cpu
       - -f https://download.pytorch.org/whl/torch_stable.html
