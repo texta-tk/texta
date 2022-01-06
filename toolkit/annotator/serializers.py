@@ -45,17 +45,17 @@ class LabelsetSerializer(serializers.Serializer):
         model = Labelset
         fields = "__all__"
 
-    indices = serializers.ListSerializer(child=serializers.CharField(), required=False, help_text="List of indices.")
-    fact_names = serializers.ListSerializer(child=serializers.CharField(), required=False, help_text="List of fact_names.")
-    value_limit = serializers.IntegerField(required=False, help_text="Limit to the number of values added.")
+    indices = serializers.ListSerializer(child=serializers.CharField(), default="[]", required=False, help_text="List of indices.")
+    fact_names = serializers.ListSerializer(child=serializers.CharField(), default="[]", required=False, help_text="List of fact_names.")
+    value_limit = serializers.IntegerField(default=500, required=False, help_text="Limit to the number of values added.")
     category = serializers.CharField(help_text="Category name.")
     values = serializers.ListSerializer(child=serializers.CharField(), help_text="Values to be added.")
 
 
     def create(self, validated_data):
-        indices = validated_data.get("indices", None)
-        fact_names = validated_data.get("fact_names", None)
-        value_limit = validated_data.get("value_limit", 30)
+        indices = validated_data["indices"]
+        fact_names = validated_data["fact_names"]
+        value_limit = validated_data["value_limit"]
         category = validated_data["category"]
         values = validated_data["values"]
 
@@ -64,13 +64,13 @@ class LabelsetSerializer(serializers.Serializer):
         index_container = []
         value_container = []
 
-        if indices is not None:
+        if indices:
             for index in indices:
                 try:
                     index_obj = Index.objects.get(name=index)
                 except Exception as e:
                     raise serializers.ValidationError(e)
-                if fact_names is not None:
+                if fact_names:
                     for fact_name in fact_names:
                         fact_map = ElasticAggregator(indices=index).facts(filter_by_fact_name=fact_name, size=int(value_limit))
                         for factm in fact_map:
