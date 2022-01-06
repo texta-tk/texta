@@ -43,6 +43,7 @@ class BinaryAnnotatorTests(APITestCase):
         self.run_pulling_comment_for_document(doc_id_with_comment)
         self.run_check_proper_skipping_functionality()
         self.run_annotating_to_the_end()
+        self.run_create_labelset()
 
 
     def _create_annotator(self):
@@ -131,6 +132,17 @@ class BinaryAnnotatorTests(APITestCase):
         random_document = self._pull_random_document()
         self.assertTrue(random_document["detail"] == 'No more documents left!')
 
+    def run_create_labelset(self):
+        payload = {
+            "indices": [self.test_index_name, self.secondary_index],
+            "fact_names": ["TOXICITY"],
+            "value_limit": 30,
+            "category": "test_labelset",
+            "values": ["first_value", "second_value"]
+        }
+        response = self.client.post(reverse("v2:labelset-list", kwargs={"project_pk": self.project.pk}), data=payload, format="json")
+        print_output("run_create_labelset:response.status", response.status_code)
+        self.assertTrue(response.status_code == status.HTTP_201_CREATED)
 
     def run_pulling_comment_for_document(self, document_id):
         url = reverse("v2:annotator-get-comments", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})

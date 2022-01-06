@@ -39,6 +39,9 @@ class Label(models.Model):
 
 
 class Labelset(models.Model):
+    indices = models.ManyToManyField(Index)
+    fact_names = models.TextField(null=True)
+    value_limit = models.IntegerField(null=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     values = models.ManyToManyField(Label)
 
