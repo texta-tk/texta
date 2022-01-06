@@ -72,12 +72,12 @@ class LabelsetSerializer(serializers.Serializer):
                     raise serializers.ValidationError(e)
                 if fact_names:
                     for fact_name in fact_names:
-                        fact_map = ElasticAggregator(indices=index).facts(filter_by_fact_name=fact_name, size=int(value_limit))
+                        fact_map = ElasticAggregator(indices=index).facts(filter_by_fact_name=fact_name, size=int(value_limit), max_count=10000)
                         for factm in fact_map:
                             label, is_created = Label.objects.get_or_create(value=factm)
                             value_container.append(label)
                 else:
-                    fact_map = ElasticAggregator(indices=index).facts(size=int(value_limit))
+                    fact_map = ElasticAggregator(indices=index).facts(size=int(value_limit), max_count=10000)
                     for fact_name in fact_map:
                         for fact_value in fact_map[fact_name]:
                             label, is_created = Label.objects.get_or_create(value=fact_value)
