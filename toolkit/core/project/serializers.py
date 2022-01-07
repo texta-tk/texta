@@ -6,6 +6,7 @@ from django.db import transaction
 from django.urls import reverse
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from texta_elastic.searcher import EMPTY_QUERY
 
 from toolkit.core import choices as choices
 from toolkit.core.project.models import Project
@@ -13,7 +14,6 @@ from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.core.user_profile.validators import check_if_username_exist
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import IndexSerializer
-from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.validators import check_for_existence
 from toolkit.helper_functions import wrap_in_list
 from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin
@@ -112,6 +112,7 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
     administrators_write = serializers.ListField(child=serializers.CharField(validators=[check_if_username_exist]), write_only=True, default=[], help_text="Usernames of users that should be given Project Administrator permissions.")
 
     author = UserSerializer(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
 
     resources = serializers.SerializerMethodField()
     resource_count = serializers.SerializerMethodField()
@@ -196,7 +197,7 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ('url', 'id', 'title', 'author', 'administrators_write', 'administrators', 'users', 'users_write', 'indices', 'indices_write', 'scopes', 'resources', 'resource_count',)
+        fields = ('url', 'id', 'title', 'author', 'created_at', 'administrators_write', 'administrators', 'users', 'users_write', 'indices', 'indices_write', 'scopes', 'resources', 'resource_count',)
         read_only_fields = ('author', 'resources',)
         fields_to_parse = ("scopes",)
 

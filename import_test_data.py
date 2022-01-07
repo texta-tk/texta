@@ -125,7 +125,7 @@ def import_docs(params):
                 es.indices.delete(index=index, ignore=[400, 404])
                 es.indices.create(index=index, body={'mappings': FACT_MAPPING})
                 print(f"Created index {index} with fact mappings.")
-                print("Line-per-line data insertion, this might take a moment...")
+                print("Inserting batches of documents into Elasticsearch!")
                 actions = actions_generator(f, index)
                 bulk(client=es, actions=actions, refresh="wait_for")
                 print('Test Elasticsearch index imported successfully')

@@ -4,9 +4,9 @@ from typing import List
 from django.contrib.auth.models import User
 from django.db import models
 from rest_framework.exceptions import ValidationError
+from texta_elastic.core import ElasticCore
 
 from toolkit.constants import MAX_DESC_LEN
-from texta_elastic.core import ElasticCore
 
 
 class Project(models.Model):
@@ -18,6 +18,7 @@ class Project(models.Model):
     indices = models.ManyToManyField(Index, default=None)
     administrators = models.ManyToManyField(User, related_name="administrators")
     scopes = models.TextField(default=json.dumps([]))
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
 
 
     def get_indices(self) -> List[str]:
