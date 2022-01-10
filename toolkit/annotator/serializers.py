@@ -47,7 +47,7 @@ class LabelsetSerializer(serializers.Serializer):
 
     indices = serializers.ListSerializer(child=serializers.CharField(), default="[]", required=False, help_text="List of indices.")
     fact_names = serializers.ListSerializer(child=serializers.CharField(), default="[]", required=False, help_text="List of fact_names.")
-    value_limit = serializers.IntegerField(default=500, required=False, help_text="Limit to the number of values added.")
+    value_limit = serializers.IntegerField(default=500, max_value=10000, required=False, help_text="Limit to the number of values added.")
     category = serializers.CharField(help_text="Category name.")
     values = serializers.ListSerializer(child=serializers.CharField(), help_text="Values to be added.")
 
@@ -72,12 +72,12 @@ class LabelsetSerializer(serializers.Serializer):
                     raise serializers.ValidationError(e)
                 if fact_names:
                     for fact_name in fact_names:
-                        fact_map = ElasticAggregator(indices=index).facts(filter_by_fact_name=fact_name, size=int(value_limit), max_count=10000)
+                        fact_map = ElasticAggregator(indices=index).facts(filter_by_fact_name=fact_name, size=int(value_limit))
                         for factm in fact_map:
                             label, is_created = Label.objects.get_or_create(value=factm)
                             value_container.append(label)
                 else:
-                    fact_map = ElasticAggregator(indices=index).facts(size=int(value_limit), max_count=10000)
+                    fact_map = ElasticAggregator(indices=index).facts(size=int(value_limit))
                     for fact_name in fact_map:
                         for fact_value in fact_map[fact_name]:
                             label, is_created = Label.objects.get_or_create(value=fact_value)
