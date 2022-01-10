@@ -9,7 +9,9 @@ from toolkit.core.project.models import Project
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.models import Index
 from texta_elastic.searcher import ElasticSearcher
+from texta_elastic.aggregator import ElasticAggregator
 from toolkit.serializer_constants import FieldParseSerializer, ToolkitTaskSerializer
+from toolkit.annotator.choices import MAX_VALUE
 
 
 ANNOTATION_MAPPING = {
@@ -44,21 +46,53 @@ class LabelsetSerializer(serializers.Serializer):
         model = Labelset
         fields = "__all__"
 
-    category = serializers.CharField()
-    values = serializers.ListSerializer(child=serializers.CharField())
+    indices = serializers.ListSerializer(child=serializers.CharField(), default="[]", required=False, help_text="List of indices.")
+    fact_names = serializers.ListSerializer(child=serializers.CharField(), default="[]", required=False, help_text="List of fact_names.")
+    value_limit = serializers.IntegerField(default=500, max_value=MAX_VALUE, required=False, help_text=f"Limit the number of values added. To include all values, the number should be greater than or equal with the number of unique fact values corresponding to the selected fact(s). NB! Including all values is not possible if the number of unique values is > {MAX_VALUE}.")
+    category = serializers.CharField(help_text="Category name.")
+    values = serializers.ListSerializer(child=serializers.CharField(), help_text="Values to be added.")
 
 
     def create(self, validated_data):
+        indices = validated_data["indices"]
+        fact_names = validated_data["fact_names"]
+        value_limit = validated_data["value_limit"]
         category = validated_data["category"]
         values = validated_data["values"]
 
         category, is_created = Category.objects.get_or_create(value=category)
+
+        index_container = []
         value_container = []
+
+        if indices:
+            for index in indices:
+                try:
+                    index_obj = Index.objects.get(name=index)
+                except Exception as e:
+                    raise serializers.ValidationError(e)
+                if fact_names:
+                    for fact_name in fact_names:
+                        fact_map = ElasticAggregator(indices=index).facts(filter_by_fact_name=fact_name, size=int(value_limit))
+                        for factm in fact_map:
+                            label, is_created = Label.objects.get_or_create(value=factm)
+                            value_container.append(label)
+                else:
+                    fact_map = ElasticAggregator(indices=index).facts(size=int(value_limit))
+                    for fact_name in fact_map:
+                        for fact_value in fact_map[fact_name]:
+                            label, is_created = Label.objects.get_or_create(value=fact_value)
+                            value_container.append(label)
+                index_container.append(index_obj)
+
         for value in values:
             label, is_created = Label.objects.get_or_create(value=value)
             value_container.append(label)
 
         labelset, is_created = Labelset.objects.get_or_create(category=category)
+        labelset.indices.add(*index_container)
+        labelset.fact_names = fact_names
+        labelset.value_limit = value_limit
         labelset.values.add(*value_container)
 
         return labelset
