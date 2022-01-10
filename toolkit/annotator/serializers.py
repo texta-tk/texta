@@ -11,6 +11,7 @@ from toolkit.elastic.index.models import Index
 from texta_elastic.searcher import ElasticSearcher
 from texta_elastic.aggregator import ElasticAggregator
 from toolkit.serializer_constants import FieldParseSerializer, ToolkitTaskSerializer
+from toolkit.annotator.choices import MAX_VALUE
 
 
 ANNOTATION_MAPPING = {
@@ -47,7 +48,7 @@ class LabelsetSerializer(serializers.Serializer):
 
     indices = serializers.ListSerializer(child=serializers.CharField(), default="[]", required=False, help_text="List of indices.")
     fact_names = serializers.ListSerializer(child=serializers.CharField(), default="[]", required=False, help_text="List of fact_names.")
-    value_limit = serializers.IntegerField(default=500, max_value=10000, required=False, help_text="Limit the number of values added. To include all values, the number should be greater than or equal with the number of unique fact values corresponding to the selected fact(s). NB! Including all values might not be possible if the number of unique values is too large.")
+    value_limit = serializers.IntegerField(default=500, max_value=MAX_VALUE, required=False, help_text=f"Limit the number of values added. To include all values, the number should be greater than or equal with the number of unique fact values corresponding to the selected fact(s). NB! Including all values is not possible if the number of unique values is > {MAX_VALUE}.")
     category = serializers.CharField(help_text="Category name.")
     values = serializers.ListSerializer(child=serializers.CharField(), help_text="Values to be added.")
 
