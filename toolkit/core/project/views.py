@@ -198,9 +198,13 @@ class GetFactsView(APIView):
 
         vals_per_name = serializer.validated_data['values_per_name']
         include_values = serializer.validated_data['output_type']
-        fact_map = ElasticAggregator(indices=project_indices).facts(size=vals_per_name, include_values=include_values)
+        fact_name = serializer.validated_data['fact_name']
+        doc_path = serializer.validated_data['doc_path']
+        fact_map = ElasticAggregator(indices=project_indices).facts(size=vals_per_name, include_values=include_values, filter_by_fact_name=fact_name)
 
-        if include_values:
+        if fact_name:
+            fact_map_list = [v for v in fact_map]
+        elif include_values:
             fact_map_list = [{'name': k, 'values': v} for k, v in fact_map.items()]
         else:
             fact_map_list = [v for v in fact_map]
