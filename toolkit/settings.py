@@ -306,11 +306,13 @@ CELERY_ALWAYS_EAGER = env.bool("TEXTA_CELERY_ALWAYS_EAGER", default=False)
 CELERY_LONG_TERM_TASK_QUEUE = "long_term_tasks"
 CELERY_SHORT_TERM_TASK_QUEUE = "short_term_tasks"
 CELERY_MLP_TASK_QUEUE = "mlp_queue"
+CELERY_CACHED_TASK_QUEUE = "short_term_tasks_cached"
 
 CELERY_QUEUES = (
     Queue(CELERY_LONG_TERM_TASK_QUEUE, exchange=CELERY_LONG_TERM_TASK_QUEUE, routing_key=CELERY_LONG_TERM_TASK_QUEUE),
     Queue(CELERY_SHORT_TERM_TASK_QUEUE, exchange=CELERY_SHORT_TERM_TASK_QUEUE, routing_key=CELERY_SHORT_TERM_TASK_QUEUE),
     Queue(CELERY_MLP_TASK_QUEUE, exchange=CELERY_MLP_TASK_QUEUE, routing_key=CELERY_MLP_TASK_QUEUE),
+    Queue(CELERY_CACHED_TASK_QUEUE, exchange=CELERY_CACHED_TASK_QUEUE, routing_key=CELERY_CACHED_TASK_QUEUE),
 )
 
 # By default use the queue for short term tasks, unless specified to use the long term one.

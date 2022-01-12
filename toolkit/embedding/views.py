@@ -1,5 +1,7 @@
 import json
 import os
+from celery import signature
+from celery.result import allow_join_result
 
 from texta_tools.text_processor import TextProcessor
 
@@ -14,12 +16,12 @@ from rest_framework.response import Response
 from toolkit.core.project.models import Project
 from toolkit.elastic.index.models import Index
 from toolkit.embedding.models import Embedding
-from toolkit.embedding.serializers import EmbeddingPredictSimilarWordsSerializer, EmbeddingSerializer
+from toolkit.embedding.serializers import EmbeddingPredictSimilarWordsSerializer, EmbeddingSerializer, EmbeddingPhraseTextSerializer
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, SerializerNotValid
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import GeneralTextSerializer, ProjectResourceImportModelSerializer
 from toolkit.view_constants import BulkDelete
-
+from toolkit.cached_tasks import cached_embedding_get_similar, cached_embedding_phrase
 
 class EmbeddingFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
@@ -104,44 +106,62 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
 
         serializer = EmbeddingPredictSimilarWordsSerializer(data=request.data)
         if serializer.is_valid():
-
             embedding_object = self.get_object()
-            if not embedding_object.embedding_model.path:
+            model_path = embedding_object.embedding_model.path
+            if not model_path:
                 raise NonExistantModelError()
 
-            embedding = embedding_object.get_embedding()
-            embedding.load_django(embedding_object)
+            positives_used = serializer.validated_data['positives_used']
+            negatives_used = serializer.validated_data['negatives_used']
+            positives_unused = serializer.validated_data['positives_unused']
+            negatives_unused = serializer.validated_data['negatives_unused']          
+            output_size = serializer.validated_data['output_size']
 
-            predictions = embedding.get_similar(
-                serializer.validated_data['positives_used'],
-                negatives_used = serializer.validated_data['negatives_used'],
-                positives_unused = serializer.validated_data['positives_unused'],
-                negatives_unused = serializer.validated_data['negatives_unused'],
-                n=serializer.validated_data['output_size']
-            )
-            return Response(predictions, status=status.HTTP_200_OK)
+            if serializer.validated_data['persistent']:
+                with allow_join_result():
+                    result = cached_embedding_get_similar.s(
+                        positives_used,
+                        negatives_used,
+                        positives_unused,
+                        negatives_unused,
+                        output_size,
+                        model_path
+                    ).apply_async().get()
+            else:
+                embedding = embedding_object.get_embedding()
+                embedding.load_django(embedding_object)
+                result = embedding.get_similar(
+                        positives_used,
+                        negatives_used=negatives_used,
+                        positives_unused=positives_unused,
+                        negatives_unused=negatives_unused,
+                        n=output_size
+                )
+            return Response(result, status=status.HTTP_200_OK)
         else:
             raise SerializerNotValid(detail=serializer.errors)
 
 
-    @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
+    @action(detail=True, methods=['post'], serializer_class=EmbeddingPhraseTextSerializer)
     def phrase_text(self, request, pk=None, project_pk=None):
         """Returns phrased version of input text. Phrasing is done using Gensim phraser trained with the embedding."""
         data = request.data
-        serializer = GeneralTextSerializer(data=data)
+        serializer = EmbeddingPhraseTextSerializer(data=data)
         if serializer.is_valid():
-
             embedding_object = self.get_object()
-            if not embedding_object.embedding_model.name:
+            model_path = embedding_object.embedding_model.path
+            if not model_path:
                 raise NonExistantModelError()
-
-            embedding = embedding_object.get_embedding()
-            embedding.load_django(embedding_object)
-            phraser = embedding.phraser
-
-            text_processor = TextProcessor(phraser=phraser, remove_stop_words=False)
-            phrased_text = text_processor.process(serializer.validated_data['text'])
-
-            return Response(phrased_text, status=status.HTTP_200_OK)
+            text = serializer.validated_data['text']
+            if serializer.validated_data['persistent']:
+                with allow_join_result():
+                    result = cached_embedding_phrase.s(text, model_path).apply_async().get()
+            else:
+                embedding = embedding_object.get_embedding()
+                embedding.load_django(embedding_object)
+                phraser = embedding.phraser
+                text_processor = TextProcessor(phraser=phraser, remove_stop_words=False)
+                result = text_processor.process(text)
+            return Response(result, status=status.HTTP_200_OK)
         else:
             raise SerializerNotValid(detail=serializer.errors)
