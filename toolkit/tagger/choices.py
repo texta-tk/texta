@@ -42,9 +42,9 @@ def get_feature_selector_choices():
     return [(a, a) for a in pipeline.get_feature_selector_options()]
 
 
-def get_tokenizer_choices():
+def get_analyzer_choices():
     """
-    Retrieves tokenizer choices
+    Retrieves analyzer choices
     :return: list
     """
     pipeline = get_pipeline_builder()
@@ -62,7 +62,7 @@ def get_scoring_choices():
 
 DEFAULT_VECTORIZER = get_vectorizer_choices()[0][0]
 DEFAULT_CLASSIFIER = get_classifier_choices()[0][0]
-
+DEFAULT_ANALYZER = get_analyzer_choices()[0][0]
 
 DEFAULT_MAX_SAMPLE_SIZE = 10000
 DEFAULT_NEGATIVE_MULTIPLIER = 1.0

@@ -48,6 +48,7 @@ class Tagger(models.Model):
     stop_words = models.TextField(default="[]")
     ignore_numbers = models.BooleanField(default=None, null=True)
     vectorizer = models.CharField(default=choices.DEFAULT_VECTORIZER, max_length=MAX_DESC_LEN)
+    analyzer = models.CharField(default=choices.DEFAULT_ANALYZER, max_length=MAX_DESC_LEN)
     classifier = models.CharField(default=choices.DEFAULT_CLASSIFIER, max_length=MAX_DESC_LEN)
     negative_multiplier = models.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER, blank=True)
     maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, blank=True)

@@ -197,7 +197,7 @@ class BertTagger(models.Model):
             allow_standard_output=choices.DEFAULT_ALLOW_STANDARD_OUTPUT,
             save_pretrained=False,
             pretrained_models_dir=BERT_PRETRAINED_MODEL_DIRECTORY,
-            use_gpu=choices.DEFAULT_USE_GPU,
+            use_gpu=self.use_gpu,
             # logger = logging.getLogger(INFO_LOGGER),
             cache_dir=BERT_CACHE_DIR
         )

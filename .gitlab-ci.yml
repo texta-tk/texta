@@ -12,7 +12,7 @@ variables:
   TEXTA_UAA_EMAIL: test@test.com
   TEXTA_UAA_PWD: test
   TEXTA_UAA_URL: http://texta-uaa:8080/uaa
-  TEXTA_UAA_FRONT_REDIRECT_URL: http://localhost:4200/oauth/uaa
+  TEXTA_UAA_FRONT_REDIRECT_URL: http://localhost:4200/#/oauth/uaa
   TEXTA_UAA_CLIENT_ID: login
   TEXTA_UAA_CLIENT_SECRET: loginsecret
   # For keeping plots as artifacts
