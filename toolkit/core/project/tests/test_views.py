@@ -86,6 +86,16 @@ class ProjectViewTests(APITestCase):
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue(TEST_FACT_NAME in [field['name'] for field in response.data])
 
+    def test_get_facts_with_doc_path(self):
+        url = f'{self.project_url}/elastic/get_facts/'
+        response = self.client.post(url, format="json", data={"doc_path": True})
+        print_output('get_facts_with_doc_path:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, list))
+        for field in response.data:
+            for value in field['values']:
+                self.assertTrue('doc_path' in value)
+
 
     def test_search(self):
         payload = {"match_text": "jeesus", "size": 1}
