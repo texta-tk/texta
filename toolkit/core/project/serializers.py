@@ -85,6 +85,14 @@ class ProjectGetFactsSerializer(IndicesSerializerMixin):
         choices=((True, 'fact names with values'), (False, 'fact names without values')),
         help_text=f'Include fact values in output. Default: True', default=True
     )
+    fact_name = serializers.CharField(
+        default="",
+        help_text="Filter by fact name."
+    )
+    doc_path = serializers.ChoiceField(
+        choices=((True, 'with doc_path'), (False, 'without doc_path')),
+        help_text='Include doc_paths in output. Default: False', default=False
+    )
 
 
 class HandleIndicesSerializer(serializers.Serializer):
