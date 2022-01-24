@@ -42,7 +42,7 @@ class DatasetImportViewTests(APITransactionTestCase):
                 import_dataset = DatasetImport.objects.get(pk=import_id)
                 self.created_indices.append(import_dataset.index)
                 self.addCleanup(remove_file, import_dataset.file.name)
-                sleep(1)
+                sleep(5)
                 # Check if Import is completed
                 self.assertEqual(import_dataset.task.status, Task.STATUS_COMPLETED)
                 self.assertTrue(import_dataset.num_documents > 0)
