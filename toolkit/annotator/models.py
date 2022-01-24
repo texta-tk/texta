@@ -153,7 +153,7 @@ class Annotator(TaskModel):
         self.generate_record(document_id, index=index, user_pk=user.pk, fact=fact, do_annotate=True, fact_id=fact["id"])
 
 
-    def add_labels(self, document_id: str, labels: List[str], index: str):
+    def add_labels(self, document_id: str, labels: List[str], index: str, user):
         """
         Adds a label to Elasticsearch documents during multilabel annotations.
         :param index:
@@ -164,7 +164,7 @@ class Annotator(TaskModel):
         ed = ESDocObject(document_id=document_id, index=index)
         for label in labels:
             ed.add_fact(fact_value=label, fact_name=self.multilabel_configuration.labelset.category.value, doc_path=self.target_field)
-        ed.add_annotated()
+        ed.add_annotated(self, user)
         ed.update()
 
 
@@ -173,7 +173,7 @@ class Annotator(TaskModel):
         return fact_name, value, spans, field, fact_id
 
 
-    def add_entity(self, document_id: str, spans: List, fact_name: str, field: str, fact_value: str, index: str):
+    def add_entity(self, document_id: str, spans: List, fact_name: str, field: str, fact_value: str, index: str, user):
         """
         Adds an entity label to Elasticsearch documents during entity annotations.
         :param index:
@@ -187,7 +187,7 @@ class Annotator(TaskModel):
         ed = ESDocObject(document_id=document_id, index=index)
         first, last = spans
         ed.add_fact(fact_value=fact_value, fact_name=fact_name, doc_path=field, spans=json.dumps([first, last]))
-        ed.add_annotated()
+        ed.add_annotated(self, user)
         ed.update()
 
 
