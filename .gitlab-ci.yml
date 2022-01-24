@@ -27,7 +27,7 @@ services:
   - name: redis:5
   - name: docker.texta.ee/texta/texta-uaa:latest
     alias: texta-uaa
-  - name: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
+  - name: docker.elastic.co/elasticsearch/elasticsearch:7.15.2
     alias: texta-elastic
     command: [ "bin/elasticsearch", "-Ediscovery.type=single-node" ]
 
