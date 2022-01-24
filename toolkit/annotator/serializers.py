@@ -39,7 +39,7 @@ class LabelsetSerializer(serializers.Serializer):
 
     def to_representation(self, instance: Labelset):
         data = super(LabelsetSerializer, self).to_representation(instance)
-        data["id"] = instance.category.id
+        data["id"] = instance.id
         return data
 
     class Meta:
