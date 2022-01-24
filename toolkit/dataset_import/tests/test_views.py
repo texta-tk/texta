@@ -1,4 +1,3 @@
-from time import sleep
 from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
@@ -42,8 +41,8 @@ class DatasetImportViewTests(APITransactionTestCase):
                 import_dataset = DatasetImport.objects.get(pk=import_id)
                 self.created_indices.append(import_dataset.index)
                 self.addCleanup(remove_file, import_dataset.file.name)
-                sleep(5)
                 # Check if Import is completed
+                print_output('test_import_dataset_task_status:response.data', import_dataset.task.status)
                 self.assertEqual(import_dataset.task.status, Task.STATUS_COMPLETED)
                 self.assertTrue(import_dataset.num_documents > 0)
                 self.assertTrue(import_dataset.num_documents_success > 0)
@@ -66,7 +65,7 @@ class DatasetImportViewTests(APITransactionTestCase):
                     "index": index
                 }
                 response = self.client.post(self.url, payload)
-                print_output('test_import_dataset:response.data', response.data)
+                print_output('test_elasticsearch_index_name_validation:response.data', response.data)
                 self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
