@@ -17,12 +17,9 @@ from toolkit.core.project.models import Project
 from toolkit.elastic.document_api.models import DeleteFactsByQueryTask, EditFactsByQueryTask
 from toolkit.elastic.document_api.serializers import DeleteFactsByQuerySerializer, EditFactsByQuerySerializer, FactsSerializer, InsertDocumentsSerializer, UpdateFactsSerializer, UpdateSplitDocumentSerializer
 from toolkit.elastic.document_importer.serializers import InsertDocumentsSerializer, UpdateSplitDocumentSerializer
-from texta_elastic.document import ElasticDocument
 from toolkit.elastic.index.models import Index
+from texta_elastic.document import ElasticDocument
 from texta_elastic.searcher import ElasticSearcher
-from toolkit.permissions.project_permissions import ProjectEditAccessAllowed
-from toolkit.elastic.tools.document import ElasticDocument
-from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed, ProjectEditAccessAllowed
 from toolkit.serializer_constants import EmptySerializer
 from toolkit.settings import DEPLOY_KEY, TEXTA_TAGS_KEY

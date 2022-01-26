@@ -5,7 +5,7 @@ from rest_framework import serializers
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.document_api.models import DeleteFactsByQueryTask, EditFactsByQueryTask
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.serializer_constants import DESCRIPTION_HELPTEXT, IndicesSerializerMixin, ProjectResourceUrlSerializer, QUERY_HELPTEXT
 
 
