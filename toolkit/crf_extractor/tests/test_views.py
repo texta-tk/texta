@@ -1,11 +1,13 @@
 import pathlib
 from time import sleep
 from io import BytesIO
+import json
 
 from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.core.task.models import Task
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.crf_extractor.models import CRFExtractor
@@ -14,9 +16,10 @@ from toolkit.test_settings import (
     TEST_KEEP_PLOT_FILES,
     TEST_VERSION_PREFIX,
     CRF_TEST_INDEX,
+    TEST_INDEX
 )
-from toolkit.elastic.tools.aggregator import ElasticAggregator
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.core import ElasticCore
 from toolkit.settings import RELATIVE_MODELS_PATH
 from toolkit.tools.utils_for_tests import (
     create_test_user,
@@ -32,6 +35,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
     Tests CRF Extractor.
     """
     def setUp(self):
+        self.test_incorrect_index_name = TEST_INDEX
         self.test_index_name = CRF_TEST_INDEX
         self.test_index_copy = reindex_test_dataset(from_index=CRF_TEST_INDEX)
         self.user = create_test_user('crfOwner', 'my@email.com', 'pw')
@@ -89,8 +93,11 @@ class CRFExtractorViewTests(APITransactionTestCase):
             payload = {
                     "description": "TestCRF",
                     "test_size": 0.2,
-                    "feature_fields": ["lemmas", "pos_tags", "text"],
-                    "feature_context_fields": ["lemmas", "pos_tags", "text"],
+                    "suffix_len": [2,3],
+                    "c_values": [0.01, 0.1],
+                    "query": json.dumps(EMPTY_QUERY),
+                    "feature_fields": ["lemmas", "text"],
+                    "context_feature_fields": ["lemmas", "text"],
                     "labels": ["GPE", "ORG", "PER"],
                     "mlp_field": CRF_TEST_FIELD,
                     "indices": [{"name": self.test_index_name}],
@@ -122,7 +129,8 @@ class CRFExtractorViewTests(APITransactionTestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
-            self.assertTrue(len(response.data["positive"]))      
+            self.assertTrue(len(response.data["features"]["positive"]))
+            self.assertTrue(len(response.data["features"]["negative"]))   
 
 
     def run_tag_text(self):
@@ -137,6 +145,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
+            self.assertTrue(response.data["texta_facts"])
 
 
     def run_test_export_import(self):
@@ -199,3 +208,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
 
 
 # TODO: test training with incorrect fields & labels
+
+# TODO: tests for retraining the model.
+
+# TODO: test for incorrect MLP field.

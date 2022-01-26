@@ -3,6 +3,7 @@ import json
 from typing import List
 
 import elasticsearch
+import texta_elastic
 import rest_framework.filters as drf_filters
 from django_filters import rest_framework as filters
 from elasticsearch_dsl import Q, Search
@@ -15,7 +16,11 @@ from texta_tools.text_splitter import TextSplitter
 from toolkit.core.project.models import Project
 from toolkit.elastic.document_api.models import DeleteFactsByQueryTask, EditFactsByQueryTask
 from toolkit.elastic.document_api.serializers import DeleteFactsByQuerySerializer, EditFactsByQuerySerializer, FactsSerializer, InsertDocumentsSerializer, UpdateFactsSerializer, UpdateSplitDocumentSerializer
+from toolkit.elastic.document_importer.serializers import InsertDocumentsSerializer, UpdateSplitDocumentSerializer
+from texta_elastic.document import ElasticDocument
 from toolkit.elastic.index.models import Index
+from texta_elastic.searcher import ElasticSearcher
+from toolkit.permissions.project_permissions import ProjectEditAccessAllowed
 from toolkit.elastic.tools.document import ElasticDocument
 from toolkit.elastic.tools.searcher import ElasticSearcher
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed, ProjectEditAccessAllowed
@@ -149,9 +154,13 @@ class DocumentInstanceView(GenericAPIView):
 
     def delete(self, request, pk: int, index: str, document_id: str):
         validate_index_and_project_perms(request, pk, index)
-        ed = ElasticDocument(index)
-        document = ed.delete(doc_id=document_id)
-        return Response(document)
+
+        try:
+            ed = ElasticDocument(index)
+            document = ed.delete(doc_id=document_id)
+            return Response(document)
+        except texta_elastic.exceptions.NotFoundError:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
 
     def patch(self, request, pk: int, index: str, document_id: str):
@@ -164,6 +173,8 @@ class DocumentInstanceView(GenericAPIView):
         except elasticsearch.exceptions.RequestError as e:
             if e.error == "mapper_parsing_exception":  # TODO Extend the decorator with different variants of the request error instead.
                 return Response(e.info["error"]["root_cause"], status=status.HTTP_400_BAD_REQUEST)
+        except texta_elastic.exceptions.NotFoundError:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 class UpdateFactsView(GenericAPIView):

@@ -4,14 +4,14 @@ from django.urls import reverse
 from rest_framework import serializers
 
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
-from toolkit.serializer_constants import BULK_SIZE_HELPTEXT, DESCRIPTION_HELPTEXT, ES_TIMEOUT_HELPTEXT, FIELDS_HELPTEXT, FieldValidationSerializer, IndicesSerializerMixin, QUERY_HELPTEXT
+from texta_elastic.searcher import EMPTY_QUERY
+from toolkit.serializer_constants import BULK_SIZE_HELPTEXT, DESCRIPTION_HELPTEXT, ES_TIMEOUT_HELPTEXT, FIELDS_HELPTEXT, FieldsValidationSerializerMixin, IndicesSerializerMixin, QUERY_HELPTEXT
 from toolkit.settings import REST_FRAMEWORK
 from .models import SearchFieldsTagger, SearchQueryTagger
 from ...core.user_profile.serializers import UserSerializer
 
 
-class SearchQueryTaggerSerializer(serializers.ModelSerializer, FieldValidationSerializer, IndicesSerializerMixin):
+class SearchQueryTaggerSerializer(serializers.ModelSerializer, FieldsValidationSerializerMixin, IndicesSerializerMixin):
     author = UserSerializer(read_only=True)
     description = serializers.CharField()
     task = TaskSerializer(read_only=True, required=False)
@@ -47,7 +47,7 @@ class SearchQueryTaggerSerializer(serializers.ModelSerializer, FieldValidationSe
         return data
 
 
-class SearchFieldsTaggerSerializer(serializers.ModelSerializer, FieldValidationSerializer, IndicesSerializerMixin):
+class SearchFieldsTaggerSerializer(serializers.ModelSerializer, FieldsValidationSerializerMixin, IndicesSerializerMixin):
     author = UserSerializer(read_only=True)
     description = serializers.CharField(help_text=DESCRIPTION_HELPTEXT)
     task = TaskSerializer(read_only=True, required=False)

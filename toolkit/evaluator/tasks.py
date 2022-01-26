@@ -18,8 +18,8 @@ from sklearn.preprocessing import MultiLabelBinarizer
 from toolkit.base_tasks import TransactionAwareTask
 from toolkit.core.task.models import Task
 
-from toolkit.elastic.tools.searcher import ElasticSearcher
-from toolkit.elastic.tools.aggregator import ElasticAggregator
+from texta_elastic.searcher import ElasticSearcher
+from texta_elastic.aggregator import ElasticAggregator
 
 from toolkit.evaluator.models import Evaluator
 from toolkit.evaluator import choices
@@ -473,7 +473,7 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
             ## Set the evaluation type in the model
             evaluator_object.evaluation_type = "multilabel"
 
-        classes.sort(key=lambda x: x[0].lower())
+            classes.sort(key=lambda x: x[0].lower())
 
         # Get number of documents in the query to estimate memory imprint
         n_docs = searcher.count()

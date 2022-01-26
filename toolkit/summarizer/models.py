@@ -5,7 +5,7 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.elastic.index.models import Index
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 
 
@@ -30,7 +30,7 @@ class Summarizer(models.Model):
     def process(self):
         from toolkit.summarizer.tasks import apply_summarizer_on_index, start_summarizer_worker, end_summarizer_task
 
-        new_task = Task.objects.create(summarizer=self, status='created')
+        new_task = Task.objects.create(summarizer=self, status='created', task_type=Task.TYPE_APPLY)
         self.task = new_task
         self.save()
 

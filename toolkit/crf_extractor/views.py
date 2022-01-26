@@ -63,8 +63,9 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         extractor: CRFExtractor = serializer.save(
             author=self.request.user,
             project=project,
-            query=json.dumps(serializer.validated_data['query']),
-            labels=json.dumps(serializer.validated_data['labels'])
+            labels=json.dumps(serializer.validated_data['labels']),
+            c_values=json.dumps(serializer.validated_data['c_values']),
+            suffix_len=json.dumps(serializer.validated_data['suffix_len'])
         )
 
         for index in Index.objects.filter(name__in=indices, is_open=True):
@@ -110,6 +111,14 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         return Response({"id": crf_id, "message": "Successfully imported model and associated files."}, status=status.HTTP_201_CREATED)
 
 
+    @action(detail=True, methods=['post'])
+    def retrain_extractor(self, request, pk=None, project_pk=None):
+        """Starts retraining task for the Extractor model."""
+        instance = self.get_object()
+        instance.train()
+        return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
+
+
     @action(detail=True, methods=['post'], serializer_class=CRFExtractorTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
         serializer = CRFExtractorTagTextSerializer(data=request.data)
@@ -144,7 +153,7 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             serializer.is_valid(raise_exception=True)
 
             extractor = self.get_object()
-            extractor.task = Task.objects.create(crfextractor=extractor, status=Task.STATUS_CREATED)
+            extractor.task = Task.objects.create(crfextractor=extractor, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
             extractor.save()
 
             indices = [index["name"] for index in serializer.validated_data["indices"]]

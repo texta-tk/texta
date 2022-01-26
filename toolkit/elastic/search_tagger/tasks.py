@@ -7,17 +7,15 @@ from celery.decorators import task
 from toolkit.base_tasks import TransactionAwareTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.search_tagger.models import SearchFieldsTagger, SearchQueryTagger
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.document import ElasticDocument
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.core import ElasticCore
+from texta_elastic.document import ElasticDocument
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER
 from toolkit.tools.show_progress import ShowProgress
 
 
-def to_texta_facts(tagger_result: dict, field: str, fact_name: str, fact_value: str):
+def to_texta_facts(field: str, fact_name: str, fact_value: str):
     """ Format search tagger as texta facts."""
-    if tagger_result["result"] == "false":
-        return []
 
     new_fact = {
         "fact": fact_name.strip(),
@@ -53,7 +51,7 @@ def update_search_query_generator(generator: ElasticSearcher, ec: ElasticCore, f
                     else:
                         fact_value = result["result"]
 
-                    new_facts = to_texta_facts(result, field, fact_name, fact_value)
+                    new_facts = to_texta_facts(field, fact_name, fact_value)
                     existing_facts.extend(new_facts)
 
             if existing_facts:
@@ -107,8 +105,7 @@ def update_search_fields_generator(
                 processed_content = handle_field_content(field_content, breakup_character, use_breakup)
 
                 for content in processed_content:
-                    result = {"result": content}
-                    new_facts = to_texta_facts(result, field, fact_name, fact_value=content)
+                    new_facts = to_texta_facts(field, fact_name, fact_value=content)
                     existing_facts.extend(new_facts)
 
             if existing_facts:

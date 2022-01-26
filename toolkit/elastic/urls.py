@@ -3,7 +3,6 @@ from rest_framework import routers
 from toolkit.elastic.index import views as index_views
 from toolkit.elastic.reindexer import views as reindexer_views
 from toolkit.elastic.index_splitter import views as index_splitter_views
-from toolkit.elastic.face_analyzer import views as face_analyzer_views
 from toolkit.elastic.search_tagger import views as search_tagger_views
 
 reindexer_router = routers.DefaultRouter()

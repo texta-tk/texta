@@ -16,7 +16,7 @@ from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 
 from toolkit.evaluator import choices
 
@@ -89,7 +89,7 @@ class Evaluator(models.Model):
 
                 evaluator_model = Evaluator(**evaluator_json)
 
-                evaluator_model.task = Task.objects.create(evaluator=evaluator_model, status=Task.STATUS_COMPLETED)
+                evaluator_model.task = Task.objects.create(evaluator=evaluator_model, status=Task.STATUS_COMPLETED, task_type=Task.TYPE_APPLY)
                 evaluator_model.author = User.objects.get(id=request.user.id)
                 evaluator_model.project = Project.objects.get(id=pk)
 

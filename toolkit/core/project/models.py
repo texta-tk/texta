@@ -6,7 +6,7 @@ from django.db import models
 from rest_framework.exceptions import ValidationError
 
 from toolkit.constants import MAX_DESC_LEN
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.core import ElasticCore
 
 
 class Project(models.Model):
@@ -86,5 +86,6 @@ class Project(models.Model):
             'num_search_fields_taggers': proj.searchfieldstagger_set.count(),
             'num_elastic_analyzers': proj.applyesanalyzerworker_set.count(),
             'num_rakun_keyword_extractors': proj.rakunextractor_set.count(),
-            'num_crf_extractors': proj.crfextractor_set.count()
+            'num_crf_extractors': proj.crfextractor_set.count(),
+            'num_annotators': proj.annotator_set.count()
         }

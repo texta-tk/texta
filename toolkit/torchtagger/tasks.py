@@ -6,9 +6,7 @@ from celery.decorators import task
 from django.db import connections
 from elasticsearch.helpers import streaming_bulk
 from texta_torch_tagger.tagger import TorchTagger
-from texta_tools.text_processor import TextProcessor
-from texta_tools.embedding import W2VEmbedding
-from texta_tools.mlp_analyzer import get_mlp_analyzer
+from texta_embedding.embedding import W2VEmbedding
 
 from toolkit.core.task.models import Task
 from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
@@ -16,12 +14,12 @@ from toolkit.tools.show_progress import ShowProgress
 from toolkit.base_tasks import TransactionAwareTask
 from toolkit.elastic.tools.data_sample import DataSample
 from toolkit.elastic.tools.feedback import Feedback
-from toolkit.elastic.tools.searcher import ElasticSearcher
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.document import ElasticDocument
+from texta_elastic.searcher import ElasticSearcher
+from texta_elastic.core import ElasticCore
+from texta_elastic.document import ElasticDocument
 from toolkit.tools.plots import create_tagger_plot
 from toolkit.settings import RELATIVE_MODELS_PATH, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, ERROR_LOGGER
-from toolkit.helper_functions import get_core_setting, get_indices_from_object
+from toolkit.helper_functions import get_indices_from_object
 
 from typing import Union, List, Dict
 

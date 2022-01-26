@@ -1,6 +1,6 @@
 from toolkit.elastic.exceptions import InvalidIndexNameException, NoIndexExists
 from toolkit.elastic.index.models import Index
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.core import ElasticCore
 
 
 def parse_index_input(value) -> str:

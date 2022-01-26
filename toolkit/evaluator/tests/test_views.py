@@ -10,7 +10,7 @@ from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
 from toolkit.core.task.models import Task
-from toolkit.elastic.tools.query import Query
+from texta_elastic.query import Query
 from toolkit.evaluator import choices
 from toolkit.evaluator.models import Evaluator as EvaluatorObject
 from toolkit.helper_functions import reindex_test_dataset, set_core_setting
@@ -62,7 +62,7 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
 
 
     def tearDown(self) -> None:
-        from toolkit.elastic.tools.core import ElasticCore
+        from texta_elastic.core import ElasticCore
         ElasticCore().delete_index(index=self.test_index, ignore=[400, 404])
 
 

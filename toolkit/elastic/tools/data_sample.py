@@ -7,13 +7,13 @@ import numpy as np
 from nltk.tokenize import sent_tokenize
 from texta_tools.text_processor import TextProcessor
 
-from toolkit.elastic.tools.aggregator import ElasticAggregator
+from texta_elastic.aggregator import ElasticAggregator
 from toolkit.elastic.tools.feedback import Feedback
-from toolkit.elastic.tools.query import Query
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.query import Query
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.settings import INFO_LOGGER
 from toolkit.tools.lemmatizer import ElasticAnalyzer
-from .core import ElasticCore
+from texta_elastic.core import ElasticCore
 from ..choices import ES6_SNOWBALL_MAPPING, ES7_SNOWBALL_MAPPING
 from ..exceptions import InvalidDataSampleError
 from ...tools.show_progress import ShowProgress

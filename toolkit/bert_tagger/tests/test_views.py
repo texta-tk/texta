@@ -3,7 +3,7 @@ import os
 import pathlib
 import uuid
 from io import BytesIO
-from time import sleep, time
+from time import sleep, time_ns
 
 from django.test import override_settings
 from rest_framework import status
@@ -13,8 +13,8 @@ from texta_bert_tagger.tagger import BertTagger
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
 from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
-from toolkit.elastic.tools.aggregator import ElasticAggregator
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.core import ElasticCore
 from toolkit.helper_functions import (
     download_bert_requirements,
     get_downloaded_bert_models,
@@ -74,7 +74,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.new_fact_value = "TEST_BERT_TAGGER_VALUE"
 
         # Create copy of test index
-        self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
+        self.reindex_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/elastic/reindexer/'
         # Generate name for new index containing random id to make sure it doesn't already exist
         self.test_index_copy = f"test_apply_bert_tagger_{uuid.uuid4().hex}"
 
@@ -736,13 +736,17 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
             "persistent": True
         }
         # First try
-        start_1 = time()
+        start_1 = time_ns()
         response = self.client.post(f'{self.url}{self.test_tagger_id}/tag_text/', payload)
-        end_1 = time()-start_1
+        end_1 = time_ns()-start_1
+
+        # Give time for persistent taggers to load
+        sleep(1)
+
         # Second try
-        start_2 = time()
+        start_2 = time_ns()
         response = self.client.post(f'{self.url}{self.test_tagger_id}/tag_text/', payload)
-        end_2 = time()-start_2
+        end_2 = time_ns()-start_2
         # Test if second attempt faster
         print_output('test_bert_tagger_persistent speed:', (end_1, end_2))
         assert end_2 < end_1

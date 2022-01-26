@@ -10,7 +10,7 @@ from elasticsearch_dsl import Q, Search
 from rest_framework import status
 from rest_framework.test import APITestCase, APITransactionTestCase
 
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.core import ElasticCore
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.settings import TEXTA_TAGS_KEY
 from toolkit.test_settings import TEST_FIELD, TEST_QUERY, VERSION_NAMESPACE

@@ -2,6 +2,7 @@ import json
 import uuid
 
 from django.db import models
+from django.db.models import F
 from django.utils.timezone import now
 
 from toolkit.constants import MAX_DESC_LEN
@@ -17,8 +18,12 @@ class Task(models.Model):
     STATUS_CANCELLED = 'cancelled'
     STATUS_FAILED = 'failed'
 
+    TYPE_TRAIN = 'train'
+    TYPE_APPLY = 'apply'
+    TYPE_IMPORT = 'import'
+
+    task_type = models.CharField(max_length=MAX_DESC_LEN, default=TYPE_TRAIN)
     status = models.CharField(max_length=MAX_DESC_LEN)
-    progress = models.FloatField(default=0.0)
     num_processed = models.IntegerField(default=0)
     total = models.IntegerField(default=0, help_text="Total amount of documents/items that are tracked with this model.")
     step = models.CharField(max_length=MAX_DESC_LEN, default='')
@@ -28,6 +33,14 @@ class Task(models.Model):
     time_completed = models.DateTimeField(null=True, blank=True, default=None)
     authtoken_hash = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
+
+    @property
+    def progress(self):
+        progress = self.num_processed / self.total if self.total != 0 else 0
+        progress = progress * 100
+        return round(progress, 2)
+
+
     @avoid_db_timeout
     def update_status(self, status, set_time_completed=False):
         self.status = status
@@ -36,6 +49,7 @@ class Task(models.Model):
             self.time_completed = now()
         self.save()
 
+
     @avoid_db_timeout
     def add_error(self, error: str):
         errors = json.loads(self.errors)
@@ -43,29 +57,26 @@ class Task(models.Model):
         self.errors = json.dumps(errors)
         self.save()
 
+
     @avoid_db_timeout
     def complete(self):
         self.status = Task.STATUS_COMPLETED
         self.time_completed = now()
         self.step = ""
-        self.progress = 100
+        self.num_processed = self.total
         self.save()
 
+
     @avoid_db_timeout
-    def update_progress(self, progress, step):
-        self.progress = progress
+    def update_progress(self, progress: int, step: str):
+        self.num_processed = F("num_processed") + progress
         self.step = step
         self.last_update = now()
-        self.save()
+        self.save(update_fields=["num_processed"])
+
 
     @avoid_db_timeout
-    def update_process_iteration(self, total, step_prefix, num_processed=False):
+    def update_progress_iter(self, progress_amount: int):
         """Step based process reporting"""
-        # # Optionally override current num_processed
-        # self.num_processed = num_processed if num_processed else self.num_processed
-        # Update step
-        self.num_processed += 1
-        # Calculate percentage
-        self.progress = (self.num_processed / total) * 100
-        self.step = f'{step_prefix} (progress: {self.num_processed}/{total})'
-        self.save()
+        self.num_processed = F("num_processed") + progress_amount
+        self.save(update_fields=["num_processed"])

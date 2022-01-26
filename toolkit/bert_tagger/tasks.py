@@ -1,40 +1,35 @@
 import json
+import logging
 import os
 import secrets
-import logging
+from typing import Dict, List, Union
+
 from celery.decorators import task
 from django.db import connections
 from elasticsearch.helpers import streaming_bulk
+from texta_bert_tagger.tagger import BertTagger
+from texta_elastic.core import ElasticCore
+from texta_elastic.document import ElasticDocument
+from texta_elastic.searcher import ElasticSearcher
 
-from toolkit.core.task.models import Task
-
-from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
+from toolkit.bert_tagger import choices
+from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
+from toolkit.core.task.models import Task
 from toolkit.elastic.tools.data_sample import DataSample
-from toolkit.elastic.tools.feedback import Feedback
-from toolkit.elastic.tools.searcher import ElasticSearcher
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.document import ElasticDocument
+from toolkit.helper_functions import get_indices_from_object
+from toolkit.settings import BERT_CACHE_DIR, BERT_FINETUNED_MODEL_DIRECTORY, BERT_PRETRAINED_MODEL_DIRECTORY, CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER
 from toolkit.tools.plots import create_tagger_plot
 from toolkit.tools.show_progress import ShowProgress
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, BERT_PRETRAINED_MODEL_DIRECTORY, BERT_FINETUNED_MODEL_DIRECTORY, BERT_CACHE_DIR, INFO_LOGGER, ERROR_LOGGER
-from toolkit.helper_functions import get_core_setting, get_indices_from_object
-from toolkit.bert_tagger import choices
 
-from texta_bert_tagger.tagger import BertTagger
-
-from typing import List, Union, Dict
-
-from nltk.tokenize import sent_tokenize
-from collections import defaultdict
-import numpy as np
 
 # Global object for the worker so tagger models won't get reloaded on each task
 # Essentially an indefinite cache
 PERSISTENT_BERT_TAGGERS = {}
 
+
 @task(name="apply_persistent_bert_tagger", base=BaseTask)
-def apply_persistent_bert_tagger(tagger_input: Union[str, Dict], tagger_id: int, input_type: str='text', feedback: bool=False):
+def apply_persistent_bert_tagger(tagger_input: Union[str, Dict], tagger_id: int, input_type: str = 'text', feedback: bool = False):
     """
     Task to use Bert models stored in memory for fast re-use.
     Stores models in dict.
@@ -63,7 +58,6 @@ def train_bert_tagger(tagger_id, testing=False):
         fields = json.loads(tagger_object.fields)
         indices = get_indices_from_object(tagger_object)
 
-
         # set loading model from a checkpoint False by default
         from_checkpoint = False
         checkpoint_model = tagger_object.checkpoint_model
@@ -77,9 +71,9 @@ def train_bert_tagger(tagger_id, testing=False):
             fields,
             show_progress=show_progress,
             join_fields=True,
-            balance = tagger_object.balance,
-            use_sentence_shuffle = tagger_object.use_sentence_shuffle,
-            balance_to_max_limit = tagger_object.balance_to_max_limit
+            balance=tagger_object.balance,
+            use_sentence_shuffle=tagger_object.use_sentence_shuffle,
+            balance_to_max_limit=tagger_object.balance_to_max_limit
         )
         show_progress.update_step('training')
         show_progress.update_view(0.0)
@@ -106,17 +100,17 @@ def train_bert_tagger(tagger_id, testing=False):
 
         # if no checkpoint model is given, train a new model
         else:
-            logging.getLogger(INFO_LOGGER).info(f"No checkpoint model detected, training a new model...")
+            logging.getLogger(INFO_LOGGER).info("No checkpoint model detected, training a new model...")
             # NB! saving pretrained models must be disabled!
             tagger = BertTagger(
-                allow_standard_output = choices.DEFAULT_ALLOW_STANDARD_OUTPUT,
-                autoadjust_batch_size = choices.DEFAULT_AUTOADJUST_BATCH_SIZE,
-                sklearn_avg_function = sklearn_avg_function,
-                use_gpu = choices.DEFAULT_USE_GPU,
-                save_pretrained = False,
-                pretrained_models_dir = BERT_PRETRAINED_MODEL_DIRECTORY,
-                logger = logging.getLogger(INFO_LOGGER),
-                cache_dir = BERT_CACHE_DIR
+                allow_standard_output=choices.DEFAULT_ALLOW_STANDARD_OUTPUT,
+                autoadjust_batch_size=choices.DEFAULT_AUTOADJUST_BATCH_SIZE,
+                sklearn_avg_function=sklearn_avg_function,
+                use_gpu=tagger_object.use_gpu,
+                save_pretrained=False,
+                pretrained_models_dir=BERT_PRETRAINED_MODEL_DIRECTORY,
+                logger=logging.getLogger(INFO_LOGGER),
+                cache_dir=BERT_CACHE_DIR
             )
 
         # use state dict for binary taggers
@@ -129,15 +123,15 @@ def train_bert_tagger(tagger_id, testing=False):
         # train tagger and get result statistics
         report = tagger.train(
             data_sample.data,
-            from_checkpoint = from_checkpoint,
-            pos_label = pos_label,
-            n_epochs = tagger_object.num_epochs,
-            max_length = tagger_object.max_length,
-            batch_size = tagger_object.batch_size,
-            lr = tagger_object.learning_rate,
-            eps = tagger_object.eps,
-            split_ratio = tagger_object.split_ratio,
-            bert_model = tagger_object.bert_model
+            from_checkpoint=from_checkpoint,
+            pos_label=pos_label,
+            n_epochs=tagger_object.num_epochs,
+            max_length=tagger_object.max_length,
+            batch_size=tagger_object.batch_size,
+            lr=tagger_object.learning_rate,
+            eps=tagger_object.eps,
+            split_ratio=tagger_object.split_ratio,
+            bert_model=tagger_object.bert_model
         )
         # close all db connections
         for conn in connections.all():
@@ -180,7 +174,7 @@ def train_bert_tagger(tagger_id, testing=False):
         raise
 
 
-def apply_tagger(tagger_object: BertTaggerObject, tagger_input: Union[str, Dict], input_type: str='text', feedback: bool=False):
+def apply_tagger(tagger_object: BertTaggerObject, tagger_input: Union[str, Dict], input_type: str = 'text', feedback: bool = False):
     """ Apply BERT tagger on a text or a document. Wraps functions load_tagger and apply_loaded_tagger."""
     # Load tagger
     tagger = tagger_object.load_tagger()
@@ -198,7 +192,7 @@ def to_texta_facts(tagger_result: List[Dict[str, Union[str, int, bool]]], field:
         "fact": fact_name,
         "str_val": fact_value,
         "doc_path": field,
-        "spans": json.dumps([[0,0]]),
+        "spans": json.dumps([[0, 0]]),
         "sent_index": 0
     }
     return [new_fact]
@@ -206,7 +200,7 @@ def to_texta_facts(tagger_result: List[Dict[str, Union[str, int, bool]]], field:
 
 def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], fact_name: str, fact_value: str, tagger_object: BertTaggerObject, tagger: BertTagger = None):
     for i, scroll_batch in enumerate(generator):
-        logging.getLogger(INFO_LOGGER).info(f"Appyling BERT Tagger with ID {tagger_object.id} to batch {i+1}...")
+        logging.getLogger(INFO_LOGGER).info(f"Appyling BERT Tagger with ID {tagger_object.id} to batch {i + 1}...")
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
             flat_hit = ec.flatten(hit)
@@ -216,7 +210,7 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
                 text = flat_hit.get(field, None)
                 if text and isinstance(text, str):
 
-                    result = tagger_object.apply_loaded_tagger(tagger, text, input_type = "text", feedback = False)
+                    result = tagger_object.apply_loaded_tagger(tagger, text, input_type="text", feedback=False)
 
                     # If tagger is binary and fact value is not specified by the user, use tagger description as fact value
                     if result["result"] in ["true", "false"]:
@@ -256,13 +250,13 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
         [ec.add_texta_facts_mapping(index) for index in indices]
 
         searcher = ElasticSearcher(
-            indices = indices,
-            field_data = fields + ["texta_facts"],  # Get facts to add upon existing ones.
-            query = query,
-            output = ElasticSearcher.OUT_RAW,
-            timeout = f"{es_timeout}m",
+            indices=indices,
+            field_data=fields + ["texta_facts"],  # Get facts to add upon existing ones.
+            query=query,
+            output=ElasticSearcher.OUT_RAW,
+            timeout=f"{es_timeout}m",
             callback_progress=progress,
-            scroll_size = bulk_size
+            scroll_size=bulk_size
         )
 
         actions = update_generator(generator=searcher, ec=ec, fields=fields, fact_name=fact_name, fact_value=fact_value, tagger_object=tagger_object, tagger=tagger)

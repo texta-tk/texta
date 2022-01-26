@@ -14,8 +14,8 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import GeneralTextSerializer
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.core import ElasticCore
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.helper_functions import load_stop_words
 from toolkit.exceptions import SerializerNotValid
 
@@ -57,7 +57,7 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             serializer.is_valid(raise_exception=True)
 
             rakun_object: RakunExtractor = self.get_object()
-            rakun_object.task = Task.objects.create(rakunextractor=rakun_object, status=Task.STATUS_CREATED)
+            rakun_object.task = Task.objects.create(rakunextractor=rakun_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
             rakun_object.save()
 
             project = Project.objects.get(pk=project_pk)
@@ -174,6 +174,9 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         # retrieve rakun fields
         fields = serializer.validated_data["fields"]
 
+        # retrieve param add_spans
+        add_spans = serializer.validated_data["add_spans"]
+
         # retrieve random document
         random_doc = ElasticSearcher(indices=indices).random_documents(size=1)[0]
         flattened_doc = ElasticCore(check_connection=False).flatten(random_doc)
@@ -191,7 +194,7 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         for field in fields:
             text = flattened_doc.get(field, "")
             results["document"][field] = text
-            keywords = rakun_object.get_rakun_keywords(keyword_detector=keyword_detector, texts=[text], field_path=field, fact_name=rakun_object.description, fact_value="", add_spans=False)
+            keywords = rakun_object.get_rakun_keywords(keyword_detector=keyword_detector, texts=[text], field_path=field, fact_name=rakun_object.description, fact_value="", add_spans=add_spans)
 
             if keywords:
                 final_keywords.extend(keywords)

@@ -9,8 +9,8 @@ from rest_framework.test import APITransactionTestCase
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.reindexer.models import Reindexer
-from toolkit.elastic.tools.core import ElasticCore
-from toolkit.elastic.tools.searcher import ElasticSearcher
+from texta_elastic.core import ElasticCore
+from texta_elastic.searcher import ElasticSearcher
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.test_settings import *
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
@@ -108,7 +108,7 @@ class ReindexerViewTests(APITransactionTestCase):
                 "indices": [self.test_index_name],
                 "new_index": REINDEXER_VALIDATION_TEST_INDEX
             }
-            url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
+            url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/elastic/reindexer/'
             self.check_new_index_validation(url, new_index_validation_payload)
 
         for payload in (
@@ -121,7 +121,7 @@ class ReindexerViewTests(APITransactionTestCase):
                 random_docs_payload,
                 update_field_type_payload
         ):
-            url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/reindexer/'
+            url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/elastic/reindexer/'
             self.run_create_reindexer_task_signal(self.project, url, payload)
 
 

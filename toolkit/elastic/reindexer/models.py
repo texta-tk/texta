@@ -6,7 +6,7 @@ from django.db.models import signals
 
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.task.models import Task
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.choices import LABEL_DISTRIBUTION
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 
@@ -35,7 +35,7 @@ class Reindexer(models.Model):
     @classmethod
     def create_reindexer_model(cls, sender, instance, created, **kwargs):
         if created:
-            new_task = Task.objects.create(reindexer=instance, status='created')
+            new_task = Task.objects.create(reindexer=instance, status='created', task_type=Task.TYPE_APPLY)
             instance.task = new_task
             instance.save()
 

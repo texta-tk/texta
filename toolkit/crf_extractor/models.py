@@ -15,13 +15,14 @@ from multiselectfield import MultiSelectField
 
 from texta_crf_extractor.crf_extractor import CRFExtractor as Extractor
 from texta_crf_extractor.exceptions import ModelLoadFailedError
+from texta_crf_extractor.config import CRFConfig
 
 from toolkit.embedding.models import Embedding
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.settings import (
     BASE_DIR,
     CELERY_LONG_TERM_TASK_QUEUE,
@@ -40,16 +41,15 @@ class CRFExtractor(models.Model):
     author = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     indices = models.ManyToManyField(Index, default=None)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
-
+    embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE, default=None, null=True)
+    # training params
     labels = models.TextField(default=json.dumps(["GPE", "ORG", "PER", "LOC"]))
     num_iter = models.IntegerField(default=100)
     test_size = models.FloatField(default=0.3)
-    c1 = models.FloatField(default=1.0)
-    c2 = models.FloatField(default=1.0)
+    c_values = models.TextField(default=json.dumps([0.001, 0.1, 0.5]))
     bias = models.BooleanField(default=True)
     window_size = models.IntegerField(default=2)
     suffix_len = models.TextField(default=json.dumps((2,2)))
-    
     # this is the main field used for training
     mlp_field = models.CharField(default="text", max_length=MAX_DESC_LEN)
     # these are the parsed feature fields
@@ -58,13 +58,33 @@ class CRFExtractor(models.Model):
     # these are used feature extractors
     feature_extractors = MultiSelectField(choices=FEATURE_EXTRACTOR_CHOICES)
     context_feature_extractors = MultiSelectField(choices=FEATURE_EXTRACTOR_CHOICES)
-
-    embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE, default=None, null=True)
-
+    # training output
+    best_c1 = models.FloatField(default=None, null=True)
+    best_c2 = models.FloatField(default=None, null=True)
+    precision = models.FloatField(default=None, null=True)
+    recall = models.FloatField(default=None, null=True)
+    f1_score = models.FloatField(default=None, null=True)
+    confusion_matrix = models.TextField(default="[]", null=True, blank=True)
     model = models.FileField(null=True, verbose_name='', default=None, max_length=MAX_DESC_LEN)
     model_size = models.FloatField(default=None, null=True)
     plot = models.FileField(upload_to='data/media', null=True, verbose_name='')
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
+
+
+    def get_labels(self):
+        return json.loads(self.labels)
+
+
+    def get_query(self):
+        return json.loads(self.query)
+
+
+    def get_suffix_len(self):
+        return json.loads(self.suffix_len)
+
+
+    def get_c_values(self):
+        return json.loads(self.c_values)
 
 
     def generate_name(self, name="crf"):
@@ -157,21 +177,42 @@ class CRFExtractor(models.Model):
         return {"model": self.model.path, "plot": self.plot.path}
 
 
+    def get_crf_config(self):
+        return CRFConfig(
+            labels = self.get_labels(),
+            num_iter = self.num_iter,
+            test_size = self.test_size,
+            c_values = self.get_c_values(),
+            bias = self.bias,
+            window_size = self.window_size,
+            suffix_len = self.get_suffix_len(),
+            context_feature_layers = list(self.context_feature_fields),
+            context_feature_extractors = list(self.context_feature_extractors),
+            feature_layers = list(self.feature_fields),
+            feature_extractors = list(self.feature_extractors)
+        )
+
+
     def load_extractor(self):
         """Loading model from disc."""
-        # load embedding
-        if self.embedding:
-            embedding = self.embedding.get_embedding()
-            embedding.load_django(self.embedding)
-        else:
-            embedding = False
-        # load extractor model
-        extractor = Extractor(embedding=embedding)
-        loaded = extractor.load_django(self)
-        # check if model gets loaded
-        if not loaded:
-            raise ModelLoadFailedError()
-        return extractor
+        try:
+            # load embedding
+            if self.embedding:
+                embedding = self.embedding.get_embedding()
+                embedding.load_django(self.embedding)
+            else:
+                embedding = False
+            # load config
+            config = self.get_crf_config()
+            # load extractor model
+            extractor = Extractor(config=config, embedding=embedding)
+            loaded = extractor.load_django(self)
+            # check if model gets loaded
+            if not loaded:
+                raise ModelLoadFailedError()
+            return extractor
+        except Exception as e:
+            raise ModelLoadFailedError(str(e))
 
 
     def apply_loaded_extractor(self, extractor: Extractor, mlp_document):

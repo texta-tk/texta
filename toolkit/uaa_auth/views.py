@@ -119,8 +119,8 @@ class UAAView(views.APIView):
         """
         Users without the TEXTA prefix in their scopes are not permitted access into Toolkit.
         """
-        if UAA_TEXTA_SCOPE_PREFIX not in scopes:
-            raise AuthenticationFailed(f"Users UAA scopes '{scopes}' do not contain access for TEXTA Toolkit (match: {UAA_TEXTA_SCOPE_PREFIX}.*)!")
+        if UAA_TEXTA_SCOPE_PREFIX not in scopes and UAA_SUPERUSER_SCOPE not in scopes:
+            raise AuthenticationFailed(f"Users UAA scopes '{scopes}' do not contain access for TEXTA Toolkit (match: {UAA_TEXTA_SCOPE_PREFIX}.* or {UAA_SUPERUSER_SCOPE})!")
 
 
     def get(self, request):

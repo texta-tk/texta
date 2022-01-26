@@ -13,7 +13,7 @@ from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.core.user_profile.validators import check_if_username_exist
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import IndexSerializer
-from toolkit.elastic.tools.searcher import EMPTY_QUERY
+from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.validators import check_for_existence
 from toolkit.helper_functions import wrap_in_list
 from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin
@@ -22,6 +22,7 @@ from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializer
 class ExportSearcherResultsSerializer(serializers.Serializer):
     indices = serializers.ListField(child=serializers.CharField(), default=[])
     query = serializers.JSONField(help_text="Which query results to fetch.", default=EMPTY_QUERY)
+    fields = serializers.ListField(help_text="Which fields to output.", child=serializers.CharField(), default=[])
 
 
 class ProjectSearchByQuerySerializer(serializers.Serializer):
@@ -84,6 +85,14 @@ class ProjectGetFactsSerializer(IndicesSerializerMixin):
         choices=((True, 'fact names with values'), (False, 'fact names without values')),
         help_text=f'Include fact values in output. Default: True', default=True
     )
+    fact_name = serializers.CharField(
+        default="",
+        help_text="Filter by fact name."
+    )
+    doc_path = serializers.ChoiceField(
+        choices=((True, 'with doc_path'), (False, 'without doc_path')),
+        help_text='Include doc_paths in output. Default: False', default=False
+    )
 
 
 class HandleIndicesSerializer(serializers.Serializer):
@@ -105,10 +114,10 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
     indices_write = serializers.ListField(child=serializers.CharField(validators=[check_for_existence]), write_only=True, default=[])
 
     users = UserSerializer(many=True, default=serializers.CurrentUserDefault(), read_only=True)
-    users_write = serializers.ListField(child=serializers.CharField(validators=[check_if_username_exist]), write_only=True, default=[])
+    users_write = serializers.ListField(child=serializers.CharField(validators=[check_if_username_exist]), write_only=True, default=[], help_text="Usernames of users that should have access to the Projects resources.")
 
     administrators = UserSerializer(many=True, default=serializers.CurrentUserDefault(), read_only=True)
-    administrators_write = serializers.ListField(child=serializers.CharField(validators=[check_if_username_exist]), write_only=True, default=[])
+    administrators_write = serializers.ListField(child=serializers.CharField(validators=[check_if_username_exist]), write_only=True, default=[], help_text="Usernames of users that should be given Project Administrator permissions.")
 
     author = UserSerializer(read_only=True)
 
@@ -213,7 +222,6 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
                 'elastic/reindexer',
                 'elastic/index_splitter',
                 'elastic/dataset_imports',
-                'elastic/face_analyzer',
                 'elastic/search_query_tagger',
                 'elastic/search_fields_tagger',
                 'elastic/delete_facts_by_query',
@@ -235,7 +243,9 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
                 'evaluators',
                 'summarizer_index',
                 'rakun_extractors',
-                'crf_extractors'
+                'crf_extractors',
+                'annotator',
+                'labelset'
             )
         elif api_version == 'v1':
             resources = (

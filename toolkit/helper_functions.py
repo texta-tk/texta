@@ -52,6 +52,7 @@ def parse_list_env_headers(env_key: str, default_value: list) -> list:
     else:
         return default_value
 
+
 def parse_tuple_env_headers(env_key: str, default_value) -> tuple:
     """
     Function for handling env values that need to be stored as a tuple.
@@ -161,7 +162,6 @@ def download_mlp_requirements(model_directory: str, supported_langs: List[str], 
     from texta_mlp.mlp import MLP, ENTITY_MAPPER_DATA_URLS
     MLP.download_entity_mapper_resources(model_directory, entity_mapper_urls=ENTITY_MAPPER_DATA_URLS, logger=logger)
     MLP.download_stanza_resources(model_directory, supported_langs=supported_langs, logger=logger)
-    MLP.download_concatenator_resources(model_directory, logger=logger)
 
 
 def download_bert_requirements(model_directory: str, supported_models: List[str], cache_directory: str, logger=None, num_labels: int = None):
@@ -196,6 +196,21 @@ def chunks(lst: list, n: int):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
+
+
+def chunks_iter(iterator, n: int):
+    container = []
+
+    for item in iterator:
+        if len(container) <= n:
+            container.append(item)
+        if len(container) == n:
+            yield container
+            container = []
+
+    # In case the final batch did not match the n count.
+    if container:
+        yield container
 
 
 def hash_file(file, block_size=65536):
@@ -256,7 +271,7 @@ def reindex_test_dataset(query: dict = None, from_index: Optional[str] = None, h
     :param hex_size: How many random characters should there be in the new indexes name.
     :return: Name of the newly generated index.
     """
-    from toolkit.elastic.tools.core import ElasticCore
+    from texta_elastic.core import ElasticCore
     from toolkit.test_settings import TEST_INDEX
 
     from_index = from_index if from_index else TEST_INDEX
@@ -292,6 +307,7 @@ def wrap_in_list(item):
         return item
     else:
         return [item]
+
 
 def prepare_mandatory_directories(*directories):
     for directory_path in directories:

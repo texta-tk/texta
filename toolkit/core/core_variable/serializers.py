@@ -48,7 +48,10 @@ class CoreVariableSerializer(serializers.HyperlinkedModelSerializer):
             raise serializers.ValidationError(f"Entered value should not contain metasymbols.")
         service_alive = True
         if name == "TEXTA_ES_URL":
-            service_alive = get_elastic_status(ES_URL=value)["alive"]
+            try:
+                service_alive = get_elastic_status(ES_URL=value)["alive"]
+            except Exception:
+                raise serializers.ValidationError(f"Invalid TEXTA_ES_URL {value}")
         if name == "TEXTA_EVALUATOR_MEMORY_BUFFER_GB":
             if value:
                 try:

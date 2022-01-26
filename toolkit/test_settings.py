@@ -53,7 +53,7 @@ TEST_DATASETS = (
     os.path.join(TEST_DATA_DIR, "import_test_data.xlsx"),
 )
 TEST_IMPORT_DATASET = "texta-test-import-dataset"
-VERSION_NAMESPACE = "v1"
+VERSION_NAMESPACE = "v2"
 TEST_VERSION_PREFIX = f"/api/{VERSION_NAMESPACE}"
 
 TEST_UAA_USERNAME = 'test'

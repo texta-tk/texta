@@ -4,7 +4,7 @@ from rest_framework.test import APITransactionTestCase
 
 from toolkit.core.task.models import Task
 from toolkit.dataset_import.models import DatasetImport
-from toolkit.elastic.tools.core import ElasticCore
+from texta_elastic.core import ElasticCore
 from toolkit.test_settings import TEST_DATASETS, TEST_IMPORT_DATASET, TEST_VERSION_PREFIX
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
@@ -17,7 +17,7 @@ class DatasetImportViewTests(APITransactionTestCase):
         self.user = create_test_user('Owner', 'my@email.com', 'pw')
         self.project = project_creation("testImportDatasetProject", None, self.user)
         self.project.users.add(self.user)
-        self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/dataset_imports/'
+        self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/elastic/dataset_imports/'
         self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
         self.created_indices = []
         self.client.login(username='Owner', password='pw')
