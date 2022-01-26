@@ -332,7 +332,7 @@ class FactManagementApplicationTests(APITransactionTestCase):
         url = reverse("v2:delete_facts_by_query-list", kwargs=self.kwargs)
         payload = {
             "description": "testing whether this deletes facts",
-            "query": {"query": {'ids': {"values": [self.uuid]}}},
+            "query": {"query": {"ids": {"values": [self.uuid]}}},
             "facts": [
                 {"str_val": "politsei", "fact": "ORG", "spans": json.dumps([[0, 0]]), "doc_path": "hello"},
             ],
@@ -344,11 +344,12 @@ class FactManagementApplicationTests(APITransactionTestCase):
         # Check whether the document itself got changed.
         document = self.ec.es.get(index=self.test_index_name, doc_type="_doc", id=self.uuid)["_source"]
         # Assure that the content isn't overwritten by some mishap.
+        print_output("test_delete_facts_by_query:document", document)
         self.assertTrue(document[TEST_FIELD] == self.content)
         # Fact field should still stay in the document, it should just be empty.
         self.assertTrue(TEXTA_TAGS_KEY in document)
         facts = document.get(TEXTA_TAGS_KEY, [])
-        print_output("test_delete_facts_by_query:document", document)
+        print_output("test_delete_facts_by_query:facts", facts)
         self.assertTrue(facts == [])
 
 
