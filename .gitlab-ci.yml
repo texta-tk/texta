@@ -38,7 +38,6 @@ stages:
   - build-test-image
   - test-and-build-front
   - build-final-image
-  - build-pro-image
 
 
 TestBack:
@@ -90,12 +89,3 @@ BuildFinalImage:
     - docker system prune --volumes -f
   only:
     - tags
-
-BuildProImage:
-  stage: build-pro-image
-  trigger:
-    project: texta/toolkit-pro
-    strategy: depend
-  only:
-    - tags
-
