@@ -39,7 +39,7 @@ class LabelsetSerializer(serializers.Serializer):
 
     def to_representation(self, instance: Labelset):
         data = super(LabelsetSerializer, self).to_representation(instance)
-        data["id"] = instance.category.id
+        data["id"] = instance.id
         return data
 
     class Meta:
@@ -147,6 +147,7 @@ class BinaryAnnotationSerializer(serializers.Serializer):
 class EntityAnnotationSerializer(serializers.Serializer):
     document_id = serializers.CharField()
     index = serializers.CharField()
+    field = serializers.CharField()
     # Add proper validation for the structure here.
     spans = serializers.ListSerializer(child=serializers.IntegerField(), default=[0, 0])
     fact_name = serializers.CharField()
