@@ -182,6 +182,27 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
     annotating_users = serializers.ListField(child=serializers.CharField(), write_only=True, default=[], help_text="Names of users that will be annotating.")
 
 
+    def update(self, instance: Annotator, validated_data: dict):
+        request = self.context.get('request')
+        project_pk = request.parser_context.get('kwargs').get("project_pk")
+        project_obj = Project.objects.get(id=project_pk)
+
+        if "annotating_users" in validated_data:
+            users = validated_data.pop("annotating_users")
+            annotating_users = []
+            for user in users:
+                annotating_user = User.objects.get(username=user)
+                try:
+                    if project_obj.users.get(username=annotating_user):
+                        annotating_users.append(annotating_user)
+                except Exception as e:
+                    raise serializers.ValidationError(e)
+            instance.annotator_users.clear()
+            instance.annotator_users.add(*annotating_users)
+            instance.save()
+
+        return instance
+
     def get_url(self, obj):
         index = reverse(f"v2:annotator-detail", kwargs={"project_pk": obj.project.pk, "pk": obj.pk})
         if "request" in self.context:
