@@ -1,6 +1,7 @@
 import json
 
 from django.urls import reverse
+from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -178,7 +179,29 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
     entity_configuration = EntityAnnotatorConfigurationSerializer(required=False)
     url = serializers.SerializerMethodField()
     annotator_users = UserSerializer(many=True, read_only=True)
+    annotating_users = serializers.ListField(child=serializers.CharField(), write_only=True, default=[], help_text="Names of users that will be annotating.")
 
+
+    def update(self, instance: Annotator, validated_data: dict):
+        request = self.context.get('request')
+        project_pk = request.parser_context.get('kwargs').get("project_pk")
+        project_obj = Project.objects.get(id=project_pk)
+
+        if "annotating_users" in validated_data:
+            users = validated_data.pop("annotating_users")
+            annotating_users = []
+            for user in users:
+                annotating_user = User.objects.get(username=user)
+                try:
+                    if project_obj.users.get(username=annotating_user):
+                        annotating_users.append(annotating_user)
+                except Exception as e:
+                    raise serializers.ValidationError(e)
+            instance.annotator_users.clear()
+            instance.annotator_users.add(*annotating_users)
+            instance.save()
+
+        return instance
 
     def get_url(self, obj):
         index = reverse(f"v2:annotator-detail", kwargs={"project_pk": obj.project.pk, "pk": obj.pk})
@@ -218,6 +241,17 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
         fields = validated_data.pop("fields")
 
         validated_data.pop("indices")
+        users = validated_data.pop("annotating_users")
+
+        annotating_users = []
+        for user in users:
+            annotating_user = User.objects.get(username=user)
+            try:
+                if project_obj.users.get(username=annotating_user):
+                    annotating_users.append(annotating_user)
+            except Exception as e:
+                raise serializers.ValidationError(e)
+
 
         configuration = self.__get_configurations(validated_data)
         total = self.__get_total(indices=indices, query=json.loads(validated_data["query"]))
@@ -231,7 +265,7 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
             **configuration,
         )
 
-        annotator.annotator_users.add(request.user)
+        annotator.annotator_users.add(*annotating_users)
 
         for index in Index.objects.filter(name__in=indices, is_open=True):
             annotator.indices.add(index)
@@ -270,6 +304,7 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
             'query',
             'annotation_type',
             'annotator_users',
+            'annotating_users',
             'created_at',
             'modified_at',
             'completed_at',
@@ -283,7 +318,7 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
             "bulk_size",
             "es_timeout"
         )
-        read_only_fields = ["annotator_users", "author", "total", "annotated", "validated", "skipped", "created_at", "modified_at", "completed_at"]
+        read_only_fields = ["author", "annotator_users", "total", "annotated", "validated", "skipped", "created_at", "modified_at", "completed_at"]
         fields_to_parse = ("fields",)
 
 
