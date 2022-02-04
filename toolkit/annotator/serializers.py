@@ -179,7 +179,7 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
     entity_configuration = EntityAnnotatorConfigurationSerializer(required=False)
     url = serializers.SerializerMethodField()
     annotator_users = UserSerializer(many=True, read_only=True)
-    annotating_users = serializers.ListField(child=serializers.CharField(), write_only=True, default=[], help_text="ID's of users that will be annotating.")
+    annotating_users = serializers.ListField(child=serializers.CharField(), write_only=True, default=[], help_text="Names of users that will be annotating.")
 
 
     def get_url(self, obj):
@@ -224,7 +224,7 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
 
         annotating_users = []
         for user in users:
-            annotating_user = User.objects.get(pk=user)
+            annotating_user = User.objects.get(username=user)
             try:
                 if project_obj.users.get(username=annotating_user):
                     annotating_users.append(annotating_user)
