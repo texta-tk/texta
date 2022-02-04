@@ -53,6 +53,7 @@ class AnnotatorViewset(mixins.CreateModelMixin,
                        mixins.ListModelMixin,
                        mixins.RetrieveModelMixin,
                        mixins.DestroyModelMixin,
+                       mixins.UpdateModelMixin,
                        viewsets.GenericViewSet,
                        BulkDelete):
     serializer_class = AnnotatorSerializer
@@ -62,7 +63,7 @@ class AnnotatorViewset(mixins.CreateModelMixin,
     )
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
-
+    http_method_names = ["get", "post", "put", "delete"]
 
     def _enrich_document_with_meta(self, document: dict, annotator: Annotator):
 
