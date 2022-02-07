@@ -63,7 +63,7 @@ class AnnotatorViewset(mixins.CreateModelMixin,
     )
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
-    http_method_names = ["get", "post", "put", "delete", "options"]
+    http_method_names = ["get", "post", "patch", "delete", "options"]
 
     def _enrich_document_with_meta(self, document: dict, annotator: Annotator):
 
