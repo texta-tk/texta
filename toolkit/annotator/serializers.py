@@ -7,6 +7,7 @@ from rest_framework.exceptions import ValidationError
 
 from toolkit.annotator.models import Annotator, BinaryAnnotatorConfiguration, Category, Comment, EntityAnnotatorConfiguration, Label, Labelset, MultilabelAnnotatorConfiguration, Record
 from toolkit.core.project.models import Project
+from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.models import Index
 from texta_elastic.searcher import ElasticSearcher
@@ -180,6 +181,7 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
     url = serializers.SerializerMethodField()
     annotator_users = UserSerializer(many=True, read_only=True)
     annotating_users = serializers.ListField(child=serializers.CharField(), write_only=True, default=[], help_text="Names of users that will be annotating.")
+    task = TaskSerializer(read_only=True)
 
 
     def update(self, instance: Annotator, validated_data: dict):
@@ -271,6 +273,8 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
         for index in Index.objects.filter(name__in=indices, is_open=True):
             annotator.indices.add(index)
 
+        annotator.create_annotator_task()
+
         annotator.save()
 
         annotator.add_annotation_mapping(indices)
@@ -302,6 +306,7 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
             'author',
             'description',
             'indices',
+            'task',
             'target_field',
             'fields',
             'query',
