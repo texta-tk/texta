@@ -187,19 +187,20 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
         project_pk = request.parser_context.get('kwargs').get("project_pk")
         project_obj = Project.objects.get(id=project_pk)
 
-        if "annotating_users" in validated_data:
+        try:
             users = validated_data.pop("annotating_users")
             annotating_users = []
             for user in users:
+
                 annotating_user = User.objects.get(username=user)
-                try:
-                    if project_obj.users.get(username=annotating_user):
-                        annotating_users.append(annotating_user)
-                except Exception as e:
-                    raise serializers.ValidationError(e)
-            instance.annotator_users.clear()
-            instance.annotator_users.add(*annotating_users)
-            instance.save()
+                if project_obj.users.get(username=annotating_user):
+                    annotating_users.append(annotating_user)
+                instance.description = validated_data["description"]
+                instance.annotator_users.clear()
+                instance.annotator_users.add(*annotating_users)
+                instance.save()
+        except Exception as e:
+            raise serializers.ValidationError(e)
 
         return instance
 
@@ -278,16 +279,18 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
 
 
     def validate(self, attrs: dict):
-        annotator_type = attrs["annotation_type"]
-        if annotator_type == "binary":
-            if not attrs.get("binary_configuration", None):
-                raise ValidationError("When choosing the binary annotation, relevant configurations must be added!")
-        elif annotator_type == "multilabel":
-            if not attrs.get("multilabel_configuration", None):
-                raise ValidationError("When choosing the binary annotation, relevant configurations must be added!")
-        elif annotator_type == "entity":
-            if not attrs.get("entity_configuration", None):
-                raise ValidationError("When choosing the entity annotation, relevant configurations must be added!")
+        if self.context['request'].method != "PATCH":
+            annotator_type = attrs["annotation_type"]
+            if annotator_type == "binary":
+                if not attrs.get("binary_configuration", None):
+                    raise ValidationError("When choosing the binary annotation, relevant configurations must be added!")
+            elif annotator_type == "multilabel":
+                if not attrs.get("multilabel_configuration", None):
+                    raise ValidationError("When choosing the binary annotation, relevant configurations must be added!")
+            elif annotator_type == "entity":
+                if not attrs.get("entity_configuration", None):
+                    raise ValidationError("When choosing the entity annotation, relevant configurations must be added!")
+            return attrs
         return attrs
 
 
