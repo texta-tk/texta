@@ -130,6 +130,7 @@ def annotator_task(self, annotator_task_id):
             create_index_res = ElasticCore().create_index(new_index, updated_schema)
             index_model, is_created = Index.objects.get_or_create(name=new_index)
             project_obj.indices.add(index_model)
+            annotator_obj.indices.add(index_model)
 
             logging.getLogger(INFO_LOGGER).info("Indexing documents.")
             # set new_index name as mapping name, perhaps make it customizable in the future
