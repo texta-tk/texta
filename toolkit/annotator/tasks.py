@@ -5,6 +5,7 @@ from celery.decorators import task
 from toolkit.base_tasks import BaseTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
+from django.contrib.auth.models import User
 from toolkit.annotator.models import Annotator
 from toolkit.core.project.models import Project
 from texta_elastic.core import ElasticCore
@@ -71,6 +72,8 @@ def annotator_task(self, annotator_task_id):
     annotator_obj = Annotator.objects.get(pk=annotator_task_id)
     indices_obj = json.loads(serializers.serialize("json", annotator_obj.indices.all()))
     users_obj = json.loads(serializers.serialize("json", annotator_obj.annotator_users.all()))
+    print("annotator binary_config", annotator_obj.binary_configuration)
+    print("annotator multi_config", annotator_obj.multilabel_configuration)
     indices = []
     users = []
     for val in indices_obj:
@@ -87,15 +90,16 @@ def annotator_task(self, annotator_task_id):
     fields = annotator_obj.fields
     project_obj = Project.objects.get(id=annotator_obj.project_id)
     print("project_id", annotator_obj.project_id)
-    #fields = ""
     random_size = 10
     field_type = ""
     scroll_size = 100
-    #new_index = f"annotator_new_{annotator_task_id}"
+
     print("users", users)
-    #print("new_index", new_index)
     new_indices = []
+    new_annotators = []
     for user in users:
+        annotating_user = User.objects.get(username=user)
+        new_annotators.append(annotating_user)
         for index in indices:
             new_indices.append(f"{user}_{index}")
     print("new_indices", new_indices)
@@ -113,28 +117,48 @@ def annotator_task(self, annotator_task_id):
         show_progress.update_step("scrolling data")
         show_progress.update_view(0)
 
-        for new_index in new_indices:
-            elastic_search = ElasticSearcher(indices=indices, field_data=fields, callback_progress=show_progress, query=query, scroll_size=scroll_size)
-            elastic_doc = ElasticDocument(new_index)
+        for new_annotator in new_annotators:
+            new_annotator_obj = Annotator.objects.create(
+                description=f"{new_annotator}_{annotator_obj.description}",
+                author=annotator_obj.author,
+                project=annotator_obj.project,
+                total=annotator_obj.total,
+                fields=annotator_obj.fields,
+                annotation_type=annotator_obj.annotation_type,
+                binary_configuration=annotator_obj.binary_configuration,
+                multilabel_configuration=annotator_obj.multilabel_configuration,
+                entity_configuration=annotator_obj.entity_configuration,
+            )
+            new_annotator_obj.annotator_users.add(new_annotator)
+            for new_index in new_indices:
+                elastic_search = ElasticSearcher(indices=indices, field_data=fields, callback_progress=show_progress, query=query, scroll_size=scroll_size)
+                elastic_doc = ElasticDocument(new_index)
 
-            if random_size > 0:
-                elastic_search = ElasticSearcher(indices=indices, field_data=fields, query=query, scroll_size=scroll_size).random_documents(size=random_size)
+                if random_size > 0:
+                    elastic_search = ElasticSearcher(indices=indices, field_data=fields, query=query, scroll_size=scroll_size).random_documents(size=random_size)
 
-            logging.getLogger(INFO_LOGGER).info("Updating index schema.")
-            ''' the operations that don't require a mapping update have been completed '''
-            schema_input = update_field_types(indices, fields, field_type, flatten_doc=False)
-            updated_schema = update_mapping(schema_input, new_index, False)
+                logging.getLogger(INFO_LOGGER).info("Updating index schema.")
+                ''' the operations that don't require a mapping update have been completed '''
+                schema_input = update_field_types(indices, fields, field_type, flatten_doc=False)
+                updated_schema = update_mapping(schema_input, new_index, False)
 
-            logging.getLogger(INFO_LOGGER).info("Creating new index.")
-            # create new_index
-            create_index_res = ElasticCore().create_index(new_index, updated_schema)
-            index_model, is_created = Index.objects.get_or_create(name=new_index)
-            project_obj.indices.add(index_model)
-            annotator_obj.indices.add(index_model)
+                logging.getLogger(INFO_LOGGER).info("Creating new index.")
+                # create new_index
+                create_index_res = ElasticCore().create_index(new_index, updated_schema)
+                index_model, is_created = Index.objects.get_or_create(name=new_index)
+                project_obj.indices.add(index_model)
+                index_user = index_model.name.split('_')[0]
+                print("index_user", index_user)
+                print("new_annotator", new_annotator)
+                if str(index_user) == str(new_annotator):
+                    new_annotator_obj.indices.add(index_model)
 
-            logging.getLogger(INFO_LOGGER).info("Indexing documents.")
-            # set new_index name as mapping name, perhaps make it customizable in the future
-            bulk_add_documents(elastic_search, elastic_doc, index=new_index, chunk_size=scroll_size, flatten_doc=False)
+                logging.getLogger(INFO_LOGGER).info("Indexing documents.")
+                # set new_index name as mapping name, perhaps make it customizable in the future
+                bulk_add_documents(elastic_search, elastic_doc, index=new_index, chunk_size=scroll_size, flatten_doc=False)
+
+            new_annotator_obj.save()
+            new_annotator_obj.add_annotation_mapping(new_indices)
 
         # declare the job done
         task_object.complete()
