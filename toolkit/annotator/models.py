@@ -4,12 +4,14 @@ from typing import List, Optional
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import signals
 
 from toolkit.core.project.models import Project
+from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from texta_elastic.document import ESDocObject
 from toolkit.model_constants import TaskModel
-from toolkit.settings import DESCRIPTION_CHAR_LIMIT
+from toolkit.settings import DESCRIPTION_CHAR_LIMIT, CELERY_LONG_TERM_TASK_QUEUE
 
 
 # Create your models here.
@@ -66,6 +68,8 @@ class Annotator(TaskModel):
 
     annotator_users = models.ManyToManyField(User, default=None, related_name="annotators", help_text="Who are the users who will be annotating.")
 
+    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
+
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     modified_at = models.DateTimeField(auto_now=True, null=True)
     completed_at = models.DateTimeField(null=True, default=None)
@@ -108,6 +112,14 @@ class Annotator(TaskModel):
     def skipped(self):
         restraint = Record.objects.filter(annotated_utc__isnull=True, skipped_utc__isnull=False, annotation_job=self)
         return restraint.count()
+
+    def create_annotator_task(self):
+        new_task = Task.objects.create(annotator=self, status='created')
+        self.task = new_task
+        self.save()
+
+        from toolkit.annotator.tasks import annotator_task
+        annotator_task.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
 
     def add_pos_label(self, document_id: str, index: str, user):

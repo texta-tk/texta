@@ -23,9 +23,11 @@ class BinaryAnnotatorTests(APITestCase):
         self.secondary_index = reindex_test_dataset()
         self.index, is_created = Index.objects.get_or_create(name=self.secondary_index)
         self.user = create_test_user('annotator', 'my@email.com', 'pw')
+        self.user2 = create_test_user('annotator2', 'test@email.com', 'pw2')
         self.project = project_creation("taggerTestProject", self.test_index_name, self.user)
         self.project.indices.add(self.index)
         self.project.users.add(self.user)
+        self.project.users.add(self.user2)
 
         self.client.login(username='annotator', password='pw')
         self.ec = ElasticCore()
@@ -36,6 +38,7 @@ class BinaryAnnotatorTests(APITestCase):
 
 
     def test_all(self):
+        self.run_create_annotator_for_multi_user()
         self.run_pulling_document()
         self.run_binary_annotation()
         self.run_that_query_limits_pulled_document()
@@ -73,6 +76,31 @@ class BinaryAnnotatorTests(APITestCase):
         url = reverse("v2:annotator-pull-document", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
         response = self.client.post(url, format="json")
         return response.data
+
+    def run_create_annotator_for_multi_user(self):
+        payload = {
+            "description": "Multi user annotation.",
+            "indices": [{"name": self.test_index_name}, {"name": self.secondary_index}],
+            "query": json.dumps(TEST_QUERY),
+            "fields": ["comment_content", TEST_FIELD],
+            "target_field": "comment_content",
+            "annotation_type": "binary",
+            "annotating_users": ["annotator", "annotator2"],
+            "binary_configuration": {
+                "fact_name": "TOXICITY",
+                "pos_value": "DO_DELETE",
+                "neg_value": "SAFE"
+            }
+        }
+        response = self.client.post(self.list_view_url, data=payload, format="json")
+        print_output("create_annotator_for_multi_user:response.status", response.status_code)
+        print_output("create_annotator_for_multi_user:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+        for d in response.data["annotator_users"]:
+            self.assertIn(d["username"], {str(self.user), str(self.user2)})
+
+        total_count = self.ec.es.count(index=f"{self.test_index_name},{self.secondary_index}").get("count", 0)
+        self.assertTrue(total_count > response.data["total"])
 
 
     def run_binary_annotation(self):
