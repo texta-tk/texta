@@ -38,7 +38,7 @@ class BinaryAnnotatorTests(APITestCase):
 
 
     def test_all(self):
-        self.create_annotator_for_multi_user()
+        self.run_create_annotator_for_multi_user()
         self.run_pulling_document()
         self.run_binary_annotation()
         self.run_that_query_limits_pulled_document()
@@ -77,7 +77,7 @@ class BinaryAnnotatorTests(APITestCase):
         response = self.client.post(url, format="json")
         return response.data
 
-    def create_annotator_for_multi_user(self):
+    def run_create_annotator_for_multi_user(self):
         payload = {
             "description": "Multi user annotation.",
             "indices": [{"name": self.test_index_name}, {"name": self.secondary_index}],
@@ -94,7 +94,7 @@ class BinaryAnnotatorTests(APITestCase):
         }
         response = self.client.post(self.list_view_url, data=payload, format="json")
         print_output("create_annotator_for_multi_user:response.status", response.status_code)
-        print_output("create_annotator_for_multi_user:response.data", response.data["annotator_users"])
+        print_output("create_annotator_for_multi_user:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
         for d in response.data["annotator_users"]:
             self.assertIn(d["username"], {str(self.user), str(self.user2)})

@@ -72,8 +72,6 @@ def annotator_task(self, annotator_task_id):
     annotator_obj = Annotator.objects.get(pk=annotator_task_id)
     indices_obj = json.loads(serializers.serialize("json", annotator_obj.indices.all()))
     users_obj = json.loads(serializers.serialize("json", annotator_obj.annotator_users.all()))
-    print("annotator binary_config", annotator_obj.binary_configuration)
-    print("annotator multi_config", annotator_obj.multilabel_configuration)
     indices = []
     users = []
     for val in indices_obj:
@@ -81,20 +79,14 @@ def annotator_task(self, annotator_task_id):
     for user_val in users_obj:
         users.append(user_val["fields"]["username"])
     task_object = annotator_obj.task
-    print("annotator task_id", annotator_task_id)
-    print("annotator obj", json.loads(json.dumps(indices)))
-    print("anontator task", annotator_obj.task)
-    print("annotator fields", annotator_obj.fields)
     indices = json.loads(json.dumps(indices))
     users = json.loads(json.dumps(users))
     fields = annotator_obj.fields
     project_obj = Project.objects.get(id=annotator_obj.project_id)
-    print("project_id", annotator_obj.project_id)
     random_size = 10
     field_type = ""
     scroll_size = 100
 
-    print("users", users)
     new_indices = []
     new_annotators = []
     for user in users:
@@ -102,7 +94,7 @@ def annotator_task(self, annotator_task_id):
         new_annotators.append(annotating_user)
         for index in indices:
             new_indices.append(f"{user}_{index}")
-    print("new_indices", new_indices)
+
     query = EMPTY_QUERY
 
     logging.getLogger(INFO_LOGGER).info("Starting task 'annotator'.")
@@ -148,8 +140,6 @@ def annotator_task(self, annotator_task_id):
                 index_model, is_created = Index.objects.get_or_create(name=new_index)
                 project_obj.indices.add(index_model)
                 index_user = index_model.name.split('_')[0]
-                print("index_user", index_user)
-                print("new_annotator", new_annotator)
                 if str(index_user) == str(new_annotator):
                     new_annotator_obj.indices.add(index_model)
 
