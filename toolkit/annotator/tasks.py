@@ -83,7 +83,6 @@ def annotator_task(self, annotator_task_id):
     users = json.loads(json.dumps(users))
     fields = json.loads(annotator_obj.fields)
     project_obj = Project.objects.get(id=annotator_obj.project_id)
-    random_size = 10
     field_type = ""
     add_facts_mapping = annotator_obj.add_facts_mapping
     scroll_size = 100
@@ -133,9 +132,6 @@ def annotator_task(self, annotator_task_id):
 
                         elastic_search = ElasticSearcher(indices=indices, field_data=fields, callback_progress=show_progress, query=query, scroll_size=scroll_size)
                         elastic_doc = ElasticDocument(new_index)
-
-                        #if random_size > 0:
-                        #    elastic_search = ElasticSearcher(indices=indices, field_data=fields, query=query, scroll_size=scroll_size).random_documents(size=random_size)
 
                         logging.getLogger(INFO_LOGGER).info("Updating index schema.")
                         ''' the operations that don't require a mapping update have been completed '''
