@@ -274,6 +274,8 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
         for index in Index.objects.filter(name__in=indices, is_open=True):
             annotator.indices.add(index)
 
+        annotator.create_annotator_task()
+
         annotator.save()
 
         annotator.add_annotation_mapping(indices)
