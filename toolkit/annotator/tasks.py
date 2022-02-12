@@ -11,9 +11,16 @@ from toolkit.core.project.models import Project
 from texta_elastic.core import ElasticCore
 from texta_elastic.searcher import ElasticSearcher, EMPTY_QUERY
 from texta_elastic.document import ElasticDocument
-from texta_elastic.mapping_tools import update_field_types, update_mapping
+from texta_elastic.mapping_tools import update_field_types, update_mapping, get_selected_fields
 from toolkit.settings import ERROR_LOGGER, INFO_LOGGER
 from toolkit.tools.show_progress import ShowProgress
+
+
+def add_field_type(fields):
+    field_type = []
+    for field in fields:
+        field_type.append({"path": field["path"], "field_type": field["type"]})
+    return field_type
 
 
 def unflatten_doc(doc):
@@ -66,24 +73,27 @@ def bulk_add_documents(elastic_search: ElasticSearcher, elastic_doc: ElasticDocu
     elastic_doc.bulk_add_generator(actions=actions, chunk_size=chunk_size, refresh="wait_for")
 
 
-
 @task(name="annotator_task", base=BaseTask, bind=True)
 def annotator_task(self, annotator_task_id):
     annotator_obj = Annotator.objects.get(pk=annotator_task_id)
     indices_obj = json.loads(serializers.serialize("json", annotator_obj.indices.all()))
     users_obj = json.loads(serializers.serialize("json", annotator_obj.annotator_users.all()))
+
     indices = []
     users = []
+
     for val in indices_obj:
         indices.append(val["fields"]["name"])
     for user_val in users_obj:
         users.append(user_val["fields"]["username"])
+
     task_object = annotator_obj.task
     indices = json.loads(json.dumps(indices))
     users = json.loads(json.dumps(users))
     fields = json.loads(annotator_obj.fields)
     project_obj = Project.objects.get(id=annotator_obj.project_id)
-    field_type = ""
+    new_field_type = get_selected_fields(indices, fields)
+    field_type = add_field_type(new_field_type)
     add_facts_mapping = annotator_obj.add_facts_mapping
     scroll_size = 100
 
@@ -117,6 +127,7 @@ def annotator_task(self, annotator_task_id):
                 project=annotator_obj.project,
                 total=annotator_obj.total,
                 fields=annotator_obj.fields,
+                add_facts_mapping=add_facts_mapping,
                 annotation_type=annotator_obj.annotation_type,
                 binary_configuration=annotator_obj.binary_configuration,
                 multilabel_configuration=annotator_obj.multilabel_configuration,
@@ -152,6 +163,8 @@ def annotator_task(self, annotator_task_id):
                         bulk_add_documents(elastic_search, elastic_doc, index=new_index, chunk_size=scroll_size, flatten_doc=False)
 
             new_annotator_obj.save()
+            logging.getLogger(INFO_LOGGER).info(f"Saving new annotator object ID {new_annotator_obj.id}")
+
         new_annotator_obj.add_annotation_mapping(new_indices)
 
         # declare the job done
@@ -163,5 +176,5 @@ def annotator_task(self, annotator_task_id):
         task_object.update_status(Task.STATUS_FAILED)
         raise e
 
-    logging.getLogger(INFO_LOGGER).info("Annotator succesfully completed.")
+    logging.getLogger(INFO_LOGGER).info(f"Annotator with Task ID {annotator_obj.task_id} successfully completed.")
     return True

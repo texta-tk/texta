@@ -181,6 +181,9 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
     url = serializers.SerializerMethodField()
     annotator_users = UserSerializer(many=True, read_only=True)
     annotating_users = serializers.ListField(child=serializers.CharField(), write_only=True, default=[], help_text="Names of users that will be annotating.")
+    add_facts_mapping = serializers.BooleanField(
+        help_text='Add texta facts mapping. NB! If texta_facts is present in annotator fields, the mapping is always created.',
+        required=False, default=False)
     task = TaskSerializer(read_only=True)
 
 
@@ -242,10 +245,11 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
         indices = [index["name"] for index in validated_data["indices"]]
         indices = project_obj.get_available_or_all_project_indices(indices)
         fields = validated_data.pop("fields")
-        add_facts_mapping = serializers.BooleanField(help_text='Add texta facts mapping. NB! If texta_facts is present in annotator fields, the mapping is always created.', required=False, default=False)
 
         validated_data.pop("indices")
         users = validated_data.pop("annotating_users")
+
+        add_facts_mapping = validated_data.pop("add_facts_mapping")
 
         annotating_users = []
         for user in users:
@@ -266,6 +270,7 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
             project=project_obj,
             total=total,
             fields=json.dumps(fields),
+            add_facts_mapping=add_facts_mapping,
             **configuration,
         )
 
@@ -273,8 +278,6 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
 
         for index in Index.objects.filter(name__in=indices, is_open=True):
             annotator.indices.add(index)
-
-        annotator.create_annotator_task()
 
         annotator.save()
 
