@@ -167,6 +167,9 @@ def annotator_task(self, annotator_task_id):
 
         new_annotator_obj.add_annotation_mapping(new_indices)
 
+        annotator_obj.annotator_users.clear()
+        annotator_obj.save()
+
         # declare the job done
         task_object.complete()
 
