@@ -85,7 +85,7 @@ def annotator_task(self, annotator_task_id):
     for val in indices_obj:
         indices.append(val["fields"]["name"])
     for user_val in users_obj:
-        users.append(user_val["fields"]["username"])
+        users.append(user_val["pk"])
 
     task_object = annotator_obj.task
     indices = json.loads(json.dumps(indices))
@@ -101,8 +101,8 @@ def annotator_task(self, annotator_task_id):
     new_annotators = []
 
     for user in users:
-        annotating_user = User.objects.get(username=user)
-        new_annotators.append(annotating_user)
+        annotating_user = User.objects.get(pk=user)
+        new_annotators.append(annotating_user.pk)
         for index in indices:
             new_indices.append(f"{user}_{index}")
 
@@ -166,6 +166,9 @@ def annotator_task(self, annotator_task_id):
             logging.getLogger(INFO_LOGGER).info(f"Saving new annotator object ID {new_annotator_obj.id}")
 
         new_annotator_obj.add_annotation_mapping(new_indices)
+
+        annotator_obj.annotator_users.clear()
+        annotator_obj.save()
 
         # declare the job done
         task_object.complete()
