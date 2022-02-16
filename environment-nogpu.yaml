@@ -60,3 +60,4 @@ dependencies:
       - mrakun
       - pelecanus
       - openpyxl
+      - scipy==1.5.*

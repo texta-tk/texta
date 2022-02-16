@@ -26,9 +26,6 @@ ENV UWSGI_INI /var/texta-rest/docker/conf/texta-rest.ini
 # Set environment variables
 ENV JOBLIB_MULTIPROCESSING 0
 ENV PYTHONIOENCODING=UTF-8
-ENV UWSGI_CHEAPER 2
-ENV UWSGI_PROCESSES 16
-
 
 # Expose ports
 EXPOSE 80
