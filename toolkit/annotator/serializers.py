@@ -183,7 +183,7 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
     annotating_users = serializers.ListField(child=serializers.CharField(), write_only=True, default=[], help_text="Names of users that will be annotating.")
     add_facts_mapping = serializers.BooleanField(
         help_text='Add texta facts mapping. NB! If texta_facts is present in annotator fields, the mapping is always created.',
-        required=False, default=False)
+        required=False, default=True)
     task = TaskSerializer(read_only=True)
 
 

@@ -70,7 +70,7 @@ class Annotator(TaskModel):
 
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
-    add_facts_mapping = models.BooleanField(default=False)
+    add_facts_mapping = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     modified_at = models.DateTimeField(auto_now=True, null=True)
