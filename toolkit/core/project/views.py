@@ -1,6 +1,7 @@
 import json
 import pathlib
 
+import django.db.utils
 import elasticsearch
 import elasticsearch_dsl
 import rest_framework.filters as drf_filters
@@ -19,7 +20,7 @@ from rest_framework.views import APIView
 from toolkit.core.project.models import Project
 from toolkit.core.project.serializers import (
     CountIndicesSerializer,
-    ExportSearcherResultsSerializer,
+    CreateAndAddIndexSerializer, ExportSearcherResultsSerializer,
     HandleIndicesSerializer, HandleProjectAdministratorsSerializer, HandleUsersSerializer, ProjectDocumentSerializer,
     ProjectGetFactsSerializer,
     ProjectGetSpamSerializer,
@@ -388,6 +389,27 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             return Response({"detail": f"Added indices '{str(indices)}' to the project!"})
         else:
             raise ValidationError(f"Could not validate indices f'{str(indices)}'")
+
+
+    @action(detail=True, methods=["post"], serializer_class=CreateAndAddIndexSerializer, permission_classes=[ExtraActionAccessInApplications])
+    def create_and_add_index(self, request, pk=None, project_pk=None):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        index = serializer.validated_data["index"]
+        add_texta_facts = serializer.validated_data["add_texta_facts"]
+        project: Project = self.get_object()
+        ec = ElasticCore()
+        ec.create_index(index=index)
+
+        try:
+            index_orm = Index.objects.create(name=index)
+        except django.db.utils.IntegrityError:
+            raise ValidationError(f"Index with the name '{index}' already exists!")
+
+        if add_texta_facts:
+            ec.add_texta_facts_mapping(index=index)
+        project.indices.add(index_orm)
+        return Response({"detail": f"Successfully created the index '{index}' and added it into the Project!"})
 
 
     @action(detail=True, methods=['post'], serializer_class=HandleIndicesSerializer, permission_classes=[AuthorProjAdminSuperadminAllowed])

@@ -14,7 +14,7 @@ from toolkit.core.user_profile.validators import check_if_username_exist
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import IndexSerializer
 from texta_elastic.searcher import EMPTY_QUERY
-from toolkit.elastic.validators import check_for_existence
+from toolkit.elastic.validators import check_for_banned_beginning_chars, check_for_colons, check_for_existence, check_for_special_symbols, check_for_upper_case, check_for_wildcards
 from toolkit.helper_functions import wrap_in_list
 from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin
 
@@ -296,6 +296,29 @@ class ProjectSuggestFactValuesSerializer(serializers.Serializer):
     startswith = serializers.CharField(help_text=f'The string to autocomplete fact values with.', allow_blank=True)
     fact_name = serializers.CharField(help_text='Fact name from which to suggest values.')
     indices = serializers.ListField(child=serializers.CharField(), default=[], required=False, help_text="Which indices to use for the fact search.")
+
+
+class CreateAndAddIndexSerializer(serializers.Serializer):
+    index = serializers.CharField(
+        help_text="Name of the index you wish to create and add into the index.", max_length=255,
+        validators=[
+            check_for_wildcards,
+            check_for_colons,
+            check_for_special_symbols,
+            check_for_banned_beginning_chars,
+            check_for_upper_case
+        ]
+    )
+    add_texta_facts = serializers.BooleanField(default=True, help_text="Whether to add the Texta Facts schema into the index.")
+
+
+    def validate_index(self, value):
+        from texta_elastic.core import ElasticCore
+        ec = ElasticCore()
+        if ec.check_if_indices_exist(indices=[value]) is True:
+            raise ValidationError(f"Index with the name '{value}' already exists!")
+        else:
+            return value
 
 
 class CountIndicesSerializer(serializers.Serializer):
