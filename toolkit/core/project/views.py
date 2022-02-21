@@ -300,11 +300,12 @@ class SearchByQueryView(APIView):
 
 
 class DocumentView(GenericAPIView):
-    permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
+    """Get document by ID from specified indices."""
 
+    permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
+    serializer_class = ProjectDocumentSerializer
 
     def post(self, request, project_pk: int):
-        """Get document by ID from specified indices."""
         project: Project = get_object_or_404(Project, pk=project_pk)
         self.check_object_permissions(request, project)
 
