@@ -1,23 +1,25 @@
 import json
+
+import rest_framework.filters as drf_filters
+from django.db import transaction
+from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from toolkit.view_constants import BulkDelete
-from .serializers import RakunExtractorSerializer, RakunExtractorRandomDocSerializer
-import rest_framework.filters as drf_filters
-from django_filters import rest_framework as filters
-from django.db import transaction
-from toolkit.rakun_keyword_extractor.serializers import StopWordSerializer, RakunExtractorIndexSerializer, RakunExtractorTextSerializer
-from toolkit.rakun_keyword_extractor.models import RakunExtractor
-from toolkit.rakun_keyword_extractor.tasks import apply_rakun_extractor_to_index
-from toolkit.core.project.models import Project
-from toolkit.core.task.models import Task
-from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
-from toolkit.serializer_constants import GeneralTextSerializer
 from texta_elastic.core import ElasticCore
 from texta_elastic.searcher import ElasticSearcher
-from toolkit.helper_functions import load_stop_words
+
+from toolkit.core.project.models import Project
+from toolkit.core.task.models import Task
 from toolkit.exceptions import SerializerNotValid
+from toolkit.helper_functions import load_stop_words
+from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
+from toolkit.rakun_keyword_extractor.models import RakunExtractor
+from toolkit.rakun_keyword_extractor.serializers import RakunExtractorIndexSerializer, RakunExtractorTextSerializer, StopWordSerializer
+from toolkit.rakun_keyword_extractor.tasks import apply_rakun_extractor_to_index
+from toolkit.serializer_constants import GeneralTextSerializer
+from toolkit.view_constants import BulkDelete
+from .serializers import RakunExtractorRandomDocSerializer, RakunExtractorSerializer
 
 
 class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
@@ -30,8 +32,10 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     ordering_fields = ('id', 'author__username', 'description')
 
+
     def get_queryset(self):
         return RakunExtractor.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
+
 
     def perform_create(self, serializer):
         project = Project.objects.get(id=self.kwargs['project_pk'])
@@ -42,13 +46,17 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             stopwords=json.dumps(serializer.validated_data.get('stopwords', []), ensure_ascii=False)
         )
 
+
     def perform_update(self, serializer):
         project = Project.objects.get(id=self.kwargs['project_pk'])
+        stopwords = serializer.validated_data.get('stopwords', [])
+        extra_kwargs = {"stopwords": json.dumps(stopwords, ensure_ascii=False)} if stopwords else {}
         rakun: RakunExtractor = serializer.save(
             author=self.request.user,
             project=project,
-            stopwords=json.dumps(serializer.validated_data.get('stopwords', []), ensure_ascii=False)
+            **extra_kwargs
         )
+
 
     @action(detail=True, methods=['post'], serializer_class=RakunExtractorIndexSerializer)
     def apply_to_index(self, request, pk=None, project_pk=None):
@@ -82,6 +90,7 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
 
             message = "Started process of applying Rakun with id: {}".format(rakun_object.id)
             return Response({"message": message}, status=status.HTTP_201_CREATED)
+
 
     @action(detail=True, methods=['get', 'post'], serializer_class=StopWordSerializer)
     def stop_words(self, request, pk=None, project_pk=None):
@@ -117,6 +126,7 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
 
             return Response({"stopwords": new_stop_words}, status=status.HTTP_200_OK)
 
+
     @action(detail=True, methods=['post'], serializer_class=RakunExtractorSerializer)
     def duplicate(self, request, pk=None, project_pk=None):
         rakun_object: RakunExtractor = self.get_object()
@@ -132,6 +142,7 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         }
 
         return Response(response, status=status.HTTP_200_OK)
+
 
     @action(detail=True, methods=['post'], serializer_class=RakunExtractorTextSerializer)
     def extract_from_text(self, request, pk=None, project_pk=None):
@@ -157,6 +168,7 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             "keywords": keywords
         }
         return Response(results, status=status.HTTP_200_OK)
+
 
     @action(detail=True, methods=['post'], serializer_class=RakunExtractorRandomDocSerializer)
     def extract_from_random_doc(self, request, pk=None, project_pk=None):
