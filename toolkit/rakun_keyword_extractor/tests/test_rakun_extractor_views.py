@@ -173,11 +173,12 @@ class RakunViewTest(APITransactionTestCase):
             self.assertTrue(response.status_code == status.HTTP_200_OK)
 
 
-    # Issue #552.
     def run_check_that_patch_doesnt_delete_stopwords(self):
         url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{self.ids[0]}/'
         response = self.client.patch(url, data={"description": "hello there"}, format="json")
         print_output("run_check_that_patch_doesnt_delete_stopwords:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_200_OK)
-        stopwords = response.data["stopwords"]
+        stopwords_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{self.ids[0]}/stop_words/'
+        stopwords_response = self.client.get(stopwords_url, format="json")
+        stopwords = stopwords_response.data["stopwords"]
         self.assertTrue(stopwords == self.payloads[0]["stopwords"] or stopwords == ["New_word1", "New_word2"])

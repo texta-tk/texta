@@ -43,7 +43,7 @@ class RakunExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer
 
     def to_representation(self, instance: RakunExtractor):
         data = super(RakunExtractorSerializer, self).to_representation(instance)
-        data["stopwords"] = json.loads(instance.stopwords)
+        data.pop("stopwords")
         return data
 
 
