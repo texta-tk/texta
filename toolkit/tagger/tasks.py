@@ -175,7 +175,6 @@ def train_tagger_task(tagger_id: int):
         # save tagger to disk
         tagger_full_path, relative_tagger_path = tagger_object.generate_name("tagger")
         tagger.save(tagger_full_path)
-        task_object.save()
 
         # Save the image before its path.
         image_name = f'{secrets.token_hex(15)}.png'
