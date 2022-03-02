@@ -189,7 +189,7 @@ def get_downloaded_bert_models(model_directory: str) -> List[str]:
     from texta_bert_tagger.tagger import BertTagger
     normalized_model_names = os.listdir(model_directory)
     bert_models = [BertTagger.restore_name(normalized_name) for normalized_name in normalized_model_names]
-    return bert_models
+    return sorted(bert_models)
 
 
 def chunks(lst: list, n: int):
