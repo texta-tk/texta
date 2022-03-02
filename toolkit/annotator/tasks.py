@@ -1,5 +1,6 @@
 import json
 import logging
+import hashlib
 from django.core import serializers
 from celery.decorators import task
 from toolkit.base_tasks import BaseTask
@@ -59,6 +60,9 @@ def apply_elastic_search(elastic_search, flatten_doc=False):
 
 def annotator_bulk_generator(generator, index: str):
     for document in generator:
+        doc_hash = hashlib.md5(document["content"].encode())
+        annotator_doc_hash = {"annotator_doc_id": doc_hash.hexdigest()}
+        document.update(annotator_doc_hash)
         yield {
             "_index": index,
             "_type": "_doc",
@@ -152,6 +156,7 @@ def annotator_task(self, annotator_task_id):
                         logging.getLogger(INFO_LOGGER).info(f"Creating new index {new_index}")
                         # create new_index
                         create_index_res = ElasticCore().create_index(new_index, updated_schema)
+
                         index_model, is_created = Index.objects.get_or_create(name=new_index)
                         project_obj.indices.add(index_model)
                         index_user = index_model.name.split('_')[0]
@@ -159,7 +164,7 @@ def annotator_task(self, annotator_task_id):
                             new_annotator_obj.indices.add(index_model)
 
                         logging.getLogger(INFO_LOGGER).info("Indexing documents.")
-                        # set new_index name as mapping name, perhaps make it customizable in the future
+                        # set new_index name as mapping name
                         bulk_add_documents(elastic_search, elastic_doc, index=new_index, chunk_size=scroll_size, flatten_doc=False)
 
             new_annotator_obj.save()
