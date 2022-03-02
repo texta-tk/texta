@@ -61,7 +61,7 @@ def apply_elastic_search(elastic_search, flatten_doc=False):
 def annotator_bulk_generator(generator, index: str):
     for document in generator:
         doc_hash = hashlib.md5(document["content"].encode())
-        annotator_doc_hash = {"annotator_doc_id": doc_hash.hexdigest()}
+        annotator_doc_hash = {"texta_annotator_doc_id": doc_hash.hexdigest()}
         document.update(annotator_doc_hash)
         yield {
             "_index": index,
