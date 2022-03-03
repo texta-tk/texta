@@ -1,6 +1,6 @@
 import json
 import logging
-import hashlib
+import uuid
 from django.core import serializers
 from celery.decorators import task
 from toolkit.base_tasks import BaseTask
@@ -60,9 +60,8 @@ def apply_elastic_search(elastic_search, flatten_doc=False):
 
 def annotator_bulk_generator(generator, index: str):
     for document in generator:
-        doc_hash = hashlib.md5(str(document).encode())
-        annotator_doc_hash = {"texta_annotator_doc_id": doc_hash.hexdigest()}
-        document.update(annotator_doc_hash)
+        annotator_doc_uuid = {"texta_meta": {"id": uuid.uuid4()}}
+        document.update(annotator_doc_uuid)
         yield {
             "_index": index,
             "_type": "_doc",
