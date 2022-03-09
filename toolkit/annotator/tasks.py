@@ -1,8 +1,10 @@
 import json
 import logging
 import uuid
+from typing import List
 from django.core import serializers
 from celery.decorators import task
+from elasticsearch.helpers import streaming_bulk
 from toolkit.base_tasks import BaseTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
@@ -69,6 +71,24 @@ def annotator_bulk_generator(generator, index: str):
         }
 
 
+def add_index_uuid(generator: ElasticSearcher):
+    for i, scroll_batch in enumerate(generator):
+        for raw_doc in scroll_batch:
+            hit = raw_doc["_source"]
+            existing_texta_meta = hit.get("texta_meta", {})
+
+            if "id" not in existing_texta_meta:
+                new_id = {"id": uuid.uuid4()}
+
+                yield {
+                    "_index": raw_doc["_index"],
+                    "_id": raw_doc["_id"],
+                    "_type": raw_doc.get("_type", "_doc"),
+                    "_op_type": "update",
+                    "_source": {"doc": {"texta_meta": new_id}}
+                }
+
+
 def bulk_add_documents(elastic_search: ElasticSearcher, elastic_doc: ElasticDocument, index: str, chunk_size: int, flatten_doc=False):
     new_docs = apply_elastic_search(elastic_search, flatten_doc)
     actions = annotator_bulk_generator(new_docs, index)
@@ -114,14 +134,20 @@ def annotator_task(self, annotator_task_id):
     logging.getLogger(INFO_LOGGER).info(f"Starting task annotator with Task ID {annotator_obj.task_id}.")
 
     try:
-        ''' for empty field post, use all posted indices fields '''
-        if not fields:
-            fields = ElasticCore().get_fields(indices)
-            fields = [field["path"] for field in fields]
+        ec = ElasticCore()
+        index_fields = ec.get_fields(indices)
+        index_fields = [index_field["path"] for index_field in index_fields]
 
         show_progress = ShowProgress(task_object, multiplier=1)
         show_progress.update_step("scrolling data")
         show_progress.update_view(0)
+
+        index_elastic_search = ElasticSearcher(indices=indices, field_data=index_fields, callback_progress=show_progress,
+                                         query=query, output=ElasticSearcher.OUT_RAW, scroll_size=scroll_size)
+        index_actions = add_index_uuid(generator=index_elastic_search)
+        for success, info in streaming_bulk(client=ec.es, actions=index_actions, refresh="wait_for", chunk_size=100, max_chunk_bytes=104857600, max_retries=3):
+            if not success:
+                logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
 
         for new_annotator in new_annotators:
             new_annotator_obj = Annotator.objects.create(
