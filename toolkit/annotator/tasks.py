@@ -75,7 +75,7 @@ def add_doc_uuid(generator: ElasticSearcher):
             existing_texta_meta = hit.get("texta_meta", {})
 
             if "document_uuid" not in existing_texta_meta:
-                new_id = {"document_uuid": uuid.uuid4()}
+                new_id = {"document_uuid": str(uuid.uuid4())}
 
                 yield {
                     "_index": raw_doc["_index"],
