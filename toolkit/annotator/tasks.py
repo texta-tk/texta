@@ -71,7 +71,7 @@ def annotator_bulk_generator(generator, index: str):
         }
 
 
-def add_index_uuid(generator: ElasticSearcher):
+def add_doc_uuid(generator: ElasticSearcher):
     for i, scroll_batch in enumerate(generator):
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
@@ -144,7 +144,7 @@ def annotator_task(self, annotator_task_id):
 
         index_elastic_search = ElasticSearcher(indices=indices, field_data=index_fields, callback_progress=show_progress,
                                          query=query, output=ElasticSearcher.OUT_RAW, scroll_size=scroll_size)
-        index_actions = add_index_uuid(generator=index_elastic_search)
+        index_actions = add_doc_uuid(generator=index_elastic_search)
         for success, info in streaming_bulk(client=ec.es, actions=index_actions, refresh="wait_for", chunk_size=100, max_chunk_bytes=104857600, max_retries=3):
             if not success:
                 logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
