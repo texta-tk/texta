@@ -171,12 +171,12 @@ def annotator_task(self, annotator_task_id):
                         elastic_search = ElasticSearcher(indices=indices, field_data=fields, callback_progress=show_progress, query=query, scroll_size=scroll_size)
                         elastic_doc = ElasticDocument(new_index)
 
-                        logging.getLogger(INFO_LOGGER).info("Updating index schema.")
+                        logging.getLogger(INFO_LOGGER).info(f"Updating index schema for index {new_index}")
                         ''' the operations that don't require a mapping update have been completed '''
                         schema_input = update_field_types(indices, fields, field_type, flatten_doc=False)
                         updated_schema = update_mapping(schema_input, new_index, add_facts_mapping, add_texta_meta_mapping=True)
 
-                        logging.getLogger(INFO_LOGGER).info(f"Creating new index {new_index}")
+                        logging.getLogger(INFO_LOGGER).info(f"Creating new index {new_index} for user {new_annotator}")
                         # create new_index
                         create_index_res = ElasticCore().create_index(new_index, updated_schema)
 
