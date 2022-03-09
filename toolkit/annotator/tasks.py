@@ -1,7 +1,6 @@
 import json
 import logging
 import uuid
-from typing import List
 from django.core import serializers
 from celery.decorators import task
 from elasticsearch.helpers import streaming_bulk
@@ -62,8 +61,6 @@ def apply_elastic_search(elastic_search, flatten_doc=False):
 
 def annotator_bulk_generator(generator, index: str):
     for document in generator:
-        annotator_doc_uuid = {"texta_meta": {"id": uuid.uuid4()}}
-        document.update(annotator_doc_uuid)
         yield {
             "_index": index,
             "_type": "_doc",
@@ -77,8 +74,8 @@ def add_doc_uuid(generator: ElasticSearcher):
             hit = raw_doc["_source"]
             existing_texta_meta = hit.get("texta_meta", {})
 
-            if "id" not in existing_texta_meta:
-                new_id = {"id": uuid.uuid4()}
+            if "document_uuid" not in existing_texta_meta:
+                new_id = {"document_uuid": uuid.uuid4()}
 
                 yield {
                     "_index": raw_doc["_index"],
@@ -114,6 +111,7 @@ def annotator_task(self, annotator_task_id):
     indices = json.loads(json.dumps(indices))
     users = json.loads(json.dumps(users))
     fields = json.loads(annotator_obj.fields)
+    fields.append("texta_meta.document_uuid")
     project_obj = Project.objects.get(id=annotator_obj.project_id)
     new_field_type = get_selected_fields(indices, fields)
     field_type = add_field_type(new_field_type)
@@ -155,7 +153,7 @@ def annotator_task(self, annotator_task_id):
                 author=annotator_obj.author,
                 project=annotator_obj.project,
                 total=annotator_obj.total,
-                fields=annotator_obj.fields,
+                fields=fields,
                 add_facts_mapping=add_facts_mapping,
                 annotation_type=annotator_obj.annotation_type,
                 binary_configuration=annotator_obj.binary_configuration,
@@ -176,7 +174,7 @@ def annotator_task(self, annotator_task_id):
                         logging.getLogger(INFO_LOGGER).info("Updating index schema.")
                         ''' the operations that don't require a mapping update have been completed '''
                         schema_input = update_field_types(indices, fields, field_type, flatten_doc=False)
-                        updated_schema = update_mapping(schema_input, new_index, add_facts_mapping)
+                        updated_schema = update_mapping(schema_input, new_index, add_facts_mapping, add_texta_meta_mapping=True)
 
                         logging.getLogger(INFO_LOGGER).info(f"Creating new index {new_index}")
                         # create new_index
@@ -196,6 +194,7 @@ def annotator_task(self, annotator_task_id):
             logging.getLogger(INFO_LOGGER).info(f"Saving new annotator object ID {new_annotator_obj.id}")
 
         new_annotator_obj.add_annotation_mapping(new_indices)
+        new_annotator_obj.add_texta_meta_mapping(new_indices)
 
         annotator_obj.annotator_users.clear()
         annotator_obj.save()
