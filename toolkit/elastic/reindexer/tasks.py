@@ -75,20 +75,19 @@ def bulk_add_documents(elastic_search: ElasticSearcher, elastic_doc: ElasticDocu
 
 @task(name="reindex_task", base=BaseTask)
 def reindex_task(reindexer_task_id):
-    reindexer_obj = Reindexer.objects.get(pk=reindexer_task_id)
-    task_object = reindexer_obj.task
-    indices = json.loads(reindexer_obj.indices)
-    fields = json.loads(reindexer_obj.fields)
-    random_size = reindexer_obj.random_size
-    field_type = json.loads(reindexer_obj.field_type)
-    scroll_size = reindexer_obj.scroll_size
-    new_index = reindexer_obj.new_index
-    query = reindexer_obj.query
-
     logging.getLogger(INFO_LOGGER).info("Starting task 'reindex'.")
-
     try:
-        ''' for empty field post, use all posted indices fields '''
+        reindexer_obj = Reindexer.objects.get(pk=reindexer_task_id)
+        task_object = reindexer_obj.task
+        indices = json.loads(reindexer_obj.indices)
+        fields = json.loads(reindexer_obj.fields)
+        random_size = reindexer_obj.random_size
+        field_type = json.loads(reindexer_obj.field_type)
+        scroll_size = reindexer_obj.scroll_size
+        new_index = reindexer_obj.new_index
+        query = json.loads(reindexer_obj.query)
+
+        # if no fields, let's use all fields from all selected indices
         if not fields:
             fields = ElasticCore().get_fields(indices)
             fields = [field["path"] for field in fields]
@@ -101,7 +100,7 @@ def reindex_task(reindexer_task_id):
         elastic_doc = ElasticDocument(new_index)
 
         if random_size > 0:
-            elastic_search = ElasticSearcher(indices=indices, field_data=fields, query=query, scroll_size=scroll_size).random_documents(size=random_size)
+            elastic_search = elastic_search.random_documents(size=random_size)
 
         logging.getLogger(INFO_LOGGER).info("Updating index schema.")
         ''' the operations that don't require a mapping update have been completed '''
