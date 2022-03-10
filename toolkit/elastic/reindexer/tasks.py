@@ -106,7 +106,7 @@ def reindex_task(reindexer_task_id):
         logging.getLogger(INFO_LOGGER).info("Updating index schema.")
         ''' the operations that don't require a mapping update have been completed '''
         schema_input = update_field_types(indices, fields, field_type, flatten_doc=FLATTEN_DOC)
-        updated_schema = update_mapping(schema_input, new_index, reindexer_obj.add_facts_mapping)
+        updated_schema = update_mapping(schema_input, new_index, reindexer_obj.add_facts_mapping, add_texta_meta_mapping=False)
 
         logging.getLogger(INFO_LOGGER).info("Creating new index.")
         # create new_index

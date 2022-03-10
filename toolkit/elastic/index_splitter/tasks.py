@@ -130,8 +130,8 @@ def index_splitting_task(index_splitting_task_id):
 
         logging.getLogger(INFO_LOGGER).info("Updating indices schema.")
         schema_input = update_field_types(indices, fields, [], flatten_doc=FLATTEN_DOC)
-        train_schema = update_mapping(schema_input, train_index, True)
-        test_schema = update_mapping(schema_input, test_index, True)
+        train_schema = update_mapping(schema_input, train_index, True, add_texta_meta_mapping=False)
+        test_schema = update_mapping(schema_input, test_index, True, add_texta_meta_mapping=False)
 
         logging.getLogger(INFO_LOGGER).info("Creating new index.")
         # Creating new indices.
