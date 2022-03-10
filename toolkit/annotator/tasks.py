@@ -153,7 +153,7 @@ def annotator_task(self, annotator_task_id):
                 author=annotator_obj.author,
                 project=annotator_obj.project,
                 total=annotator_obj.total,
-                fields=fields,
+                fields=json.dumps(fields),
                 add_facts_mapping=add_facts_mapping,
                 annotation_type=annotator_obj.annotation_type,
                 binary_configuration=annotator_obj.binary_configuration,
