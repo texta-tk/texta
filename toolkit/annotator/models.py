@@ -313,6 +313,19 @@ class Annotator(TaskModel):
         for index in indices:
             ec.add_annotator_mapping(index)
 
+    @staticmethod
+    def add_texta_meta_mapping(indices: List[str]):
+        """
+        Adds the mapping for texta_meta.
+        :param indices: Which indices to target for the schemas.
+        :return:
+        """
+        from texta_elastic.core import ElasticCore
+
+        ec = ElasticCore()
+        for index in indices:
+            ec.add_texta_meta_mapping(index)
+
 
 class Comment(models.Model):
     text = models.TextField()

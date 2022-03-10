@@ -1,8 +1,9 @@
 import json
 import logging
-import hashlib
+import uuid
 from django.core import serializers
 from celery.decorators import task
+from elasticsearch.helpers import streaming_bulk
 from toolkit.base_tasks import BaseTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
@@ -60,14 +61,29 @@ def apply_elastic_search(elastic_search, flatten_doc=False):
 
 def annotator_bulk_generator(generator, index: str):
     for document in generator:
-        doc_hash = hashlib.md5(str(document).encode())
-        annotator_doc_hash = {"texta_annotator_doc_id": doc_hash.hexdigest()}
-        document.update(annotator_doc_hash)
         yield {
             "_index": index,
             "_type": "_doc",
             "_source": document
         }
+
+
+def add_doc_uuid(generator: ElasticSearcher):
+    for i, scroll_batch in enumerate(generator):
+        for raw_doc in scroll_batch:
+            hit = raw_doc["_source"]
+            existing_texta_meta = hit.get("texta_meta", {})
+
+            if "document_uuid" not in existing_texta_meta:
+                new_id = {"document_uuid": str(uuid.uuid4())}
+
+                yield {
+                    "_index": raw_doc["_index"],
+                    "_id": raw_doc["_id"],
+                    "_type": raw_doc.get("_type", "_doc"),
+                    "_op_type": "update",
+                    "_source": {"doc": {"texta_meta": new_id}}
+                }
 
 
 def bulk_add_documents(elastic_search: ElasticSearcher, elastic_doc: ElasticDocument, index: str, chunk_size: int, flatten_doc=False):
@@ -95,6 +111,7 @@ def annotator_task(self, annotator_task_id):
     indices = json.loads(json.dumps(indices))
     users = json.loads(json.dumps(users))
     fields = json.loads(annotator_obj.fields)
+    fields.append("texta_meta.document_uuid")
     project_obj = Project.objects.get(id=annotator_obj.project_id)
     new_field_type = get_selected_fields(indices, fields)
     field_type = add_field_type(new_field_type)
@@ -115,14 +132,20 @@ def annotator_task(self, annotator_task_id):
     logging.getLogger(INFO_LOGGER).info(f"Starting task annotator with Task ID {annotator_obj.task_id}.")
 
     try:
-        ''' for empty field post, use all posted indices fields '''
-        if not fields:
-            fields = ElasticCore().get_fields(indices)
-            fields = [field["path"] for field in fields]
+        ec = ElasticCore()
+        index_fields = ec.get_fields(indices)
+        index_fields = [index_field["path"] for index_field in index_fields]
 
         show_progress = ShowProgress(task_object, multiplier=1)
         show_progress.update_step("scrolling data")
         show_progress.update_view(0)
+
+        index_elastic_search = ElasticSearcher(indices=indices, field_data=index_fields, callback_progress=show_progress,
+                                         query=query, output=ElasticSearcher.OUT_RAW, scroll_size=scroll_size)
+        index_actions = add_doc_uuid(generator=index_elastic_search)
+        for success, info in streaming_bulk(client=ec.es, actions=index_actions, refresh="wait_for", chunk_size=scroll_size, max_retries=3):
+            if not success:
+                logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
 
         for new_annotator in new_annotators:
             new_annotator_obj = Annotator.objects.create(
@@ -130,7 +153,7 @@ def annotator_task(self, annotator_task_id):
                 author=annotator_obj.author,
                 project=annotator_obj.project,
                 total=annotator_obj.total,
-                fields=annotator_obj.fields,
+                fields=fields,
                 add_facts_mapping=add_facts_mapping,
                 annotation_type=annotator_obj.annotation_type,
                 binary_configuration=annotator_obj.binary_configuration,
@@ -148,12 +171,12 @@ def annotator_task(self, annotator_task_id):
                         elastic_search = ElasticSearcher(indices=indices, field_data=fields, callback_progress=show_progress, query=query, scroll_size=scroll_size)
                         elastic_doc = ElasticDocument(new_index)
 
-                        logging.getLogger(INFO_LOGGER).info("Updating index schema.")
+                        logging.getLogger(INFO_LOGGER).info(f"Updating index schema for index {new_index}")
                         ''' the operations that don't require a mapping update have been completed '''
                         schema_input = update_field_types(indices, fields, field_type, flatten_doc=False)
-                        updated_schema = update_mapping(schema_input, new_index, add_facts_mapping)
+                        updated_schema = update_mapping(schema_input, new_index, add_facts_mapping, add_texta_meta_mapping=True)
 
-                        logging.getLogger(INFO_LOGGER).info(f"Creating new index {new_index}")
+                        logging.getLogger(INFO_LOGGER).info(f"Creating new index {new_index} for user {new_annotator}")
                         # create new_index
                         create_index_res = ElasticCore().create_index(new_index, updated_schema)
 
@@ -171,6 +194,7 @@ def annotator_task(self, annotator_task_id):
             logging.getLogger(INFO_LOGGER).info(f"Saving new annotator object ID {new_annotator_obj.id}")
 
         new_annotator_obj.add_annotation_mapping(new_indices)
+        new_annotator_obj.add_texta_meta_mapping(new_indices)
 
         annotator_obj.annotator_users.clear()
         annotator_obj.save()
