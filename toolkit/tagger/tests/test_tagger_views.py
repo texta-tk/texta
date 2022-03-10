@@ -36,8 +36,8 @@ class TaggerViewTests(APITransactionTestCase):
         self.multitag_text_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/taggers/multitag_text/'
 
         # set vectorizer & classifier options
-        self.vectorizer_opts = ('Count Vectorizer', 'Hashing Vectorizer', 'TfIdf Vectorizer')
-        self.classifier_opts = ('Logistic Regression', 'LinearSVC')
+        self.vectorizer_opts = ('Count Vectorizer',)
+        self.classifier_opts = ('Logistic Regression',)
 
         # list tagger_ids for testing. is populated during training test
         self.test_tagger_ids = []
@@ -153,8 +153,7 @@ class TaggerViewTests(APITransactionTestCase):
 
     def run_create_tagger_training_and_task_signal(self):
         """Tests the endpoint for a new Tagger, and if a new Task gets created via the signal"""
-        lemmatize = True
-        # run test for each vectorizer & classifier option
+
         for vectorizer_opt in self.vectorizer_opts:
             for classifier_opt in self.classifier_opts:
                 payload = {
@@ -162,7 +161,6 @@ class TaggerViewTests(APITransactionTestCase):
                     "query": json.dumps(TEST_QUERY),
                     "fields": TEST_FIELD_CHOICE,
                     "indices": [{"name": self.test_index_name}],
-                    "lemmatize": lemmatize,
                     "vectorizer": vectorizer_opt,
                     "classifier": classifier_opt,
                     "maximum_sample_size": 500,
@@ -170,8 +168,6 @@ class TaggerViewTests(APITransactionTestCase):
                     "score_threshold": 0.1,
                     "stop_words": ["asdfghjkl"]
                 }
-                # as lemmatization is slow, do it only once
-                lemmatize = False
                 # procees to analyze result
                 response = self.client.post(self.url, payload, format='json')
                 print_output('test_create_tagger_training_and_task_signal:response.data', response.data)

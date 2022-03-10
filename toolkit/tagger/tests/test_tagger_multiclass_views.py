@@ -43,8 +43,8 @@ class TaggerViewTests(APITransactionTestCase):
         self.multitag_text_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/taggers/multitag_text/'
 
         # set vectorizer & classifier options
-        self.vectorizer_opts = ('Count Vectorizer', 'Hashing Vectorizer', 'TfIdf Vectorizer')
-        self.classifier_opts = ('Logistic Regression', 'LinearSVC')
+        self.vectorizer_opts = ('TfIdf Vectorizer',)
+        self.classifier_opts = ('Logistic Regression',)
 
         # list tagger_ids for testing. is populated during training test
         self.test_tagger_ids = []
