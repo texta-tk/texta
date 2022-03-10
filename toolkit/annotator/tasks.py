@@ -110,10 +110,11 @@ def annotator_task(self, annotator_task_id):
     task_object = annotator_obj.task
     indices = json.loads(json.dumps(indices))
     users = json.loads(json.dumps(users))
-    fields = json.loads(annotator_obj.fields)
-    fields.append("texta_meta.document_uuid")
+    annotator_fields = json.loads(annotator_obj.fields)
+    all_fields = annotator_fields
+    all_fields.append("texta_meta.document_uuid")
     project_obj = Project.objects.get(id=annotator_obj.project_id)
-    new_field_type = get_selected_fields(indices, fields)
+    new_field_type = get_selected_fields(indices, annotator_fields)
     field_type = add_field_type(new_field_type)
     add_facts_mapping = annotator_obj.add_facts_mapping
     scroll_size = 100
@@ -125,7 +126,7 @@ def annotator_task(self, annotator_task_id):
         annotating_user = User.objects.get(pk=user)
         new_annotators.append(annotating_user.pk)
         for index in indices:
-            new_indices.append(f"{user}_{index}")
+            new_indices.append(f"{index}_{user}_{annotator_obj.task_id}")
 
     query = EMPTY_QUERY
 
@@ -149,11 +150,11 @@ def annotator_task(self, annotator_task_id):
 
         for new_annotator in new_annotators:
             new_annotator_obj = Annotator.objects.create(
-                description=f"{new_annotator}_{annotator_obj.description}",
+                description=f"{annotator_obj.description}_{new_annotator}_{annotator_obj.task_id}",
                 author=annotator_obj.author,
                 project=annotator_obj.project,
                 total=annotator_obj.total,
-                fields=json.dumps(fields),
+                fields=json.dumps(annotator_fields),
                 add_facts_mapping=add_facts_mapping,
                 annotation_type=annotator_obj.annotation_type,
                 binary_configuration=annotator_obj.binary_configuration,
@@ -166,14 +167,14 @@ def annotator_task(self, annotator_task_id):
                 logging.getLogger(INFO_LOGGER).info(f"Index object {indices}")
 
                 for index in indices:
-                    if new_index == f"{new_annotator}_{index}":
+                    if new_index == f"{index}_{new_annotator}_{annotator_obj.task_id}":
 
-                        elastic_search = ElasticSearcher(indices=indices, field_data=fields, callback_progress=show_progress, query=query, scroll_size=scroll_size)
+                        elastic_search = ElasticSearcher(indices=indices, field_data=all_fields, callback_progress=show_progress, query=query, scroll_size=scroll_size)
                         elastic_doc = ElasticDocument(new_index)
 
                         logging.getLogger(INFO_LOGGER).info(f"Updating index schema for index {new_index}")
                         ''' the operations that don't require a mapping update have been completed '''
-                        schema_input = update_field_types(indices, fields, field_type, flatten_doc=False)
+                        schema_input = update_field_types(indices, all_fields, field_type, flatten_doc=False)
                         updated_schema = update_mapping(schema_input, new_index, add_facts_mapping, add_texta_meta_mapping=True)
 
                         logging.getLogger(INFO_LOGGER).info(f"Creating new index {new_index} for user {new_annotator}")
@@ -182,7 +183,7 @@ def annotator_task(self, annotator_task_id):
 
                         index_model, is_created = Index.objects.get_or_create(name=new_index)
                         project_obj.indices.add(index_model)
-                        index_user = index_model.name.split('_')[0]
+                        index_user = index_model.name.rsplit('_', 2)[1]
                         if str(index_user) == str(new_annotator):
                             new_annotator_obj.indices.add(index_model)
 
@@ -190,7 +191,12 @@ def annotator_task(self, annotator_task_id):
                         # set new_index name as mapping name
                         bulk_add_documents(elastic_search, elastic_doc, index=new_index, chunk_size=scroll_size, flatten_doc=False)
 
+            if "texta_meta.document_uuid" in annotator_fields:
+                annotator_fields.remove("texta_meta.document_uuid")
+                new_annotator_obj.fields = json.dumps(annotator_fields)
             new_annotator_obj.save()
+            if "texta_meta.document_uuid" not in annotator_fields:
+                annotator_fields.append("texta_meta.document_uuid")
             logging.getLogger(INFO_LOGGER).info(f"Saving new annotator object ID {new_annotator_obj.id}")
 
         new_annotator_obj.add_annotation_mapping(new_indices)
