@@ -128,7 +128,7 @@ def annotator_task(self, annotator_task_id):
         for index in indices:
             new_indices.append(f"{index}_{user}_{annotator_obj.task_id}")
 
-    query = EMPTY_QUERY
+    query = annotator_obj.query
 
     logging.getLogger(INFO_LOGGER).info(f"Starting task annotator with Task ID {annotator_obj.task_id}.")
 
