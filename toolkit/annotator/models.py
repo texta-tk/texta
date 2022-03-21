@@ -133,6 +133,15 @@ class Annotator(TaskModel):
         :return:
         """
         ed = ESDocObject(document_id=document_id, index=index)
+        if "texta_facts" in ed.document["_source"]:
+            for facts in ed.document["_source"]["texta_facts"]:
+                if facts["fact"] == self.binary_configuration.fact_name and facts["source"] == "annotator":
+                    if facts["str_val"] != self.binary_configuration.pos_value:
+                        facts["str_val"] = self.binary_configuration.pos_value
+                        ed.update()
+                        return
+                    else:
+                        return
         fact = ed.add_fact(fact_value=self.binary_configuration.pos_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field)
         ed.add_annotated(annotator_model=self, user=user)
         ed.update()
@@ -161,6 +170,15 @@ class Annotator(TaskModel):
         :return:
         """
         ed = ESDocObject(document_id=document_id, index=index)
+        if "texta_facts" in ed.document["_source"]:
+            for facts in ed.document["_source"]["texta_facts"]:
+                if facts["fact"] == self.binary_configuration.fact_name and facts["source"] == "annotator":
+                    if facts["str_val"] != self.binary_configuration.neg_value:
+                        facts["str_val"] = self.binary_configuration.neg_value
+                        ed.update()
+                        return
+                    else:
+                        return
         fact = ed.add_fact(fact_value=self.binary_configuration.neg_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field)
         ed.add_annotated(self, user)
         ed.update()
