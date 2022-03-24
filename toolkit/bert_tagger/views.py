@@ -1,6 +1,8 @@
 import json
 import logging
 import os
+import pathlib
+from shutil import rmtree
 
 import rest_framework.filters as drf_filters
 from django.db import transaction
@@ -8,13 +10,14 @@ from django.http import HttpResponse
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from texta_elastic.core import ElasticCore
 from texta_elastic.searcher import ElasticSearcher
 
 from toolkit.bert_tagger import choices
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
-from toolkit.bert_tagger.serializers import (ApplyTaggerSerializer, BertDownloaderSerializer, BertTagTextSerializer, BertTaggerSerializer, EpochReportSerializer, TagRandomDocSerializer)
+from toolkit.bert_tagger.serializers import (ApplyTaggerSerializer, BertDownloaderSerializer, BertTagTextSerializer, BertTaggerSerializer, DeleteBERTModelSerializer, EpochReportSerializer, TagRandomDocSerializer)
 from toolkit.bert_tagger.tasks import apply_tagger, apply_tagger_to_index
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
@@ -195,7 +198,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         return Response(filtered_reports, status=status.HTTP_200_OK)
 
 
-    @action(detail=False, methods=['post'], serializer_class=BertDownloaderSerializer)
+    @action(detail=False, methods=['post'], serializer_class=BertDownloaderSerializer, permission_classes=(IsAdminUser,))
     def download_pretrained_model(self, request, pk=None, project_pk=None):
         """Download pretrained BERT models."""
 
@@ -223,6 +226,21 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         available_models = get_downloaded_bert_models(BERT_PRETRAINED_MODEL_DIRECTORY)
 
         return Response(available_models, status=status.HTTP_200_OK)
+
+    # This is made into a POST request instead of DELETE, so it would be nice to use through the Browsable API.
+    @action(detail=False, methods=['post'], serializer_class=DeleteBERTModelSerializer, permission_classes=(IsAdminUser,))
+    def delete_pretrained_model(self, request, pk=None, project_pk=None):
+        """Delete existing BERT models."""
+        serializer: DeleteBERTModelSerializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        model_name = serializer.validated_data["model_name"]
+
+        from texta_bert_tagger.tagger import BertTagger
+        file_name = BertTagger.normalize_name(model_name)
+        path = pathlib.Path(BERT_PRETRAINED_MODEL_DIRECTORY) / file_name
+        rmtree(path)  # Since Pathlib can't deal with directories.
+        return Response({"detail": f"Deleted model {model_name} from the filesystem!"}, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['post'], serializer_class=ApplyTaggerSerializer)

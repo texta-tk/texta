@@ -1,6 +1,8 @@
 import json
+import pathlib
 
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from texta_elastic.searcher import EMPTY_QUERY
 
 from toolkit.bert_tagger import choices
@@ -100,3 +102,16 @@ class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, In
                             'task', 'num_examples', 'adjusted_batch_size', 'confusion_matrix')
 
         fields_to_parse = ['fields']
+
+
+class DeleteBERTModelSerializer(serializers.Serializer):
+    model_name = serializers.CharField(help_text="Name of the BERT model to delete.")
+
+
+    def validate_model_name(self, value: str):
+        from texta_bert_tagger.tagger import BertTagger
+        file_name = BertTagger.normalize_name(value)
+        path = pathlib.Path(BERT_PRETRAINED_MODEL_DIRECTORY) / file_name
+        if path.exists() is False:
+            raise ValidationError(f"Model with the name of '{value}' does not exist in the file system!")
+        return value
