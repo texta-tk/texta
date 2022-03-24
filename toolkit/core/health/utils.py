@@ -7,8 +7,8 @@ import torch
 from celery.task.control import inspect
 from pynvml import nvmlDeviceGetHandleByIndex, nvmlDeviceGetMemoryInfo, nvmlInit
 from rest_framework import exceptions
-
 from texta_elastic.core import ElasticCore
+
 from toolkit.helper_functions import get_core_setting
 from toolkit.settings import BASE_DIR, BROKER_URL, ERROR_LOGGER
 
@@ -69,10 +69,7 @@ def get_redis_status(is_anon: bool = False):
         parser = urlparse(BROKER_URL)
         r = redis.Redis(host=parser.hostname, port=parser.port, socket_timeout=3)
         info = r.info()
-        redis_status = {
-            "alive": True,
-
-        }
+        redis_status = {"alive": True}
 
         if is_anon is False:
             redis_status = {
