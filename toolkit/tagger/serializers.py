@@ -251,6 +251,7 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
                 'fields': json.loads(first_tagger.fields),
                 'vectorizer': first_tagger.vectorizer,
                 'classifier': first_tagger.classifier,
+                'analyzer': first_tagger.analyzer,
                 'stop_words': load_stop_words(first_tagger.stop_words),
                 'ignore_numbers': first_tagger.ignore_numbers,
                 'balance': first_tagger.balance,

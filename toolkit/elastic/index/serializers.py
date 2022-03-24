@@ -17,11 +17,6 @@ class AddMappingToIndexSerializer(serializers.Serializer):
     mappings = serializers.DictField()
 
 
-# An empty serializer because otherwise it defaults to the Index one, creating confusion
-# inside the BrowsableAPI.
-class AddTextaFactsMapping(serializers.Serializer):
-    pass
-
 
 class IndexSerializer(serializers.ModelSerializer):
     is_open = serializers.BooleanField(default=True)
