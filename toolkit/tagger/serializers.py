@@ -1,26 +1,23 @@
 import json
+import logging
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Avg, Sum
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from texta_elastic.searcher import EMPTY_QUERY
 
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
-from toolkit.embedding.models import Embedding
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choices
-from texta_elastic.searcher import EMPTY_QUERY
+from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import load_stop_words
-from toolkit.serializer_constants import (
-    FieldParseSerializer,
-    IndicesSerializerMixin,
-    ElasticScrollMixIn,
-    ProjectResourceUrlSerializer,
-    ProjectFilteredPrimaryKeyRelatedField
-)
+from toolkit.serializer_constants import (ElasticScrollMixIn, FieldParseSerializer, IndicesSerializerMixin, ProjectFilteredPrimaryKeyRelatedField, ProjectResourceUrlSerializer)
+from toolkit.settings import ERROR_LOGGER
 from toolkit.tagger import choices
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.validator_constants import validate_pos_label
+
 
 # NB! Currently not used
 class ApplyTaggersSerializer(FieldParseSerializer, IndicesSerializerMixin, ElasticScrollMixIn):
@@ -202,6 +199,7 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     fact_name = serializers.CharField(default=choices.DEFAULT_TAGGER_GROUP_FACT_NAME, help_text=f'Fact name used to filter tags (fact values). Default: {choices.DEFAULT_TAGGER_GROUP_FACT_NAME}')
     tagger = TaggerSerializer(write_only=True, remove_fields=['description', 'query', 'fact_name', 'minimum_sample_size'])
     num_tags = serializers.IntegerField(read_only=True)
+    blacklisted_facts = serializers.ListField(child=serializers.CharField(), default=[], help_text="Which fact values to ignore when creating the taggers.")
     tagger_status = serializers.SerializerMethodField()
     tagger_statistics = serializers.SerializerMethodField()
     tagger_params = serializers.SerializerMethodField()
@@ -209,9 +207,18 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     task = TaskSerializer(read_only=True)
 
 
+    def to_representation(self, instance):
+        data = super(TaggerGroupSerializer, self).to_representation(instance)
+        try:
+            data["blacklisted_facts"] = json.loads(instance.blacklisted_facts)
+        except Exception as e:
+            logging.getLogger(ERROR_LOGGER).exception(e)
+        return data
+
+
     class Meta:
         model = TaggerGroup
-        fields = ('id', 'url', 'author', 'description', 'fact_name', 'num_tags', 'minimum_sample_size',
+        fields = ('id', 'url', 'author', 'description', 'fact_name', 'num_tags', 'blacklisted_facts', 'minimum_sample_size',
                   'tagger_status', 'tagger_params', 'tagger', 'tagger_statistics', 'task')
 
 
