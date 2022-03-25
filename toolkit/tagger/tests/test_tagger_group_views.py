@@ -8,15 +8,15 @@ from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
-
-from toolkit.core.task.models import Task
-from toolkit.elastic.reindexer.models import Reindexer
 from texta_elastic.aggregator import ElasticAggregator
 from texta_elastic.core import ElasticCore
 from texta_elastic.searcher import ElasticSearcher
+
+from toolkit.core.task.models import Task
+from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.tagger.models import Tagger, TaggerGroup
-from toolkit.test_settings import (TEST_FACT_NAME, TEST_FIELD, TEST_FIELD_CHOICE, TEST_KEEP_PLOT_FILES, TEST_QUERY, TEST_TAGGER_GROUP, TEST_VERSION_PREFIX, VERSION_NAMESPACE)
+from toolkit.test_settings import (TEST_FACT_NAME, TEST_FIELD, TEST_FIELD_CHOICE, TEST_KEEP_PLOT_FILES, TEST_QUERY, TEST_TAGGER_GROUP, TEST_VALUE_2, TEST_VALUE_3, TEST_VERSION_PREFIX, VERSION_NAMESPACE)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
@@ -489,6 +489,40 @@ class TaggerGroupViewTests(APITransactionTestCase):
             self.assertTrue("id" in response.data["tagger_groups"][0])
             self.assertTrue("fact_name" in response.data["tagger_groups"][0])
             self.assertTrue(tg.description == response.data["tagger_groups"][0]["description"])
-            self.assertTrue(tg.pk ==  response.data["tagger_groups"][0]["id"])
+            self.assertTrue(tg.pk == response.data["tagger_groups"][0]["id"])
             self.assertTrue(tg.fact_name == response.data["tagger_groups"][0]["fact_name"])
             self.add_cleanup_files(tagger.id)
+
+
+    def test_training_tagger_group_with_blacklisted_values(self):
+        url = reverse(f"{VERSION_NAMESPACE}:tagger_group-list", kwargs={"project_pk": self.project.pk})
+        payload = {
+            "description": "TestTaggerGroup",
+            "minimum_sample_size": 50,
+            "fact_name": TEST_FACT_NAME,
+            "blacklisted_facts": [TEST_VALUE_2, TEST_VALUE_3],
+            "tagger": {
+                "fields": TEST_FIELD_CHOICE,
+                "vectorizer": "Hashing Vectorizer",
+                "classifier": "LinearSVC",
+                "feature_selector": "SVM Feature Selector",
+                "maximum_sample_size": 500,
+                "negative_multiplier": 1.0,
+
+            }
+        }
+        response = self.client.post(url, data=payload, format="json")
+        self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+        print_output("test_training_tagger_group_with_blacklisted_values:response.data", response.data)
+        created_tagger_group = TaggerGroup.objects.get(pk=response.data["id"])
+
+        # Check that none of the taggers was actually created.
+        for tagger in created_tagger_group.taggers.all():
+            self.assertTrue(tagger.description != TEST_VALUE_2 and tagger.description != TEST_VALUE_3)
+        self.run_tag_text(created_tagger_group.pk)
+
+        # Check that the new value is actually returned inside the list view as a list instead of gibberish.
+        url = reverse("v2:tagger_group-detail", kwargs={"project_pk": self.project.pk, "pk": response.data["id"]})
+        get_response = self.client.get(url)
+        self.assertTrue(get_response.status_code == status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data["blacklisted_facts"], list))

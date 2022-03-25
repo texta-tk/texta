@@ -11,12 +11,12 @@ from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from texta_elastic.core import ElasticCore
+from texta_elastic.searcher import ElasticSearcher
 
 from toolkit.core.health.utils import get_redis_status
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
-from texta_elastic.core import ElasticCore
-from texta_elastic.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, SerializerNotValid
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
@@ -72,6 +72,8 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
         fact_name = serializer.validated_data['fact_name']
         active_project = Project.objects.get(id=self.kwargs['project_pk'])
+        blacklisted_facts = serializer.validated_data["blacklisted_facts"]
+
         serialized_indices = [index["name"] for index in serializer.validated_data["tagger"]["indices"]]
         indices = Project.objects.get(pk=kwargs["project_pk"]).get_available_or_all_project_indices(serialized_indices)
         if not indices:
@@ -79,6 +81,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
         # retrieve tags with sufficient counts & create queries to build models
         tags = self.get_tags(fact_name, active_project, min_count=serializer.validated_data['minimum_sample_size'], indices=indices)
+        tags = [tag for tag in tags if tag not in set(blacklisted_facts)]
 
         # check if found any tags to build models on
         if not tags:
@@ -99,6 +102,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         tagger_group = serializer.save(
             author=self.request.user,
             project=Project.objects.get(id=self.kwargs['project_pk']),
+            blacklisted_facts=json.dumps(blacklisted_facts, ensure_ascii=False),
             num_tags=len(tags)
         )
 
