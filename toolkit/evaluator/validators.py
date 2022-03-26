@@ -37,7 +37,7 @@ def validate_metric_restrictions(value: json):
 def validate_fact(indices: List[str], fact: str):
     """ Check if given fact exists in the selected indices. """
     ag = ElasticAggregator(indices=indices)
-    fact_values = ag.get_fact_values_distribution(fact)
+    fact_values = ag.get_fact_values_distribution(fact, fact_name_size=choices.DEFAULT_MAX_FACT_AGGREGATION_SIZE)
     if not fact_values:
         raise ValidationError(f"Fact '{fact}' not present in any of the selected indices ({indices}).")
     return True

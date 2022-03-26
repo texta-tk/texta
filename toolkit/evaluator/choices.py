@@ -14,6 +14,9 @@ DEFAULT_AVG_FUNCTION = "macro"
 # Max number of fact values retrieved with facts aggregation
 DEFAULT_MAX_AGGREGATION_SIZE = 10000
 
+# Max number of fact names returned while validating the existance of facts in an index
+DEFAULT_MAX_FACT_AGGREGATION_SIZE = 5000
+
 # Max number of classes to calculate the confusion matrix.
 # If the number of classes exceeds the allowed limit,
 # an empty matrix is returned
