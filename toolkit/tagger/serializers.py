@@ -251,11 +251,25 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
             return tagger_stats
 
 
+    def _embedding_details(self, instance: Tagger):
+        if instance.embedding:
+            return {"id": instance.embedding.pk, "description": instance.embedding.description}
+        else:
+            return None
+
+
     def get_tagger_params(self, obj):
         if obj.taggers.exists():
-            first_tagger = obj.taggers.first()
+            first_tagger: Tagger = obj.taggers.first()
             params = {
                 'fields': json.loads(first_tagger.fields),
+                'detect_lang': first_tagger.detect_lang,
+                'scoring_function': first_tagger.scoring_function,
+                'maximum_sample_size': first_tagger.maximum_sample_size,
+                'negative_multiplier': first_tagger.negative_multiplier,
+                'snowball_language': first_tagger.snowball_language,
+                'embedding': self._embedding_details(first_tagger),
+                'indices': first_tagger.get_indices(),
                 'vectorizer': first_tagger.vectorizer,
                 'classifier': first_tagger.classifier,
                 'analyzer': first_tagger.analyzer,
