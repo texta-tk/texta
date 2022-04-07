@@ -186,7 +186,7 @@ class AnnotatorViewset(mixins.CreateModelMixin,
             index=serializer.validated_data["index"],
             user=request.user
         )
-        return Response({"detail": f"Skipped document with ID: {serializer.validated_data['document_id']}"})
+        return Response({"detail": f"Annotated document with ID: {serializer.validated_data['document_id']}"})
 
 
     @action(detail=True, methods=["POST"], serializer_class=BinaryAnnotationSerializer)
