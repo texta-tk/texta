@@ -83,7 +83,7 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
     @action(detail=True, methods=['get', 'post'])
     def list_features(self, request, pk=None, project_pk=None):
         """Returns list of features for the extactor."""
-        extractor: Extractor = self.get_object()
+        extractor: CRFExtractor = self.get_object()
         # check if model exists
         if not extractor.model.path:
             raise NonExistantModelError()
@@ -133,7 +133,7 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         # apply mlp
         text = serializer.validated_data["text"]
         with allow_join_result():
-            mlp = apply_mlp_on_list.apply_async(kwargs={"texts": [text], "analyzers": ["lemmas", "pos_tags", "sentences"]}, queue=CELERY_MLP_TASK_QUEUE).get()
+            mlp = apply_mlp_on_list.apply_async(kwargs={"texts": [text], "analyzers": extractor.mlp_analyzers}, queue=CELERY_MLP_TASK_QUEUE).get()
             mlp_document = mlp[0]
         # apply extractor
         extractor_response = apply_crf_extractor(
