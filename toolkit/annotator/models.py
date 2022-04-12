@@ -218,12 +218,16 @@ class Annotator(TaskModel):
         """
         ed = ESDocObject(document_id=document_id, index=index)
 
+        spans = []
+
         for fact in texta_facts:
             if "id" in fact:
                 continue
             else:
-                first, last = fact["spans"]
-                ed.add_fact(fact_value=fact["str_val"], fact_name=fact["fact"], doc_path=fact["doc_path"], spans=json.dumps([first, last]))
+                for span in json.loads(fact["spans"]):
+                    first, last = span
+                    spans.append([first, last])
+                ed.add_fact(fact_value=fact["str_val"], fact_name=fact["fact"], doc_path=fact["doc_path"], spans=json.dumps(spans))
                 ed.add_annotated(self, user)
 
         ed.update()
