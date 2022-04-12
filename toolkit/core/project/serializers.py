@@ -94,6 +94,11 @@ class ProjectGetFactsSerializer(IndicesSerializerMixin):
         help_text='Include doc_paths in output. Default: False', default=False
     )
 
+    exclude_zero_spans = serializers.BooleanField(
+        default=choices.DEFAULT_EXCLUDE_ZERO_SPANS, #Default = False
+        help_text=f'Retrieve only facts with nonzero spans.'
+    )
+
 
 class HandleIndicesSerializer(serializers.Serializer):
     indices = serializers.PrimaryKeyRelatedField(many=True, queryset=Index.objects.filter(is_open=True), )
