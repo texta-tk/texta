@@ -218,9 +218,8 @@ class Annotator(TaskModel):
         """
         ed = ESDocObject(document_id=document_id, index=index)
 
-        spans = []
-
         for fact in texta_facts:
+            spans = []
             if "id" in fact:
                 continue
             else:
