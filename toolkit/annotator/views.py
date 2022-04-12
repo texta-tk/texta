@@ -179,10 +179,7 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         annotator: Annotator = self.get_object()
         annotator.add_entity(
             document_id=serializer.validated_data["document_id"],
-            fact_name=serializer.validated_data["fact_name"],
-            fact_value=serializer.validated_data["fact_value"],
-            field=serializer.validated_data["field"],
-            spans=serializer.validated_data["spans"],
+            texta_facts=serializer.validated_data["texta_facts"],
             index=serializer.validated_data["index"],
             user=request.user
         )
