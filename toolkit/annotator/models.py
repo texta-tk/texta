@@ -229,7 +229,7 @@ class Annotator(TaskModel):
                 ed.add_fact(fact_value=fact["str_val"], fact_name=fact["fact"], doc_path=fact["doc_path"], spans=json.dumps(spans))
                 ed.add_annotated(self, user)
 
-        self.generate_record(document_id, index=index, user_pk=user.pk, fact=fact, do_annotate=True)
+            self.generate_record(document_id, index=index, user_pk=user.pk, fact=fact, do_annotate=True)
 
         ed.update()
 
