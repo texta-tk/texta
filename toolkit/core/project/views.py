@@ -203,14 +203,30 @@ class GetFactsView(APIView):
             return Response([])
 
         vals_per_name = serializer.validated_data['values_per_name']
-        include_values = serializer.validated_data['output_type']
+        include_values = serializer.validated_data['include_values']
         fact_name = serializer.validated_data['fact_name']
-        doc_path = serializer.validated_data['doc_path']
-        
-        fact_map = ElasticAggregator(indices=project_indices).facts(size=vals_per_name, include_values=include_values, filter_by_fact_name=fact_name, include_doc_path=doc_path)
+        include_doc_path = serializer.validated_data['include_doc_path']
+        exclude_zero_spans = serializer.validated_data['exclude_zero_spans']
+        mlp_doc_path = serializer.validated_data['mlp_doc_path']
+
+        aggregator = ElasticAggregator(indices=project_indices)
+
+        if mlp_doc_path and exclude_zero_spans:
+            # If exclude_zerp_spans is enabled and mlp_doc_path specified, the other values don't have any effect -
+            # this behaviour might need to change at some point
+            fact_map = aggregator.facts(size=1, include_values=True, include_doc_path=True, exclude_zero_spans=exclude_zero_spans)
+
+        else:
+            fact_map = aggregator.facts(size=vals_per_name, include_values=include_values, filter_by_fact_name=fact_name, include_doc_path=include_doc_path, exclude_zero_spans=exclude_zero_spans)
 
         if fact_name:
             fact_map_list = [v for v in fact_map]
+
+        elif mlp_doc_path and exclude_zero_spans:
+            # Return only fact names where doc_path contains mlp_doc_path as a parent field and facts have spans.
+            # NB! Doesn't take into account the situation where facts have the same name, but different doc paths! Could happen!
+            fact_map_list = [k for k, v in fact_map.items() if v and mlp_doc_path == v[0]["doc_path"].rsplit(".", 1)[0]]
+
         elif include_values:
             fact_map_list = [{'name': k, 'values': v} for k, v in fact_map.items()]
         else:
