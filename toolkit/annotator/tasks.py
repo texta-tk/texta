@@ -113,6 +113,7 @@ def annotator_task(self, annotator_task_id):
     annotator_fields = json.loads(annotator_obj.fields)
     all_fields = annotator_fields
     all_fields.append("texta_meta.document_uuid")
+    all_fields.append("texta_facts")
     project_obj = Project.objects.get(id=annotator_obj.project_id)
     new_field_type = get_selected_fields(indices, annotator_fields)
     field_type = add_field_type(new_field_type)
