@@ -240,5 +240,86 @@ class BinaryAnnotatorTests(APITestCase):
         pass
 
 
+class EntityAnnotatorTests(APITestCase):
 
+    def setUp(self):
+        # Owner of the project
+        self.test_index_name = reindex_test_dataset()
+        self.secondary_index = reindex_test_dataset()
+        self.index, is_created = Index.objects.get_or_create(name=self.secondary_index)
+        self.user = create_test_user('annotator', 'my@email.com', 'pw')
+        self.user2 = create_test_user('annotator2', 'test@email.com', 'pw2')
+        self.project = project_creation("entityTestProject", self.test_index_name, self.user)
+        self.project.indices.add(self.index)
+        self.project.users.add(self.user)
+        self.project.users.add(self.user2)
 
+        self.client.login(username='annotator', password='pw')
+        self.ec = ElasticCore()
+
+        self.list_view_url = reverse("v2:annotator-list", kwargs={"project_pk": self.project.pk})
+        self.annotator = self._create_annotator()
+        self.pull_document_url = reverse("v2:annotator-pull-document", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
+
+    def test_all(self):
+        self.run_entity_annotation()
+
+    def _create_annotator(self):
+        payload = {
+            "description": "Random test annotation.",
+            "indices": [{"name": self.test_index_name}, {"name": self.secondary_index}],
+            "query": json.dumps(TEST_QUERY),
+            "fields": ["comment_content", TEST_FIELD],
+            "target_field": "comment_content",
+            "annotation_type": "entity",
+            "entity_configuration": {
+                "fact_name": "TOXICITY"
+            }
+        }
+        response = self.client.post(self.list_view_url, data=payload, format="json")
+        print_output("_create_annotator:response.status", response.status_code)
+        self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+
+        total_count = self.ec.es.count(index=f"{self.test_index_name},{self.secondary_index}").get("count", 0)
+        self.assertTrue(total_count > response.data["total"])
+        return response.data
+
+    def _pull_random_document(self):
+        url = reverse("v2:annotator-pull-document", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
+        response = self.client.post(url, format="json")
+        return response.data
+
+    def run_entity_annotation(self):
+        annotation_url = reverse("v2:annotator-annotate-entity", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
+        print_output("run_entity_annotation:annotation_url", annotation_url)
+        annotation_payloads = []
+        for i in range(2):
+            random_document = self._pull_random_document()
+            annotation_payloads.append(
+                {"index": random_document["_index"], "document_id": random_document["_id"], "texta_facts": [{"doc_path": "comment_content", "fact": "TOXICITY", "spans": "[[0,0]]", "str_val": "bar"}]}
+            )
+        print_output("annotation_document_before_0", annotation_payloads[0]['document_id'])
+        print_output("annotation_document_before_1", annotation_payloads[1]['document_id'])
+        while annotation_payloads[0]['document_id'] == annotation_payloads[1]['document_id']:
+            random_document = self._pull_random_document()
+            annotation_payloads[1] = {"index": random_document["_index"], "document_id": random_document["_id"], "texta_facts": [{"doc_path": "comment_content", "fact": "TOXICITY", "spans": "[[0,0]]", "str_val": "bar"}]}
+        print_output("run_entity_annotation:annotation_payloads", annotation_payloads)
+        for index_count, payload in enumerate(annotation_payloads):
+            print_output(f"run_entity_annotation:annotation_payload{index_count}", payload['document_id'])
+            annotation_response = self.client.post(annotation_url, data=payload, format="json")
+            # Test for response success.
+            print_output("run_entity_annotation:response.status", annotation_response.status_code)
+            self.assertTrue(annotation_response.status_code == status.HTTP_200_OK)
+
+            # Test that progress is updated properly.
+            model_object = Annotator.objects.get(pk=self.annotator["id"])
+            print_output("run_entity_annotation:annotator_model_obj", model_object.annotated)
+            print_output("run_entity_annotation:entity_index_count", index_count)
+            self.assertTrue(model_object.annotated == index_count + 1)
+
+            # Check that document was actually edited.
+            es_doc = self.ec.es.get(index=payload["index"], id=payload["document_id"])["_source"]
+            facts = es_doc["texta_facts"]
+            print_output("facts", facts)
+            print_output("mode_object", model_object.entity_configuration.fact_name)
+            self.assertTrue(model_object.entity_configuration.fact_name in [fact["fact"] for fact in facts])

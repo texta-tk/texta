@@ -205,7 +205,7 @@ class Annotator(TaskModel):
         return fact_name, value, spans, field, fact_id
 
 
-    def add_entity(self, document_id: str, spans: List, fact_name: str, field: str, fact_value: str, index: str, user):
+    def add_entity(self, document_id: str, texta_facts, index: str, user):
         """
         Adds an entity label to Elasticsearch documents during entity annotations.
         :param index:
@@ -217,9 +217,20 @@ class Annotator(TaskModel):
         :return:
         """
         ed = ESDocObject(document_id=document_id, index=index)
-        first, last = spans
-        ed.add_fact(fact_value=fact_value, fact_name=fact_name, doc_path=field, spans=json.dumps([first, last]))
-        ed.add_annotated(self, user)
+
+        for fact in texta_facts:
+            spans = []
+            if "id" in fact:
+                continue
+            else:
+                for span in json.loads(fact["spans"]):
+                    first, last = span
+                    spans.append([first, last])
+                ed.add_fact(fact_value=fact["str_val"], fact_name=fact["fact"], doc_path=fact["doc_path"], spans=json.dumps(spans))
+                ed.add_annotated(self, user)
+
+            self.generate_record(document_id, index=index, user_pk=user.pk, fact=fact, do_annotate=True)
+
         ed.update()
 
 

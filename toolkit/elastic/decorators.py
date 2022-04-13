@@ -1,6 +1,8 @@
 import logging
 
 import elasticsearch
+from rest_framework.exceptions import APIException
+from texta_elastic.exceptions import ElasticsearchError, NotFoundError
 
 from toolkit.elastic.exceptions import ElasticAuthenticationException, ElasticAuthorizationException, ElasticIndexNotFoundException, ElasticTimeoutException, ElasticTransportException
 from toolkit.settings import ERROR_LOGGER
@@ -38,6 +40,33 @@ def elastic_connection(func):
         except elasticsearch.exceptions.ConnectionTimeout as e:
             logging.getLogger(ERROR_LOGGER).error(e.info)
             raise ElasticTimeoutException(f"Connection to Elasticsearch timed out!")
+
+        except NotFoundError as e:
+            raise APIException("Could not connect to Elasticsearch, have you set up the URL right?")
+
+
+    return func_wrapper
+
+
+def elastic_view(func):
+    """
+    After the Elastic functions got sent to their library, the previous one isn't
+    functional anymore, this is for putting into views that use Elasticsearch functionality
+    to throw APIExceptions on Elasticsearch related errors.
+    """
+
+
+    def func_wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+
+        except ElasticsearchError as e:
+            logging.getLogger(ERROR_LOGGER).exception(e)
+            raise APIException("Could not handle the query you sent!")
+
+        except NotFoundError as e:
+            logging.getLogger(ERROR_LOGGER).exception(e)
+            raise APIException("Could not connect to Elasticsearch, do you have the right URL set?")
 
 
     return func_wrapper

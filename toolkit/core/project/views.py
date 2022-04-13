@@ -15,6 +15,12 @@ from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.core import ElasticCore
+from texta_elastic.document import ElasticDocument
+from texta_elastic.query import Query
+from texta_elastic.searcher import ElasticSearcher
+from texta_elastic.spam_detector import SpamDetector
 
 from toolkit.core.project.models import Project
 from toolkit.core.project.serializers import (
@@ -29,15 +35,10 @@ from toolkit.core.project.serializers import (
     ProjectSuggestFactNamesSerializer,
     ProjectSuggestFactValuesSerializer
 )
+from toolkit.elastic.decorators import elastic_view
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import IndexSerializer
-from texta_elastic.aggregator import ElasticAggregator
-from texta_elastic.core import ElasticCore
-from texta_elastic.document import ElasticDocument
-from texta_elastic.query import Query
-from texta_elastic.searcher import ElasticSearcher
 from toolkit.elastic.tools.serializers import ElasticScrollSerializer
-from texta_elastic.spam_detector import SpamDetector
 from toolkit.exceptions import InvalidInputDocument, ProjectValidationFailed, SerializerNotValid
 from toolkit.helper_functions import hash_string
 from toolkit.permissions.project_permissions import (AuthorProjAdminSuperadminAllowed, ExtraActionAccessInApplications, OnlySuperadminAllowed, ProjectAccessInApplicationsAllowed, ProjectEditAccessAllowed)
@@ -50,6 +51,7 @@ class ExportSearchView(APIView):
     permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
+    @elastic_view
     def post(self, request, project_pk: int):
         try:
             serializer = ExportSearcherResultsSerializer(data=request.data)
@@ -93,6 +95,7 @@ class ScrollView(APIView):
     permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
+    @elastic_view
     def post(self, request, project_pk: int):
         serializer = ElasticScrollSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -119,6 +122,7 @@ class GetSpamView(APIView):
     permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
+    @elastic_view
     def post(self, request, project_pk: int):
         """
         Analyses Elasticsearch inside the project to detect frequently occuring texts.
@@ -147,6 +151,7 @@ class GetFieldsView(APIView):
     permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
+    @elastic_view
     def get(self, request, project_pk: int):
         """Returns list of fields from all Elasticsearch indices inside the project."""
         project_object = get_object_or_404(Project, pk=project_pk)
@@ -176,6 +181,7 @@ class GetFactsView(APIView):
     permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
+    @elastic_view
     def post(self, request, project_pk: int):
         """
         Returns existing fact names and values from Elasticsearch.
@@ -215,6 +221,7 @@ class GetIndicesView(APIView):
     permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
+    @elastic_view
     def get(self, request, project_pk: int):
         """Returns list of available indices in project."""
         project_object = get_object_or_404(Project, pk=project_pk)
@@ -227,6 +234,7 @@ class SearchView(APIView):
     permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
+    @elastic_view
     def post(self, request, project_pk: int):
         """Simplified search interface for making Elasticsearch queries."""
         serializer = ProjectSimplifiedSearchSerializer(data=request.data)
@@ -274,6 +282,7 @@ class SearchByQueryView(APIView):
     permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
+    @elastic_view
     def post(self, request, project_pk: int):
         """Executes **raw** Elasticsearch query on all project indices."""
         project = get_object_or_404(Project, pk=project_pk)
@@ -305,6 +314,8 @@ class DocumentView(GenericAPIView):
     permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
     serializer_class = ProjectDocumentSerializer
 
+
+    @elastic_view
     def post(self, request, project_pk: int):
         project: Project = get_object_or_404(Project, pk=project_pk)
         self.check_object_permissions(request, project)

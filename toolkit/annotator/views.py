@@ -179,14 +179,11 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         annotator: Annotator = self.get_object()
         annotator.add_entity(
             document_id=serializer.validated_data["document_id"],
-            fact_name=serializer.validated_data["fact_name"],
-            fact_value=serializer.validated_data["fact_value"],
-            field=serializer.validated_data["field"],
-            spans=serializer.validated_data["spans"],
+            texta_facts=serializer.validated_data["texta_facts"],
             index=serializer.validated_data["index"],
             user=request.user
         )
-        return Response({"detail": f"Skipped document with ID: {serializer.validated_data['document_id']}"})
+        return Response({"detail": f"Annotated document with ID: {serializer.validated_data['document_id']}"})
 
 
     @action(detail=True, methods=["POST"], serializer_class=BinaryAnnotationSerializer)
