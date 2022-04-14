@@ -79,19 +79,27 @@ class ProjectSimplifiedSearchSerializer(serializers.Serializer):
 class ProjectGetFactsSerializer(IndicesSerializerMixin):
     values_per_name = serializers.IntegerField(
         default=choices.DEFAULT_VALUES_PER_NAME,
-        help_text=f'Number of fact values per fact name. Default: 10.'
+        help_text=f'Number of fact values per fact name.'
     )
-    output_type = serializers.ChoiceField(
-        choices=((True, 'fact names with values'), (False, 'fact names without values')),
-        help_text=f'Include fact values in output. Default: True', default=True
+    include_values = serializers.BooleanField(
+        default=choices.DEFAULT_INCLUDE_VALUES,
+        help_text=f'If enabled, fact values are included in the output.',
     )
     fact_name = serializers.CharField(
-        default="",
-        help_text="Filter by fact name."
+        default=choices.DEFAULT_FACT_NAME,
+        help_text='Filter by fact name.'
     )
-    doc_path = serializers.ChoiceField(
-        choices=((True, 'with doc_path'), (False, 'without doc_path')),
-        help_text='Include doc_paths in output. Default: False', default=False
+    include_doc_path = serializers.BooleanField(
+        default=choices.DEFAULT_INCLUDE_DOC_PATH,
+        help_text='If enabled, doc_path is included in the output.'
+    )
+    exclude_zero_spans = serializers.BooleanField(
+        default=choices.DEFAULT_EXCLUDE_ZERO_SPANS,
+        help_text=f'If enabled, only facts with nonzero spans are returned.'
+    )
+    mlp_doc_path = serializers.CharField(
+        default=choices.DEFAULT_MLP_DOC_PATH,
+        help_text='Specify the doc_path of MLP fields and apply it as a filter.'
     )
 
 
