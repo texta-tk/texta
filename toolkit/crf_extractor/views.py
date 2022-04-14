@@ -158,12 +158,14 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
 
             indices = [index["name"] for index in serializer.validated_data["indices"]]
             mlp_fields = serializer.validated_data["mlp_fields"]
+            label_suffix = serializer.validated_data["label_suffix"]
             query = serializer.validated_data["query"]
             bulk_size = serializer.validated_data["bulk_size"]
             max_chunk_bytes = serializer.validated_data["max_chunk_bytes"]
             es_timeout = serializer.validated_data["es_timeout"]
 
-            args = (pk, indices, mlp_fields, query, bulk_size, max_chunk_bytes, es_timeout)
+
+            args = (pk, indices, mlp_fields, label_suffix, query, bulk_size, max_chunk_bytes, es_timeout)
             transaction.on_commit(lambda: apply_crf_extractor_to_index.apply_async(args=args, queue=CELERY_LONG_TERM_TASK_QUEUE))
 
             message = "Started process of applying Tagger with id: {}".format(extractor.id)
