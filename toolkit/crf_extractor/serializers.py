@@ -102,8 +102,12 @@ class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, 
 class ApplyCRFExtractorSerializer(FieldParseSerializer, IndicesSerializerMixin, ElasticScrollMixIn):
     mlp_fields = serializers.ListField(child=serializers.CharField())
     query = serializers.JSONField(
-        help_text='Filter the documents which to scroll and apply to.',
+        help_text="Filter the documents which to scroll and apply to.",
         default=json.dumps(EMPTY_QUERY)
+    )
+    label_suffix = serializers.CharField(
+        help_text="Suffix added to fact names to distinguish them from other facts with the same name.",
+        default=""
     )
 
 

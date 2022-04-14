@@ -163,6 +163,7 @@ def update_generator(
     generator: ElasticSearcher,
     ec: ElasticCore,
     mlp_fields: List[str],
+    label_suffix: str,
     object_id: int,
     extractor: CRFExtractor = None
     ):
@@ -175,7 +176,7 @@ def update_generator(
             hit = raw_doc["_source"]
             existing_facts = hit.get("texta_facts", [])
             for mlp_field in mlp_fields:
-                new_facts = extractor.tag(hit, field_name=mlp_field)["texta_facts"]
+                new_facts = extractor.tag(hit, field_name=mlp_field, label_suffix=label_suffix)["texta_facts"]
                 if new_facts:
                     existing_facts.extend(new_facts)
 
@@ -197,6 +198,7 @@ def apply_crf_extractor_to_index(
     object_id: int,
     indices: List[str],
     mlp_fields: List[str],
+    label_suffix: str,
     query: dict,
     bulk_size: int,
     max_chunk_bytes: int,
@@ -228,6 +230,7 @@ def apply_crf_extractor_to_index(
             generator=searcher,
             ec=ec,
             mlp_fields=mlp_fields,
+            label_suffix=label_suffix,
             object_id=object_id,
             extractor=extractor
         )

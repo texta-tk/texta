@@ -87,6 +87,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
         self.run_tag_text()
         self.run_test_export_import()
         self.run_apply_crf_to_index()
+        self.run_apply_crf_to_index_with_specified_label_suffix()
 
     def run_create_crf_training_and_task_signal(self):
         for embedding_id in self.embedding_ids:
@@ -130,7 +131,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
             self.assertTrue(len(response.data["features"]["positive"]))
-            self.assertTrue(len(response.data["features"]["negative"]))   
+            self.assertTrue(len(response.data["features"]["negative"]))
 
 
     def run_tag_text(self):
@@ -197,7 +198,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
             sleep(2)
 
         results_old = ElasticAggregator(indices=[self.test_index_name]).get_fact_values_distribution("GPE")
-        print_output("test_apply_crf_to_index_bofore:elastic aggerator results:", results_old)
+        print_output("test_apply_crf_to_index_before:elastic aggerator results:", results_old)
 
         results_new = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution("GPE")
         print_output("test_apply_crf_to_index_after:elastic aggerator results:", results_new)
@@ -205,6 +206,34 @@ class CRFExtractorViewTests(APITransactionTestCase):
         # assert we have more facts than before
         for item in ["China", "U.S.", "Iran"]:
             self.assertTrue(results_old[item] < results_new[item])
+
+
+    def run_apply_crf_to_index_with_specified_label_suffix(self):
+        """Tests applying extractor to index with specified label suffix using apply_to_index endpoint."""
+        test_tagger_id = self.test_crf_ids[0]
+        url = f'{self.url}{test_tagger_id}/apply_to_index/'
+        label_suffix = "CRF_TEST"
+        payload = {
+            "description": "apply crf test task",
+            "mlp_fields": ["text_mlp"],
+            "indices": [{"name": self.test_index_copy}],
+            "label_suffix": label_suffix
+        }
+        response = self.client.post(url, payload, format='json')
+        print_output('test_apply_crf_to_index:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        tagger_object = CRFExtractor.objects.get(pk=test_tagger_id)
+
+        # Wait til the task has finished
+        while tagger_object.task.status != Task.STATUS_COMPLETED:
+            print_output('test_apply_crf_to_index_with_specified_label_suffix: waiting for applying tagger task to finish, current status:', tagger_object.task.status)
+            sleep(2)
+
+        results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution(f"GPE_{label_suffix}")
+        print_output("test_apply_crf_to_index_with_specified_label_suffix:elastic aggerator results:", results)
+
+        # assert we have more facts than before
+        self.assertTrue(len(results) > 1)
 
 
 # TODO: test training with incorrect fields & labels
