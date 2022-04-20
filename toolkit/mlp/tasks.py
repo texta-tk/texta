@@ -4,12 +4,12 @@ from typing import List, Optional
 
 from celery import group
 from celery.decorators import task
+from texta_elastic.document import ElasticDocument
+from texta_elastic.searcher import ElasticSearcher
 from texta_mlp.mlp import MLP
 
 from toolkit.base_tasks import BaseTask, QuietTransactionAwareTask, TransactionAwareTask
 from toolkit.core.task.models import Task
-from texta_elastic.document import ElasticDocument
-from texta_elastic.searcher import ElasticSearcher
 from toolkit.helper_functions import chunks_iter
 from toolkit.mlp.helpers import process_lang_actions
 from toolkit.mlp.models import ApplyLangWorker, MLPWorker
@@ -66,7 +66,8 @@ def apply_mlp_on_documents(documents: List[dict], analyzers: List[str], field_da
     # Apply MLP
     try:
         load_mlp()
-        documents = mlp.process_docs(documents, analyzers=analyzers, doc_paths=field_data)
+        spans = "sentence" if "sentences" in analyzers or "all" in analyzers else "text"
+        documents = mlp.process_docs(documents, analyzers=analyzers, doc_paths=field_data, spans=spans)
         return documents
 
     except Exception as e:
