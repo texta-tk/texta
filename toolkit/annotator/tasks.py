@@ -201,8 +201,8 @@ def annotator_task(self, annotator_task_id):
                 annotator_fields.append("texta_meta.document_uuid")
             logging.getLogger(INFO_LOGGER).info(f"Saving new annotator object ID {new_annotator_obj.id}")
 
-            new_annotator_obj.add_annotation_mapping(new_indices)
-            new_annotator_obj.add_texta_meta_mapping(new_indices)
+        new_annotator_obj.add_annotation_mapping(new_indices)
+        new_annotator_obj.add_texta_meta_mapping(new_indices)
 
         annotator_obj.annotator_users.clear()
         annotator_obj.save()
