@@ -4,14 +4,13 @@ from typing import List, Optional
 
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models import signals
+from texta_elastic.document import ESDocObject
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from texta_elastic.document import ESDocObject
 from toolkit.model_constants import TaskModel
-from toolkit.settings import DESCRIPTION_CHAR_LIMIT, CELERY_LONG_TERM_TASK_QUEUE
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, DESCRIPTION_CHAR_LIMIT
 
 
 # Create your models here.
@@ -115,6 +114,7 @@ class Annotator(TaskModel):
         restraint = Record.objects.filter(annotated_utc__isnull=True, skipped_utc__isnull=False, annotation_job=self)
         return restraint.count()
 
+
     def create_annotator_task(self):
         new_task = Task.objects.create(annotator=self, status='created')
         self.task = new_task
@@ -205,33 +205,38 @@ class Annotator(TaskModel):
         return fact_name, value, spans, field, fact_id
 
 
-    def add_entity(self, document_id: str, texta_facts, index: str, user):
+    def add_entity(self, document_id: str, texta_facts: List[dict], index: str, user):
         """
         Adds an entity label to Elasticsearch documents during entity annotations.
-        :param index:
-        :param field: Which field was used to annotate.
+        :param user: Which user is adding the Facts.
+        :param texta_facts: Facts to store inside Elasticsearch.
+        :param index: Index into which the Facts are stored.
         :param document_id: Elasticsearch document ID of the comment in question.
-        :param spans: At which position in the text does the label belong to.
-        :param fact_name: Which fact name to give to the Elasticsearch document.
-        :param fact_value: Which fact value to give to the Elasticsearch document.
         :return:
         """
         ed = ESDocObject(document_id=document_id, index=index)
+        if texta_facts:
+            for fact in texta_facts:
+                spans = []
+                if "id" in fact:
+                    continue
+                else:
+                    for span in json.loads(fact["spans"]):
+                        first, last = span
+                        spans.append([first, last])
+                    ed.add_fact(fact_value=fact["str_val"], fact_name=fact["fact"], doc_path=fact["doc_path"], spans=json.dumps(spans))
 
-        for fact in texta_facts:
-            spans = []
-            if "id" in fact:
-                continue
-            else:
-                for span in json.loads(fact["spans"]):
-                    first, last = span
-                    spans.append([first, last])
-                ed.add_fact(fact_value=fact["str_val"], fact_name=fact["fact"], doc_path=fact["doc_path"], spans=json.dumps(spans))
-                ed.add_annotated(self, user)
+                    # TODO Look if this can be pulled outside the loop, should be done once per document.
+                    ed.add_annotated(self, user)
 
-            self.generate_record(document_id, index=index, user_pk=user.pk, fact=fact, do_annotate=True)
+                self.generate_record(document_id, index=index, user_pk=user.pk, fact=fact, do_annotate=True)
 
-        ed.update()
+            ed.update()
+        else:
+            # In case the users marks the document as 'done' but it has no Facts to add.
+            ed.add_annotated(self, user)
+            ed.update()
+            self.generate_record(document_id, index=index, user_pk=user.pk, do_annotate=True)
 
 
     def pull_document(self) -> Optional[dict]:
@@ -341,6 +346,7 @@ class Annotator(TaskModel):
         ec = ElasticCore()
         for index in indices:
             ec.add_annotator_mapping(index)
+
 
     @staticmethod
     def add_texta_meta_mapping(indices: List[str]):
