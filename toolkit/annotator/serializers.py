@@ -1,19 +1,19 @@
 import json
 
-from django.urls import reverse
 from django.contrib.auth.models import User
+from django.urls import reverse
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.searcher import ElasticSearcher
 
+from toolkit.annotator.choices import MAX_VALUE
 from toolkit.annotator.models import Annotator, BinaryAnnotatorConfiguration, Category, Comment, EntityAnnotatorConfiguration, Label, Labelset, MultilabelAnnotatorConfiguration, Record
 from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.models import Index
-from texta_elastic.searcher import ElasticSearcher
-from texta_elastic.aggregator import ElasticAggregator
 from toolkit.serializer_constants import FieldParseSerializer, ToolkitTaskSerializer
-from toolkit.annotator.choices import MAX_VALUE
 
 
 ANNOTATION_MAPPING = {
@@ -44,9 +44,11 @@ class LabelsetSerializer(serializers.Serializer):
         data["id"] = instance.id
         return data
 
+
     class Meta:
         model = Labelset
         fields = "__all__"
+
 
     indices = serializers.ListSerializer(child=serializers.CharField(), default="[]", required=False, help_text="List of indices.")
     fact_names = serializers.ListSerializer(child=serializers.CharField(), default="[]", required=False, help_text="List of fact_names.")
@@ -205,6 +207,7 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
 
         return instance
 
+
     def get_url(self, obj):
         index = reverse(f"v2:annotator-detail", kwargs={"project_pk": obj.project.pk, "pk": obj.pk})
         if "request" in self.context:
@@ -256,7 +259,6 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
             except Exception as e:
                 raise serializers.ValidationError(e)
 
-
         configuration = self.__get_configurations(validated_data)
         total = self.__get_total(indices=indices, query=json.loads(validated_data["query"]))
 
@@ -296,6 +298,13 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
             elif annotator_type == "entity":
                 if not attrs.get("entity_configuration", None):
                     raise ValidationError("When choosing the entity annotation, relevant configurations must be added!")
+
+                # Since the way fields are handled comes with the serializer and model mixins (being shared by all annotation types), the sanest solution
+                # to ensure only a single field is inserted is by checking it pre-everything else in the first stages of validation.
+                fields = attrs.get("fields", [])
+                if len(fields) != 1:
+                    raise ValidationError("Please ensure only one 'field' is chosen!")
+
             return attrs
         return attrs
 
