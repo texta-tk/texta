@@ -1,19 +1,22 @@
 import json
 import logging
 import uuid
-from django.core import serializers
+from typing import List
+
+import texta_mlp.settings
 from celery.decorators import task
+from django.contrib.auth.models import User
 from elasticsearch.helpers import streaming_bulk
+from texta_elastic.core import ElasticCore
+from texta_elastic.document import ElasticDocument
+from texta_elastic.mapping_tools import get_selected_fields, update_field_types, update_mapping
+from texta_elastic.searcher import ElasticSearcher
+
+from toolkit.annotator.models import Annotator
 from toolkit.base_tasks import BaseTask
+from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from django.contrib.auth.models import User
-from toolkit.annotator.models import Annotator
-from toolkit.core.project.models import Project
-from texta_elastic.core import ElasticCore
-from texta_elastic.searcher import ElasticSearcher, EMPTY_QUERY
-from texta_elastic.document import ElasticDocument
-from texta_elastic.mapping_tools import update_field_types, update_mapping, get_selected_fields
 from toolkit.settings import ERROR_LOGGER, INFO_LOGGER
 from toolkit.tools.show_progress import ShowProgress
 
@@ -26,8 +29,7 @@ def add_field_type(fields):
 
 
 def unflatten_doc(doc):
-    """ Unflatten document retrieved from ElasticSearcher.
-    """
+    """ Unflatten document retrieved from ElasticSearcher."""
     unflattened_doc = {}
     nested_fields = [(k, v) for k, v in doc.items() if '.' in k]
     not_nested_fields = {k: v for k, v in doc.items() if '.' not in k}
@@ -69,6 +71,10 @@ def annotator_bulk_generator(generator, index: str):
 
 
 def add_doc_uuid(generator: ElasticSearcher):
+    """
+    Add unique document ID's so that annotations across multiple sub-indices could be mapped together in the end. Refer to https://git.texta.ee/texta/texta-rest/-/issues/589
+    :param generator: Source of elasticsearch documents, can be any iterator.
+    """
     for i, scroll_batch in enumerate(generator):
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
@@ -93,28 +99,37 @@ def bulk_add_documents(elastic_search: ElasticSearcher, elastic_doc: ElasticDocu
     elastic_doc.bulk_add_generator(actions=actions, chunk_size=chunk_size, refresh="wait_for")
 
 
+def __add_meta_to_original_index(indices: List[str], index_fields: List[str], show_progress: ShowProgress, query: dict, scroll_size: int, elastic_wrapper: ElasticCore):
+    index_elastic_search = ElasticSearcher(
+        indices=indices,
+        field_data=index_fields,
+        callback_progress=show_progress,
+        query=query,
+        output=ElasticSearcher.OUT_RAW,
+        scroll_size=scroll_size
+    )
+    index_actions = add_doc_uuid(generator=index_elastic_search)
+    for success, info in streaming_bulk(client=elastic_wrapper.es, actions=index_actions, refresh="wait_for", chunk_size=scroll_size, max_retries=3):
+        if not success:
+            logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
+
+
 @task(name="annotator_task", base=BaseTask, bind=True)
 def annotator_task(self, annotator_task_id):
     annotator_obj = Annotator.objects.get(pk=annotator_task_id)
-    indices_obj = json.loads(serializers.serialize("json", annotator_obj.indices.all()))
-    users_obj = json.loads(serializers.serialize("json", annotator_obj.annotator_users.all()))
 
-    indices = []
-    users = []
-
-    for val in indices_obj:
-        indices.append(val["fields"]["name"])
-    for user_val in users_obj:
-        users.append(user_val["pk"])
+    indices = annotator_obj.get_indices()
+    users = [user.pk for user in annotator_obj.annotator_users.all()]
 
     task_object = annotator_obj.task
-    indices = json.loads(json.dumps(indices))
-    users = json.loads(json.dumps(users))
     annotator_fields = json.loads(annotator_obj.fields)
     all_fields = annotator_fields
     all_fields.append("texta_meta.document_uuid")
+
     if annotator_obj.annotation_type == 'entity':
         all_fields.append("texta_facts")
+        all_fields.append(texta_mlp.settings.META_KEY)  # Include MLP Meta key here so it would be pulled from Elasticsearch.
+
     project_obj = Project.objects.get(id=annotator_obj.project_id)
     new_field_type = get_selected_fields(indices, annotator_fields)
     field_type = add_field_type(new_field_type)
@@ -139,16 +154,19 @@ def annotator_task(self, annotator_task_id):
         index_fields = ec.get_fields(indices)
         index_fields = [index_field["path"] for index_field in index_fields]
 
+        # ElasticSearcher seems to be broken when handling scrolls with only the main field in its field_data instead of all of them in dot notation.
+        # Hence this ugly hack is needed if I want to include the MLP meta field inside the output.
+        for annotator_field in json.loads(annotator_obj.fields):
+            for index_field in index_fields:
+                stripped_mlp_field = annotator_field.split("_mlp.")[0] if "_mlp." in annotator_field else annotator_field
+                if texta_mlp.settings.META_KEY in index_field and stripped_mlp_field in index_field:
+                    all_fields.append(index_field)
+
         show_progress = ShowProgress(task_object, multiplier=1)
         show_progress.update_step("scrolling data")
         show_progress.update_view(0)
 
-        index_elastic_search = ElasticSearcher(indices=indices, field_data=index_fields, callback_progress=show_progress,
-                                         query=query, output=ElasticSearcher.OUT_RAW, scroll_size=scroll_size)
-        index_actions = add_doc_uuid(generator=index_elastic_search)
-        for success, info in streaming_bulk(client=ec.es, actions=index_actions, refresh="wait_for", chunk_size=scroll_size, max_retries=3):
-            if not success:
-                logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
+        __add_meta_to_original_index(indices, index_fields, show_progress, query, scroll_size, ec)
 
         for new_annotator in new_annotators:
             new_annotator_obj = Annotator.objects.create(
@@ -156,7 +174,7 @@ def annotator_task(self, annotator_task_id):
                 author=annotator_obj.author,
                 project=annotator_obj.project,
                 total=annotator_obj.total,
-                fields=json.dumps(annotator_fields),
+                fields=annotator_obj.fields,
                 add_facts_mapping=add_facts_mapping,
                 annotation_type=annotator_obj.annotation_type,
                 binary_configuration=annotator_obj.binary_configuration,
@@ -193,12 +211,7 @@ def annotator_task(self, annotator_task_id):
                         # set new_index name as mapping name
                         bulk_add_documents(elastic_search, elastic_doc, index=new_index, chunk_size=scroll_size, flatten_doc=False)
 
-            if "texta_meta.document_uuid" in annotator_fields:
-                annotator_fields.remove("texta_meta.document_uuid")
-                new_annotator_obj.fields = json.dumps(annotator_fields)
             new_annotator_obj.save()
-            if "texta_meta.document_uuid" not in annotator_fields:
-                annotator_fields.append("texta_meta.document_uuid")
             logging.getLogger(INFO_LOGGER).info(f"Saving new annotator object ID {new_annotator_obj.id}")
 
         new_annotator_obj.add_annotation_mapping(new_indices)

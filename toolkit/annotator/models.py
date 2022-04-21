@@ -127,7 +127,7 @@ class Annotator(TaskModel):
     def add_pos_label(self, document_id: str, index: str, user):
         """
         Adds a positive label to the Elasticsearch document for Binary annotation.
-        :param user_pk:
+        :param user: User that does the annotation.
         :param index: Which index does said Elasticsearch document reside in.
         :param document_id: Elasticsearch document ID of the comment in question.
         :return:
