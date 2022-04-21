@@ -75,6 +75,11 @@ class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, 
         default=DEFAULT_EXTRACTORS,
         help_text="Feature extractors used for the observed word and it's context."
     )
+    context_feature_extractors = serializers.MultipleChoiceField(
+        choices=FEATURE_EXTRACTOR_CHOICES,
+        default=DEFAULT_EXTRACTORS,
+        help_text="Feature extractors used for the context of the observed word."
+    )
     embedding = ProjectFilteredPrimaryKeyRelatedField(
         queryset=Embedding.objects,
         many=False,
@@ -92,7 +97,7 @@ class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, 
         fields = (
             'id', 'url', 'author', 'description', 'query', 'indices', 'mlp_field',
             'window_size', 'test_size', 'num_iter', 'best_c1', 'best_c2', 'bias', 'suffix_len',
-            'labels', 'feature_fields', 'context_feature_fields', 'feature_extractors',
+            'labels', 'feature_fields', 'context_feature_fields', 'feature_extractors', 'context_feature_extractors',
             'embedding', 'task', 'precision', 'recall', 'f1_score', 'c_values'
         )
         read_only_fields = ()
