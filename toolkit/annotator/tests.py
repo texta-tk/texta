@@ -1,14 +1,13 @@
 # Create your tests here.
 import json
-import time
 
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+from texta_elastic.core import ElasticCore
 
 from toolkit.annotator.models import Annotator
 from toolkit.elastic.index.models import Index
-from texta_elastic.core import ElasticCore
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.settings import TEXTA_ANNOTATOR_KEY
 from toolkit.test_settings import TEST_FIELD, TEST_MATCH_TEXT, TEST_QUERY
@@ -76,6 +75,7 @@ class BinaryAnnotatorTests(APITestCase):
         url = reverse("v2:annotator-pull-document", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
         response = self.client.post(url, format="json")
         return response.data
+
 
     def run_create_annotator_for_multi_user(self):
         payload = {
@@ -160,6 +160,7 @@ class BinaryAnnotatorTests(APITestCase):
         random_document = self._pull_random_document()
         self.assertTrue(random_document["detail"] == 'No more documents left!')
 
+
     def run_create_labelset(self):
         payload = {
             "indices": [self.test_index_name, self.secondary_index],
@@ -171,6 +172,7 @@ class BinaryAnnotatorTests(APITestCase):
         response = self.client.post(reverse("v2:labelset-list", kwargs={"project_pk": self.project.pk}), data=payload, format="json")
         print_output("run_create_labelset:response.status", response.status_code)
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+
 
     def run_pulling_comment_for_document(self, document_id):
         url = reverse("v2:annotator-get-comments", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
@@ -261,16 +263,18 @@ class EntityAnnotatorTests(APITestCase):
         self.annotator = self._create_annotator()
         self.pull_document_url = reverse("v2:annotator-pull-document", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
 
+
     def test_all(self):
         self.run_entity_annotation()
+
 
     def _create_annotator(self):
         payload = {
             "description": "Random test annotation.",
             "indices": [{"name": self.test_index_name}, {"name": self.secondary_index}],
             "query": json.dumps(TEST_QUERY),
-            "fields": ["comment_content", TEST_FIELD],
-            "target_field": "comment_content",
+            "fields": [TEST_FIELD],
+            "users": [self.user.pk],
             "annotation_type": "entity",
             "entity_configuration": {
                 "fact_name": "TOXICITY"
@@ -284,10 +288,12 @@ class EntityAnnotatorTests(APITestCase):
         self.assertTrue(total_count > response.data["total"])
         return response.data
 
+
     def _pull_random_document(self):
         url = reverse("v2:annotator-pull-document", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
         response = self.client.post(url, format="json")
         return response.data
+
 
     def run_entity_annotation(self):
         annotation_url = reverse("v2:annotator-annotate-entity", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
@@ -296,13 +302,13 @@ class EntityAnnotatorTests(APITestCase):
         for i in range(2):
             random_document = self._pull_random_document()
             annotation_payloads.append(
-                {"index": random_document["_index"], "document_id": random_document["_id"], "texta_facts": [{"doc_path": "comment_content", "fact": "TOXICITY", "spans": "[[0,0]]", "str_val": "bar"}]}
+                {"index": random_document["_index"], "document_id": random_document["_id"], "texta_facts": [{"doc_path": TEST_FIELD, "fact": "TOXICITY", "spans": "[[0,0]]", "str_val": "bar"}]}
             )
         print_output("annotation_document_before_0", annotation_payloads[0]['document_id'])
         print_output("annotation_document_before_1", annotation_payloads[1]['document_id'])
         while annotation_payloads[0]['document_id'] == annotation_payloads[1]['document_id']:
             random_document = self._pull_random_document()
-            annotation_payloads[1] = {"index": random_document["_index"], "document_id": random_document["_id"], "texta_facts": [{"doc_path": "comment_content", "fact": "TOXICITY", "spans": "[[0,0]]", "str_val": "bar"}]}
+            annotation_payloads[1] = {"index": random_document["_index"], "document_id": random_document["_id"], "texta_facts": [{"doc_path": TEST_FIELD, "fact": "TOXICITY", "spans": "[[0,0]]", "str_val": "bar"}]}
         print_output("run_entity_annotation:annotation_payloads", annotation_payloads)
         for index_count, payload in enumerate(annotation_payloads):
             print_output(f"run_entity_annotation:annotation_payload{index_count}", payload['document_id'])
