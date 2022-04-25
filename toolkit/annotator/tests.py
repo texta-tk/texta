@@ -56,6 +56,7 @@ class BinaryAnnotatorTests(APITestCase):
             "fields": ["comment_content", TEST_FIELD],
             "target_field": "comment_content",
             "annotation_type": "binary",
+            "annotating_users": ["annotator"],
             "binary_configuration": {
                 "fact_name": "TOXICITY",
                 "pos_value": "DO_DELETE",
@@ -274,7 +275,7 @@ class EntityAnnotatorTests(APITestCase):
             "indices": [{"name": self.test_index_name}, {"name": self.secondary_index}],
             "query": json.dumps(TEST_QUERY),
             "fields": [TEST_FIELD],
-            "users": [self.user.pk],
+            "annotating_users": ["annotator"],
             "annotation_type": "entity",
             "entity_configuration": {
                 "fact_name": "TOXICITY"
