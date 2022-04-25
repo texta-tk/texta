@@ -305,6 +305,10 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
                 if len(fields) != 1:
                     raise ValidationError("Please ensure only one 'field' is chosen!")
 
+        users = attrs.get("annotating_users", [])
+        if len(users) < 1:
+            raise ValidationError("Please ensure at least 'one' user is chosen.")
+
             return attrs
         return attrs
 
