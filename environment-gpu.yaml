@@ -27,8 +27,7 @@ dependencies:
       - django-cors-headers
       - django-extensions
       - django-filter
-      - django-rest-auth[with_social]
-      - dj-rest-auth
+      - dj-rest-auth[with_social]
       - djangorestframework==3.11.*
       - drf-nested-routers
       - celery==4.*
