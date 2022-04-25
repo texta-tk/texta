@@ -319,6 +319,7 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
         fields = (
             'id',
             'url',
+            'annotator_uid',
             'author',
             'description',
             'indices',
@@ -343,7 +344,7 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
             "bulk_size",
             "es_timeout"
         )
-        read_only_fields = ["author", "annotator_users", "total", "annotated", "validated", "skipped", "created_at", "modified_at", "completed_at"]
+        read_only_fields = ["annotator_uid", "author", "annotator_users", "total", "annotated", "validated", "skipped", "created_at", "modified_at", "completed_at"]
         fields_to_parse = ("fields",)
 
 

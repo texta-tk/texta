@@ -170,7 +170,8 @@ def annotator_task(self, annotator_task_id):
 
         for new_annotator in new_annotators:
             new_annotator_obj = Annotator.objects.create(
-                description=f"{annotator_obj.description}_{new_annotator}_{annotator_obj.task_id}",
+                annotator_uid=f"{annotator_obj.description}_{new_annotator}_{annotator_obj.task_id}",
+                description=f"{annotator_obj.description}",
                 author=annotator_obj.author,
                 project=annotator_obj.project,
                 total=annotator_obj.total,
