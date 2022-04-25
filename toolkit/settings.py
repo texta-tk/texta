@@ -103,12 +103,11 @@ INSTALLED_APPS = [
     # https://github.com/goinnn/django-multiselectfield
     "multiselectfield",
     "django_filters",
-    # "rest_auth" https://github.com/Tivix/django-rest-auth
-    "rest_auth",
-    "allauth",
+    "dj_rest_auth",
+    "dj_rest_auth.registration",
+    "allauth",  # Comes with dj-rest-auth[with_social].
     "allauth.account",
     "allauth.socialaccount",
-    "rest_auth.registration",
     "django_extensions",
     "drf_yasg",
 ]

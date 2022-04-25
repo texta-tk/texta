@@ -9,8 +9,8 @@ from toolkit.test_settings import TEST_VERSION_PREFIX
 
 class AuthTests(APITestCase, URLPatternsTestCase):
     urlpatterns = [
-        path(f'{TEST_VERSION_PREFIX[1:]}/rest-auth/', include('rest_auth.urls')),
-        path(f'{TEST_VERSION_PREFIX[1:]}/rest-auth/registration/', include('rest_auth.registration.urls'))
+        path(f'{TEST_VERSION_PREFIX[1:]}/rest-auth/', include('dj_rest_auth.urls')),
+        path(f'{TEST_VERSION_PREFIX[1:]}/rest-auth/registration/', include('dj_rest_auth.registration.urls'))
     ]
 
     def setUp(self):
