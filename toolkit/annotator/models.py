@@ -63,6 +63,7 @@ class EntityAnnotatorConfiguration(models.Model):
 
 
 class Annotator(TaskModel):
+    annotator_uid = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, default="", help_text="Unique Identifier for Annotator")
     annotation_type = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, choices=ANNOTATION_CHOICES, help_text="Which type of annotation does the user wish to perform")
 
     annotator_users = models.ManyToManyField(User, default=None, related_name="annotators", help_text="Who are the users who will be annotating.")
