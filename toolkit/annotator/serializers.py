@@ -287,8 +287,9 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
 
 
     def validate(self, attrs: dict):
-        annotator_type = attrs["annotation_type"]
+        annotator_type = ""
         if self.context['request'].method != "PATCH":
+            annotator_type = attrs["annotation_type"]
             if annotator_type == "binary":
                 if not attrs.get("binary_configuration", None):
                     raise ValidationError("When choosing the binary annotation, relevant configurations must be added!")
@@ -298,19 +299,20 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
             elif annotator_type == "entity":
                 if not attrs.get("entity_configuration", None):
                     raise ValidationError("When choosing the entity annotation, relevant configurations must be added!")
+        else:
+            if "annotation_type" in attrs:
+                annotator_type = attrs["annotation_type"]
+            if annotator_type == "entity":
+                # Since the way fields are handled comes with the serializer and model mixins (being shared by all annotation types), the sanest solution
+                # to ensure only a single field is inserted is by checking it pre-everything else in the first stages of validation.
+                fields = attrs.get("fields", [])
+                if len(fields) != 1:
+                    raise ValidationError("Please ensure only one 'field' is chosen!")
+            if "annotating_users" in attrs:
+                users = attrs.get("annotating_users", [])
+                if len(users) < 1:
+                    raise ValidationError("Please ensure at least 'one' user is chosen.")
 
-        if annotator_type == "entity":
-            # Since the way fields are handled comes with the serializer and model mixins (being shared by all annotation types), the sanest solution
-            # to ensure only a single field is inserted is by checking it pre-everything else in the first stages of validation.
-            fields = attrs.get("fields", [])
-            if len(fields) != 1:
-                raise ValidationError("Please ensure only one 'field' is chosen!")
-
-        users = attrs.get("annotating_users", [])
-        if len(users) < 1:
-            raise ValidationError("Please ensure at least 'one' user is chosen.")
-
-            return attrs
         return attrs
 
 
