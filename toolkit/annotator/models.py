@@ -206,7 +206,7 @@ class Annotator(TaskModel):
         return fact_name, value, spans, field, fact_id
 
 
-    def add_entity(self, document_id: str, texta_facts: List[dict], index: str, user):
+    def add_entity(self, document_id: str, texta_facts: List[dict], index: str, user: User):
         """
         Adds an entity label to Elasticsearch documents during entity annotations.
         :param user: Which user is adding the Facts.
@@ -216,19 +216,18 @@ class Annotator(TaskModel):
         :return:
         """
         ed = ESDocObject(document_id=document_id, index=index)
-        if texta_facts:
-            for fact in texta_facts:
+        filtered_facts = ed.filter_facts(fact_name=self.entity_configuration.fact_name, doc_path=json.loads(self.fields)[0])
+        new_facts = filtered_facts + texta_facts
+        if new_facts:
+            for fact in new_facts:
                 spans = []
-                if "id" in fact:
-                    continue
-                else:
-                    for span in json.loads(fact["spans"]):
-                        first, last = span
-                        spans.append([first, last])
-                    ed.add_fact(fact_value=fact["str_val"], fact_name=fact["fact"], doc_path=fact["doc_path"], spans=json.dumps(spans))
+                for span in json.loads(fact["spans"]):
+                    first, last = span
+                    spans.append([first, last])
+                ed.add_fact(source=fact.get("source", "annotator"), fact_value=fact["str_val"], fact_name=fact["fact"], doc_path=fact["doc_path"], spans=json.dumps(spans), sent_index=fact.get("sent_index", 0), author=user.username)
 
-                    # TODO Look if this can be pulled outside the loop, should be done once per document.
-                    ed.add_annotated(self, user)
+                # TODO Look if this can be pulled outside the loop, should be done once per document.
+                ed.add_annotated(self, user)
 
                 self.generate_record(document_id, index=index, user_pk=user.pk, fact=fact, do_annotate=True)
 
