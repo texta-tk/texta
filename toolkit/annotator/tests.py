@@ -303,13 +303,13 @@ class EntityAnnotatorTests(APITestCase):
         for i in range(2):
             random_document = self._pull_random_document()
             annotation_payloads.append(
-                {"index": random_document["_index"], "document_id": random_document["_id"], "texta_facts": [{"doc_path": TEST_FIELD, "fact": "TOXICITY", "spans": "[[0,0]]", "str_val": "bar"}]}
+                {"index": random_document["_index"], "document_id": random_document["_id"], "texta_facts": [{"doc_path": TEST_FIELD, "fact": "TOXICITY", "spans": "[[0,0]]", "str_val": "bar", "source": "annotator"}]}
             )
         print_output("annotation_document_before_0", annotation_payloads[0]['document_id'])
         print_output("annotation_document_before_1", annotation_payloads[1]['document_id'])
         while annotation_payloads[0]['document_id'] == annotation_payloads[1]['document_id']:
             random_document = self._pull_random_document()
-            annotation_payloads[1] = {"index": random_document["_index"], "document_id": random_document["_id"], "texta_facts": [{"doc_path": TEST_FIELD, "fact": "TOXICITY", "spans": "[[0,0]]", "str_val": "bar"}]}
+            annotation_payloads[1] = {"index": random_document["_index"], "document_id": random_document["_id"], "texta_facts": [{"doc_path": TEST_FIELD, "fact": "TOXICITY", "spans": "[[0,0]]", "str_val": "bar", "source": "annotator"}]}
         print_output("run_entity_annotation:annotation_payloads", annotation_payloads)
         for index_count, payload in enumerate(annotation_payloads):
             print_output(f"run_entity_annotation:annotation_payload{index_count}", payload['document_id'])
