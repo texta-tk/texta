@@ -315,9 +315,9 @@ class Annotator(TaskModel):
         ec = ElasticCore()
         json_query = json.loads(self.query)
         indices = self.get_indices()
-        query = ec.get_annotation_validation_query(json_query)
+        query = ec.get_annotated_annotation_query(query=json_query, job_pk=self.pk)
         document = ESDocObject.random_document(indices=indices, query=query)
-        # At one point in time, the documents will rune out.
+        # At one point in time, the documents will run out.
         if document:
             return document.document
         else:
