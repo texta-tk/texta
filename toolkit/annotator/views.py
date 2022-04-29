@@ -155,8 +155,28 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         serializer: DocumentIDSerializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         annotator: Annotator = self.get_object()
-        annotator.skip_document(serializer.validated_data["document_id"], serializer.validated_data["index"], user=request.user)
-        return Response({"detail": f"Skipped document with ID: {serializer.validated_data['document_id']}"})
+
+        ed = ElasticDocument(index=annotator.get_indices())
+        document_id = serializer.validated_data["document_id"]
+        document = ed.get(document_id)
+        texta_annotations = document["_source"].get("texta_annotator", [])
+
+        processed_timestamp = None
+        if texta_annotations:
+            for texta_annotation in texta_annotations:
+                processed_timestamp = texta_annotation.get("processed_timestamp_utc", None)
+
+                if processed_timestamp:
+                    return Response(
+                        {"detail": f"Document with ID: {serializer.validated_data['document_id']} is already annotated"})
+
+            annotator.skip_document(serializer.validated_data["document_id"], serializer.validated_data["index"],
+                                    user=request.user)
+            return Response({"detail": f"Skipped document with ID: {serializer.validated_data['document_id']}"})
+        else:
+            annotator.skip_document(serializer.validated_data["document_id"], serializer.validated_data["index"],
+                                    user=request.user)
+            return Response({"detail": f"Skipped document with ID: {serializer.validated_data['document_id']}"})
 
 
     @action(detail=True, methods=["POST"], serializer_class=ValidateDocumentSerializer)
