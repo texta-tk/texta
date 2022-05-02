@@ -188,20 +188,10 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
     def update(self, instance: Annotator, validated_data: dict):
         request = self.context.get('request')
         project_pk = request.parser_context.get('kwargs').get("project_pk")
-        project_obj = Project.objects.get(id=project_pk)
 
         try:
-            users = validated_data.pop("annotating_users")
-            annotating_users = []
-            for user in users:
-
-                annotating_user = User.objects.get(username=user)
-                if project_obj.users.get(username=annotating_user):
-                    annotating_users.append(annotating_user)
-                instance.description = validated_data["description"]
-                instance.annotator_users.clear()
-                instance.annotator_users.add(*annotating_users)
-                instance.save()
+            instance.description = validated_data["description"]
+            instance.save()
         except Exception as e:
             raise serializers.ValidationError(e)
 
