@@ -37,7 +37,7 @@ class RecordSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class LabelsetSerializer(serializers.Serializer):
+class LabelsetSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance: Labelset):
         data = super(LabelsetSerializer, self).to_representation(instance)
@@ -47,7 +47,15 @@ class LabelsetSerializer(serializers.Serializer):
 
     class Meta:
         model = Labelset
-        fields = "__all__"
+        fields = (
+            'id',
+            'indices',
+            'values',
+            'fact_names',
+            'value_limit',
+            'category',
+        )
+        fields_to_parse = ("fields",)
 
 
     indices = serializers.ListSerializer(child=serializers.CharField(), default="[]", required=False, help_text="List of indices.")
@@ -58,7 +66,13 @@ class LabelsetSerializer(serializers.Serializer):
 
 
     def create(self, validated_data):
-        indices = validated_data["indices"]
+        request = self.context.get('request')
+        project_pk = request.parser_context.get('kwargs').get("project_pk")
+        project_obj = Project.objects.get(id=project_pk)
+
+        indices = [index for index in validated_data["indices"]]
+        indices = project_obj.get_available_or_all_project_indices(indices)
+
         fact_names = validated_data["fact_names"]
         value_limit = validated_data["value_limit"]
         category = validated_data["category"]
@@ -93,7 +107,7 @@ class LabelsetSerializer(serializers.Serializer):
             label, is_created = Label.objects.get_or_create(value=value)
             value_container.append(label)
 
-        labelset, is_created = Labelset.objects.get_or_create(category=category)
+        labelset, is_created = Labelset.objects.get_or_create(project=project_obj, category=category)
         labelset.indices.add(*index_container)
         labelset.fact_names = fact_names
         labelset.value_limit = value_limit
