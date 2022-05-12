@@ -8,7 +8,7 @@ from texta_elastic.aggregator import ElasticAggregator
 from texta_elastic.searcher import ElasticSearcher
 
 from toolkit.annotator.choices import MAX_VALUE
-from toolkit.annotator.models import Annotator, BinaryAnnotatorConfiguration, Category, Comment, EntityAnnotatorConfiguration, Label, Labelset, MultilabelAnnotatorConfiguration, Record
+from toolkit.annotator.models import Annotator, AnnotatorGroup, BinaryAnnotatorConfiguration, Category, Comment, EntityAnnotatorConfiguration, Label, Labelset, MultilabelAnnotatorConfiguration, Record
 from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
@@ -361,3 +361,34 @@ class AnnotatorProjectSerializer(AnnotatorSerializer):
         result = super(AnnotatorProjectSerializer, self).to_representation(instance)
         result["project_pk"] = instance.project.pk
         return result
+
+
+class AnnotatorGroupSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = AnnotatorGroup
+        fields = (
+            'id',
+            'parent',
+            'children',
+        )
+        fields_to_parse = ("fields",)
+
+    def to_representation(self, instance: AnnotatorGroup):
+        result = super(AnnotatorGroupSerializer, self).to_representation(instance)
+        result["parent"] = AnnotatorSerializer(instance=instance.parent, context={'request': self.context['request']}).data
+        result["children"] = AnnotatorSerializer(instance=instance.children, many=True, context={'request': self.context['request']}).data
+        return result
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        project_pk = request.parser_context.get('kwargs').get("project_pk")
+        project_obj = Project.objects.get(id=project_pk)
+
+        parent = validated_data["parent"]
+        children = [child for child in validated_data["children"] if child != parent]
+
+        annotator_group, is_created = AnnotatorGroup.objects.get_or_create(project=project_obj, parent=parent)
+        annotator_group.children.add(*children)
+
+        return annotator_group

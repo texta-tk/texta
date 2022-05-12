@@ -365,6 +365,12 @@ class Annotator(TaskModel):
             ec.add_texta_meta_mapping(index)
 
 
+class AnnotatorGroup(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, default=None, null=True)
+    parent = models.ForeignKey(Annotator, on_delete=models.CASCADE)
+    children = models.ManyToManyField(Annotator, default=None, related_name="annotator_group_children")
+
+
 class Comment(models.Model):
     text = models.TextField()
     document_id = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)

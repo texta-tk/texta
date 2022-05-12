@@ -5,8 +5,8 @@ from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.annotator.models import Annotator, Comment, Labelset, Record
-from toolkit.annotator.serializers import AnnotatorProjectSerializer, AnnotatorSerializer, BinaryAnnotationSerializer, CommentSerializer, DocumentEditSerializer, DocumentIDSerializer, EntityAnnotationSerializer, LabelsetSerializer, MultilabelAnnotationSerializer, RecordSerializer, \
+from toolkit.annotator.models import Annotator, AnnotatorGroup, Comment, Labelset, Record
+from toolkit.annotator.serializers import AnnotatorProjectSerializer, AnnotatorGroupSerializer, AnnotatorSerializer, BinaryAnnotationSerializer, CommentSerializer, DocumentEditSerializer, DocumentIDSerializer, EntityAnnotationSerializer, LabelsetSerializer, MultilabelAnnotationSerializer, RecordSerializer, \
     ValidateDocumentSerializer
 from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
@@ -267,3 +267,21 @@ class AnnotatorProjectViewset(mixins.ListModelMixin, viewsets.GenericViewSet):
 
     def get_queryset(self):
         return Annotator.objects.filter(annotator_users=self.request.user).order_by('-id')
+
+
+class AnnotatorGroupViewset(mixins.CreateModelMixin,
+                       mixins.ListModelMixin,
+                       mixins.RetrieveModelMixin,
+                       mixins.DestroyModelMixin,
+                       mixins.UpdateModelMixin,
+                       viewsets.GenericViewSet,
+                       BulkDelete):
+    serializer_class = AnnotatorGroupSerializer
+    permission_classes = (
+        permissions.IsAuthenticated,
+    )
+
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+
+    def get_queryset(self):
+        return AnnotatorGroup.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
