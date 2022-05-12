@@ -278,6 +278,7 @@ class AnnotatorGroupViewset(mixins.CreateModelMixin,
                        BulkDelete):
     serializer_class = AnnotatorGroupSerializer
     permission_classes = (
+        ProjectAccessInApplicationsAllowed,
         permissions.IsAuthenticated,
     )
 
