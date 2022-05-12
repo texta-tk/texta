@@ -46,7 +46,7 @@ class LabelsetViewset(mixins.CreateModelMixin,
 
 
     def get_queryset(self):
-        return Labelset.objects.filter().order_by('-id')
+        return Labelset.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
 
 class AnnotatorViewset(mixins.CreateModelMixin,

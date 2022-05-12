@@ -40,6 +40,7 @@ class Label(models.Model):
 
 
 class Labelset(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, default=None, null=True)
     indices = models.ManyToManyField(Index)
     fact_names = models.TextField(null=True)
     value_limit = models.IntegerField(null=True)
