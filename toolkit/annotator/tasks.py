@@ -12,7 +12,7 @@ from texta_elastic.document import ElasticDocument
 from texta_elastic.mapping_tools import get_selected_fields, update_field_types, update_mapping
 from texta_elastic.searcher import ElasticSearcher
 
-from toolkit.annotator.models import Annotator
+from toolkit.annotator.models import Annotator, AnnotatorGroup
 from toolkit.base_tasks import BaseTask
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
@@ -117,6 +117,7 @@ def __add_meta_to_original_index(indices: List[str], index_fields: List[str], sh
 @task(name="annotator_task", base=BaseTask, bind=True)
 def annotator_task(self, annotator_task_id):
     annotator_obj = Annotator.objects.get(pk=annotator_task_id)
+    annotator_group_children = []
 
     indices = annotator_obj.get_indices()
     users = [user.pk for user in annotator_obj.annotator_users.all()]
@@ -213,6 +214,7 @@ def annotator_task(self, annotator_task_id):
                         bulk_add_documents(elastic_search, elastic_doc, index=new_index, chunk_size=scroll_size, flatten_doc=False)
 
             new_annotator_obj.save()
+            annotator_group_children.append(new_annotator_obj.id)
             logging.getLogger(INFO_LOGGER).info(f"Saving new annotator object ID {new_annotator_obj.id}")
 
         new_annotator_obj.add_annotation_mapping(new_indices)
@@ -220,6 +222,9 @@ def annotator_task(self, annotator_task_id):
 
         annotator_obj.annotator_users.clear()
         annotator_obj.save()
+
+        annotator_group, is_created = AnnotatorGroup.objects.get_or_create(project=annotator_obj.project, parent=annotator_obj)
+        annotator_group.children.add(*annotator_group_children)
 
         # declare the job done
         task_object.complete()
