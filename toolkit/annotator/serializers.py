@@ -173,12 +173,13 @@ class MultilabelAnnotatorConfigurationSerializer(serializers.ModelSerializer):
     def to_representation(self, instance: MultilabelAnnotatorConfiguration):
         data = super(MultilabelAnnotatorConfigurationSerializer, self).to_representation(instance)
         data["id"] = instance.id
-        data["labelset"] = str(instance.labelset.category)
+        data["labelset"] = instance.labelset_id
+        data["category"] = str(instance.labelset.category)
         return data
 
     class Meta:
         model = MultilabelAnnotatorConfiguration
-        fields = ("id", "labelset",)
+        fields = "__all__"
 
 
 class BinaryAnnotatorConfigurationSerializer(serializers.ModelSerializer):
