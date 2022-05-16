@@ -122,6 +122,10 @@ class Annotator(TaskModel):
         self.task = new_task
         self.save()
 
+        annotator_obj = Annotator.objects.get(pk=self.pk)
+        annotator_group, is_created = AnnotatorGroup.objects.get_or_create(project=annotator_obj.project,
+                                                                           parent=annotator_obj)
+
         from toolkit.annotator.tasks import annotator_task
         annotator_task.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
