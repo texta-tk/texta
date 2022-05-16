@@ -251,7 +251,8 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
                 'rakun_extractors',
                 'crf_extractors',
                 'annotator',
-                'labelset'
+                'labelset',
+                'annotator_groups',
             )
         elif api_version == 'v1':
             resources = (

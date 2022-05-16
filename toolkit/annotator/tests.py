@@ -37,6 +37,7 @@ class BinaryAnnotatorTests(APITestCase):
 
 
     def test_all(self):
+        self.run_binary_annotator_group()
         self.run_create_annotator_for_multi_user()
         self.run_pulling_document()
         self.run_binary_annotation()
@@ -76,6 +77,20 @@ class BinaryAnnotatorTests(APITestCase):
         url = reverse("v2:annotator-pull-document", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
         response = self.client.post(url, format="json")
         return response.data
+
+    def run_binary_annotator_group(self):
+        annotator_children = []
+        for i in range(2):
+            child = self._create_annotator()
+            annotator_children.append(child["id"])
+        group_url = reverse("v2:annotator_groups-list", kwargs={"project_pk": self.project.pk})
+        group_payload = {
+            "parent": self.annotator["id"],
+            "children": annotator_children
+        }
+        group_response = self.client.post(group_url, data=group_payload, format="json")
+        print_output("run_binary_annotator_group:response.status", group_response.status_code)
+        self.assertTrue(group_response.status_code == status.HTTP_201_CREATED)
 
 
     def run_create_annotator_for_multi_user(self):
@@ -266,6 +281,7 @@ class EntityAnnotatorTests(APITestCase):
 
 
     def test_all(self):
+        self.run_entity_annotator_group()
         self.run_entity_annotation()
 
 
@@ -294,6 +310,20 @@ class EntityAnnotatorTests(APITestCase):
         url = reverse("v2:annotator-pull-document", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
         response = self.client.post(url, format="json")
         return response.data
+
+    def run_entity_annotator_group(self):
+        annotator_children = []
+        for i in range(2):
+            child = self._create_annotator()
+            annotator_children.append(child["id"])
+        group_url = reverse("v2:annotator_groups-list", kwargs={"project_pk": self.project.pk})
+        group_payload = {
+            "parent": self.annotator["id"],
+            "children": annotator_children
+        }
+        group_response = self.client.post(group_url, data=group_payload, format="json")
+        print_output("run_entity_annotator_group:response.status", group_response.status_code)
+        self.assertTrue(group_response.status_code == status.HTTP_201_CREATED)
 
 
     def run_entity_annotation(self):
