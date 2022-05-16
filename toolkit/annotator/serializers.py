@@ -169,9 +169,16 @@ class EntityAnnotationSerializer(serializers.Serializer):
 
 
 class MultilabelAnnotatorConfigurationSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance: MultilabelAnnotatorConfiguration):
+        data = super(MultilabelAnnotatorConfigurationSerializer, self).to_representation(instance)
+        data["id"] = instance.id
+        data["labelset"] = str(instance.labelset.category)
+        return data
+
     class Meta:
         model = MultilabelAnnotatorConfiguration
-        fields = "__all__"
+        fields = ("id", "labelset",)
 
 
 class BinaryAnnotatorConfigurationSerializer(serializers.ModelSerializer):
