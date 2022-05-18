@@ -86,6 +86,6 @@ BuildFinalImage:
   script:
     - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD docker.texta.ee
     - sh ./docker/build_and_push.sh
-    - docker system prune --volumes -f
+    - docker system prune -a
   only:
     - tags
