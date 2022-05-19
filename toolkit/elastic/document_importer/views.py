@@ -8,6 +8,7 @@ from rest_framework import permissions, status
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework.response import Response
+from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
 from texta_elastic.searcher import ElasticSearcher
 from texta_tools.text_splitter import TextSplitter
@@ -21,10 +22,9 @@ from toolkit.serializer_constants import EmptySerializer
 from toolkit.settings import DEPLOY_KEY
 
 
-
-def validate_index_and_project_perms(request, pk, index):
-    project: Project = get_object_or_404(Project, pk=pk)
-    if request.user not in project.users.all():
+def validate_index_and_project_perms(request, project_pk: int, index: str):
+    project: Project = get_object_or_404(Project, pk=project_pk)
+    if project.users.filter(pk=request.user.pk).exists() is False:
         raise PermissionDenied(f"User '{request.user.username}' does not have access to this project!")
 
     if index not in project.get_indices():
@@ -37,6 +37,26 @@ class DocumentImportView(GenericAPIView):
 
 
     @staticmethod
+    def get_indices_with_timestamp(index_base: str) -> List[dict]:
+        """
+        Using the index_base as a base, returns all the indices in Elasticsearch
+        that have it inside their names along with their timestamps to be used in
+        index rotation.
+        :param index_base: Limitation on which indices to pull.
+        :return: List of dictionaries that contain the 'name' and 'timestamp' of all indices that have the base_name inside their name.
+        """
+        ec = ElasticCore()
+
+        index_store = []
+        indices = ec.get_index_settings(f"{index_base}*")
+        for index_name, index_settings in indices.items():
+            settings = index_settings["settings"]
+            unix_timestamp: str = settings["index"]["creation_date"]
+            index_store.append({"name": index_name, "creation_date": int(unix_timestamp)})
+        return index_store
+
+
+    @staticmethod
     def get_new_index_name(project_id: int, indices: List[str] = []):
         """
         Creates a name for the new index based on the number of documents already in the project-related indices.
@@ -44,13 +64,15 @@ class DocumentImportView(GenericAPIView):
         This prevents the indices from getting too large during production.
         """
         base_index_name = f"texta-{DEPLOY_KEY}-import-project-{project_id}"
-        # get all indices, sort them by name & filter them based on name (starting with latest)
-        sorted_indices = [i for i in sorted(indices, reverse=True) if i.startswith(base_index_name)]
+
+        indices = DocumentImportView.get_indices_with_timestamp(base_index_name)
+        sorted_indices = sorted(indices, reverse=True, key=lambda x: x["creation_date"])
+
         # if no indices exist for the pattern, use base name
         if not sorted_indices:
             return base_index_name
         # get last index name
-        last_index_name = sorted_indices[0]
+        last_index_name = sorted_indices[0]["name"]
         # count documents in last index
         last_index_count = ElasticDocument(index=last_index_name).count()
         # compare count
@@ -138,7 +160,7 @@ class DocumentImportView(GenericAPIView):
         serializer: InsertDocumentsSerializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         project = get_object_or_404(Project, pk=pk)
-        if request.user not in project.users.all():
+        if project.users.filter(pk=request.user.pk).exists() is False:
             raise PermissionDenied("You do not have permissions for this project!")
 
         # Split indices on whether they have index access or lack any index details at all.
@@ -146,7 +168,7 @@ class DocumentImportView(GenericAPIView):
         split_fields = serializer.validated_data["split_text_in_fields"]
         indices = project.get_indices()
 
-        correct_actions, failed_actions, missing_actions = self._split_documents_per_index(indices, documents)
+        correct_actions, failed_actions, missing_actions = self._split_documents_per_index(allowed_indices=indices, documents=documents)
         missing_actions, index_name, has_new_index = self._normalize_missing_index_values(missing_actions, project.pk, indices)
         split_actions = self._split_text(correct_actions + missing_actions, split_fields)
 

@@ -214,11 +214,18 @@ class DocumentImporterAPITestCase(APITestCase):
         self.assertTrue(response.status_code == status.HTTP_200_OK)
 
         # Send a batch for the second time to see if the documents rolled over properly.
-        response = self.client.post(url, data={"documents": [{"_source": {"value": i}} for i in range(51)], "split_text_in_fields": []}, format="json")
-        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        clean_up_container = ["texta-1-import-project-1"]
+        for i in range(1, 12):
+            response = self.client.post(url, data={"documents": [{"_source": {"value": i}} for i in range(51)], "split_text_in_fields": []}, format="json")
 
-        self.assertTrue(self.project.indices.filter(name="texta-1-import-project-1").exists())
-        self.assertTrue(self.project.indices.filter(name="texta-1-import-project-1-1").exists())
+            self.assertTrue(response.status_code == status.HTTP_200_OK)
+            if i == 1:
+                self.assertTrue(self.project.indices.filter(name="texta-1-import-project-1").exists())
+            else:
+                # i-1 because the first request doesn't add the rollover index counter.
+                rollover_index_name = f"texta-1-import-project-1-{i - 1}"
+                self.assertTrue(self.project.indices.filter(name=rollover_index_name).exists())
+                clean_up_container.append(rollover_index_name)
 
         # Cleanup
-        self.ec.delete_index(index=",".join(["texta-1-import-project-1", "texta-1-import-project-1-1"]))
+        self.ec.delete_index(index=",".join(clean_up_container))
