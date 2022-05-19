@@ -204,7 +204,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
         print_output("test_apply_crf_to_index_after:elastic aggerator results:", results_new)
 
         # assert we have more facts than before
-        for item in ["China", "U.S.", "Iran"]:
+        for item in ["China", "Russia", "Iran"]:
             self.assertTrue(results_old[item] < results_new[item])
 
 
