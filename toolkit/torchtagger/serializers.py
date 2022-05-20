@@ -43,7 +43,7 @@ class TorchTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, I
     maximum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, required=False)
     minimum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, required=False)
     num_epochs = serializers.IntegerField(default=choices.DEFAULT_NUM_EPOCHS, required=False)
-    embedding = ProjectFilteredPrimaryKeyRelatedField(queryset=Embedding.objects, many=False, read_only=False, allow_null=True, default=None, help_text=f'Embedding to use. Default = None')
+    embedding = ProjectFilteredPrimaryKeyRelatedField(queryset=Embedding.objects, many=False, read_only=False, required=True, help_text=f'Embedding to use, usage mandatory.')
 
     balance = serializers.BooleanField(default=choices.DEFAULT_BALANCE, required=False, help_text=f'Balance sample sizes of different classes. Only applicable for multiclass taggers. Default = {choices.DEFAULT_BALANCE}')
     use_sentence_shuffle = serializers.BooleanField(default=choices.DEFAULT_USE_SENTENCE_SHUFFLE, required=False, help_text=f'Shuffle sentences in added examples. NB! Only applicable for multiclass taggers with balance=True. Default = {choices.DEFAULT_USE_SENTENCE_SHUFFLE}')
