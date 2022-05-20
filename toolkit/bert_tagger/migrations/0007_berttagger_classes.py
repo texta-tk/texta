@@ -8,7 +8,7 @@ def convert_num_examples_to_classes(apps, schema_editor):
     BertTagger = apps.get_model("bert_tagger", "BertTagger")
     for tagger in BertTagger.objects.all():
         classes = list(json.loads(tagger.num_examples).keys())
-        tagger.classes = json.dumps(classes)
+        tagger.classes = json.dumps(classes, ensure_ascii=False)
         tagger.save()
 
 class Migration(migrations.Migration):
