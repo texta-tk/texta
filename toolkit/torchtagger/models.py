@@ -37,7 +37,7 @@ class TorchTagger(models.Model):
     fields = models.TextField(default=json.dumps([]))
     indices = models.ManyToManyField(Index, default=None)
 
-    embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE, default=None)
+    embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE)
 
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     fact_name = models.CharField(max_length=MAX_DESC_LEN, null=True)
