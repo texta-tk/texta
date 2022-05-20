@@ -54,6 +54,7 @@ def train_torchtagger(tagger_id, testing=False):
         # get num examples and save to model
         num_examples = {k: len(v) for k, v in data_sample.data.items()}
         tagger_object.num_examples = json.dumps(num_examples)
+
         tagger_object.save()
 
         # create TorchTagger
@@ -86,6 +87,8 @@ def train_torchtagger(tagger_id, testing=False):
         tagger_object.training_loss = report.training_loss
         tagger_object.epoch_reports = json.dumps([a.to_dict() for a in tagger.epoch_reports])
         tagger_object.confusion_matrix = json.dumps(report.confusion.tolist())
+        tagger_object.classes = json.dumps(report.classes)
+
         # save tagger object
         tagger_object.save()
         # declare the job done
