@@ -183,6 +183,11 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         print_output('test_multiclass_bert_tagger_has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
+
+        print_output('test_multiclass_bert_tagger_has_classes:response.data.classes', response.data["classes"])
+        self.assertTrue(isinstance(response.data["classes"], list))
+        self.assertTrue(len(response.data["classes"]) > 2)
+
         self.add_cleanup_files(tagger_id)
 
 
@@ -212,6 +217,11 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         print_output('test_binary_multiclass_bert_tagger_has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
+
+        print_output('test_binary_multiclass_bert_tagger_has_classes:response.data.classes', response.data["classes"])
+        self.assertTrue(isinstance(response.data["classes"], list))
+        self.assertTrue(len(response.data["classes"]) == 2)
+
         self.add_cleanup_files(tagger_id)
 
 
@@ -284,6 +294,10 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
 
+        print_output('test_balanced_multiclass_bert_tagger_has_classes:response.data.classes', response.data["classes"])
+        self.assertTrue(isinstance(response.data["classes"], list))
+        self.assertTrue(len(response.data["classes"]) >= 2)
+
         num_examples = json.loads(response.data["num_examples"])
         print_output('test_balanced_bert_tagger_num_examples_correct:num_examples', num_examples)
         for class_size in num_examples.values():
@@ -319,6 +333,10 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
 
+        print_output('test_binary_bert_tagger_has_classes:response.data.classes', response.data["classes"])
+        self.assertTrue(isinstance(response.data["classes"], list))
+        self.assertTrue(len(response.data["classes"]) == 2)
+
         # set trained tagger as active tagger
         self.test_tagger_id = tagger_id
         self.add_cleanup_files(tagger_id)
@@ -348,9 +366,13 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         sleep(5)
         tagger_id = response.data['id']
         response = self.client.get(f'{self.url}{tagger_id}/')
-        print_output('test_train_bert_tagger_from_checkpoint_model_bin2bin:GET:response.data', response.data)
+        print_output('test_train_bert_tagger_from_checkpoint_model_bin2bin.has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
+
+        print_output('test_train_bert_tagger_from_checkpoint_model.has_stats:response.data.classes', response.data["classes"])
+        self.assertTrue(isinstance(response.data["classes"], list))
+        self.assertTrue(len(response.data["classes"]) >= 2)
 
         self.add_cleanup_files(tagger_id)
 
@@ -379,9 +401,13 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         sleep(5)
         tagger_id = response.data['id']
         response = self.client.get(f'{self.url}{tagger_id}/')
-        print_output('test_train_bert_tagger_from_checkpoint_model_bin2mc:GET:response.data', response.data)
+        print_output('test_train_bert_tagger_from_checkpoint_model_bin2mc.has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
+
+        print_output('test_train_bert_tagger_from_checkpoint_model_bin2mc.has_classes:response.data.classes', response.data["classes"])
+        self.assertTrue(isinstance(response.data["classes"], list))
+        self.assertTrue(len(response.data["classes"]) >= 2)
 
         self.add_cleanup_files(tagger_id)
 

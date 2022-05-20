@@ -108,6 +108,8 @@ class TaggerViewTests(APITransactionTestCase):
         response = self.client.post(url, data=payload, format="json")
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
         print_output("test_training_tagger_with_embedding:response.data", response.data)
+        self.assertTrue(isinstance(response.data["classes"], list))
+        self.assertTrue(len(response.data["classes"]) >= 2)
         self.run_tag_text([response.data["id"]])
         self.add_cleanup_files(response.data["id"])
 
@@ -184,6 +186,9 @@ class TaggerViewTests(APITransactionTestCase):
                 self.assertTrue(created_tagger.task is not None)
                 # Check if Tagger gets trained and completed
                 self.assertEqual(created_tagger.task.status, Task.STATUS_COMPLETED)
+                # Check if Tagger object contains classes
+                self.assertTrue(isinstance(response.data["classes"], list))
+                self.assertTrue(len(response.data["classes"]) == 2)
 
 
     def run_create_tagger_with_incorrect_fields(self):
