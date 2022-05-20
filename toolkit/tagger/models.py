@@ -63,6 +63,7 @@ class Tagger(models.Model):
     num_examples = models.TextField(default="{}", null=True)
     confusion_matrix = models.TextField(default="[]", null=True, blank=True)
     scoring_function = models.CharField(default=choices.DEFAULT_SCORING_FUNCTION, max_length=MAX_DESC_LEN, null=True, blank=True)
+    classes = models.TextField(default=json.dumps([]))
 
     model = models.FileField(null=True, verbose_name='', default=None)
     model_size = models.FloatField(default=None, null=True)
