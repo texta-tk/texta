@@ -165,6 +165,11 @@ class TorchTaggerViewTests(APITransactionTestCase):
         print_output('test_torchtagger_has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
+
+        print_output('test_torchtagger_has_classes:response.data.classes', response.data["classes"])
+        self.assertTrue(isinstance(response.data["classes"], list))
+        self.assertTrue(len(response.data["classes"]) == 2)
+
         self.test_tagger_id = tagger_id
         # add cleanup
         self.add_cleanup_files(tagger_id)
@@ -191,6 +196,11 @@ class TorchTaggerViewTests(APITransactionTestCase):
         print_output('test_torchtagger_has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
+
+        print_output('test_torchtagger_has_classes:response.data.classes', response.data["classes"])
+        self.assertTrue(isinstance(response.data["classes"], list))
+        self.assertTrue(len(response.data["classes"]) > 2)
+
         self.test_multiclass_tagger_id = tagger_id
         # add cleanup
         self.add_cleanup_files(tagger_id)
@@ -219,6 +229,10 @@ class TorchTaggerViewTests(APITransactionTestCase):
         print_output('test_torchtagger_has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
+
+        print_output('test_torchtagger_has_classes:response.data.classes', response.data["classes"])
+        self.assertTrue(isinstance(response.data["classes"], list))
+        self.assertTrue(len(response.data["classes"]) == 2)
         # add cleanup
         self.add_cleanup_files(tagger_id)
 
@@ -290,6 +304,9 @@ class TorchTaggerViewTests(APITransactionTestCase):
         for class_size in num_examples.values():
             self.assertTrue(class_size, payload["maximum_sample_size"])
 
+        print_output('test_balanced_torchtagger_has_classes:classes', response.data["classes"])
+        self.assertTrue(isinstance(response.data["classes"], list))
+        self.assertTrue(len(response.data["classes"]) >= 2)
         # add cleanup
         self.add_cleanup_files(tagger_id)
 

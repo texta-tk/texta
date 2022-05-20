@@ -57,6 +57,7 @@ class TorchTagger(models.Model):
     balance_to_max_limit = models.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT)
 
     num_examples = models.TextField(default="{}", null=True)
+    classes = models.TextField(default=json.dumps([]))
 
     # RESULTS
     label_index = models.TextField(default=json.dumps({}))

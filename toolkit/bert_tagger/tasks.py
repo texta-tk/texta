@@ -120,6 +120,7 @@ def train_bert_tagger(tagger_id, testing=False):
             tagger.config.use_state_dict = False
             pos_label = ""
 
+
         # train tagger and get result statistics
         report = tagger.train(
             data_sample.data,
@@ -161,6 +162,7 @@ def train_bert_tagger(tagger_id, testing=False):
         tagger_object.num_examples = json.dumps({k: len(v) for k, v in list(data_sample.data.items())})
         tagger_object.adjusted_batch_size = tagger.config.batch_size
         tagger_object.confusion_matrix = json.dumps(report.confusion.tolist())
+        tagger_object.classes = json.dumps(report.classes, ensure_ascii=False)
         # save tagger object
         tagger_object.save()
         # declare the job done

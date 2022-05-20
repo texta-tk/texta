@@ -159,9 +159,9 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Indice
         model = Tagger
         fields = ('id', 'url', 'author', 'description', 'query', 'fact_name', 'indices', 'fields', 'detect_lang', 'embedding', 'vectorizer', 'analyzer', 'classifier', 'stop_words',
                   'maximum_sample_size', 'minimum_sample_size', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score', 'snowball_language', 'scoring_function',
-                  'num_features', 'num_examples', 'confusion_matrix', 'plot', 'task', 'tagger_groups', 'ignore_numbers', 'balance', 'balance_to_max_limit', 'pos_label')
-        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'num_examples', 'tagger_groups', 'confusion_matrix')
-        fields_to_parse = ('fields',)
+                  'num_features', 'num_examples', 'confusion_matrix', 'plot', 'task', 'tagger_groups', 'ignore_numbers', 'balance', 'balance_to_max_limit', 'pos_label', 'classes')
+        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'num_examples', 'tagger_groups', 'confusion_matrix', 'classes')
+        fields_to_parse = ('fields', 'classes',)
 
 
     def validate(self, data):

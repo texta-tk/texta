@@ -66,6 +66,7 @@ class BertTagger(models.Model):
     precision = models.FloatField(default=None, null=True)
     recall = models.FloatField(default=None, null=True)
     f1_score = models.FloatField(default=None, null=True)
+    classes = models.TextField(default=json.dumps([]))
 
     balance = models.BooleanField(default=choices.DEFAULT_BALANCE)
     use_sentence_shuffle = models.BooleanField(default=choices.DEFAULT_USE_SENTENCE_SHUFFLE)
