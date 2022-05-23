@@ -8,7 +8,7 @@ from celery.decorators import task
 from django.contrib.auth.models import User
 from elasticsearch.helpers import streaming_bulk
 from texta_elastic.core import ElasticCore
-from texta_elastic.document import ElasticDocument
+from texta_elastic.document import ElasticDocument, ESDocObject
 from texta_elastic.mapping_tools import get_selected_fields, update_field_types, update_mapping
 from texta_elastic.searcher import ElasticSearcher
 
@@ -112,6 +112,35 @@ def __add_meta_to_original_index(indices: List[str], index_fields: List[str], sh
     for success, info in streaming_bulk(client=elastic_wrapper.es, actions=index_actions, refresh="wait_for", chunk_size=scroll_size, max_retries=3):
         if not success:
             logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
+
+@task(name="add_entity_task", base=BaseTask, bind=True)
+def add_entity_task(self, pk: int, document_id: str, texta_facts: List[dict], index: str, user_pk: int):
+    annotator_obj = Annotator.objects.get(pk=pk)
+    user_obj = User.objects.get(pk=user_pk)
+    ed = ESDocObject(document_id=document_id, index=index)
+    filtered_facts = ed.filter_facts(fact_name=annotator_obj.entity_configuration.fact_name, doc_path=json.loads(annotator_obj.fields)[0])
+    new_facts = filtered_facts + texta_facts
+    if new_facts:
+        for fact in new_facts:
+            spans = []
+            for span in json.loads(fact["spans"]):
+                first, last = span
+                spans.append([first, last])
+            ed.add_fact(source=fact.get("source", "annotator"), fact_value=fact["str_val"], fact_name=fact["fact"],
+                        doc_path=fact["doc_path"], spans=json.dumps(spans), sent_index=fact.get("sent_index", 0),
+                        author=user_obj.username)
+
+            # TODO Look if this can be pulled outside the loop, should be done once per document.
+            ed.add_annotated(annotator_obj, user_obj)
+
+            annotator_obj.generate_record(document_id, index=index, user_pk=user_obj.pk, fact=fact, do_annotate=True)
+
+        ed.update()
+    else:
+        # In case the users marks the document as 'done' but it has no Facts to add.
+        ed.add_annotated(annotator_obj, user_obj)
+        ed.update()
+        annotator_obj.generate_record(document_id, index=index, user_pk=user_obj.pk, do_annotate=True)
 
 
 @task(name="annotator_task", base=BaseTask, bind=True)

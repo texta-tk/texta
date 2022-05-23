@@ -222,29 +222,8 @@ class Annotator(TaskModel):
         :param document_id: Elasticsearch document ID of the comment in question.
         :return:
         """
-        ed = ESDocObject(document_id=document_id, index=index)
-        filtered_facts = ed.filter_facts(fact_name=self.entity_configuration.fact_name, doc_path=json.loads(self.fields)[0])
-        new_facts = filtered_facts + texta_facts
-        if new_facts:
-            for fact in new_facts:
-                spans = []
-                for span in json.loads(fact["spans"]):
-                    first, last = span
-                    spans.append([first, last])
-                ed.add_fact(source=fact.get("source", "annotator"), fact_value=fact["str_val"], fact_name=fact["fact"], doc_path=fact["doc_path"], spans=json.dumps(spans), sent_index=fact.get("sent_index", 0), author=user.username)
-
-                # TODO Look if this can be pulled outside the loop, should be done once per document.
-                ed.add_annotated(self, user)
-
-                self.generate_record(document_id, index=index, user_pk=user.pk, fact=fact, do_annotate=True)
-
-            ed.update()
-        else:
-            # In case the users marks the document as 'done' but it has no Facts to add.
-            ed.add_annotated(self, user)
-            ed.update()
-            self.generate_record(document_id, index=index, user_pk=user.pk, do_annotate=True)
-
+        from toolkit.annotator.tasks import add_entity_task
+        add_entity_task.apply_async(args=(self.pk, document_id, texta_facts, index, user.pk), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
     def pull_document(self) -> Optional[dict]:
         """
