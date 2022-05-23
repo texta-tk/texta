@@ -87,7 +87,7 @@ def train_torchtagger(tagger_id, testing=False):
         tagger_object.training_loss = report.training_loss
         tagger_object.epoch_reports = json.dumps([a.to_dict() for a in tagger.epoch_reports])
         tagger_object.confusion_matrix = json.dumps(report.confusion.tolist())
-        tagger_object.classes = json.dumps(report.classes)
+        tagger_object.classes = json.dumps(report.classes, ensure_ascii=False)
 
         # save tagger object
         tagger_object.save()

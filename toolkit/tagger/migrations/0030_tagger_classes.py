@@ -8,7 +8,7 @@ def convert_num_examples_to_classes(apps, schema_editor):
     Tagger = apps.get_model("tagger", "Tagger")
     for tagger in Tagger.objects.all():
         classes = list(json.loads(tagger.num_examples).keys())
-        tagger.classes = json.dumps(classes)
+        tagger.classes = json.dumps(classes, ensure_ascii=False)
         tagger.save()
 
 class Migration(migrations.Migration):

@@ -225,7 +225,7 @@ def save_tagger_results(result_data: dict):
         tagger_object.model_size = result_data["model_size"]
         tagger_object.plot.name = result_data["plot"]
         tagger_object.confusion_matrix = result_data["confusion_matrix"]
-        tagger_object.classes = json.dumps(result_data["classes"])
+        tagger_object.classes = json.dumps(result_data["classes"], ensure_ascii=False)
         tagger_object.save()
         task_object.complete()
     except Exception as e:

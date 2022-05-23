@@ -5,8 +5,8 @@ import json
 
 
 def convert_num_examples_to_classes(apps, schema_editor):
-    BertTagger = apps.get_model("bert_tagger", "BertTagger")
-    for tagger in BertTagger.objects.all():
+    TorchTagger = apps.get_model("torchtagger", "TorchTagger")
+    for tagger in TorchTagger.objects.all():
         classes = list(json.loads(tagger.num_examples).keys())
         tagger.classes = json.dumps(classes, ensure_ascii=False)
         tagger.save()
@@ -14,12 +14,12 @@ def convert_num_examples_to_classes(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('bert_tagger', '0006_berttagger_use_gpu'),
+        ('torchtagger', '0009_demand_embedding'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='berttagger',
+            model_name='torchtagger',
             name='classes',
             field=models.TextField(default='[]'),
         ),
