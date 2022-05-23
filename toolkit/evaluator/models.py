@@ -58,8 +58,11 @@ class Evaluator(models.Model):
 
     scores_imprecise = models.BooleanField(default=None, null=True)
     score_after_scroll = models.BooleanField(default=None, null=True)
-    
+
     evaluation_type = models.CharField(max_length=MAX_DESC_LEN, default=None, null=True)
+
+    token_based = models.BooleanField(default=choices.DEFAULT_TOKEN_BASED, null=True)
+    add_misclassified_examples = models.BooleanField(default=choices.DEFAULT_ADD_MISCLASSIFIED_EXAMPLES, null=True)
 
     plot = models.FileField(upload_to="data/media", null=True, verbose_name="")
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)

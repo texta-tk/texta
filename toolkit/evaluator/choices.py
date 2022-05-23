@@ -52,3 +52,18 @@ DEFAULT_ES_TIMEOUT = 10
 # are also calculated and saved during multilabel
 # evaluation
 DEFAULT_ADD_INDIVIDUAL_RESULTS = True
+
+# If true, apply token-based evaluation for entities; otherwise labelsets of documents are compared
+# and results are calculated based on them
+DEFAULT_TOKEN_BASED = True
+
+
+# If true, example values of misclassified examples are stored along with partial overlaps
+# (only for for entity evaluation)
+DEFAULT_ADD_MISCLASSIFIED_EXAMPLES = True
+
+# Limit the misclassified values stored in the data model
+MAX_VALUES_STORED = 1000
+
+EVALUATION_TYPES = ["binary", "multilabel", "entity"]
+EVALUATION_TYPE_CHOICES = [(et, et) for et in EVALUATION_TYPES]

@@ -44,6 +44,11 @@ class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSeriali
     add_individual_results = serializers.BooleanField(default=choices.DEFAULT_ADD_INDIVIDUAL_RESULTS, required=False,
                                                       help_text=f"Only used for multilabel/multiclass evaluation. If enabled, individual label scores are calculated and stored as well. Default = {choices.DEFAULT_ADD_INDIVIDUAL_RESULTS}.")
 
+    add_misclassified_examples = serializers.BooleanField(default=choices.DEFAULT_ADD_MISCLASSIFIED_EXAMPLES, required=False,
+                                                      help_text=f"Only used for entity evaluation. If enabled, misclassified and partially overlapping values are stored and can be analyzed later. Default = {choices.DEFAULT_ADD_MISCLASSIFIED_EXAMPLES}.")
+
+    evaluation_type = serializers.ChoiceField(choices=choices.EVALUATION_TYPE_CHOICES, required=True, help_text=f"Specify the type labelsets to evaluate.")
+
     plot = serializers.SerializerMethodField()
     task = TaskSerializer(read_only=True)
 
