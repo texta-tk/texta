@@ -2,6 +2,7 @@
 import json
 
 from django.urls import reverse
+from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
 from texta_elastic.core import ElasticCore
@@ -257,7 +258,7 @@ class BinaryAnnotatorTests(APITestCase):
     def run_that_double_skipped_document_wont_be_counted(self):
         pass
 
-
+@override_settings(CELERY_ALWAYS_EAGER=True)
 class EntityAnnotatorTests(APITestCase):
 
     def setUp(self):
