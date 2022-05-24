@@ -64,6 +64,8 @@ class Evaluator(models.Model):
     token_based = models.BooleanField(default=choices.DEFAULT_TOKEN_BASED, null=True)
     add_misclassified_examples = models.BooleanField(default=choices.DEFAULT_ADD_MISCLASSIFIED_EXAMPLES, null=True)
 
+    misclassified_examples = models.TextField(default="{}")
+
     plot = models.FileField(upload_to="data/media", null=True, verbose_name="")
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
