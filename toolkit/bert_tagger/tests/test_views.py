@@ -10,12 +10,12 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 from texta_bert_tagger.tagger import BertTagger
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.core import ElasticCore
 
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
 from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
-from texta_elastic.aggregator import ElasticAggregator
-from texta_elastic.core import ElasticCore
 from toolkit.helper_functions import (
     download_bert_requirements,
     get_downloaded_bert_models,
@@ -145,6 +145,21 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         print_output(f"Delete apply_bert_taggers test index {self.test_index_copy}", res)
 
 
+    def __assert_model_response(self, response):
+        for score in ['f1_score', 'precision', 'recall', 'accuracy']:
+            self.assertTrue(isinstance(response.data[score], float))
+
+        # Assert that progress tracking is working as intended.
+        self.assertTrue(response.data["task"])
+        self.assertTrue(response.data["task"]["status"] == Task.STATUS_COMPLETED)
+        self.assertTrue(response.data["task"]["progress"] == 100.0)
+        self.assertTrue(response.data["task"]["step"] == "")
+        self.assertTrue(response.data["task"]["total"] != 0)
+        self.assertTrue(response.data["task"]["num_processed"] != 0)
+        self.assertTrue(response.data["task"]["time_completed"])
+        self.assertTrue(response.data["task"]["last_update"])
+
+
     def add_cleanup_files(self, tagger_id: int):
         tagger_object = BertTaggerObject.objects.get(pk=tagger_id)
         self.addCleanup(remove_file, tagger_object.model.path)
@@ -181,8 +196,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.test_multiclass_tagger_id = tagger_id
         response = self.client.get(f'{self.url}{tagger_id}/')
         print_output('test_multiclass_bert_tagger_has_stats:response.data', response.data)
-        for score in ['f1_score', 'precision', 'recall', 'accuracy']:
-            self.assertTrue(isinstance(response.data[score], float))
+        self.__assert_model_response(response)
 
         print_output('test_multiclass_bert_tagger_has_classes:response.data.classes', response.data["classes"])
         self.assertTrue(isinstance(response.data["classes"], list))
@@ -214,11 +228,8 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         sleep(5)
         tagger_id = response.data['id']
         response = self.client.get(f'{self.url}{tagger_id}/')
-        print_output('test_binary_multiclass_bert_tagger_has_stats:response.data', response.data)
-        for score in ['f1_score', 'precision', 'recall', 'accuracy']:
-            self.assertTrue(isinstance(response.data[score], float))
+        self.__assert_model_response(response)
 
-        print_output('test_binary_multiclass_bert_tagger_has_classes:response.data.classes', response.data["classes"])
         self.assertTrue(isinstance(response.data["classes"], list))
         self.assertTrue(len(response.data["classes"]) == 2)
 
@@ -291,8 +302,8 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.test_multiclass_tagger_id = tagger_id
         response = self.client.get(f'{self.url}{tagger_id}/')
         print_output('test_balanced_multiclass_bert_tagger_has_stats:response.data', response.data)
-        for score in ['f1_score', 'precision', 'recall', 'accuracy']:
-            self.assertTrue(isinstance(response.data[score], float))
+        self.__assert_model_response(response)
+
 
         print_output('test_balanced_multiclass_bert_tagger_has_classes:response.data.classes', response.data["classes"])
         self.assertTrue(isinstance(response.data["classes"], list))
@@ -329,11 +340,9 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         sleep(5)
         tagger_id = response.data['id']
         response = self.client.get(f'{self.url}{tagger_id}/')
-        print_output('test_binary_bert_tagger_has_stats:response.data', response.data)
-        for score in ['f1_score', 'precision', 'recall', 'accuracy']:
-            self.assertTrue(isinstance(response.data[score], float))
 
-        print_output('test_binary_bert_tagger_has_classes:response.data.classes', response.data["classes"])
+        self.__assert_model_response(response)
+
         self.assertTrue(isinstance(response.data["classes"], list))
         self.assertTrue(len(response.data["classes"]) == 2)
 
@@ -366,11 +375,8 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         sleep(5)
         tagger_id = response.data['id']
         response = self.client.get(f'{self.url}{tagger_id}/')
-        print_output('test_train_bert_tagger_from_checkpoint_model_bin2bin.has_stats:response.data', response.data)
-        for score in ['f1_score', 'precision', 'recall', 'accuracy']:
-            self.assertTrue(isinstance(response.data[score], float))
+        self.__assert_model_response(response)
 
-        print_output('test_train_bert_tagger_from_checkpoint_model.has_stats:response.data.classes', response.data["classes"])
         self.assertTrue(isinstance(response.data["classes"], list))
         self.assertTrue(len(response.data["classes"]) >= 2)
 
@@ -401,9 +407,8 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         sleep(5)
         tagger_id = response.data['id']
         response = self.client.get(f'{self.url}{tagger_id}/')
-        print_output('test_train_bert_tagger_from_checkpoint_model_bin2mc.has_stats:response.data', response.data)
-        for score in ['f1_score', 'precision', 'recall', 'accuracy']:
-            self.assertTrue(isinstance(response.data[score], float))
+        self.__assert_model_response(response)
+
 
         print_output('test_train_bert_tagger_from_checkpoint_model_bin2mc.has_classes:response.data.classes', response.data["classes"])
         self.assertTrue(isinstance(response.data["classes"], list))

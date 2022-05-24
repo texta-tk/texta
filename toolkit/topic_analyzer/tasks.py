@@ -33,7 +33,7 @@ def start_clustering_task(clustering_id: int):
     task_object = clustering_obj.task
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('starting clustering')
-    show_progress.update_view(0)
+    show_progress.set_progress()
 
     return clustering_id
 
@@ -62,7 +62,7 @@ def perform_data_clustering(clustering_id):
         # Removing stopwords, ignored ids while fetching the documents.
         show_progress = ShowProgress(clustering_model.task, multiplier=1)
         show_progress.update_step("scrolling data")
-        show_progress.update_view(0)
+        show_progress.set_progress()
 
         # load phraser from embedding
         if clustering_model.embedding:

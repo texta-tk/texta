@@ -123,7 +123,7 @@ def index_splitting_task(index_splitting_task_id):
 
         show_progress = ShowProgress(task_object, multiplier=1)
         show_progress.update_step("scrolling data")
-        show_progress.update_view(0)
+        show_progress.set_progress()
 
         # Use it just to insert data to elasticsearch. Index name does not matter. 
         elastic_doc = ElasticDocument(train_index)

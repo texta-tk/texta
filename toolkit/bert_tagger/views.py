@@ -25,7 +25,7 @@ from toolkit.elastic.index.models import Index
 from toolkit.exceptions import DownloadingModelsNotAllowedError, InvalidModelIdentifierError, NonExistantModelError, ProjectValidationFailed
 from toolkit.helper_functions import add_finite_url_to_feedback, download_bert_requirements, get_downloaded_bert_models
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
-from toolkit.serializer_constants import ProjectResourceImportModelSerializer
+from toolkit.serializer_constants import EmptySerializer, ProjectResourceImportModelSerializer
 from toolkit.settings import ALLOW_BERT_MODEL_DOWNLOADS, BERT_CACHE_DIR, BERT_PRETRAINED_MODEL_DIRECTORY, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER
 from toolkit.view_constants import BulkDelete, FeedbackModelView
 from .tasks import apply_persistent_bert_tagger
@@ -87,7 +87,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         return BertTaggerObject.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], serializer_class=EmptySerializer)
     def retrain_tagger(self, request, pk=None, project_pk=None):
         """Starts retraining task for the BertTagger model."""
         instance = self.get_object()
@@ -226,6 +226,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         available_models = get_downloaded_bert_models(BERT_PRETRAINED_MODEL_DIRECTORY)
 
         return Response(available_models, status=status.HTTP_200_OK)
+
 
     # This is made into a POST request instead of DELETE, so it would be nice to use through the Browsable API.
     @action(detail=False, methods=['post'], serializer_class=DeleteBERTModelSerializer, permission_classes=(IsAdminUser,))

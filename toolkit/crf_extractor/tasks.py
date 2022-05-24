@@ -35,7 +35,7 @@ def start_crf_task(crf_id: int):
     task_object = extractor.task
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('starting tagging')
-    show_progress.update_view(0)
+    show_progress.set_progress()
     return crf_id
 
 
@@ -52,7 +52,7 @@ def train_crf_task(crf_id: int):
         # create progress object
         show_progress = ShowProgress(task_object, multiplier=1)
         show_progress.update_step('scrolling documents')
-        show_progress.update_view(0)
+        show_progress.set_progress()
         # retrieve indices & field data
         indices = get_indices_from_object(crf_object)
         mlp_field = crf_object.mlp_field
@@ -123,7 +123,7 @@ def save_crf_results(result_data: dict):
         show_progress = ShowProgress(task_object, multiplier=1)
         # update status to saving
         show_progress.update_step('saving')
-        show_progress.update_view(0)
+        show_progress.set_progress()
         crf_object.best_c1 = result_data["best_c_values"][0]
         crf_object.best_c2 = result_data["best_c_values"][1]
         crf_object.model.name = result_data["extractor_path"]

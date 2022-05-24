@@ -101,7 +101,7 @@ def reindex_task(reindexer_task_id):
 
         show_progress = ShowProgress(task_object, multiplier=1)
         show_progress.update_step("scrolling data")
-        show_progress.update_view(0)
+        show_progress.set_progress()
 
         elastic_search = ElasticSearcher(indices=indices, field_data=fields, callback_progress=show_progress, query=query, scroll_size=scroll_size)
         elastic_doc = ElasticDocument(new_index)

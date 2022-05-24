@@ -142,7 +142,7 @@ def start_mlp_worker(self, mlp_id: int):
     # init progress
     show_progress = ShowProgress(mlp_object.task, multiplier=1)
     show_progress.update_step('Scrolling document IDs')
-    show_progress.update_view(0)
+    show_progress.set_progress()
     # Get the necessary fields.
     indices: List[str] = mlp_object.get_indices()
     es_scroll_size = mlp_object.es_scroll_size
@@ -165,7 +165,7 @@ def start_mlp_worker(self, mlp_id: int):
 
     # update progress
     show_progress.update_step(f'Applying MLP to {len(doc_chunks)} documents')
-    show_progress.update_view(0)
+    show_progress.set_progress()
     # update total doc count
     task_object = mlp_object.task
     task_object.total = sum([len(chunk) for chunk in doc_chunks])

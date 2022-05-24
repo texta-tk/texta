@@ -9,18 +9,17 @@ from celery import group
 from celery.decorators import task
 from celery.result import allow_join_result
 from elasticsearch.helpers import streaming_bulk
-from texta_tagger.tagger import Tagger as TextTagger
+from texta_elastic.core import ElasticCore
+from texta_elastic.document import ElasticDocument
+from texta_elastic.query import Query
+from texta_elastic.searcher import ElasticSearcher
 from texta_embedding.embedding import W2VEmbedding
+from texta_tagger.tagger import Tagger as TextTagger
 
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from texta_elastic.core import ElasticCore
 from toolkit.elastic.tools.data_sample import DataSample
-from texta_elastic.document import ElasticDocument
-from toolkit.elastic.tools.feedback import Feedback
-from texta_elastic.query import Query
-from texta_elastic.searcher import ElasticSearcher
 from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import add_finite_url_to_feedback, get_indices_from_object, load_stop_words
 from toolkit.mlp.tasks import apply_mlp_on_list
@@ -28,7 +27,6 @@ from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE,
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.tools.plots import create_tagger_plot
 from toolkit.tools.show_progress import ShowProgress
-
 
 
 def create_tagger_batch(tagger_group_id, taggers_to_create):
@@ -105,7 +103,7 @@ def start_tagger_task(tagger_id: int):
     task_object = tagger.task
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('starting tagging')
-    show_progress.update_view(0)
+    show_progress.set_progress()
     return tagger_id
 
 
@@ -118,7 +116,7 @@ def train_tagger_task(tagger_id: int):
         # create progress object
         show_progress = ShowProgress(task_object, multiplier=1)
         show_progress.update_step('scrolling positives')
-        show_progress.update_view(0)
+        show_progress.set_progress()
 
         # retrieve indices & field data
         indices = get_indices_from_object(tagger_object)
@@ -155,7 +153,7 @@ def train_tagger_task(tagger_id: int):
         )
         # update status to training
         show_progress.update_step("training")
-        show_progress.update_view(0)
+        show_progress.set_progress()
         # train model
         tagger = TextTagger(
             embedding=embedding,
@@ -164,7 +162,7 @@ def train_tagger_task(tagger_id: int):
             classifier=tagger_object.classifier,
             vectorizer=tagger_object.vectorizer,
             analyzer=tagger_object.analyzer
-            )
+        )
         tagger.train(
             data_sample.data,
             pos_label=tagger_object.pos_label,
@@ -215,7 +213,7 @@ def save_tagger_results(result_data: dict):
         show_progress = ShowProgress(task_object, multiplier=1)
         # update status to saving
         show_progress.update_step('saving')
-        show_progress.update_view(0)
+        show_progress.set_progress()
         tagger_object.model.name = result_data["tagger_path"]
         tagger_object.precision = result_data["precision"]
         tagger_object.recall = result_data["recall"]
@@ -276,7 +274,6 @@ def get_mlp(tagger_group_id: int, text: str, lemmatize: bool = False, use_ner: b
         logging.getLogger(INFO_LOGGER).info(f"[Get MLP] Detected {len(tags)} with NER.")
 
     return text, tags
-
 
 
 def get_tag_candidates(tagger_group_id: int, text: str, ignore_tags: List[str] = [], n_similar_docs: int = 10, max_candidates: int = 10):

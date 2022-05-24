@@ -5,15 +5,15 @@ from typing import List, Optional
 
 import numpy as np
 from nltk.tokenize import sent_tokenize
-from texta_tools.text_processor import TextProcessor
-
 from texta_elastic.aggregator import ElasticAggregator
-from toolkit.elastic.tools.feedback import Feedback
+from texta_elastic.core import ElasticCore
 from texta_elastic.query import Query
 from texta_elastic.searcher import ElasticSearcher
+from texta_tools.text_processor import TextProcessor
+
+from toolkit.elastic.tools.feedback import Feedback
 from toolkit.settings import INFO_LOGGER
 from toolkit.tools.lemmatizer import ElasticAnalyzer
-from texta_elastic.core import ElasticCore
 from ..choices import ES6_SNOWBALL_MAPPING, ES7_SNOWBALL_MAPPING
 from ..exceptions import InvalidDataSampleError
 from ...tools.show_progress import ShowProgress
@@ -82,6 +82,13 @@ class DataSample:
         self.is_binary = True if len(self.data) == 2 else False
 
 
+    def sample_count(self):
+        counter = 0
+        for label, documents in self.data.items():
+            counter += len(documents)
+        return counter
+
+
     def _resolve_fields(self, field_data: List[str]) -> List[str]:
         """
         Function to resolve the names of the fields that you want to exclusively fetch from
@@ -131,7 +138,6 @@ class DataSample:
             query = json.loads(self.tagger_object.query)
         except:
             query = self.tagger_object.query
-
 
         if fact_name:
             es_aggregator = ElasticAggregator(indices=self.indices, query=query)
@@ -199,7 +205,7 @@ class DataSample:
 
     @staticmethod
     def _join_fields(list_of_dicts):
-        #return [" ".join(a.values()) for a in list_of_dicts]
+        # return [" ".join(a.values()) for a in list_of_dicts]
         return [" ".join([str(v) for v in a.values()]) for a in list_of_dicts]
 
 
@@ -286,7 +292,7 @@ class DataSample:
 
         for i, class_name in enumerate(self.class_names):
             self.show_progress.update_step(f"scrolling sample for {class_name}")
-            self.show_progress.update_view(0)
+            self.show_progress.set_progress()
 
             self._set_class_display_name(class_name)
 
@@ -295,7 +301,7 @@ class DataSample:
         # add negatives as additional class if asked
         if len(self.class_names) < 2 or self.add_negative_sample:
             self.show_progress.update_step("scrolling negative sample")
-            self.show_progress.update_view(0)
+            self.show_progress.set_progress()
             # set size of negatives equal to first class examples len
             size = len(samples[self.class_names[0]])
             samples['false'] = self._get_negatives(size)
@@ -453,7 +459,7 @@ class DataSample:
 
     def _get_negatives(self, size):
         self.show_progress.update_step("scrolling negative sample")
-        self.show_progress.update_view(0)
+        self.show_progress.set_progress()
         # iterator for retrieving negative examples
         negative_sample_iterator = ElasticSearcher(
             indices=self.indices,

@@ -42,7 +42,7 @@ def start_rakun_task(self, object_id: int):
     task_object = rakun.task
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('starting rakun')
-    show_progress.update_view(0)
+    show_progress.set_progress()
     return object_id
 
 @task(name="apply_rakun_extractor_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)

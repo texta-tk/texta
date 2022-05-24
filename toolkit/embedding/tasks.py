@@ -24,7 +24,7 @@ def train_embedding(embedding_id):
     task_object = embedding_object.task
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('training')
-    show_progress.update_view(0)
+    show_progress.set_progress()
     try:
         # retrieve indices from project 
         indices = get_indices_from_object(embedding_object)

@@ -195,7 +195,7 @@ def annotator_task(self, annotator_task_id):
 
         show_progress = ShowProgress(task_object, multiplier=1)
         show_progress.update_step("scrolling data")
-        show_progress.update_view(0)
+        show_progress.set_progress()
 
         __add_meta_to_original_index(indices, index_fields, show_progress, query, scroll_size, ec)
 

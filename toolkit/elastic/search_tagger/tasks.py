@@ -127,7 +127,7 @@ def start_search_query_tagger_worker(self, object_id: int):
     searchquerytagger_object = SearchQueryTagger.objects.get(pk=object_id)
     show_progress = ShowProgress(searchquerytagger_object.task, multiplier=1)
     show_progress.update_step('running search query tagger')
-    show_progress.update_view(0)
+    show_progress.set_progress()
     return object_id
 
 
@@ -190,7 +190,7 @@ def start_search_fields_tagger_worker(self, object_id: int):
     searchfieldstagger_object = SearchFieldsTagger.objects.get(pk=object_id)
     show_progress = ShowProgress(searchfieldstagger_object.task, multiplier=1)
     show_progress.update_step('running search fields tagger')
-    show_progress.update_view(0)
+    show_progress.set_progress()
     return object_id
 
 

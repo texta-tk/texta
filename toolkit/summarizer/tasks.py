@@ -27,7 +27,7 @@ def start_summarizer_worker(self, summarizer_id: int):
     summarizer_object = Summarizer.objects.get(pk=summarizer_id)
     show_progress = ShowProgress(summarizer_object.task, multiplier=1)
     show_progress.update_step('running summarizer')
-    show_progress.update_view(0)
+    show_progress.set_progress()
     return summarizer_id
 
 @task(name="apply_summarizer_on_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)

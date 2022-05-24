@@ -76,7 +76,9 @@ def train_bert_tagger(tagger_id, testing=False):
             balance_to_max_limit=tagger_object.balance_to_max_limit
         )
         show_progress.update_step('training')
-        show_progress.update_view(0.0)
+        sample_count = data_sample.sample_count()
+        show_progress.set_total(sample_count)
+        show_progress.set_progress(0)
 
         # select sklearn average function based on the number of classes
         if data_sample.is_binary:
@@ -110,7 +112,8 @@ def train_bert_tagger(tagger_id, testing=False):
                 save_pretrained=False,
                 pretrained_models_dir=BERT_PRETRAINED_MODEL_DIRECTORY,
                 logger=logging.getLogger(INFO_LOGGER),
-                cache_dir=BERT_CACHE_DIR
+                cache_dir=BERT_CACHE_DIR,
+                callback=show_progress
             )
 
         # use state dict for binary taggers
@@ -119,7 +122,6 @@ def train_bert_tagger(tagger_id, testing=False):
         else:
             tagger.config.use_state_dict = False
             pos_label = ""
-
 
         # train tagger and get result statistics
         report = tagger.train(
@@ -137,6 +139,8 @@ def train_bert_tagger(tagger_id, testing=False):
         # close all db connections
         for conn in connections.all():
             conn.close_if_unusable_or_obsolete()
+
+        show_progress.set_progress(sample_count)
 
         # save tagger to disc
         tagger_path = os.path.join(BERT_FINETUNED_MODEL_DIRECTORY, f'{tagger_object.MODEL_TYPE}_{tagger_id}_{secrets.token_hex(10)}')
@@ -164,13 +168,15 @@ def train_bert_tagger(tagger_id, testing=False):
         tagger_object.confusion_matrix = json.dumps(report.confusion.tolist())
         tagger_object.classes = json.dumps(report.classes, ensure_ascii=False)
         # save tagger object
-        tagger_object.save()
         # declare the job done
+        task_object.refresh_from_db()
         task_object.complete()
+        tagger_object.save()
+
         return True
 
-
     except Exception as e:
+        task_object.refresh_from_db()
         task_object.add_error(str(e))
         task_object.update_status(Task.STATUS_FAILED)
         raise

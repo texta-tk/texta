@@ -16,7 +16,7 @@ def import_dataset(dataset_import_id):
     # create progress
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('importing dataset')
-    show_progress.update_view(0)
+    show_progress.set_progress()
     try:
         # retrieve file path from object
         file_path = import_object.file.path
