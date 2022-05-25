@@ -23,6 +23,7 @@ from texta_elastic.aggregator import ElasticAggregator
 
 from toolkit.evaluator.models import Evaluator
 from toolkit.evaluator import choices
+from toolkit.evaluator.helpers.entity_evaluator import scroll_and_score_entity
 
 from toolkit.helper_functions import get_core_setting, calculate_memory_buffer
 
@@ -421,35 +422,23 @@ def evaluate_entity_tags_task(object_id: int, indices: List[str], query: dict, e
         pred_fact = evaluator_object.predicted_fact
         #true_fact_value = evaluator_object.true_fact_value
         #pred_fact_value = evaluator_object.predicted_fact_value
+        #print("True label", true_fact)
+        #print("Pred label", pred_fact)
 
         #average = evaluator_object.average_function
         #add_individual_results = evaluator_object.add_individual_results
         add_misclassified_examples = evaluator_object.add_misclassified_examples
+        token_based = evaluator_object.token_based
 
         es_aggregator = ElasticAggregator(indices=indices, query=deepcopy(query))
 
         true_fact_doc_paths = es_aggregator.facts_abstract(key_field="fact", value_field="doc_path", filter_by_key=true_fact)
-        pred_fact_doc_paths = es_aggregator.facts_abstract(key_field="fact", value_field="doc_path", filter_by_key=pred_fact)
-
-        # TODO: validation should be done sooner!
-
-        if not true_fact_doc_paths:
-            raise Exception(f"Didn't detect any facts with the selected true fact name ('{true_fact}').")
-
-        if set(true_fact_doc_paths) != set(pred_fact_doc_paths):
-            raise Exception(f"The doc paths for true and predicted facts are different (true = {true_fact_doc_paths}; predicted = {pred_fact_doc_paths}). Please make sure you are evaluation facts based on the same fields.")
-
-        if len(true_fact_doc_paths) > 1:
-            raise Exception(f"Selected true fact ({true_fact}) is related to two or more fields {true_fact_doc_paths}.")
-
-        if len(pred_fact_doc_paths) > 1:
-            raise Exception(f"Selected predicted fact ({pred_fact}) is related to two or more fields {pred_fact_doc_paths}.")
 
         doc_path = true_fact_doc_paths[0]
 
         searcher = ElasticSearcher(
             indices = indices,
-            field_data = ["texta_facts"],
+            field_data = [doc_path, "texta_facts"],
             query = query,
             output = ElasticSearcher.OUT_RAW,
             timeout = f"{es_timeout}m",
@@ -496,37 +485,33 @@ def evaluate_entity_tags_task(object_id: int, indices: List[str], query: dict, e
         # Get number of batches for the logger
         n_batches = math.ceil(n_docs/scroll_size)
 
+        scores, misclassified = scroll_and_score_entity(searcher, evaluator_object, true_fact, pred_fact, doc_path, token_based, n_batches, add_misclassified_examples)
+
         # Scroll and score tags
-        scores, bin_scores = scroll_and_score(generator=searcher, evaluator_object=evaluator_object, true_fact = true_fact, pred_fact = pred_fact, true_fact_value = true_fact_value, pred_fact_value=pred_fact_value, classes=classes, average=average, score_after_scroll=score_after_scroll, n_batches=n_batches, add_individual_results=add_individual_results)
+        #scores, bin_scores = scroll_and_score(generator=searcher, evaluator_object=evaluator_object, true_fact = true_fact, pred_fact = pred_fact, true_fact_value = true_fact_value, pred_fact_value=pred_fact_value, classes=classes, average=average, score_after_scroll=score_after_scroll, n_batches=n_batches, add_individual_results=add_individual_results)
 
         logging.getLogger(INFO_LOGGER).info(f"Final scores: {scores}")
 
         for conn in connections.all():
             conn.close_if_unusable_or_obsolete()
 
-        confusion = scores["confusion_matrix"]
-        confusion = np.asarray(confusion, dtype="int64")
 
-        if len(classes) <=  choices.DEFAULT_MAX_CONFUSION_CLASSES:
-            # Delete empty rows and columns corresponding to missing pred/true labels from the confusion matrix
-            confusion, classes = delete_empty_rows_and_cols(confusion, classes)
-
-        scores["confusion_matrix"] = confusion.tolist()
 
         # Generate confusion matrix plot and save it
         image_name = f"{secrets.token_hex(15)}.png"
+        classes = ["other", true_fact]
         evaluator_object.plot.save(image_name, create_confusion_plot(scores["confusion_matrix"], classes), save=False)
         image_path = pathlib.Path(MEDIA_URL) / image_name
         evaluator_object.plot.name = str(image_path)
 
         # Add final scores to the model
-        evaluator_object.precision = scores["precision"]
-        evaluator_object.recall = scores["recall"]
-        evaluator_object.f1_score = scores["f1_score"]
-        evaluator_object.accuracy = scores["accuracy"]
-        evaluator_object.confusion_matrix = json.dumps(scores["confusion_matrix"])
+        #evaluator_object.precision = scores["precision"]
+        #evaluator_object.recall = scores["recall"]
+        #evaluator_object.f1_score = scores["f1_score"]
+        #evaluator_object.accuracy = scores["accuracy"]
+        #evaluator_object.confusion_matrix = json.dumps(scores["confusion_matrix"])
 
-        evaluator_object.individual_results = json.dumps(remove_not_found(bin_scores))
+        #evaluator_object.individual_results = json.dumps(remove_not_found(bin_scores))
 
 
         evaluator_object.save()

@@ -22,8 +22,8 @@ from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.evaluator import choices
 from toolkit.evaluator.models import Evaluator as EvaluatorObject
-from toolkit.evaluator.serializers import EvaluatorSerializer, IndividualResultsSerializer, FilteredAverageSerializer
-from toolkit.evaluator.tasks import evaluate_tags_task, filter_results, filter_and_average_results
+from toolkit.evaluator.serializers import EvaluatorSerializer, IndividualResultsSerializer, FilteredAverageSerializer, MisclassifiedExamplesSerializer
+from toolkit.evaluator.tasks import evaluate_tags_task, evaluate_entity_tags_task, filter_results, filter_and_average_results
 from toolkit.helper_functions import get_indices_from_object
 
 from toolkit.view_constants import BulkDelete
@@ -75,13 +75,21 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
         for index in Index.objects.filter(name__in=indices, is_open=True):
             evaluator.indices.add(index)
 
+        evaluation_type = evaluator.evaluation_type
+
         query = json.loads(serializer.validated_data["query"])
+
+
+
 
         new_task = Task.objects.create(evaluator=evaluator, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
         evaluator.task = new_task
         evaluator.save()
 
-        evaluate_tags_task.apply_async(args=(evaluator.pk, indices, query, es_timeout, scroll_size), queue=CELERY_LONG_TERM_TASK_QUEUE)
+        if evaluation_type == choices.ENTITY_EVALUATION:
+            evaluate_entity_tags_task.apply_async(args=(evaluator.pk, indices, query, es_timeout, scroll_size), queue=CELERY_LONG_TERM_TASK_QUEUE)
+        else:
+            evaluate_tags_task.apply_async(args=(evaluator.pk, indices, query, es_timeout, scroll_size), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
 
     def destroy(self, request, *args, **kwargs):
@@ -106,7 +114,7 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
     def filtered_average(self, request, pk=None, project_pk=None):
         """Return average scores of (optionally filtered) individual results."""
         evaluator_object: EvaluatorObject = self.get_object()
-        if evaluator_object.evaluation_type in ["binary"]:
+        if evaluator_object.evaluation_type != "multilabel":
             return Response("This operation is enabled only for multilabel evaluators.", status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
         binary_results = json.loads(evaluator_object.individual_results)
@@ -133,12 +141,53 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
         return Response(avg_scores, status=status.HTTP_200_OK)
 
 
+    @action(detail=True, methods=["get", "post"], serializer_class=MisclassifiedExamplesSerializer)
+    def misclassified_examples(self, request, pk=None, project_pk=None):
+        """Retrieve individual scores for multilabel tags."""
+        evaluator_object: EvaluatorObject = self.get_object()
+
+        if evaluator_object.evaluation_type != "entity":
+            return Response("This operation is applicable only for entity evaluators.", status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        # TODO: throw error, if add_misclassified_examples was set false?
+        misclassified_examples_temp = json.loads(evaluator_object.misclassified_examples)
+
+
+        if request.method == "POST":
+            serializer = MisclassifiedExamplesSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            max_count = serializer.validated_data["max_count"]
+            min_count = serializer.validated_data["min_count"]
+            top_n = serializer.validated_data["top_n"]
+            misclassified_examples = {}
+            for key, values in list(misclassified_examples_temp.items()):
+                misclassified_examples[key] = {}
+                filtered_values = []
+                for value in values:
+                    if value["count"] >= min_count and value["count"] <= max_count:
+                        filtered_values.append(value)
+                misclassified_examples[key]["values"] = filtered_values[:top_n]
+                misclassified_examples[key]["total_unique_count"] = len(values)
+                misclassified_examples[key]["filtered_unique_count"] = len(filtered_values[:top_n])
+        else:
+            misclassified_examples = misclassified_examples_temp
+
+
+
+
+
+        # TODO: add counts ?
+
+        return Response(misclassified_examples, status=status.HTTP_200_OK)
+
+
     @action(detail=True, methods=["post", "get"], serializer_class = IndividualResultsSerializer)
     def individual_results(self, request, pk=None, project_pk=None):
         """Retrieve individual scores for multilabel tags."""
         evaluator_object: EvaluatorObject = self.get_object()
 
-        if evaluator_object.evaluation_type in ["binary"]:
+        if evaluator_object.evaluation_type != "multilabel":
             return Response("This operation is applicable only for multilabel/multiclass evaluators.", status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
         binary_results = json.loads(evaluator_object.individual_results)

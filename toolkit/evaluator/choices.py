@@ -63,7 +63,18 @@ DEFAULT_TOKEN_BASED = True
 DEFAULT_ADD_MISCLASSIFIED_EXAMPLES = True
 
 # Limit the misclassified values stored in the data model
-MAX_VALUES_STORED = 1000
+MAX_MISCLASSIFIED_VALUES_STORED = 1000
 
 EVALUATION_TYPES = ["binary", "multilabel", "entity"]
 EVALUATION_TYPE_CHOICES = [(et, et) for et in EVALUATION_TYPES]
+
+ENTITY_EVALUATION = "entity"
+
+# Default min count for the misclassified examples returned by endpoint "misclassified_examples"
+DEFAULT_MIN_MISCLASSIFIED_COUNT = 1
+
+# Default max count of the misclassified examples returned by endpoint "misclassified_examples"
+DEFAULT_MAX_MISCLASSIFIED_COUNT = 100000000
+
+# Max number of misclassified examples to return per class
+DEFAULT_N_MISCLASSIFIED_VALUES_TO_RETURN = 100

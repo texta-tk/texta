@@ -8,7 +8,7 @@ from toolkit.core.user_profile.serializers import UserSerializer
 from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.evaluator import choices
 from toolkit.evaluator.models import Evaluator
-from toolkit.evaluator.validators import (validate_average_function, validate_fact, validate_fact_value, validate_fact_values_in_sync, validate_metric_restrictions)
+from toolkit.evaluator.validators import (validate_average_function, validate_fact, validate_fact_value, validate_fact_values_in_sync, validate_metric_restrictions, validate_entity_facts, validate_evaluation_type)
 from toolkit.serializer_constants import IndicesSerializerMixin, ProjectResourceUrlSerializer
 
 
@@ -24,6 +24,13 @@ class IndividualResultsSerializer(serializers.Serializer):
     metric_restrictions = serializers.JSONField(default={}, validators=[validate_metric_restrictions], required=False, help_text=f"Score restrictions in format {{metric: {{'min_score: min_score, 'max_score': max_score}}, ...}}. Default = No restrictions.")
     order_by = serializers.ChoiceField(default=choices.DEFAULT_ORDER_BY_FIELD, choices=choices.ORDERING_FIELDS_CHOICES, required=False, help_text=f"Field used for ordering the results. Default = {choices.DEFAULT_ORDER_BY_FIELD}")
     order_desc = serializers.BooleanField(default=choices.DEFAULT_ORDER_DESC, required=False, help_text=f"Order results in descending order? Default = {choices.DEFAULT_ORDER_DESC}.")
+
+
+class MisclassifiedExamplesSerializer(serializers.Serializer):
+    min_count = serializers.IntegerField(default=choices.DEFAULT_MIN_MISCLASSIFIED_COUNT, required=False, help_text=f"Minimum frequency of the misclassified values to return. Default = {choices.DEFAULT_MIN_MISCLASSIFIED_COUNT}.")
+    max_count = serializers.IntegerField(default=choices.DEFAULT_MAX_MISCLASSIFIED_COUNT, required=False, help_text=f"Maximum frequency of the misclassified values to return. Default = {choices.DEFAULT_MAX_MISCLASSIFIED_COUNT}.")
+    top_n = serializers.IntegerField(default=choices.DEFAULT_N_MISCLASSIFIED_VALUES_TO_RETURN, required=False, help_text = f"Number of values to return per class.")
+
 
 
 class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin):
@@ -49,6 +56,8 @@ class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSeriali
 
     evaluation_type = serializers.ChoiceField(choices=choices.EVALUATION_TYPE_CHOICES, required=True, help_text=f"Specify the type labelsets to evaluate.")
 
+    token_based = serializers.BooleanField(default=choices.DEFAULT_TOKEN_BASED, required=False, help_text=f"If enabled, uses token-based entity evaluation, otherwise calculates the scores based on the spans of two value-sets.")
+
     plot = serializers.SerializerMethodField()
     task = TaskSerializer(read_only=True)
 
@@ -72,6 +81,9 @@ class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSeriali
             return data
 
         indices = [index.get("name") for index in data.get("indices")]
+        query = data.get("query")
+        if isinstance(query, str):
+            query = json.loads(query)
 
         true_fact = data.get("true_fact")
         predicted_fact = data.get("predicted_fact")
@@ -80,6 +92,7 @@ class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSeriali
         predicted_fact_value = data.get("predicted_fact_value")
 
         avg_function = data.get("average_function")
+        evaluation_type = data.get("evaluation_type")
 
         validate_fact(indices, true_fact)
         validate_fact(indices, predicted_fact)
@@ -87,9 +100,13 @@ class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSeriali
         validate_fact_value(indices, true_fact, true_fact_value)
         validate_fact_value(indices, predicted_fact, predicted_fact_value)
 
+        if evaluation_type == "entity":
+            validate_entity_facts(indices, query, true_fact, predicted_fact)
+
         validate_fact_values_in_sync(true_fact_value, predicted_fact_value)
 
         validate_average_function(avg_function, true_fact_value, predicted_fact_value)
+        validate_evaluation_type(indices, query, evaluation_type, true_fact, predicted_fact, true_fact_value, predicted_fact_value, )
 
         return data
 
@@ -98,6 +115,6 @@ class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSeriali
         model = Evaluator
         fields = ("url", "author", "id", "description", "indices", "query", "true_fact", "predicted_fact", "true_fact_value", "predicted_fact_value",
                   "average_function", "f1_score", "precision", "recall", "accuracy", "confusion_matrix", "n_true_classes", "n_predicted_classes", "n_total_classes",
-                  "evaluation_type", "scroll_size", "es_timeout", "scores_imprecise", "score_after_scroll", "document_count", "add_individual_results", "plot", "task")
+                  "evaluation_type", "scroll_size", "es_timeout", "scores_imprecise", "score_after_scroll", "document_count", "add_individual_results", "plot", "task", "add_misclassified_examples", "evaluation_type", "token_based")
 
         read_only_fields = ("project", "f1_score", "precision", "recall", "accuracy", "confusion_matrix", "n_true_classes", "n_predicted_classes", "n_total_classes", "document_count", "evaluation_type", "scores_imprecise", "score_after_scroll", "task")

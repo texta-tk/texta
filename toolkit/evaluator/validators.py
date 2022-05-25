@@ -1,7 +1,7 @@
 import json
 
 from typing import List
-
+from copy import deepcopy
 from django.core.exceptions import ValidationError
 
 from texta_elastic.aggregator import ElasticAggregator
@@ -40,6 +40,60 @@ def validate_fact(indices: List[str], fact: str):
     fact_values = ag.get_fact_values_distribution(fact, fact_name_size=choices.DEFAULT_MAX_FACT_AGGREGATION_SIZE)
     if not fact_values:
         raise ValidationError(f"Fact '{fact}' not present in any of the selected indices ({indices}).")
+    return True
+
+
+def validate_entity_facts(indices: List[str], query: dict, true_fact: str, pred_fact: str):
+    """ Check if facts chosen for entity evaluation follow all the necessary requirements. """
+
+    ag = ElasticAggregator(indices=indices, query=deepcopy(query))
+
+    true_fact_doc_paths = ag.facts_abstract(key_field="fact", value_field="doc_path", filter_by_key=true_fact)
+    pred_fact_doc_paths = ag.facts_abstract(key_field="fact", value_field="doc_path", filter_by_key=pred_fact)
+
+    # TODO: validation should be done sooner!
+
+    if set(true_fact_doc_paths) != set(pred_fact_doc_paths):
+        raise ValidationError(f"The doc paths for true and predicted facts are different (true = {true_fact_doc_paths}; predicted = {pred_fact_doc_paths}). Please make sure you are evaluating facts based on the same fields.")
+
+    if len(true_fact_doc_paths) > 1:
+        raise ValidationError(f"Selected true fact ({true_fact}) is related to two or more fields {true_fact_doc_paths}.")
+
+    if len(pred_fact_doc_paths) > 1:
+        raise ValidationError(f"Selected predicted fact ({pred_fact}) is related to two or more fields {pred_fact_doc_paths}.")
+
+    return True
+
+
+def validate_evaluation_type(indices: List[str], query: dict, evaluation_type: str, true_fact: str, pred_fact: str, true_value: str, pred_value: str):
+    """ Checks if the chosen facts (and values) are applicable for the chosen evaluation type.
+    """
+
+    if evaluation_type == "binary":
+        if not true_value or not pred_value:
+            raise ValidationError(f"Please specify true and predicted values for evaluation type 'binary'.")
+    elif evaluation_type == "multilabel":
+        if true_value or pred_value:
+            raise ValidationError(f"Please leave true and predicted values unspeficied for evaluation type 'multilabel'.")
+    elif evaluation_type == "entity":
+        if true_value or pred_value:
+            raise ValidationError(f"Please leave true and predicted values unspeficied for evaluation type 'entity'.")
+
+        ag = ElasticAggregator(indices=indices, query=deepcopy(query))
+
+        true_fact_results = ag.facts_abstract(key_field="fact", value_field="spans", filter_by_key=true_fact, size=5)
+        pred_fact_results = ag.facts_abstract(key_field="fact", value_field="spans", filter_by_key=pred_fact, size=5)
+
+        if len(true_fact_results) == 1:
+            spans = json.loads(true_fact_results[0])
+            if not spans[0] or (spans[0][0] == 0 and spans[0][1] == 0):
+                raise ValidationError(f"Did not find non-zero spans for selected true fact '{true_fact}'. Please make sure to use facts with existing spans for evaluation_type 'entity'.")
+
+        if len(pred_fact_results) == 1:
+            spans = json.loads(pred_fact_results[0])
+            if not spans[0] or (spans[0][0] == 0 and spans[0][1] == 0):
+                raise ValidationError(f"Did not find non-zero spans for selected predicted fact '{pred_fact}'. Please make sure to use facts with existing spans for evaluation_type 'entity'.")
+
     return True
 
 
