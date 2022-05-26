@@ -618,12 +618,16 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
             "new_fact_name": self.new_fact_name,
             "new_fact_value": self.new_fact_value,
             "indices": [{"name": self.test_index_copy}],
-            "fields": TEST_FIELD_CHOICE
+            "fields": TEST_FIELD_CHOICE,
+            "use_gpu": False
         }
         response = self.client.post(url, payload, format='json')
         print_output('test_apply_binary_bert_tagger_to_index:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         tagger_object = BertTaggerObject.objects.get(pk=self.test_imported_binary_gpu_tagger_id)
+
+        # Check that GPU usage in tagger hasn't been turned off by a one-time setting.
+        self.assertTrue(tagger_object.use_gpu is True)
 
         # Wait til the task has finished
         while tagger_object.task.status != Task.STATUS_COMPLETED:

@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import secrets
+from copy import copy
 from typing import Dict, List, Union
 
 from celery.decorators import task
@@ -29,7 +30,7 @@ PERSISTENT_BERT_TAGGERS = {}
 
 
 @task(name="apply_persistent_bert_tagger", base=BaseTask)
-def apply_persistent_bert_tagger(tagger_input: Union[str, Dict], tagger_id: int, input_type: str = 'text', feedback: bool = False):
+def apply_persistent_bert_tagger(tagger_input: Union[str, Dict], tagger_id: int, input_type: str = 'text', feedback: bool = False, use_gpu: bool = False):
     """
     Task to use Bert models stored in memory for fast re-use.
     Stores models in dict.
@@ -39,6 +40,9 @@ def apply_persistent_bert_tagger(tagger_input: Union[str, Dict], tagger_id: int,
     try:
         # load tagger object into cache if not there
         if tagger_id not in PERSISTENT_BERT_TAGGERS:
+            # Allows user to overwrite whether they want to use gpu when applying the tagger or not
+            # without changing the original setting.
+            tagger_object.use_gpu = use_gpu
             PERSISTENT_BERT_TAGGERS[tagger_id] = tagger_object.load_tagger()
         # select loaded tagger from cache
         loaded_tagger = PERSISTENT_BERT_TAGGERS[tagger_id]
@@ -120,7 +124,6 @@ def train_bert_tagger(tagger_id, testing=False):
             tagger.config.use_state_dict = False
             pos_label = ""
 
-
         # train tagger and get result statistics
         report = tagger.train(
             data_sample.data,
@@ -176,11 +179,11 @@ def train_bert_tagger(tagger_id, testing=False):
         raise
 
 
-def apply_tagger(tagger_object: BertTaggerObject, tagger_input: Union[str, Dict], input_type: str = 'text', feedback: bool = False):
+def apply_tagger(tagger_object: BertTaggerObject, tagger_input: Union[str, Dict], input_type: str = 'text', feedback: bool = False, use_gpu=False):
     """ Apply BERT tagger on a text or a document. Wraps functions load_tagger and apply_loaded_tagger."""
     # Load tagger
-    tagger = tagger_object.load_tagger()
-    # Predict with the loaded tagger
+    tagger_object.use_gpu = use_gpu
+    tagger: BertTagger = tagger_object.load_tagger()  # Predict with the loaded tagger
     prediction = tagger_object.apply_loaded_tagger(tagger, tagger_input, input_type, feedback)
     return prediction
 
@@ -240,15 +243,20 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
 
 
 @task(name="apply_bert_tagger_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
-def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str], fact_name: str, fact_value: str, query: dict, bulk_size: int, max_chunk_bytes: int, es_timeout: int):
+def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str], fact_name: str, fact_value: str, query: dict, bulk_size: int, max_chunk_bytes: int, es_timeout: int, use_gpu: bool):
     """Apply BERT Tagger to index."""
     try:
         tagger_object = BertTaggerObject.objects.get(pk=object_id)
+        # Overwrite the default GPU usage on user demand without overwriting the DB record itself.
+        original_gpu_setting = copy(tagger_object.use_gpu)
+        tagger_object.use_gpu = use_gpu
         tagger = tagger_object.load_tagger()
+        tagger_object.use_gpu = original_gpu_setting  # Safety to avoid overwriting it.
 
         progress = ShowProgress(tagger_object.task)
 
         ec = ElasticCore()
+        indices = tagger_object.get_available_or_all_indices(indices)
         [ec.add_texta_facts_mapping(index) for index in indices]
 
         searcher = ElasticSearcher(
@@ -260,6 +268,10 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
             callback_progress=progress,
             scroll_size=bulk_size
         )
+
+        # Set the total count for the task and its progress.
+        tagger_object.task.total = searcher.count()
+        tagger_object.task.save()
 
         actions = update_generator(generator=searcher, ec=ec, fields=fields, fact_name=fact_name, fact_value=fact_value, tagger_object=tagger_object, tagger=tagger)
         for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes, max_retries=3):

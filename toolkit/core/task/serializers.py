@@ -7,8 +7,8 @@ from toolkit.core.task.models import Task
 class TaskSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Task
-        fields = ('id', 'status', 'progress', 'step', 'errors', 'time_started', 'last_update', 'time_completed', 'total', 'num_processed')
-        read_only_fields = ('id', 'status', 'step', 'errors', 'time_started', 'last_update', 'time_completed')
+        fields = ('id', 'status', 'task_type', 'progress', 'step', 'errors', 'time_started', 'last_update', 'time_completed', 'total', 'num_processed')
+        read_only_fields = ('id', 'status', 'task_type', 'step', 'errors', 'time_started', 'last_update', 'time_completed')
 
 
 class TaskAPISerializer(serializers.Serializer):

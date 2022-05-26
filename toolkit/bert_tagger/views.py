@@ -131,6 +131,8 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         serializer = TagRandomDocSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        use_gpu = serializer.validated_data["use_gpu"]
+
         indices = [index["name"] for index in serializer.validated_data["indices"]]
         indices = tagger_object.get_available_or_all_indices(indices)
 
@@ -151,7 +153,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         random_doc_filtered = {k: v for k, v in random_doc.items() if k in tagger_fields}
 
         # apply tagger
-        tagger_response = apply_tagger(tagger_object, random_doc_filtered, input_type='doc')
+        tagger_response = apply_tagger(tagger_object, random_doc_filtered, input_type='doc', use_gpu=use_gpu)
         response = {"document": random_doc, "prediction": tagger_response}
         return Response(response, status=status.HTTP_200_OK)
 
@@ -170,11 +172,13 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         text = serializer.validated_data['text']
         feedback = serializer.validated_data['feedback_enabled']
         persistent = serializer.validated_data['persistent']
+        use_gpu = serializer.validated_data["use_gpu"]
+
         # decide whether to store the model in cache
         if not persistent:
-            prediction = apply_tagger(tagger_object, text, feedback=feedback)
+            prediction = apply_tagger(tagger_object, text, feedback=feedback, use_gpu=use_gpu)
         else:
-            prediction = apply_persistent_bert_tagger.s(text, tagger_object.pk, feedback=feedback).apply_async().get()
+            prediction = apply_persistent_bert_tagger.s(text, tagger_object.pk, feedback=feedback, use_gpu=use_gpu).apply_async().get()
         prediction = add_finite_url_to_feedback(prediction, request)
         return Response(prediction, status=status.HTTP_200_OK)
 
@@ -227,6 +231,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
         return Response(available_models, status=status.HTTP_200_OK)
 
+
     # This is made into a POST request instead of DELETE, so it would be nice to use through the Browsable API.
     @action(detail=False, methods=['post'], serializer_class=DeleteBERTModelSerializer, permission_classes=(IsAdminUser,))
     def delete_pretrained_model(self, request, pk=None, project_pk=None):
@@ -253,12 +258,12 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             serializer.is_valid(raise_exception=True)
 
             tagger_object = self.get_object()
-            tagger_object.task = Task.objects.create(berttagger=tagger_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
+            tagger_object.task = Task.objects.create(berttagger=tagger_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY, step="scroll and apply")
             tagger_object.save()
 
             project = Project.objects.get(pk=project_pk)
             indices = [index["name"] for index in serializer.validated_data["indices"]]
-            # indices = project.get_available_or_all_project_indices(indices)
+            indices = project.get_available_or_all_project_indices(indices)
 
             fields = serializer.validated_data["fields"]
             fact_name = serializer.validated_data["new_fact_name"]
@@ -267,12 +272,13 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             bulk_size = serializer.validated_data["bulk_size"]
             max_chunk_bytes = serializer.validated_data["max_chunk_bytes"]
             es_timeout = serializer.validated_data["es_timeout"]
+            use_gpu = serializer.validated_data["use_gpu"]
 
             if tagger_object.fact_name:
                 # Disable fact_value usage for multiclass taggers
                 fact_value = ""
 
-            args = (pk, indices, fields, fact_name, fact_value, query, bulk_size, max_chunk_bytes, es_timeout)
+            args = (pk, indices, fields, fact_name, fact_value, query, bulk_size, max_chunk_bytes, es_timeout, use_gpu)
             transaction.on_commit(lambda: apply_tagger_to_index.apply_async(args=args, queue=CELERY_LONG_TERM_TASK_QUEUE))
 
             message = "Started process of applying BERT Tagger with id: {}".format(tagger_object.id)

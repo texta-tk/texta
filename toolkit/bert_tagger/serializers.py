@@ -21,6 +21,7 @@ class ApplyTaggerSerializer(FieldParseSerializer, IndicesSerializerMixin, Elasti
     new_fact_value = serializers.CharField(required=False, default="", help_text="NB! Only applicable for binary taggers! Used as fact value when applying the tagger. Defaults to tagger description (binary) / tagger result (multiclass).")
     fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
     query = serializers.JSONField(help_text="Filter the documents which to scroll and apply to.", default=EMPTY_QUERY)
+    use_gpu = serializers.BooleanField(default=False)
 
 
 class BertDownloaderSerializer(serializers.Serializer):
@@ -35,10 +36,12 @@ class BertTagTextSerializer(serializers.Serializer):
     text = serializers.CharField()
     persistent = serializers.BooleanField(default=False)
     feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
+    use_gpu = serializers.BooleanField(default=False)
 
 
 class TagRandomDocSerializer(IndicesSerializerMixin):
     fields = serializers.ListField(child=serializers.CharField(), default=[], required=False, allow_empty=True, help_text='Fields to apply the tagger. By default, the tagger is applied to the same fields it was trained on.')
+    use_gpu = serializers.BooleanField(default=False)
 
 
 class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
