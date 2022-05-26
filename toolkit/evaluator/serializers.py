@@ -58,6 +58,7 @@ class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSeriali
 
     token_based = serializers.BooleanField(default=choices.DEFAULT_TOKEN_BASED, required=False, help_text=f"If enabled, uses token-based entity evaluation, otherwise calculates the scores based on the spans of two value-sets.")
 
+    field = serializers.CharField(default="", required=False, help_text=f"Field related to true and predicted facts. NB! This has effect only for evaluation_type='entity' and is only required if the selected facts have multiple different doc paths. ")
     plot = serializers.SerializerMethodField()
     task = TaskSerializer(read_only=True)
 
@@ -94,6 +95,8 @@ class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSeriali
         avg_function = data.get("average_function")
         evaluation_type = data.get("evaluation_type")
 
+        doc_path = data.get("field")
+
         validate_fact(indices, true_fact)
         validate_fact(indices, predicted_fact)
 
@@ -101,7 +104,7 @@ class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSeriali
         validate_fact_value(indices, predicted_fact, predicted_fact_value)
 
         if evaluation_type == "entity":
-            validate_entity_facts(indices, query, true_fact, predicted_fact)
+            validate_entity_facts(indices, query, true_fact, predicted_fact, doc_path)
 
         validate_fact_values_in_sync(true_fact_value, predicted_fact_value)
 
@@ -115,6 +118,6 @@ class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSeriali
         model = Evaluator
         fields = ("url", "author", "id", "description", "indices", "query", "true_fact", "predicted_fact", "true_fact_value", "predicted_fact_value",
                   "average_function", "f1_score", "precision", "recall", "accuracy", "confusion_matrix", "n_true_classes", "n_predicted_classes", "n_total_classes",
-                  "evaluation_type", "scroll_size", "es_timeout", "scores_imprecise", "score_after_scroll", "document_count", "add_individual_results", "plot", "task", "add_misclassified_examples", "evaluation_type", "token_based")
+                  "evaluation_type", "scroll_size", "es_timeout", "scores_imprecise", "score_after_scroll", "document_count", "add_individual_results", "plot", "task", "add_misclassified_examples", "evaluation_type", "token_based", "field")
 
         read_only_fields = ("project", "f1_score", "precision", "recall", "accuracy", "confusion_matrix", "n_true_classes", "n_predicted_classes", "n_total_classes", "document_count", "evaluation_type", "scores_imprecise", "score_after_scroll", "task")
