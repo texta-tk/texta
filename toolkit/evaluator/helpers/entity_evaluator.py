@@ -1,15 +1,16 @@
 import os
 import json
 import logging
-from collections import defaultdict
 
+from collections import defaultdict
 from typing import List, Union, Tuple, Dict
 from texta_elastic.searcher import ElasticSearcher
+
 from toolkit.evaluator.models import Evaluator
+from toolkit.evaluator import choices
 
 from toolkit.settings import INFO_LOGGER, ERROR_LOGGER
 
-from toolkit.evaluator import choices
 
 def separate_facts_with_multispans(texta_facts: List[dict]) -> List[dict]:
     """ Separates facts with multiple spans. E.g:
@@ -106,10 +107,10 @@ def value_spans_to_token_spans(span: List[int], text: str) -> List[str]:
 
 
 def get_text(doc: dict, doc_path: str) -> str:
+    """ Retrieve text from a given (potentially nested) field.
+    """
     doc_path_tokens = doc_path.split(".")
     if doc_path_tokens[0] not in doc:
-        #print(doc_path_tokens)
-        #print(doc.keys())
         raise Exception(f"Couldn't detect field '{doc_path}' from the given document.")
 
     text = doc[doc_path_tokens[0]]
@@ -117,8 +118,6 @@ def get_text(doc: dict, doc_path: str) -> str:
 
     while isinstance(text, dict) or pointer < len(doc_path_tokens):
         if doc_path_tokens[pointer] not in text:
-            #print(doc_path_tokens)
-            #print(text.keys())
             raise Exception(f"Couldn't detect field '{doc_path}' from the given document.")
         text = text[doc_path_tokens[pointer]]
         pointer+=1
@@ -129,7 +128,7 @@ def get_text(doc: dict, doc_path: str) -> str:
 
 
 def get_token_spans(sent_index: int, label_dict: Dict[int, list], text: str):
-    """ TODO
+    """ Recalculate spans (value spans -> token spans).
     """
     token_spans = []
     if sent_index in label_dict:
@@ -206,7 +205,7 @@ def get_tps_fps_tns_fns(text: str, true_spans: List[str], pred_spans: List[str])
 
 
 def get_labels(sent_index: int, label_dict: Dict[int, list], as_str: bool = False) -> Union[List[str], List[list]]:
-    """ TODO.
+    """ Get labels corresponding to the given sent index.
     """
     labels = []
     if sent_index in label_dict:
@@ -218,7 +217,7 @@ def get_labels(sent_index: int, label_dict: Dict[int, list], as_str: bool = Fals
 
 
 def get_value_based_tps(sent_index: int, true_dict: Dict[int, list], pred_dict: Dict[int, list]) -> int:
-    """ TODO.
+    """ Calculate the number of true positives for value based evaluation.
     """
     true_labels = get_labels(sent_index, true_dict, as_str = True)
     pred_labels = get_labels(sent_index, pred_dict, as_str = True)
@@ -228,7 +227,7 @@ def get_value_based_tps(sent_index: int, true_dict: Dict[int, list], pred_dict: 
 
 
 def get_unique_span_labels(sent_index: int, true_dict: Dict[int, list], pred_dict: Dict[int, list]) -> Tuple[List[list], List[list]]:
-    """ TODO.
+    """ Get false positives and false negatives.
     """
     true_labels = get_labels(sent_index, true_dict, as_str = True)
     pred_labels = get_labels(sent_index, pred_dict, as_str = True)
@@ -245,7 +244,7 @@ def get_unique_span_labels(sent_index: int, true_dict: Dict[int, list], pred_dic
 
 
 def process_batch(doc_batch: List[dict], doc_path: str, pred_fact_name: str, true_fact_name: str, token_based: bool = True, add_misclassified_examples: bool = True) -> Dict[str, int]:
-    """ TODO.
+    """ Process a batch of documents.
     """
 
     tps = 0
@@ -258,7 +257,6 @@ def process_batch(doc_batch: List[dict], doc_path: str, pred_fact_name: str, tru
     partial_vals = []
     fp_vals = []
     fn_vals = []
-
 
     for i, raw_doc in enumerate(doc_batch):
 
@@ -286,7 +284,7 @@ def process_batch(doc_batch: List[dict], doc_path: str, pred_fact_name: str, tru
         nonzero_keys = set(nonzero_true_keys + nonzero_pred_keys)
 
         if nonzero_keys:
-            texts = text.split("\n")
+            texts = [t.strip() for t in text.split("\n")]
         else:
             texts = [text]
 
@@ -318,8 +316,6 @@ def process_batch(doc_batch: List[dict], doc_path: str, pred_fact_name: str, tru
 
                     # If the predicted value is a substring of the true value, e.g. "EDGAR" vs. "EDGAR Sa"
                     if start_p >= start_t and end_p <= end_t:
-                        #subset_val = f"true: {text[start_t: end_t]}; predicted: {text[start_p: end_p]}"
-                        #subset_vals.append({"true": text[start_t: end_t], "pred": text[start_p: end_p]})
                         subset_val = json.dumps({"true": text[start_t: end_t], "pred": text[start_p: end_p]})
                         subset_vals.append(subset_val)
                         used_pred_spans.append(json.dumps([start_p, end_p]))
@@ -327,24 +323,18 @@ def process_batch(doc_batch: List[dict], doc_path: str, pred_fact_name: str, tru
 
                     # If the predicted value has a parital overlap with the true value, e.g. "Anton HANSEN" vs. "HANSEN Tammsaare"
                     elif (start_p < start_t and end_p > start_t and end_p < end_t) or (start_p > start_t and start_p <= end_t and end_p > end_t):
-                        #partial_val = f"true: {text[start_t: end_t]}; predicted: {text[start_p: end_p]}"
-                        #partial_val = f"true: {text[start_t: end_t]}; predicted: {text[start_p: end_p]}"
                         partial_val = json.dumps({"true": text[start_t: end_t], "pred": text[start_p: end_p]})
                         partial_vals.append(partial_val)
-                        #partial_vals.append({"true": text[start_t: end_t], "pred": text[start_p: end_p]})
                         used_pred_spans.append(json.dumps([start_p, end_p]))
                         used_true_spans.append(json.dumps([start_t, end_t]))
 
                     # If the predicted value is a superstring of the true value, e.g. "EDGAR SAVISAAR" vs. "SAVISAAR"
                     elif (start_p < start_t and end_p > end_t):
-                        #superset_val = f"true: {text[start_t: end_t]}; predicted: {text[start_p: end_p]}"
                         superset_val = json.dumps({"true": text[start_t: end_t], "pred": text[start_p: end_p]})
                         superset_vals.append(superset_val)
-                        #superset_vals.append({"true": text[start_t: end_t], "pred": text[start_p: end_p]})
                         used_pred_spans.append(json.dumps([start_p, end_p]))
                         used_true_spans.append(json.dumps([start_t, end_t]))
 
-            # TODO: Clean this up a bit!
             true_i_keep_str = [json.dumps(l) for l in true_unique]
             pred_i_keep_str = [json.dumps(l) for l in pred_unique]
             fn_spans = [json.loads(l) for l in list(set(true_i_keep_str).difference(set(used_true_spans)))]
@@ -369,7 +359,7 @@ def process_batch(doc_batch: List[dict], doc_path: str, pred_fact_name: str, tru
 
 
 
-def scroll_and_score_entity(generator: ElasticSearcher, evaluator_object: Evaluator, true_fact: str, pred_fact: str, doc_path: str, token_based: bool, n_batches: int = None, add_misclassified_examples: bool = True, doc_path: str = "") -> Tuple[Union[List[int], List[List[str]]], Union[List[int], List[List[str]]], Dict[str, Dict[str, List[int]]]]:
+def scroll_and_score_entity(generator: ElasticSearcher, evaluator_object: Evaluator, true_fact: str, pred_fact: str, doc_path: str, token_based: bool, n_batches: int = None, add_misclassified_examples: bool = True) -> Tuple[Union[List[int], List[List[str]]], Union[List[int], List[List[str]]], Dict[str, Dict[str, List[int]]]]:
     """ Scrolls over ES index and calculates scores."""
 
     total_counts = {
@@ -398,14 +388,9 @@ def scroll_and_score_entity(generator: ElasticSearcher, evaluator_object: Evalua
         for key, count in list(batch_counts.items()):
             total_counts[key]+=count
 
-        # TODO: how to handle misclassified
         for key, values in list(batch_values.items()):
-            #print(values)
-            #print(batch_values)
             for value in values:
                 misclassified[key][value]+=1
-
-    # sort misclassified examples and cut off tail
 
     tps=total_counts["tps"]
     tns=total_counts["tns"]
@@ -429,9 +414,9 @@ def scroll_and_score_entity(generator: ElasticSearcher, evaluator_object: Evalua
     evaluator_object.n_predicted_classes = tps + fps
     evaluator_object.n_total_classes = tps + fns + fps # tns aren't included!
 
-    if add_misclassified_examples:
+    misclassified_new = {}
 
-        misclassified_new = {}
+    if add_misclassified_examples:
         for key, value_dict in list(misclassified.items()):
             value_dict = dict(value_dict)
             value_list = sorted(list(value_dict.items()), key=lambda x: x[1], reverse=True)

@@ -23,7 +23,8 @@ from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.evaluator import choices
 from toolkit.evaluator.models import Evaluator as EvaluatorObject
 from toolkit.evaluator.serializers import EvaluatorSerializer, IndividualResultsSerializer, FilteredAverageSerializer, MisclassifiedExamplesSerializer
-from toolkit.evaluator.tasks import evaluate_tags_task, evaluate_entity_tags_task, filter_results, filter_and_average_results
+from toolkit.evaluator.tasks import evaluate_tags_task, evaluate_entity_tags_task
+from toolkit.evaluator.helpers.binary_and_multilabel_evaluator import filter_results, filter_and_average_results
 from toolkit.helper_functions import get_indices_from_object
 
 from toolkit.view_constants import BulkDelete
@@ -77,10 +78,10 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
 
         evaluation_type = evaluator.evaluation_type
 
-        query = json.loads(serializer.validated_data["query"])
-
-
-
+        if isinstance(serializer.validated_data["query"], str):
+            query = json.loads(serializer.validated_data["query"])
+        else:
+            query = serializer.validated_data["query"]
 
         new_task = Task.objects.create(evaluator=evaluator, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
         evaluator.task = new_task
@@ -105,8 +106,14 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
         es_timeout = evaluator.es_timeout
         scroll_size = evaluator.scroll_size
         query = json.loads(evaluator.query)
+        evaluation_type = evaluator.evaluation_type
         indices = get_indices_from_object(evaluator)
-        evaluate_tags_task.apply_async(args=(evaluator.pk, indices, query, es_timeout, scroll_size), queue=CELERY_LONG_TERM_TASK_QUEUE)
+
+        if evaluation_type == choices.ENTITY_EVALUATION:
+            evaluate_entity_tags_task.apply_async(args=(evaluator.pk, indices, query, es_timeout, scroll_size), queue=CELERY_LONG_TERM_TASK_QUEUE)
+        else:
+            evaluate_tags_task.apply_async(args=(evaluator.pk, indices, query, es_timeout, scroll_size), queue=CELERY_LONG_TERM_TASK_QUEUE)
+
         return Response({"success": "Re-evaluation task created"}, status=status.HTTP_200_OK)
 
 
@@ -152,7 +159,6 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
         # TODO: throw error, if add_misclassified_examples was set false?
         misclassified_examples_temp = json.loads(evaluator_object.misclassified_examples)
 
-
         if request.method == "POST":
             serializer = MisclassifiedExamplesSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -172,12 +178,6 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
                 misclassified_examples[key]["filtered_unique_count"] = len(filtered_values[:top_n])
         else:
             misclassified_examples = misclassified_examples_temp
-
-
-
-
-
-        # TODO: add counts ?
 
         return Response(misclassified_examples, status=status.HTTP_200_OK)
 

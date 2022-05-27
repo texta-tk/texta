@@ -48,12 +48,16 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
 
         # TODO! Construct a test query
         self.fact_names_to_filter = [self.true_fact_name, self.pred_fact_name]
-        self.fact_values_to_filter = ["650 bioeetika", "650 rahvusbibliograafiad"]
         self.test_query = Query()
-        self.test_query.add_facts_filter(self.fact_names_to_filter, self.fact_values_to_filter, operator="must")
+        self.test_query.add_facts_filter(self.fact_names_to_filter, [], operator="must")
         self.test_query = self.test_query.__dict__()
 
         self.client.login(username="EvaluatorOwner", password="pw")
+
+        self.token_based_evaluator_id = None
+        self.value_based_evaluator_id = None
+        self.token_based_sent_index_evaluator_id = None
+        self.value_based_sent_index_evaluator_id = None
 
 
     def tearDown(self) -> None:
@@ -64,37 +68,29 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
     def test(self):
 
         self.run_test_invalid_fact_name()
-        self.run_test_invalid_fact_value()
-        self.run_test_invalid_average_function()
-
-        self.run_test_evaluation_with_query()
-
-        self.run_test_binary_evaluation()
-        self.run_test_multilabel_evaluation(add_individual_results=True)
-        self.run_test_multilabel_evaluation(add_individual_results=False)
-
-        self.run_test_multilabel_evaluation_with_scoring_after_each_scroll(add_individual_results=True)
-        self.run_test_multilabel_evaluation_with_scoring_after_each_scroll(add_individual_results=False)
-
-        self.run_test_individual_results_enabled(self.memory_optimized_multilabel_evaluators.values())
-        self.run_test_individual_results_enabled(self.multilabel_evaluators.values())
-        self.run_test_individual_results_disabled(self.binary_evaluators.values())
-
-        self.run_test_individual_results_view_multilabel(self.multilabel_evaluators["macro"])
-        self.run_test_individual_results_view_invalid_input_multilabel(self.multilabel_evaluators["macro"])
-        self.run_test_individual_results_view_binary(self.binary_evaluators["macro"])
-
-        self.run_test_filtered_average_view_multilabel_get(self.multilabel_evaluators["macro"])
-        self.run_test_filtered_average_view_multilabel_post(self.multilabel_evaluators["macro"])
-        self.run_test_filtered_average_view_binary(self.binary_evaluators["macro"])
-
-        self.run_export_import(self.binary_evaluators["macro"])
-        self.run_export_import(self.multilabel_evaluators["macro"])
-
-        self.run_patch(self.binary_evaluators["macro"])
-        self.run_reevaluate(self.binary_evaluators["macro"])
-
-        self.run_delete(self.binary_evaluators["macro"])
+        self.run_test_invalid_fact_without_spans()
+        self.run_test_invalid_doc_path()
+        self.run_test_invalid_facts_have_different_doc_paths()
+        self.run_test_invalid_fact_has_multiple_paths_field_name_unspecified()
+        self.run_test_entity_evaluation_token_based()
+        self.run_test_entity_evaluation_token_based_sent_index()
+        self.run_test_entity_evaluation_value_based()
+        self.run_test_entity_evaluation_value_based_sent_index()
+        self.run_test_individual_results_view_entity(self.token_based_evaluator_id)
+        self.run_test_filtered_average_view_entity(self.token_based_evaluator_id)
+        self.run_test_misclassified_examples_get(self.token_based_evaluator_id)
+        self.run_test_misclassified_examples_get(self.value_based_evaluator_id)
+        self.run_test_misclassified_examples_get(self.token_based_sent_index_evaluator_id)
+        self.run_test_misclassified_examples_get(self.value_based_sent_index_evaluator_id)
+        self.run_test_misclassified_examples_post(self.token_based_evaluator_id)
+        self.run_test_misclassified_examples_post(self.value_based_evaluator_id)
+        self.run_test_misclassified_examples_post(self.token_based_sent_index_evaluator_id)
+        self.run_test_misclassified_examples_post(self.value_based_sent_index_evaluator_id)
+        self.run_test_entity_evaluation_with_query()
+        self.run_export_import(self.token_based_evaluator_id)
+        self.run_reevaluate(self.token_based_evaluator_id)
+        self.run_delete(self.token_based_evaluator_id)
+        self.run_patch(self.value_based_evaluator_id)
 
 
     def add_cleanup_files(self, evaluator_id: int):
@@ -104,22 +100,6 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
             pass
         if not TEST_KEEP_PLOT_FILES:
             self.addCleanup(remove_file, evaluator_object.plot.path)
-
-
-    def run_patch(self, evaluator_id: int):
-        """Test updating description."""
-        url = f"{self.url}{evaluator_id}/"
-
-        payload = {"description": "New description"}
-
-        response = self.client.patch(url, payload, format="json")
-        print_output(f"evaluator:run_patch:response.data:", response.data)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        response = self.client.get(url, format="json")
-        self.assertEqual(response.data["description"], "New description")
-
-        self.add_cleanup_files(evaluator_id)
 
 
     def run_test_invalid_fact_name(self):
@@ -176,6 +156,57 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
+    def run_test_invalid_doc_path(self):
+        """
+        Check if evaluator endpoint throws an error if the
+        selected doc_path is invalid.
+        """
+        invalid_payloads = [
+            {
+                "true_fact": self.true_fact_name,
+                "predicted_fact": self.pred_fact_name
+            }
+        ]
+        main_payload = {
+            "description": "Test invalid doc_path (field)",
+            "indices": [{"name": self.test_index}],
+            "evaluation_type": "entity",
+            "field": "brr"
+        }
+        for invalid_payload in invalid_payloads:
+            payload = {**main_payload, **invalid_payload}
+            response = self.client.post(self.url, payload, format="json")
+            print_output("entity_evaluator:run_test_invalid_doc_path:response.data", response.data)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+    def run_test_invalid_facts_have_different_doc_paths(self):
+        """
+        Check if evaluator endpoint throws an error if the
+        selected facts have different doc paths.
+        """
+        invalid_payloads = [
+            {
+                "true_fact": self.true_fact_name,
+                "predicted_fact": self.pred_fact_name_sent_index
+            },
+            {
+                "true_fact": self.true_fact_name_sent_index,
+                "predicted_fact": self.pred_fact_name
+            }
+        ]
+        main_payload = {
+            "description": "Test invalid: facts have different doc paths (fields)",
+            "indices": [{"name": self.test_index}],
+            "evaluation_type": "entity"
+        }
+        for invalid_payload in invalid_payloads:
+            payload = {**main_payload, **invalid_payload}
+            response = self.client.post(self.url, payload, format="json")
+            print_output("entity_evaluator:run_test_invalid_facts_have_different_doc_paths:response.data", response.data)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
     def run_test_invalid_fact_has_multiple_paths_field_name_unspecified(self):
         """
         Check if evaluator endpoint throws an error if one of the
@@ -215,7 +246,7 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
         default_payload = {}
 
         response = self.client.post(url, default_payload, format="json")
-        print_output(f"evaluator:run_test_individual_results_view_binary:avg:{evaluation_type}:default_payload:response.data:", response.data)
+        print_output(f"entity_evaluator:run_test_individual_results_view_binary:{evaluation_type}:default_payload:response.data:", response.data)
 
         # The usage of the endpoint is not available for binary evaluators
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -234,7 +265,7 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
         default_payload = {}
 
         response = self.client.post(url, default_payload, format="json")
-        print_output(f"evaluator:run_test_filtered_average_view_entity:avg:{evaluation_type}:default_payload:response.data:", response.data)
+        print_output(f"entity_evaluator:run_test_filtered_average_view_entity:{evaluation_type}:default_payload:response.data:", response.data)
 
         # The usage of the endpoint is not available for binary evaluators
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -243,9 +274,9 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
 
 
     def run_test_entity_evaluation_token_based(self):
-        """ Test entity evaluation. """
+        """ Test token-based entity evaluation. """
 
-        main_payload = {
+        payload = {
             "description": "Test token-based entity evaluation",
             "indices": [{"name": self.test_index}],
             "true_fact": self.true_fact_name,
@@ -258,223 +289,402 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
         }
 
         expected_scores = {
-            "weighted": {"accuracy": 0.66, "precision": 0.68, "recall": 0.66, "f1_score": 0.67},
-            "micro": {"accuracy": 0.66, "precision": 0.66, "recall": 0.66, "f1_score": 0.66},
-            "macro": {"accuracy": 0.66, "precision": 0.49, "recall": 0.49, "f1_score": 0.49},
-            "binary": {"accuracy": 0.66, "precision": 0.18, "recall": 0.21, "f1_score": 0.19}
+            "accuracy": 0.99,
+            "precision": 0.84,
+            "recall": 0.85,
+            "f1_score": 0.84
         }
 
-        for avg_function in self.binary_avg_functions:
-            avg_function_payload = {"average_function": avg_function}
-            payload = {**main_payload, **avg_function_payload}
 
-            response = self.client.post(self.url, payload, format="json")
-            print_output(f"evaluator:run_test_binary_evaluation:avg:{avg_function}:response.data", response.data)
+        response = self.client.post(self.url, payload, format="json")
+        print_output(f"entity_evaluator:run_test_entity_evaluation_token_based:response.data", response.data)
 
-            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-            evaluator_id = response.data["id"]
-            evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
-            while evaluator_object.task.status != Task.STATUS_COMPLETED:
-                print_output(f"evaluator:run_test_binary_evaluation:avg:{avg_function}: waiting for evaluation task to finish, current status:", evaluator_object.task.status)
-                sleep(1)
+        evaluator_id = response.data["id"]
+        evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
+        while evaluator_object.task.status != Task.STATUS_COMPLETED:
+            print_output(f"entity_evaluator:run_test_entity_evaluation_token_based: waiting for evaluation task to finish, current status:", evaluator_object.task.status)
+            sleep(1)
 
-            evaluator_json = evaluator_object.to_json()
-            evaluator_json.pop("individual_results")
+        evaluator_json = evaluator_object.to_json()
+        evaluator_json.pop("misclassified_examples")
 
-            print_output(f"evaluator:run_test_binary_evaluation_avg_{avg_function}:evaluator_object.json:", evaluator_json)
+        print_output(f"entity_evaluator:run_test_entity_evaluation_token_based:evaluator_object.json:", evaluator_json)
 
-            for metric in choices.METRICS:
-                self.assertEqual(round(evaluator_json[metric], 2), expected_scores[avg_function][metric])
+        for metric in choices.METRICS:
+            self.assertEqual(round(evaluator_json[metric], 2), expected_scores[metric])
 
-            self.assertEqual(evaluator_object.n_total_classes, 2)
-            self.assertEqual(evaluator_object.n_true_classes, 2)
-            self.assertEqual(evaluator_object.n_predicted_classes, 2)
+        self.assertEqual(evaluator_object.n_total_classes, 877)
+        self.assertEqual(evaluator_object.n_true_classes, 757)
+        self.assertEqual(evaluator_object.n_predicted_classes, 760)
 
-            cm = np.array(json.loads(evaluator_object.confusion_matrix))
-            cm_size = np.shape(cm)
+        cm = np.array(json.loads(evaluator_object.confusion_matrix))
+        cm_size = np.shape(cm)
 
-            self.assertEqual(evaluator_object.n_total_classes, cm_size[0])
-            self.assertEqual(evaluator_object.n_total_classes, cm_size[1])
+        self.assertEqual(2, cm_size[0])
+        self.assertEqual(2, cm_size[1])
 
-            self.assertEqual(evaluator_object.document_count, 2000)
-            self.assertEqual(evaluator_object.add_individual_results, payload["add_individual_results"])
-            self.assertEqual(evaluator_object.scores_imprecise, False)
-            self.assertEqual(evaluator_object.evaluation_type, "binary")
+        self.assertEqual(evaluator_object.document_count, 100)
+        self.assertEqual(evaluator_object.add_individual_results, False)
+        self.assertEqual(evaluator_object.scores_imprecise, False)
+        self.assertEqual(evaluator_object.token_based, True)
+        self.assertEqual(evaluator_object.evaluation_type, "entity")
 
-            self.assertEqual(evaluator_object.average_function, avg_function)
+        self.token_based_evaluator_id = evaluator_id
 
-            self.binary_evaluators[avg_function] = evaluator_id
-
-            self.add_cleanup_files(evaluator_id)
+        self.add_cleanup_files(evaluator_id)
 
 
-    def run_test_evaluation_with_query(self):
-        """ Test if running the evaluation with query works. """
+
+    def run_test_entity_evaluation_token_based_sent_index(self):
+        """ Test token-based entity evaluation with sentence-level spans. """
+
+        payload = {
+            "description": "Test token-based entity evaluation with sentence-level spans",
+            "indices": [{"name": self.test_index}],
+            "true_fact": self.true_fact_name_sent_index,
+            "predicted_fact": self.pred_fact_name_sent_index,
+            "scroll_size": 50,
+            "add_misclassified_examples": True,
+            "token_based": True,
+            "evaluation_type": "entity"
+
+        }
+
+        expected_scores = {
+            "accuracy": 1.0,
+            "precision": 0.93,
+            "recall": 0.90,
+            "f1_score": 0.92
+        }
+
+
+        response = self.client.post(self.url, payload, format="json")
+        print_output(f"entity_evaluator:run_test_entity_evaluation_token_based:response.data", response.data)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        evaluator_id = response.data["id"]
+        evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
+        while evaluator_object.task.status != Task.STATUS_COMPLETED:
+            print_output(f"entity_evaluator:run_test_entity_evaluation_token_based_sent_index: waiting for evaluation task to finish, current status:", evaluator_object.task.status)
+            sleep(1)
+
+        evaluator_json = evaluator_object.to_json()
+        evaluator_json.pop("misclassified_examples")
+
+        print_output(f"entity_evaluator:run_test_entity_evaluation_token_based_sent_index:evaluator_object.json:", evaluator_json)
+
+        for metric in choices.METRICS:
+            self.assertEqual(round(evaluator_json[metric], 2), expected_scores[metric])
+
+        self.assertEqual(evaluator_object.n_total_classes, 802)
+        self.assertEqual(evaluator_object.n_true_classes, 754)
+        self.assertEqual(evaluator_object.n_predicted_classes, 726)
+
+        cm = np.array(json.loads(evaluator_object.confusion_matrix))
+        cm_size = np.shape(cm)
+
+        self.assertEqual(2, cm_size[0])
+        self.assertEqual(2, cm_size[1])
+
+        self.assertEqual(evaluator_object.document_count, 100)
+        self.assertEqual(evaluator_object.add_individual_results, False)
+        self.assertEqual(evaluator_object.scores_imprecise, False)
+        self.assertEqual(evaluator_object.token_based, True)
+        self.assertEqual(evaluator_object.evaluation_type, "entity")
+
+        self.token_based_sent_index_evaluator_id = evaluator_id
+
+        self.add_cleanup_files(evaluator_id)
+
+
+    def run_test_entity_evaluation_value_based(self):
+        """ Test value-based entity evaluation. """
+
+        payload = {
+            "description": "Test value-based entity evaluation",
+            "indices": [{"name": self.test_index}],
+            "true_fact": self.true_fact_name,
+            "predicted_fact": self.pred_fact_name,
+            "scroll_size": 50,
+            "add_misclassified_examples": True,
+            "token_based": False,
+            "evaluation_type": "entity"
+
+        }
+
+        expected_scores = {
+            "accuracy": 0.61,
+            "precision": 0.68,
+            "recall": 0.80,
+            "f1_score": 0.73
+        }
+
+
+        response = self.client.post(self.url, payload, format="json")
+        print_output(f"entity_evaluator:run_test_entity_evaluation_value_based:response.data", response.data)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        evaluator_id = response.data["id"]
+        evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
+        while evaluator_object.task.status != Task.STATUS_COMPLETED:
+            print_output(f"entity_evaluator:run_test_entity_evaluation_value_based: waiting for evaluation task to finish, current status:", evaluator_object.task.status)
+            sleep(1)
+
+        evaluator_json = evaluator_object.to_json()
+        evaluator_json.pop("misclassified_examples")
+
+        print_output(f"entity_evaluator:run_test_entity_evaluation_value_based:evaluator_object.json:", evaluator_json)
+
+        for metric in choices.METRICS:
+            self.assertEqual(round(evaluator_json[metric], 2), expected_scores[metric])
+
+        self.assertEqual(evaluator_object.n_total_classes, 600)
+        self.assertEqual(evaluator_object.n_true_classes, 437)
+        self.assertEqual(evaluator_object.n_predicted_classes, 511)
+
+        cm = np.array(json.loads(evaluator_object.confusion_matrix))
+        cm_size = np.shape(cm)
+
+        self.assertEqual(2, cm_size[0])
+        self.assertEqual(2, cm_size[1])
+
+        self.assertEqual(evaluator_object.document_count, 100)
+        self.assertEqual(evaluator_object.add_individual_results, False)
+        self.assertEqual(evaluator_object.scores_imprecise, False)
+        self.assertEqual(evaluator_object.token_based, False)
+        self.assertEqual(evaluator_object.evaluation_type, "entity")
+
+        self.value_based_evaluator_id = evaluator_id
+
+        self.add_cleanup_files(evaluator_id)
+
+
+    def run_test_entity_evaluation_value_based_sent_index(self):
+        """ Test value-based entity evaluation with sentence-level spans. """
+
+        payload = {
+            "description": "Test value-based entity evaluation with sentence-level spans",
+            "indices": [{"name": self.test_index}],
+            "true_fact": self.true_fact_name_sent_index,
+            "predicted_fact": self.pred_fact_name_sent_index,
+            "scroll_size": 50,
+            "add_misclassified_examples": True,
+            "token_based": False,
+            "evaluation_type": "entity"
+
+        }
+
+        expected_scores = {
+            "accuracy": 0.95,
+            "precision": 0.92,
+            "recall": 0.84,
+            "f1_score": 0.88
+        }
+
+
+        response = self.client.post(self.url, payload, format="json")
+        print_output(f"entity_evaluator:run_test_entity_evaluation_value_based_sent_index:response.data", response.data)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        evaluator_id = response.data["id"]
+        evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
+        while evaluator_object.task.status != Task.STATUS_COMPLETED:
+            print_output(f"entity_evaluator:run_test_entity_evaluation_value_based_sent_index: waiting for evaluation task to finish, current status:", evaluator_object.task.status)
+            sleep(1)
+
+        evaluator_json = evaluator_object.to_json()
+        evaluator_json.pop("misclassified_examples")
+
+        print_output(f"entity_evaluator:run_test_entity_evaluation_value_based_sent_index:evaluator_object.json:", evaluator_json)
+
+        for metric in choices.METRICS:
+            self.assertEqual(round(evaluator_json[metric], 2), expected_scores[metric])
+
+        self.assertEqual(evaluator_object.n_total_classes, 481)
+        self.assertEqual(evaluator_object.n_true_classes, 447)
+        self.assertEqual(evaluator_object.n_predicted_classes, 410)
+
+        cm = np.array(json.loads(evaluator_object.confusion_matrix))
+        cm_size = np.shape(cm)
+
+        self.assertEqual(2, cm_size[0])
+        self.assertEqual(2, cm_size[1])
+
+        self.assertEqual(evaluator_object.document_count, 100)
+        self.assertEqual(evaluator_object.add_individual_results, False)
+        self.assertEqual(evaluator_object.scores_imprecise, False)
+        self.assertEqual(evaluator_object.token_based, False)
+        self.assertEqual(evaluator_object.evaluation_type, "entity")
+
+
+        self.value_based_sent_index_evaluator_id = evaluator_id
+
+        self.add_cleanup_files(evaluator_id)
+
+
+    def run_test_misclassified_examples_get(self, evaluator_id: int):
+        """ Test misclassified_examples endpoint with GET request. """
+
+
+        evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
+        token_based = evaluator_object.token_based
+
+        url = f"{self.url}{evaluator_id}/misclassified_examples/"
+
+        response = self.client.get(url, format="json")
+        print_output(f"entity_evaluator:run_test_misclassified_examples_view_get:token_based:{token_based}:response.data:", response.data)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, dict))
+
+        keys = ["substrings", "superstrings", "partial", "false_negatives", "false_positives"]
+
+        for key in keys:
+            self.assertTrue(key in response.data)
+            self.assertTrue(isinstance(response.data[key], list))
+
+
+        value_types_dict = ["substrings", "superstrings", "partial"]
+        value_types_str = ["false_negatives", "false_positives"]
+
+        for key in list(response.data.keys()):
+            if response.data[key]:
+                if key in value_types_dict:
+                    self.assertTrue("true" in response.data[key][0]["value"])
+                    self.assertTrue("pred" in response.data[key][0]["value"])
+                elif key in value_types_str:
+                    self.assertTrue(isinstance(response.data[key][0]["value"], str))
+                self.assertTrue("count" in response.data[key][0])
+
+
+
+    def run_test_misclassified_examples_post(self, evaluator_id: int):
+        """ Test misclassified examples endpoint with POST request."""
+        evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
+        token_based = evaluator_object.token_based
+
+
+        url = f"{self.url}{evaluator_id}/misclassified_examples/"
+
+        # Test param `min_count`
+        payload_min_count = {
+            "min_count": 2
+        }
+
+        response = self.client.post(url, payload_min_count, format="json")
+        print_output(f"entity_evaluator:run_test_misclassified_examples_view_min_count_post:token_based:{token_based}:response.data:", response.data)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, dict))
+
+        keys = ["substrings", "superstrings", "partial", "false_negatives", "false_positives"]
+
+        for key in keys:
+            self.assertTrue(key in response.data)
+            self.assertTrue(isinstance(response.data[key], dict))
+            nested_keys = ["values", "total_unique_count", "filtered_unique_count"]
+            for nested_key in nested_keys:
+                self.assertTrue(nested_key in response.data[key])
+
+            # Check that the number of filtered values is smaller than or equal with the number of total values
+            self.assertTrue(response.data[key]["total_unique_count"] >= response.data[key]["filtered_unique_count"])
+
+            # Check that no value with smaller count than the min count is present in the results
+            for value in response.data[key]["values"]:
+                self.assertTrue(value["count"] >= payload_min_count["min_count"])
+
+
+
+        # Test param `max_count`
+        payload_max_count = {
+            "max_count": 2
+        }
+
+        response = self.client.post(url, payload_max_count, format="json")
+        print_output(f"entity_evaluator:run_test_misclassified_examples_view_max_count_post:token_based:{token_based}:response.data:", response.data)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, dict))
+
+        keys = ["substrings", "superstrings", "partial", "false_negatives", "false_positives"]
+
+        for key in keys:
+            self.assertTrue(key in response.data)
+            self.assertTrue(isinstance(response.data[key], dict))
+            nested_keys = ["values", "total_unique_count", "filtered_unique_count"]
+            for nested_key in nested_keys:
+                self.assertTrue(nested_key in response.data[key])
+
+            # Check that the number of filtered values is smaller than or equal with the number of total values
+            self.assertTrue(response.data[key]["total_unique_count"] >= response.data[key]["filtered_unique_count"])
+
+            # Check that no value with bigger count than max count is present in the results
+            for value in response.data[key]["values"]:
+                self.assertTrue(value["count"] <= payload_max_count["max_count"])
+
+
+        # Test param `top_n`
+        payload_top_n = {
+            "top_n": 5
+        }
+
+        response = self.client.post(url, payload_top_n, format="json")
+        print_output(f"entity_evaluator:run_test_misclassified_examples_view_top_n_post:token_based:{token_based}:response.data:", response.data)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, dict))
+
+        keys = ["substrings", "superstrings", "partial", "false_negatives", "false_positives"]
+
+        for key in keys:
+            self.assertTrue(key in response.data)
+            self.assertTrue(isinstance(response.data[key], dict))
+            nested_keys = ["values", "total_unique_count", "filtered_unique_count"]
+            for nested_key in nested_keys:
+                self.assertTrue(nested_key in response.data[key])
+
+            # Check that the number of filtered values is smaller than or equal with the number of total values
+            self.assertTrue(response.data[key]["total_unique_count"] >= response.data[key]["filtered_unique_count"])
+
+            # Check that at most top n values are present for each key
+            self.assertTrue(response.data[key]["filtered_unique_count"] <= payload_top_n["top_n"])
+
+
+    def run_test_entity_evaluation_with_query(self):
+        """ Test if running the entity evaluation with query works. """
+
         payload = {
             "description": "Test evaluation with query",
             "indices": [{"name": self.test_index}],
             "true_fact": self.true_fact_name,
             "predicted_fact": self.pred_fact_name,
-            "scroll_size": 500,
-            "add_individual_results": False,
-            "average_function": "macro",
-            "query": json.dumps(self.test_query)
+            "scroll_size": 50,
+            "add_misclassified_examples": False,
+            "query": self.test_query,
+            "evaluation_type": "entity"
         }
 
         response = self.client.post(self.url, payload, format="json")
-        print_output(f"evaluator:run_test_evaluation_with_query:avg:{payload['average_function']}:response.data", response.data)
+        print_output(f"entity_evaluator:run_test_entity_evaluation_with_query:response.data", response.data)
 
         evaluator_id = response.data["id"]
         evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
 
         while evaluator_object.task.status != Task.STATUS_COMPLETED:
-            print_output(f"evaluator:run_test_evaluation_with_query:avg:{payload['average_function']}: waiting for evaluation task to finish, current status:", evaluator_object.task.status)
+            print_output(f"entity_evaluator:run_test_evaluation_with_query: waiting for evaluation task to finish, current status:", evaluator_object.task.status)
             sleep(1)
+            if evaluator_object.task.status == Task.STATUS_FAILED:
+                print_output(f"entity_evaluator:run_test_evaluation_with_query: status = failed: error:", evaluator_object.task.errors)
+            self.assertFalse(evaluator_object.task.status == Task.STATUS_FAILED)
 
         # Check if the document count is in sync with the query
-        self.assertEqual(evaluator_object.document_count, 83)
+        self.assertEqual(evaluator_object.document_count, 68)
         self.add_cleanup_files(evaluator_id)
-
-
-    def run_test_multilabel_evaluation(self, add_individual_results: bool):
-        """ Test multilabvel evaluation with averaging functions set in self.multilabel_avg_functions"""
-
-        main_payload = {
-            "description": "Test multilabel evaluation",
-            "indices": [{"name": self.test_index}],
-            "true_fact": self.true_fact_name,
-            "predicted_fact": self.pred_fact_name,
-            "scroll_size": 500,
-            "add_individual_results": add_individual_results
-        }
-
-        expected_scores = {
-            "weighted": {"accuracy": 0, "precision": 0.57, "recall": 0.67, "f1_score": 0.62},
-            "micro": {"accuracy": 0, "precision": 0.57, "recall": 0.67, "f1_score": 0.62},
-            "macro": {"accuracy": 0, "precision": 0.57, "recall": 0.67, "f1_score": 0.62},
-            "samples": {"accuracy": 0, "precision": 0.55, "recall": 0.73, "f1_score": 0.61}
-        }
-
-        for avg_function in self.multilabel_avg_functions:
-            avg_function_payload = {"average_function": avg_function}
-            payload = {**main_payload, **avg_function_payload}
-
-            response = self.client.post(self.url, payload, format="json")
-            print_output(f"evaluator:run_test_multilabel_evaluation:avg:{avg_function}:response.data", response.data)
-
-            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-            evaluator_id = response.data["id"]
-            evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
-            while evaluator_object.task.status != Task.STATUS_COMPLETED:
-                print_output(f"evaluator:run_test_multilabel_evaluation:avg:{avg_function}: waiting for evaluation task to finish, current status:", evaluator_object.task.status)
-                sleep(1)
-
-            evaluator_json = evaluator_object.to_json()
-            evaluator_json.pop("individual_results")
-
-            print_output(f"evaluator:run_test_multilabel_evaluation:avg:{avg_function}:evaluator_object.json:", evaluator_json)
-            for metric in choices.METRICS:
-                self.assertEqual(round(evaluator_json[metric], 2), expected_scores[avg_function][metric])
-
-            self.assertEqual(evaluator_object.n_total_classes, 10)
-            self.assertEqual(evaluator_object.n_true_classes, 10)
-            self.assertEqual(evaluator_object.n_predicted_classes, 10)
-
-            cm = np.array(json.loads(evaluator_object.confusion_matrix))
-            cm_size = np.shape(cm)
-
-            self.assertEqual(evaluator_object.n_total_classes, cm_size[0])
-            self.assertEqual(evaluator_object.n_total_classes, cm_size[1])
-
-            self.assertEqual(evaluator_object.document_count, 2000)
-            self.assertEqual(evaluator_object.add_individual_results, add_individual_results)
-            self.assertEqual(evaluator_object.scores_imprecise, False)
-            self.assertEqual(evaluator_object.evaluation_type, "multilabel")
-            self.assertEqual(evaluator_object.average_function, avg_function)
-
-            if add_individual_results:
-                self.assertEqual(len(json.loads(evaluator_object.individual_results)), evaluator_object.n_total_classes)
-                self.multilabel_evaluators[avg_function] = evaluator_id
-            else:
-                self.assertEqual(len(json.loads(evaluator_object.individual_results)), 0)
-
-            self.add_cleanup_files(evaluator_id)
-
-
-    def run_test_multilabel_evaluation_with_scoring_after_each_scroll(self, add_individual_results: bool):
-        """
-        Test multilabel evaluation with averaging functions set in self.multilabel_avg_functions and
-        calculating and averaging scores after each scroll.
-        """
-
-        # Set required memory buffer high
-        set_core_setting("TEXTA_EVALUATOR_MEMORY_BUFFER_GB", "100")
-
-        main_payload = {
-            "description": "Test Multilabel Evaluator",
-            "indices": [{"name": self.test_index}],
-            "true_fact": self.true_fact_name,
-            "predicted_fact": self.pred_fact_name,
-            "scroll_size": 500,
-            "add_individual_results": add_individual_results,
-
-        }
-
-        for avg_function in self.multilabel_avg_functions:
-            avg_function_payload = {"average_function": avg_function}
-            payload = {**main_payload, **avg_function_payload}
-
-            response = self.client.post(self.url, payload, format="json")
-            print_output(f"evaluator:run_test_multilabel_evaluation_with_scoring_after_each_scroll:avg:{avg_function}:response.data", response.data)
-
-            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-            evaluator_id = response.data["id"]
-            evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
-            while evaluator_object.task.status != Task.STATUS_COMPLETED:
-                print_output(f"evaluator:run_test_multilabel_evaluation_with_scoring_after_each_scroll:avg:{avg_function}: waiting for evaluation task to finish, current status:", evaluator_object.task.status)
-                sleep(1)
-
-            evaluator_json = evaluator_object.to_json()
-            evaluator_json.pop("individual_results")
-
-            print_output(f"evaluator:run_test_multilabel_evaluation_with_scoring_after_each_scroll:avg:{avg_function}:evaluator_object.json:", evaluator_json)
-            for metric in choices.METRICS:
-                if metric == "accuracy":
-                    self.assertEqual(evaluator_json[metric], 0)
-                else:
-                    self.assertTrue(0.5 <= evaluator_json[metric] <= 0.8)
-
-            self.assertEqual(evaluator_object.n_total_classes, 10)
-            self.assertEqual(evaluator_object.n_true_classes, 10)
-            self.assertEqual(evaluator_object.n_predicted_classes, 10)
-
-            cm = np.array(json.loads(evaluator_object.confusion_matrix))
-            cm_size = np.shape(cm)
-
-            self.assertEqual(evaluator_object.n_total_classes, cm_size[0])
-            self.assertEqual(evaluator_object.n_total_classes, cm_size[1])
-
-            scores_imprecise = True if avg_function != "micro" else False
-
-            self.assertEqual(evaluator_object.document_count, 2000)
-            self.assertEqual(evaluator_object.add_individual_results, add_individual_results)
-            self.assertEqual(evaluator_object.scores_imprecise, scores_imprecise)
-            self.assertEqual(evaluator_object.evaluation_type, "multilabel")
-            self.assertEqual(evaluator_object.average_function, avg_function)
-
-            if add_individual_results:
-                self.assertEqual(len(json.loads(evaluator_object.individual_results)), evaluator_object.n_total_classes)
-                self.memory_optimized_multilabel_evaluators[avg_function] = evaluator_id
-            else:
-                self.assertEqual(len(json.loads(evaluator_object.individual_results)), 0)
-
-            self.add_cleanup_files(evaluator_id)
-
-        # Set memory buffer back to default
-        set_core_setting("TEXTA_EVALUATOR_MEMORY_BUFFER_GB", "")
 
 
     def run_export_import(self, evaluator_id: int):
@@ -483,7 +693,6 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
         evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
 
         eval_type = evaluator_object.evaluation_type
-        avg_function = evaluator_object.average_function
 
         # retrieve model zip
         url = f"{self.url}{evaluator_id}/export_model/"
@@ -493,7 +702,7 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
         import_url = f"{self.url}import_model/"
         response = self.client.post(import_url, data={"file": BytesIO(response.content)})
 
-        print_output(f"evaluator:run_export_import:avg:{avg_function}:evaluation_type:{eval_type}:response.data", response.data)
+        print_output(f"entity_evaluator:run_export_import:evaluation_type:{eval_type}:response.data", response.data)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -513,9 +722,6 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
         for metric in choices.METRICS:
             self.assertEqual(evaluator_object_json[metric], imported_evaluator_object_json[metric])
 
-        # Check that the sizes of individual labels are the same
-        self.assertEqual(len(json.loads(evaluator_object.individual_results)), len(json.loads(imported_evaluator_object.individual_results)))
-
         self.add_cleanup_files(evaluator_id)
         self.add_cleanup_files(imported_evaluator_id)
 
@@ -525,7 +731,7 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
         url = f"{self.url}{evaluator_id}/reevaluate/"
         payload = {}
         response = self.client.post(url, payload, format="json")
-        print_output(f"evaluator:run_reevaluate:response.data", response.data)
+        print_output(f"entity_evaluator:run_reevaluate:response.data", response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
@@ -537,12 +743,12 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
 
         url = f"{self.url}{evaluator_id}/"
         response = self.client.delete(url, format="json")
-        print_output(f"evaluator:run_delete:delete:response.data", response.data)
+        print_output(f"entity_evaluator:run_delete:delete:response.data", response.data)
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         response = self.client.get(url, format="json")
-        print_output(f"evaluator:run_delete:get:response.data", response.data)
+        print_output(f"entity_evaluator:run_delete:get:response.data", response.data)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -550,3 +756,19 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
         for path in resources.values():
             file = pathlib.Path(path)
             self.assertFalse(file.exists())
+
+
+    def run_patch(self, evaluator_id: int):
+        """Test updating description."""
+        url = f"{self.url}{evaluator_id}/"
+
+        payload = {"description": "New description"}
+
+        response = self.client.patch(url, payload, format="json")
+        print_output(f"entity_evaluator:run_patch:response.data:", response.data)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = self.client.get(url, format="json")
+        self.assertEqual(response.data["description"], "New description")
+
+        self.add_cleanup_files(evaluator_id)
