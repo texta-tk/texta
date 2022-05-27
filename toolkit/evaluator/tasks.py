@@ -429,12 +429,14 @@ def evaluate_entity_tags_task(object_id: int, indices: List[str], query: dict, e
         #add_individual_results = evaluator_object.add_individual_results
         add_misclassified_examples = evaluator_object.add_misclassified_examples
         token_based = evaluator_object.token_based
+        if not evaluator_object.field:
+            es_aggregator = ElasticAggregator(indices=indices, query=deepcopy(query))
 
-        es_aggregator = ElasticAggregator(indices=indices, query=deepcopy(query))
+            true_fact_doc_paths = es_aggregator.facts_abstract(key_field="fact", value_field="doc_path", filter_by_key=true_fact)
 
-        true_fact_doc_paths = es_aggregator.facts_abstract(key_field="fact", value_field="doc_path", filter_by_key=true_fact)
-
-        doc_path = true_fact_doc_paths[0]
+            doc_path = true_fact_doc_paths[0]
+        else:
+            doc_path = evaluator_object.field
 
         searcher = ElasticSearcher(
             indices = indices,

@@ -35,10 +35,13 @@ def separate_facts_with_multispans(texta_facts: List[dict]) -> List[dict]:
     return new_facts
 
 
-def filter_facts_by_name(texta_facts: List[dict], name: str) -> List[dict]:
+def filter_facts_by_name_and_path(texta_facts: List[dict], name: str, doc_path: str = "") -> List[dict]:
     """ Filters facts based on fact name.
     """
-    filtered_facts = [fact for fact in texta_facts if fact["fact"] == name]
+    if not doc_path:
+        filtered_facts = [fact for fact in texta_facts if fact["fact"] == name]
+    else:
+        filtered_facts = [fact for fact in texta_facts if fact["fact"] == name and fact["doc_path"] == doc_path]
     return filtered_facts
 
 
@@ -265,8 +268,8 @@ def process_batch(doc_batch: List[dict], doc_path: str, pred_fact_name: str, tru
         texta_facts = doc.get("texta_facts", [])
 
         # Filter out relevant facts
-        true_facts = filter_facts_by_name(texta_facts, true_fact_name)
-        pred_facts = filter_facts_by_name(texta_facts, pred_fact_name)
+        true_facts = filter_facts_by_name_and_path(texta_facts, true_fact_name, doc_path)
+        pred_facts = filter_facts_by_name_and_path(texta_facts, pred_fact_name, doc_path)
 
         # Convert facts to labels in suitable format
         true_labels = facts_to_span_labels(true_facts, as_str = False)
@@ -366,7 +369,7 @@ def process_batch(doc_batch: List[dict], doc_path: str, pred_fact_name: str, tru
 
 
 
-def scroll_and_score_entity(generator: ElasticSearcher, evaluator_object: Evaluator, true_fact: str, pred_fact: str, doc_path: str, token_based: bool, n_batches: int = None, add_misclassified_examples: bool = True) -> Tuple[Union[List[int], List[List[str]]], Union[List[int], List[List[str]]], Dict[str, Dict[str, List[int]]]]:
+def scroll_and_score_entity(generator: ElasticSearcher, evaluator_object: Evaluator, true_fact: str, pred_fact: str, doc_path: str, token_based: bool, n_batches: int = None, add_misclassified_examples: bool = True, doc_path: str = "") -> Tuple[Union[List[int], List[List[str]]], Union[List[int], List[List[str]]], Dict[str, Dict[str, List[int]]]]:
     """ Scrolls over ES index and calculates scores."""
 
     total_counts = {

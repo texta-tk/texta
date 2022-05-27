@@ -43,7 +43,7 @@ def validate_fact(indices: List[str], fact: str):
     return True
 
 
-def validate_entity_facts(indices: List[str], query: dict, true_fact: str, pred_fact: str):
+def validate_entity_facts(indices: List[str], query: dict, true_fact: str, pred_fact: str, doc_path: str):
     """ Check if facts chosen for entity evaluation follow all the necessary requirements. """
 
     ag = ElasticAggregator(indices=indices, query=deepcopy(query))
@@ -51,16 +51,22 @@ def validate_entity_facts(indices: List[str], query: dict, true_fact: str, pred_
     true_fact_doc_paths = ag.facts_abstract(key_field="fact", value_field="doc_path", filter_by_key=true_fact)
     pred_fact_doc_paths = ag.facts_abstract(key_field="fact", value_field="doc_path", filter_by_key=pred_fact)
 
-    # TODO: validation should be done sooner!
+    if doc_path:
+        if doc_path not in true_fact_doc_paths:
+            raise ValidationError(f"The selected true_fact ('{true_fact}') doesn't contain any instances corresponding to the selected field('{doc_path}').")
 
-    if set(true_fact_doc_paths) != set(pred_fact_doc_paths):
-        raise ValidationError(f"The doc paths for true and predicted facts are different (true = {true_fact_doc_paths}; predicted = {pred_fact_doc_paths}). Please make sure you are evaluating facts based on the same fields.")
+        if doc_path not in pred_fact_doc_paths:
+            raise ValidationError(f"The selected predicted_fact ('{pred_fact}') doesn't contain any instances corresponding to the selected field('{doc_path}').")
 
-    if len(true_fact_doc_paths) > 1:
-        raise ValidationError(f"Selected true fact ({true_fact}) is related to two or more fields {true_fact_doc_paths}.")
+    if not doc_path:
+        if set(true_fact_doc_paths) != set(pred_fact_doc_paths):
+            raise ValidationError(f"The doc paths for true and predicted facts are different (true = {true_fact_doc_paths}; predicted = {pred_fact_doc_paths}). Please make sure you are evaluating facts based on the same fields.")
 
-    if len(pred_fact_doc_paths) > 1:
-        raise ValidationError(f"Selected predicted fact ({pred_fact}) is related to two or more fields {pred_fact_doc_paths}.")
+        if len(true_fact_doc_paths) > 1:
+            raise ValidationError(f"Selected true fact ({true_fact}) is related to two or more fields {true_fact_doc_paths}, but the value for parameter 'field' isn't defined. Please define parameter 'field'.")
+
+        if len(pred_fact_doc_paths) > 1:
+            raise ValidationError(f"Selected predicted fact ({pred_fact}) is related to two or more fields {pred_fact_doc_paths}, but the value for parameter 'field' isn't defined. Please define parameter 'field'.")
 
     return True
 
