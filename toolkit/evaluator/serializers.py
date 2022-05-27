@@ -54,7 +54,7 @@ class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSeriali
     add_misclassified_examples = serializers.BooleanField(default=choices.DEFAULT_ADD_MISCLASSIFIED_EXAMPLES, required=False,
                                                       help_text=f"Only used for entity evaluation. If enabled, misclassified and partially overlapping values are stored and can be analyzed later. Default = {choices.DEFAULT_ADD_MISCLASSIFIED_EXAMPLES}.")
 
-    evaluation_type = serializers.ChoiceField(choices=choices.EVALUATION_TYPE_CHOICES, required=True, help_text=f"Specify the type labelsets to evaluate.")
+    evaluation_type = serializers.ChoiceField(choices=choices.EVALUATION_TYPE_CHOICES, default="multilabel", required=False, help_text=f"Specify the type of labelsets to evaluate.")
 
     token_based = serializers.BooleanField(default=choices.DEFAULT_TOKEN_BASED, required=False, help_text=f"If enabled, uses token-based entity evaluation, otherwise calculates the scores based on the spans of two value-sets.")
 

@@ -14,7 +14,7 @@ from texta_elastic.query import Query
 from toolkit.evaluator import choices
 from toolkit.evaluator.models import Evaluator as EvaluatorObject
 from toolkit.helper_functions import reindex_test_dataset, set_core_setting
-from toolkit.test_settings import (TEST_INDEX_EVALUATOR, TEST_KEEP_PLOT_FILES, TEST_VERSION_PREFIX)
+from toolkit.test_settings import (TEST_INDEX_ENTITY_EVALUATOR, TEST_KEEP_PLOT_FILES, TEST_VERSION_PREFIX)
 from toolkit.tools.utils_for_tests import (
     create_test_user,
     print_output,
@@ -24,34 +24,29 @@ from toolkit.tools.utils_for_tests import (
 
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
-class EvaluatorObjectViewTests(APITransactionTestCase):
+class EntityEvaluatorObjectViewTests(APITransactionTestCase):
     def setUp(self):
         # Owner of the project
-        self.test_index = reindex_test_dataset(from_index=TEST_INDEX_EVALUATOR)
+        self.test_index = reindex_test_dataset(from_index=TEST_INDEX_ENTITY_EVALUATOR)
         self.user = create_test_user("EvaluatorOwner", "my@email.com", "pw")
         self.project = project_creation("EvaluatorTestProject", self.test_index, self.user)
         self.project.users.add(self.user)
         self.url = f"{TEST_VERSION_PREFIX}/projects/{self.project.id}/evaluators/"
         self.project_url = f"{TEST_VERSION_PREFIX}/projects/{self.project.id}"
 
-        self.multilabel_avg_functions = choices.MULTILABEL_AVG_FUNCTIONS
-        self.binary_avg_functions = choices.BINARY_AVG_FUNCTIONS
+        self.true_fact_name = "PER"
+        self.pred_fact_name = "PER_CRF_30"
 
-        self.multilabel_evaluators = {avg: None for avg in self.multilabel_avg_functions}
-        self.binary_evaluators = {avg: None for avg in self.binary_avg_functions}
+        self.true_fact_name_sent_index = "PER_SENT"
+        self.pred_fact_name_sent_index = "PER_CRF_31_SENT"
 
-        self.memory_optimized_multilabel_evaluators = {avg: None for avg in self.multilabel_avg_functions}
-        self.memory_optimized_binary_evaluators = {avg: None for avg in self.binary_avg_functions}
+        self.fact_name_no_spans = "PER_FN_REGEX_NO_SPANS"
 
-        self.true_fact_name = "TRUE_TAG"
-        self.pred_fact_name = "PREDICTED_TAG"
-
-        self.true_fact_value = "650 kapital"
-        self.pred_fact_value = "650 kuvand"
+        self.fact_name_different_doc_paths = "PER_DOUBLE"
 
         self.core_variables_url = f"{TEST_VERSION_PREFIX}/core_variables/5/"
 
-        # Construct a test query
+        # TODO! Construct a test query
         self.fact_names_to_filter = [self.true_fact_name, self.pred_fact_name]
         self.fact_values_to_filter = ["650 bioeetika", "650 rahvusbibliograafiad"]
         self.test_query = Query()
@@ -144,136 +139,83 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
         ]
         main_payload = {
             "description": "Test invalid fact name",
-            "indices": [{"name": self.test_index}]
+            "indices": [{"name": self.test_index}],
+            "evaluation_type": "entity"
         }
         for invalid_payload in invalid_payloads:
             payload = {**main_payload, **invalid_payload}
             response = self.client.post(self.url, payload, format="json")
-            print_output("evaluator:run_test_invalid_fact_name:response.data", response.data)
+            print_output("entity_evaluator:run_test_invalid_fact_name:response.data", response.data)
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
-    def run_test_invalid_fact_value(self):
+    def run_test_invalid_fact_without_spans(self):
         """
         Check if evaluator endpoint throws an error if one of the
-        selected fact values is not present for the selected fact name.
+        selected fact names has only zero-valued spans.
         """
         invalid_payloads = [
             {
-                "true_fact_value": self.true_fact_value,
-                "predicted_fact_value": "INVALID_FACT_NAME"
+                "true_fact": self.true_fact_name,
+                "predicted_fact": self.fact_name_no_spans
             },
             {
-                "true_fact_value": "INVALID_FACT_NAME",
-                "predicted_fact_value": self.pred_fact_value
+                "true_fact": self.fact_name_no_spans,
+                "predicted_fact": self.pred_fact_name
             }
         ]
         main_payload = {
-            "description": "Test invalid fact name",
+            "description": "Test invalid fact without spans",
             "indices": [{"name": self.test_index}],
-            "true_fact": self.true_fact_name,
-            "predicted_fact": self.pred_fact_name
+            "evaluation_type": "entity"
         }
         for invalid_payload in invalid_payloads:
             payload = {**main_payload, **invalid_payload}
             response = self.client.post(self.url, payload, format="json")
-            print_output("evaluator:run_test_invalid_fact_value:response.data", response.data)
+            print_output("entity_evaluator:run_test_invalid_fact_without_spans:response.data", response.data)
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
-    def run_test_invalid_average_function(self):
+    def run_test_invalid_fact_has_multiple_paths_field_name_unspecified(self):
         """
-        Check if evaluator endpoint throws an error if binary average
-        function is chosen for multilabel evaluation.
+        Check if evaluator endpoint throws an error if one of the
+        selected fact names is related to more than one doc path,
+        but the user hasn't specified the field.
         """
-
-        main_payload = {
-            "description": "Test invalid fact name",
-            "indices": [{"name": self.test_index}],
-            "true_fact": self.true_fact_name,
-            "predicted_fact": self.pred_fact_name,
-        }
-
-        invalid_binary_payload = {
-            "true_fact_value": self.true_fact_value,
-            "predicted_fact_value": self.pred_fact_value,
-            "average_function": "samples"
-        }
-
-        invalid_multilabel_payload = {
-            "average_function": "binary"
-        }
-
-        invalid_payloads = {
-            "binary": invalid_binary_payload,
-            "multilabel": invalid_multilabel_payload
-        }
-
-        for eval_type, invalid_payload in list(invalid_payloads.items()):
-            payload = {**main_payload, **invalid_payload}
-
-            response = self.client.post(self.url, invalid_payload, format="json")
-            print_output(f"evaluator:run_test_invalid_average_function:evaluation_type:{eval_type}:response.data", response.data)
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-
-    def run_test_individual_results_view_multilabel(self, evaluator_id: int):
-        """ Test individual_results endpoint for multilabel evaluators."""
-
-        evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
-        avg_function = evaluator_object.average_function
-
-        url = f"{self.url}{evaluator_id}/individual_results/"
-
-        default_payload = {}
-
-        response = self.client.post(url, default_payload, format="json")
-        print_output(f"evaluator:run_test_individual_results_view_multilabel:avg:{avg_function}:default_payload:response.data:", response.data)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        self.assertEqual(response.data["total"], evaluator_object.n_total_classes)
-
-        # Test filtering by count
-        payload = {"min_count": 600, "max_count": 630}
-        print_output(f"evaluator:run_test_individual_results_view_multilabel:avg:{avg_function}:restricted_count:payload:", payload)
-
-        response = self.client.post(url, payload, format="json")
-        print_output(f"evaluator:run_test_individual_results_view_multilabel:avg:{avg_function}:restricted_count:response.data:", response.data)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["total"], 3)
-
-        # Test filtering by precision and accuracy
-        payload = {
-            "metric_restrictions": {
-                "precision": {"min_score": 0.57},
-                "accuracy": {"min_score": 0.84}
+        invalid_payloads = [
+            {
+                "true_fact": self.true_fact_name,
+                "predicted_fact": self.fact_name_different_doc_paths
+            },
+            {
+                "true_fact": self.fact_name_different_doc_paths,
+                "predicted_fact": self.pred_fact_name
             }
+        ]
+        main_payload = {
+            "description": "Test invalid fact without spans",
+            "indices": [{"name": self.test_index}],
+            "evaluation_type": "entity"
         }
-        print_output(f"evaluator:run_test_individual_results_view_multilabel:avg:{avg_function}:restricted_metrics:payload:", payload)
-
-        response = self.client.post(url, payload, format="json")
-        print_output(f"evaluator:run_test_individual_results_view_multilabel:avg:{avg_function}:restricted_metrics:response.data:", response.data)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(response.data["total"] < 10)
-
-        self.add_cleanup_files(evaluator_id)
+        for invalid_payload in invalid_payloads:
+            payload = {**main_payload, **invalid_payload}
+            response = self.client.post(self.url, payload, format="json")
+            print_output("entity_evaluator:run_test_invalid_fact_has_multiple_paths_field_name_unspecified:response.data", response.data)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
-    def run_test_individual_results_view_binary(self, evaluator_id: int):
-        """ Test individual_results endpoint for binary evaluators. """
+    def run_test_individual_results_view_entity(self, evaluator_id: int):
+        """ Test individual_results endpoint for entity evaluators."""
 
         evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
-        avg_function = evaluator_object.average_function
+        evaluation_type = evaluator_object.evaluation_type
 
         url = f"{self.url}{evaluator_id}/individual_results/"
 
         default_payload = {}
 
         response = self.client.post(url, default_payload, format="json")
-        print_output(f"evaluator:run_test_individual_results_view_binary:avg:{avg_function}:default_payload:response.data:", response.data)
+        print_output(f"evaluator:run_test_individual_results_view_binary:avg:{evaluation_type}:default_payload:response.data:", response.data)
 
         # The usage of the endpoint is not available for binary evaluators
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -281,44 +223,18 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
         self.add_cleanup_files(evaluator_id)
 
 
-    def run_test_individual_results_view_invalid_input_multilabel(self, evaluator_id: int):
-        """ Test individual_results endpoint for multilabel evaluators with invalid input. """
-        evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
-        avg_function = evaluator_object.average_function
-
-        url = f"{self.url}{evaluator_id}/individual_results/"
-
-        invalid_payloads = [
-            {"metric_restrictions": {"asd": {"max_score": 0.5}}},
-            {"metric_restrictions": {"precision": 0}},
-            {"metric_restrictions": {"precision": {"asd": 8}}},
-            {"metric_restrictions": {"precision": {"min_score": 18}}},
-            {"metric_restrictions": ["asd"]}
-        ]
-
-        for i, payload in enumerate(invalid_payloads):
-            print_output(f"evaluator:run_test_individual_results_view_invalid_input_multilabel:avg:{avg_function}:payload:", payload)
-
-            response = self.client.post(url, payload, format="json")
-            print_output(f"evaluator:run_test_individual_results_view_invalid_input_multilabel:avg:{avg_function}:response.data:", response.data)
-
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-            self.add_cleanup_files(evaluator_id)
-
-
-    def run_test_filtered_average_view_binary(self, evaluator_id: int):
+    def run_test_filtered_average_view_entity(self, evaluator_id: int):
         """ Test filtered_average endpoint for binary evaluators. """
 
         evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
-        avg_function = evaluator_object.average_function
+        evaluation_type = evaluator_object.evaluation_type
 
         url = f"{self.url}{evaluator_id}/filtered_average/"
 
         default_payload = {}
 
         response = self.client.post(url, default_payload, format="json")
-        print_output(f"evaluator:run_test_filtered_average_view_binary:avg:{avg_function}:default_payload:response.data:", response.data)
+        print_output(f"evaluator:run_test_filtered_average_view_entity:avg:{evaluation_type}:default_payload:response.data:", response.data)
 
         # The usage of the endpoint is not available for binary evaluators
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -326,114 +242,18 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
         self.add_cleanup_files(evaluator_id)
 
 
-    def run_test_filtered_average_view_multilabel_get(self, evaluator_id: int):
-        """ Test GET method of filtered_average endpoint for multilabel evaluators. """
-        evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
-        avg_function = evaluator_object.average_function
-
-        url = f"{self.url}{evaluator_id}/filtered_average/"
-
-        response = self.client.get(url, format="json")
-        print_output(f"evaluator:run_test_filtered_average_view_multilabel_get:avg:{avg_function}:response.data:", response.data)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["count"], evaluator_object.n_total_classes)
-        for metric in choices.METRICS:
-            self.assertTrue(response.data[metric] > 0)
-
-        self.add_cleanup_files(evaluator_id)
-
-
-    def run_test_filtered_average_view_multilabel_post(self, evaluator_id: int):
-        """ Test POST method of filtered_average endpoint for multilabel evaluators. """
-        evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
-        avg_function = evaluator_object.average_function
-
-        url = f"{self.url}{evaluator_id}/filtered_average/"
-
-        payload = {"min_count": 600}
-
-        print_output(f"evaluator:run_test_filtered_average_view_multilabel_post:avg:{avg_function}:payload:", payload)
-
-        response = self.client.post(url, payload, format="json")
-        print_output(f"evaluator:run_test_filtered_average_view_multilabel_post:avg:{avg_function}:response.data:", response.data)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["count"], 4)
-
-        for metric in choices.METRICS:
-            self.assertTrue(response.data[metric] > 0)
-
-        self.add_cleanup_files(evaluator_id)
-
-
-    def run_test_individual_results_enabled(self, evaluator_ids: List[int]):
-        """
-        Test if individual results stored in multilabel evaluators are
-        containing correct information.
-        """
-
-        for evaluator_id in evaluator_ids:
-
-            evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
-
-            individual_results = json.loads(evaluator_object.individual_results)
-
-            evaluation_type = evaluator_object.evaluation_type
-            memory_optimized = evaluator_object.score_after_scroll
-            avg_function = evaluator_object.average_function
-
-            print_output(f"evaluator:run_test_individual_results_enabled:{evaluation_type}:{avg_function}:memory_optimized:{memory_optimized}:response.data", individual_results)
-
-            # Check if individual results exist for all the classes
-            self.assertEqual(evaluator_object.n_total_classes, len(individual_results))
-
-            for label, scores in list(individual_results.items()):
-                for metric in choices.METRICS:
-                    self.assertTrue(scores[metric] > 0)
-
-                cm = np.array(scores["confusion_matrix"])
-                cm_size = np.shape(cm)
-                # Check if confusion matrix has non-zero values
-                self.assertTrue(cm.any())
-                # Check if confusion matric has the correct shape
-                self.assertEqual(cm_size[0], 2)
-                self.assertEqual(cm_size[1], 2)
-
-
-    def run_test_individual_results_disabled(self, evaluator_ids: List[int]):
-        """
-        Test if individual results information is not stored in the evaluator
-        if add_individual_results was set false.
-        """
-
-        for evaluator_id in evaluator_ids:
-            evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
-
-            individual_results = json.loads(evaluator_object.individual_results)
-
-            evaluation_type = evaluator_object.evaluation_type
-            memory_optimized = evaluator_object.score_after_scroll
-            avg_function = evaluator_object.average_function
-
-            print_output(f"evaluator:run_test_individual_results_disabled:type:{evaluation_type}:avg:{avg_function}:memory_optimized:{memory_optimized}:response.data", individual_results)
-
-            # Check if individual results is empty
-            self.assertEqual(0, len(individual_results))
-
-
-    def run_test_binary_evaluation(self):
-        """ Test binary evaluation with averaging functions set in self.binary_avg_functions."""
+    def run_test_entity_evaluation_token_based(self):
+        """ Test entity evaluation. """
 
         main_payload = {
-            "description": "Test binary evaluation",
+            "description": "Test token-based entity evaluation",
             "indices": [{"name": self.test_index}],
             "true_fact": self.true_fact_name,
             "predicted_fact": self.pred_fact_name,
-            "true_fact_value": self.true_fact_value,
-            "predicted_fact_value": self.pred_fact_value,
-            "scroll_size": 500,
-            "add_individual_results": False
+            "scroll_size": 50,
+            "add_misclassified_examples": True,
+            "token_based": True,
+            "evaluation_type": "entity"
 
         }
 
