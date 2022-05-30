@@ -102,6 +102,33 @@ class ProjectGetFactsSerializer(IndicesSerializerMixin):
         help_text='Specify the doc_path of MLP fields and apply it as a filter.'
     )
 
+class ProjectFactAggregatorSerializer(IndicesSerializerMixin):
+    key_field = serializers.ChoiceField(
+        choices=choices.KEY_FIELD_CHOICES,
+        required=True,
+        help_text='Key field of the aggregation.'
+    ),
+    value_field = serializers.ChoiceField(
+        choices=choices.VALUE_FIELD_CHOICES,
+        required=True,
+        help_text='Value field of the aggregation.'
+    )
+    filter_by_key = serializers.CharField(
+        default=choices.DEFAULT_FILTER_BY_KEY,
+        required=False,
+        help_text='If specified, returns only a list of values corresponding to that value of a key field.',
+    ),
+    max_count = serializers.IntegerField(
+        default=choices.DEFAULT_MAX_AGGREGATION_COUNT,
+        required=False,
+        help_text=f'Maximum number of values to return.'
+    ),
+    query = serializers.JSONField(
+        default=json.dumps(EMPTY_QUERY))
+        required=False,
+        help_text='Query in JSON format.'
+    )
+
 
 class HandleIndicesSerializer(serializers.Serializer):
     indices = serializers.PrimaryKeyRelatedField(many=True, queryset=Index.objects.filter(is_open=True), )

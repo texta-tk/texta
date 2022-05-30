@@ -26,7 +26,10 @@ from toolkit.core.project.models import Project
 from toolkit.core.project.serializers import (
     CountIndicesSerializer,
     ExportSearcherResultsSerializer,
-    HandleIndicesSerializer, HandleProjectAdministratorsSerializer, HandleUsersSerializer, ProjectDocumentSerializer,
+    HandleIndicesSerializer,
+    HandleProjectAdministratorsSerializer,
+    HandleUsersSerializer,
+    ProjectDocumentSerializer,
     ProjectGetFactsSerializer,
     ProjectGetSpamSerializer,
     ProjectSearchByQuerySerializer,
@@ -41,7 +44,13 @@ from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.elastic.tools.serializers import ElasticScrollSerializer
 from toolkit.exceptions import InvalidInputDocument, ProjectValidationFailed, SerializerNotValid
 from toolkit.helper_functions import hash_string
-from toolkit.permissions.project_permissions import (AuthorProjAdminSuperadminAllowed, ExtraActionAccessInApplications, OnlySuperadminAllowed, ProjectAccessInApplicationsAllowed, ProjectEditAccessAllowed)
+from toolkit.permissions.project_permissions import (
+    AuthorProjAdminSuperadminAllowed,
+    ExtraActionAccessInApplications,
+    OnlySuperadminAllowed,
+    ProjectAccessInApplicationsAllowed,
+    ProjectEditAccessAllowed
+)
 from toolkit.settings import RELATIVE_PROJECT_DATA_PATH, SEARCHER_FOLDER_KEY
 from toolkit.tools.autocomplete import Autocomplete
 from toolkit.view_constants import FeedbackIndexView
@@ -232,6 +241,46 @@ class GetFactsView(APIView):
         else:
             fact_map_list = [v for v in fact_map]
         return Response(fact_map_list, status=status.HTTP_200_OK)
+
+
+class AggregateFactsView(APIView):
+    permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
+
+
+    @elastic_view
+    def post(self, request, project_pk: int):
+        """
+        Returns existing fact names and values from Elasticsearch.
+        """
+        serializer = ProjectFactAggregatorSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            raise SerializerNotValid(detail=serializer.errors)
+
+        indices = serializer.validated_data["indices"]
+        indices = [index["name"] for index in indices]
+
+        # retrieve and validate project indices
+        project = get_object_or_404(Project, pk=project_pk)
+        self.check_object_permissions(request, project)
+        project_indices = project.get_available_or_all_project_indices(indices)  # Gives all if n   one, the default, is entered.
+
+        if not project_indices:
+            return Response([])
+
+        key_field = serializer.validated_data["key_field"]
+        value_field = serializer.validated_data["value_field"]
+        filter_by_key = serializer.validated_data["filter_by_key"]
+        max_count = serializer.validated_data["max_count"]
+        query = serializer.validated_data["query"]
+
+        if isinstance(query, str):
+            query = json.loads(query)
+
+        aggregator = ElasticAggregator(indices=project_indices, query=query)
+        results = aggregator.fact_abstract(key_field=key_field, value_field=value_field, filter_by_key=filter_by_key, size=max_count)
+
+        return Response(results, status=status.HTTP_200_OK)
 
 
 class GetIndicesView(APIView):
