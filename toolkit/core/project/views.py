@@ -32,6 +32,7 @@ from toolkit.core.project.serializers import (
     ProjectDocumentSerializer,
     ProjectGetFactsSerializer,
     ProjectGetSpamSerializer,
+    ProjectFactAggregatorSerializer,
     ProjectSearchByQuerySerializer,
     ProjectSerializer,
     ProjectSimplifiedSearchSerializer,
@@ -278,7 +279,7 @@ class AggregateFactsView(APIView):
             query = json.loads(query)
 
         aggregator = ElasticAggregator(indices=project_indices, query=query)
-        results = aggregator.fact_abstract(key_field=key_field, value_field=value_field, filter_by_key=filter_by_key, size=max_count)
+        results = aggregator.facts_abstract(key_field=key_field, value_field=value_field, filter_by_key=filter_by_key, size=max_count)
 
         return Response(results, status=status.HTTP_200_OK)
 

@@ -1,9 +1,11 @@
 import json
 from typing import List
 
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.urls import reverse
+
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
@@ -102,12 +104,13 @@ class ProjectGetFactsSerializer(IndicesSerializerMixin):
         help_text='Specify the doc_path of MLP fields and apply it as a filter.'
     )
 
+
 class ProjectFactAggregatorSerializer(IndicesSerializerMixin):
     key_field = serializers.ChoiceField(
         choices=choices.KEY_FIELD_CHOICES,
         required=True,
         help_text='Key field of the aggregation.'
-    ),
+    )
     value_field = serializers.ChoiceField(
         choices=choices.VALUE_FIELD_CHOICES,
         required=True,
@@ -116,18 +119,27 @@ class ProjectFactAggregatorSerializer(IndicesSerializerMixin):
     filter_by_key = serializers.CharField(
         default=choices.DEFAULT_FILTER_BY_KEY,
         required=False,
-        help_text='If specified, returns only a list of values corresponding to that value of a key field.',
-    ),
+        help_text='If specified, returns only a list of values corresponding to that value of a key field.'
+    )
     max_count = serializers.IntegerField(
         default=choices.DEFAULT_MAX_AGGREGATION_COUNT,
         required=False,
         help_text=f'Maximum number of values to return.'
-    ),
+    )
     query = serializers.JSONField(
-        default=json.dumps(EMPTY_QUERY))
+        default=json.dumps(EMPTY_QUERY),
         required=False,
         help_text='Query in JSON format.'
     )
+
+    def validate(self, data):
+        """ Apply custom validation checks."""
+        key_field = data.get("key_field")
+        value_field = data.get("value_field")
+
+        if key_field == value_field:
+            raise ValidationError(f"Key and value fields must be different! (Selected key_field = value_field = '{key_field}')")
+        return data
 
 
 class HandleIndicesSerializer(serializers.Serializer):
