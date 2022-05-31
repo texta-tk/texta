@@ -35,7 +35,7 @@ class MisclassifiedExamplesSerializer(serializers.Serializer):
 
 class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin):
     author = UserSerializer(read_only=True)
-    query = serializers.JSONField(required=False, help_text="Query in JSON format", default=json.dumps(EMPTY_QUERY))
+    query = serializers.JSONField(required=False, help_text="Query in JSON format", default=json.dumps(EMPTY_QUERY), ensure_ascii=False)
 
     true_fact = serializers.CharField(required=True, help_text=f"Fact name used as true label for mulilabel evaluation.")
     predicted_fact = serializers.CharField(required=True, help_text=f"Fact name used as predicted label for multilabel evaluation.")
