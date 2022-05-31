@@ -24,7 +24,7 @@ from toolkit.tools.utils_for_tests import (
 
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
-class EvaluatorObjectViewTests(APITransactionTestCase):
+class BinaryAndMultilabelEvaluatorObjectViewTests(APITransactionTestCase):
     def setUp(self):
         # Owner of the project
         self.test_index = reindex_test_dataset(from_index=TEST_INDEX_EVALUATOR)
@@ -266,14 +266,14 @@ class EvaluatorObjectViewTests(APITransactionTestCase):
         """ Test individual_results endpoint for binary evaluators. """
 
         evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
-        avg_function = evaluator_object.average_function
+        evaluation_type = evaluator_object.evaluation_type
 
         url = f"{self.url}{evaluator_id}/individual_results/"
 
         default_payload = {}
 
         response = self.client.post(url, default_payload, format="json")
-        print_output(f"evaluator:run_test_individual_results_view_binary:avg:{avg_function}:default_payload:response.data:", response.data)
+        print_output(f"evaluator:run_test_individual_results_view_binary:avg:{evaluation_type}:default_payload:response.data:", response.data)
 
         # The usage of the endpoint is not available for binary evaluators
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
