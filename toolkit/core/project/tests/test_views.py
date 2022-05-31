@@ -166,6 +166,57 @@ class ProjectViewTests(APITestCase):
                 self.assertTrue('doc_path' in value)
 
 
+    def test_aggregate_facts(self):
+        url = f'{self.project_url}/elastic/aggregate_facts/'
+
+        payload = {
+            "incides": [{"name": TEST_INDEX}],
+            "key_field": "fact",
+            "value_field": "doc_path"
+        }
+        response = self.client.post(url, payload)
+        print_output('project:aggregate_facts:key=fact:value=doc_path:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, dict))
+        self.assertTrue(TEST_FACT_NAME in response.data)
+        self.assertTrue("comment_content" in response.data[TEST_FACT_NAME])
+
+        payload = {
+            "incides": [{"name": TEST_INDEX}],
+            "key_field": "doc_path",
+            "value_field": "fact",
+            "filter_by_key": "comment_content"
+        }
+
+        response = self.client.post(url, payload)
+        print_output('project:aggregate_facts:key=doc_path:value=fact:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue(TEST_FACT_NAME in response.data)
+
+
+    def test_aggregate_facts_invalid(self):
+        url = f'{self.project_url}/elastic/aggregate_facts/'
+
+        payload = {
+            "incides": [{"name": TEST_INDEX}],
+            "key_field": "fact",
+            "value_field": "fact"
+        }
+        response = self.client.post(url, payload)
+        print_output('project:aggregate_facts_invalid_input:key=fact:value=fact:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        payload = {
+            "incides": [{"name": TEST_INDEX}],
+            "key_field": "fact",
+            "value_field": "brr"
+        }
+        response = self.client.post(url, payload)
+        print_output('project:aggregate_facts_invalid_input:key=fact:value=brr:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
     def test_search(self):
         payload = {"match_text": "jeesus", "size": 1}
         url = f'{self.project_url}/elastic/search/'
