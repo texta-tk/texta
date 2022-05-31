@@ -34,9 +34,9 @@ def validate_metric_restrictions(value: json):
     return value
 
 
-def validate_fact(indices: List[str], fact: str):
+def validate_fact(indices: List[str], query: dict, fact: str):
     """ Check if given fact exists in the selected indices. """
-    ag = ElasticAggregator(indices=indices)
+    ag = ElasticAggregator(indices=indices, query=deepcopy(query))
     fact_values = ag.get_fact_values_distribution(fact, fact_name_size=choices.DEFAULT_MAX_FACT_AGGREGATION_SIZE)
     if not fact_values:
         raise ValidationError(f"Fact '{fact}' not present in any of the selected indices ({indices}).")
@@ -78,9 +78,9 @@ def validate_evaluation_type(indices: List[str], query: dict, evaluation_type: s
     if evaluation_type == "binary":
         if not true_value or not pred_value:
             raise ValidationError(f"Please specify true and predicted values for evaluation type 'binary'.")
-    elif evaluation_type == "multilabel":
-        if true_value or pred_value:
-            raise ValidationError(f"Please leave true and predicted values unspeficied for evaluation type 'multilabel'.")
+    #elif evaluation_type == "multilabel":
+    #    if true_value or pred_value:
+    #        raise ValidationError(f"Please leave true and predicted values unspeficied for evaluation type 'multilabel'.")
     elif evaluation_type == "entity":
         if true_value or pred_value:
             raise ValidationError(f"Please leave true and predicted values unspeficied for evaluation type 'entity'.")
@@ -103,13 +103,13 @@ def validate_evaluation_type(indices: List[str], query: dict, evaluation_type: s
     return True
 
 
-def validate_fact_value(indices: List[str], fact: str, fact_value: str):
+def validate_fact_value(indices: List[str], query: dict, fact: str, fact_value: str):
     """ Check if given fact value exists under given fact. """
     # Fact value is allowed to be empty
     if not fact_value:
         return True
 
-    ag = ElasticAggregator(indices=indices)
+    ag = ElasticAggregator(indices=indices, query=deepcopy(query))
 
     fact_values = ag.facts(size=choices.DEFAULT_MAX_AGGREGATION_SIZE, filter_by_fact_name=fact, include_values=True)
     if fact_value not in fact_values:

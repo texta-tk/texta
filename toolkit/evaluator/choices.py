@@ -68,6 +68,7 @@ MAX_MISCLASSIFIED_VALUES_STORED = 1000
 EVALUATION_TYPES = ["binary", "multilabel", "entity"]
 EVALUATION_TYPE_CHOICES = [(et, et) for et in EVALUATION_TYPES]
 
+# Key for evaluation type 'entity'
 ENTITY_EVALUATION = "entity"
 
 # Default min count for the misclassified examples returned by endpoint "misclassified_examples"
@@ -78,3 +79,12 @@ DEFAULT_MAX_MISCLASSIFIED_COUNT = 100000000
 
 # Max number of misclassified examples to return per class
 DEFAULT_N_MISCLASSIFIED_VALUES_TO_RETURN = 100
+
+# Marker for scores containing devision by zero
+SCORES_NAN_MARKER = -1
+
+# Label used in the confusion matrix for predicted labels that are not present in true labels
+MISSING_TRUE_LABEL = "Missing from true labels"
+
+# Label used in the confusion matrix for true labels that are note present in predicted labels
+MISSING_PRED_LABEL = "Missing from pred labels"
