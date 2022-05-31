@@ -52,3 +52,39 @@ DEFAULT_ES_TIMEOUT = 10
 # are also calculated and saved during multilabel
 # evaluation
 DEFAULT_ADD_INDIVIDUAL_RESULTS = True
+
+# If true, apply token-based evaluation for entities; otherwise labelsets of documents are compared
+# and results are calculated based on them
+DEFAULT_TOKEN_BASED = True
+
+
+# If true, example values of misclassified examples are stored along with partial overlaps
+# (only for for entity evaluation)
+DEFAULT_ADD_MISCLASSIFIED_EXAMPLES = True
+
+# Limit the misclassified values stored in the data model
+MAX_MISCLASSIFIED_VALUES_STORED = 1000
+
+EVALUATION_TYPES = ["binary", "multilabel", "entity"]
+EVALUATION_TYPE_CHOICES = [(et, et) for et in EVALUATION_TYPES]
+
+# Key for evaluation type 'entity'
+ENTITY_EVALUATION = "entity"
+
+# Default min count for the misclassified examples returned by endpoint "misclassified_examples"
+DEFAULT_MIN_MISCLASSIFIED_COUNT = 1
+
+# Default max count of the misclassified examples returned by endpoint "misclassified_examples"
+DEFAULT_MAX_MISCLASSIFIED_COUNT = 100000000
+
+# Max number of misclassified examples to return per class
+DEFAULT_N_MISCLASSIFIED_VALUES_TO_RETURN = 100
+
+# Marker for scores containing devision by zero
+SCORES_NAN_MARKER = -1
+
+# Label used in the confusion matrix for predicted labels that are not present in true labels
+MISSING_TRUE_LABEL = "Missing from true labels"
+
+# Label used in the confusion matrix for true labels that are note present in predicted labels
+MISSING_PRED_LABEL = "Missing from pred labels"

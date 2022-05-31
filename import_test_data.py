@@ -26,19 +26,25 @@ parser.add_argument(
     '-i',
     type=str,
     default='texta_test_index,texta_test_index_mlp',
-    help='The final index name of the testing index, that will be added to Elasticsearch. If an old index exists, IT WILL BE DELETED!'
+    help='The final index name of the testing index that will be added to Elasticsearch. If an old index exists, IT WILL BE DELETED!'
 )
 parser.add_argument(
     '-ei',
     type=str,
     default='texta_test_index_evaluator',
-    help='The final index name of the evaluation testing index, that will be added to Elasticsearch. If an old index exists, IT WILL BE DELETED!'
+    help='The final index name of the evaluation testing index that will be added to Elasticsearch. If an old index exists, IT WILL BE DELETED!'
+)
+parser.add_argument(
+    '-vi',
+    type=str,
+    default='texta_test_index_entity_evaluator',
+    help='The final index name of the entity evaluation testing index that will be added to Elasticsearch. If an old index exists, IT WILL BE DELETED!'
 )
 parser.add_argument(
     '-ci',
     type=str,
     default='texta_crf_test_index',
-    help='The final index name of the evaluation testing index, that will be added to Elasticsearch. If an old index exists, IT WILL BE DELETED!'
+    help='The final index name of the evaluation testing index that will be added to Elasticsearch. If an old index exists, IT WILL BE DELETED!'
 )
 parser.add_argument(
     '-lg',
@@ -75,6 +81,11 @@ dataset_params = {
         "url": url_prefix + "elastic_data/texta_test_index_evaluator.zip",
         "file_name": "texta_test_index_evaluator"
     },
+    "eev": {
+        "index": args.vi,
+        "url": url_prefix + "elastic_data/texta_test_index_entity_evaluator.zip",
+        "file_name": "texta_test_index_entity_evaluator"
+    },
     "collection": {
         "url": url_prefix + "import_data/import_test_data.zip"
     }
@@ -93,6 +104,8 @@ FACT_MAPPING = {
                 'spans': {'type': 'keyword'},
                 'str_val': {'type': 'keyword'},
                 'sent_index': {'type': 'long'},
+                'id': {'type': 'keyword'},
+                'source': {'type': 'keyword'}
             }
         }
     }
@@ -146,8 +159,10 @@ def main():
     try:
         print("Processing small dataset:")
         import_docs(dataset_params["sm"])
-        print("Processing evaluator dataset:")
+        print("Processing binary/multilabel evaluator dataset:")
         import_docs(dataset_params["ev"])
+        print("Processing entity evaluator dataset:")
+        import_docs(dataset_params["eev"])
         print("Processing CRF dataset")
         import_docs(dataset_params["crf"])
         if LARGE is True:
