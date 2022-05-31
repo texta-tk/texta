@@ -76,7 +76,7 @@ def remove_not_found(binary_results: dict) -> dict:
     return cleaned_results
 
 
-def filter_results(binary_results: dict, min_count: int, max_count: int, metric_restrictions: json) -> json:
+def filter_results(binary_results: dict, min_count: int, max_count: int, metric_restrictions: dict) -> dict:
     """ Filter multilabel scores based on label count and metric scores restrictions. """
     filtered_scores = {}
 
@@ -106,7 +106,7 @@ def filter_results(binary_results: dict, min_count: int, max_count: int, metric_
     return filtered_scores
 
 
-def filter_and_average_results(binary_results: dict, min_count: int, max_count: int, metric_restrictions: json) -> json:
+def filter_and_average_results(binary_results: dict, min_count: int, max_count: int, metric_restrictions: dict) -> dict:
     """ Calculate average of filtered tag scores. """
     metrics = choices.METRICS
     filtered_scores = {metric: [] for metric in metrics}
@@ -294,7 +294,7 @@ def update_scores(scores_buffer: dict, batch_scores: dict) -> dict:
     return scores_buffer
 
 
-def scroll_and_score(generator: ElasticSearcher, evaluator_object: Evaluator, true_fact: str, pred_fact: str, true_fact_value: str = "", pred_fact_value: str = "", classes: List[Union[str, int]]=[], average: str = "macro", score_after_scroll: bool = True, n_batches: int = None, add_individual_results: bool = True) -> Tuple[Union[List[int], List[List[str]]], Union[List[int], List[List[str]]], Dict[str, Dict[str, List[int]]]]:
+def scroll_and_score(generator: ElasticSearcher, evaluator_object: Evaluator, true_fact: str, pred_fact: str, true_fact_value: str = "", pred_fact_value: str = "", classes: List[Union[str, int]]=[], average: str = "macro", score_after_scroll: bool = True, n_batches: int = None, add_individual_results: bool = True) -> Tuple[dict, dict]:
     """ Scrolls over ES index and calculates scores."""
 
     true_labels = []
@@ -369,7 +369,7 @@ def scroll_and_score(generator: ElasticSearcher, evaluator_object: Evaluator, tr
             evaluator_object.f1_score = scores["f1_score"]
             evaluator_object.accuracy = scores["accuracy"]
             evaluator_object.confusion_matrix = json.dumps(scores["confusion_matrix"])
-            evaluator_object.individual_results = json.dumps(bin_scores)
+            evaluator_object.individual_results = json.dumps(bin_scores, ensure_ascii=False)
             evaluator_object.save()
 
     if not score_after_scroll:

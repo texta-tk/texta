@@ -210,7 +210,7 @@ def get_labels(sent_index: int, label_dict: Dict[int, list], as_str: bool = Fals
     labels = []
     if sent_index in label_dict:
         if as_str:
-            labels = [json.dumps(l) for l in label_dict[sent_index]]
+            labels = [json.dumps(l, ensure_ascii=False) for l in label_dict[sent_index]]
         else:
             labels = label_dict[sent_index]
     return labels
@@ -316,27 +316,27 @@ def process_batch(doc_batch: List[dict], doc_path: str, pred_fact_name: str, tru
 
                     # If the predicted value is a substring of the true value, e.g. "EDGAR" vs. "EDGAR Sa"
                     if start_p >= start_t and end_p <= end_t:
-                        subset_val = json.dumps({"true": text[start_t: end_t], "pred": text[start_p: end_p]})
+                        subset_val = json.dumps({"true": text[start_t: end_t], "pred": text[start_p: end_p]}, ensure_ascii=False)
                         subset_vals.append(subset_val)
-                        used_pred_spans.append(json.dumps([start_p, end_p]))
-                        used_true_spans.append(json.dumps([start_t, end_t]))
+                        used_pred_spans.append(json.dumps([start_p, end_p], ensure_ascii=False))
+                        used_true_spans.append(json.dumps([start_t, end_t], ensure_ascii=False))
 
                     # If the predicted value has a parital overlap with the true value, e.g. "Anton HANSEN" vs. "HANSEN Tammsaare"
                     elif (start_p < start_t and end_p > start_t and end_p < end_t) or (start_p > start_t and start_p <= end_t and end_p > end_t):
-                        partial_val = json.dumps({"true": text[start_t: end_t], "pred": text[start_p: end_p]})
+                        partial_val = json.dumps({"true": text[start_t: end_t], "pred": text[start_p: end_p]}, ensure_ascii=False)
                         partial_vals.append(partial_val)
-                        used_pred_spans.append(json.dumps([start_p, end_p]))
-                        used_true_spans.append(json.dumps([start_t, end_t]))
+                        used_pred_spans.append(json.dumps([start_p, end_p], ensure_ascii=False))
+                        used_true_spans.append(json.dumps([start_t, end_t], ensure_ascii=False))
 
                     # If the predicted value is a superstring of the true value, e.g. "EDGAR SAVISAAR" vs. "SAVISAAR"
                     elif (start_p < start_t and end_p > end_t):
-                        superset_val = json.dumps({"true": text[start_t: end_t], "pred": text[start_p: end_p]})
+                        superset_val = json.dumps({"true": text[start_t: end_t], "pred": text[start_p: end_p]}, ensure_ascii=False)
                         superset_vals.append(superset_val)
-                        used_pred_spans.append(json.dumps([start_p, end_p]))
-                        used_true_spans.append(json.dumps([start_t, end_t]))
+                        used_pred_spans.append(json.dumps([start_p, end_p], ensure_ascii=False))
+                        used_true_spans.append(json.dumps([start_t, end_t], ensure_ascii=False))
 
-            true_i_keep_str = [json.dumps(l) for l in true_unique]
-            pred_i_keep_str = [json.dumps(l) for l in pred_unique]
+            true_i_keep_str = [json.dumps(l, ensure_ascii=False) for l in true_unique]
+            pred_i_keep_str = [json.dumps(l, ensure_ascii=False) for l in pred_unique]
             fn_spans = [json.loads(l) for l in list(set(true_i_keep_str).difference(set(used_true_spans)))]
             fp_spans = [json.loads(l) for l in list(set(pred_i_keep_str).difference(set(used_pred_spans)))]
 
@@ -359,7 +359,7 @@ def process_batch(doc_batch: List[dict], doc_path: str, pred_fact_name: str, tru
 
 
 
-def scroll_and_score_entity(generator: ElasticSearcher, evaluator_object: Evaluator, true_fact: str, pred_fact: str, doc_path: str, token_based: bool, n_batches: int = None, add_misclassified_examples: bool = True) -> Tuple[Union[List[int], List[List[str]]], Union[List[int], List[List[str]]], Dict[str, Dict[str, List[int]]]]:
+def scroll_and_score_entity(generator: ElasticSearcher, evaluator_object: Evaluator, true_fact: str, pred_fact: str, doc_path: str, token_based: bool, n_batches: int = None, add_misclassified_examples: bool = True) -> Tuple[dict, dict]:
     """ Scrolls over ES index and calculates scores."""
 
     total_counts = {
@@ -426,7 +426,7 @@ def scroll_and_score_entity(generator: ElasticSearcher, evaluator_object: Evalua
                 value_list = [{"value": s, "count": c} for s, c in value_list]
             misclassified_new[key] = value_list[:choices.MAX_MISCLASSIFIED_VALUES_STORED]
 
-        evaluator_object.misclassified_examples = json.dumps(misclassified_new)
+        evaluator_object.misclassified_examples = json.dumps(misclassified_new, ensure_ascii=False)
     evaluator_object.save()
 
     return (scores, misclassified_new)
