@@ -171,8 +171,10 @@ def train_bert_tagger(tagger_id, testing=False):
 
 
     except Exception as e:
-        task_object.add_error(str(e))
-        task_object.update_status(Task.STATUS_FAILED)
+        logging.getLogger(ERROR_LOGGER).exception(e)
+        error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
+        tagger_object.task.add_error(error_message)
+        tagger_object.task.update_status(Task.STATUS_FAILED)
         raise
 
 
