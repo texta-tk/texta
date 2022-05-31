@@ -7,6 +7,7 @@ from toolkit.bert_tagger.urls import router as bert_tagger_router
 from toolkit.core.core_variable.views import CoreVariableViewSet
 from toolkit.core.health.views import HealthView
 from toolkit.core.project.views import (
+    AggregateFactsView,
     DocumentView,
     ExportSearchView,
     GetFactsView,
@@ -115,6 +116,7 @@ urlpatterns = [
     path('projects/<int:project_pk>/document/', DocumentView.as_view(), name="project-document"),
     path('projects/<int:project_pk>/get_spam/', GetSpamView.as_view(), name="project-get-spam"),
     path('projects/<int:project_pk>/get_facts/', GetFactsView.as_view(), name="get_facts"),
+    path('projects/<int:project_pk>/aggregate_facts/', AggregateFactsView.as_view(), name="aggregate_facts"),
     path('projects/<int:project_pk>/get_fields/', GetFieldsView.as_view(), name="get_fields"),
     path('projects/<int:project_pk>/get_indices/', GetIndicesView.as_view(), name="get_project_indices"),
     path('projects/<int:project_pk>/scroll/', ScrollView.as_view(), name="project-scroll"),
