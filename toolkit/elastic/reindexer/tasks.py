@@ -3,16 +3,17 @@ import logging
 from typing import List
 
 from celery.decorators import task
+from django.conf import settings
+from texta_elastic.core import ElasticCore
+from texta_elastic.document import ElasticDocument
+from texta_elastic.mapping_tools import update_field_types, update_mapping
+from texta_elastic.searcher import ElasticSearcher
 
 from toolkit.base_tasks import BaseTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.reindexer.models import Reindexer
-from texta_elastic.core import ElasticCore
-from texta_elastic.document import ElasticDocument
-from texta_elastic.mapping_tools import update_field_types, update_mapping
-from texta_elastic.searcher import ElasticSearcher
-from toolkit.settings import ERROR_LOGGER, INFO_LOGGER
+from toolkit.settings import TEXTA_MLP_META_KEY
 from toolkit.tools.show_progress import ShowProgress
 
 
@@ -66,6 +67,10 @@ def apply_field_changes_generator(generator, index: str, field_data: List[dict])
                 new_field = field["new_path_name"]
                 document[new_field] = document.pop(old_path)
 
+            mlp_meta = document.get(TEXTA_MLP_META_KEY, {})
+            if old_path not in mlp_meta:
+                mlp_meta.pop(old_path)
+
         yield {
             "_index": index,
             "_type": "_doc",
@@ -81,8 +86,9 @@ def bulk_add_documents(elastic_search: ElasticSearcher, elastic_doc: ElasticDocu
 
 
 @task(name="reindex_task", base=BaseTask)
-def reindex_task(reindexer_task_id):
-    logging.getLogger(INFO_LOGGER).info("Starting task 'reindex'.")
+def reindex_task(reindexer_task_id: int):
+    logger = logging.getLogger(settings.INFO_LOGGER)
+    logger.info(f"Starting task 'reindex' with id: {str(reindexer_task_id)}.")
     try:
         reindexer_obj = Reindexer.objects.get(pk=reindexer_task_id)
         task_object = reindexer_obj.task
@@ -103,23 +109,24 @@ def reindex_task(reindexer_task_id):
         show_progress.update_step("scrolling data")
         show_progress.update_view(0)
 
-        elastic_search = ElasticSearcher(indices=indices, field_data=fields, callback_progress=show_progress, query=query, scroll_size=scroll_size)
+        elastic_search = ElasticSearcher(indices=indices, field_data=fields + [settings.TEXTA_MLP_META_KEY], callback_progress=show_progress, query=query, scroll_size=scroll_size)
         elastic_doc = ElasticDocument(new_index)
 
         if random_size > 0:
             elastic_search = elastic_search.random_documents(size=random_size)
 
-        logging.getLogger(INFO_LOGGER).info("Updating index schema.")
-        ''' the operations that don't require a mapping update have been completed '''
+        logger.info(f"Updating index schema for index: {new_index}.")
+
+        # the operations that don't require a mapping update have been completed
         schema_input = update_field_types(indices, fields, field_type, flatten_doc=FLATTEN_DOC)
         updated_schema = update_mapping(schema_input, new_index, reindexer_obj.add_facts_mapping, add_texta_meta_mapping=False)
 
-        logging.getLogger(INFO_LOGGER).info("Creating new index.")
+        logger.info(f"Creating new index: '{new_index}'.")
         # create new_index
         create_index_res = ElasticCore().create_index(new_index, updated_schema)
         Index.objects.get_or_create(name=new_index)
 
-        logging.getLogger(INFO_LOGGER).info("Indexing documents.")
+        logger.info("Indexing documents.")
         # set new_index name as mapping name, perhaps make it customizable in the future
         bulk_add_documents(elastic_search, elastic_doc, index=new_index, chunk_size=scroll_size, flatten_doc=FLATTEN_DOC, field_data=field_type)
 
@@ -127,10 +134,10 @@ def reindex_task(reindexer_task_id):
         task_object.complete()
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
+        logging.getLogger(settings.ERROR_LOGGER).exception(e)
         task_object.add_error(str(e))
         task_object.update_status(Task.STATUS_FAILED)
         raise e
 
-    logging.getLogger(INFO_LOGGER).info("Reindexing succesfully completed.")
+    logger.info(f"Reindexing of task-id {reindexer_task_id} successfully completed.")
     return True

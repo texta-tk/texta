@@ -3,6 +3,7 @@ import json
 import rest_framework.filters as drf_filters
 from django_filters import rest_framework as filters
 from rest_framework import mixins, permissions, viewsets
+from texta_elastic.core import ElasticCore
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.index.models import Index
@@ -66,12 +67,15 @@ class ReindexerViewSet(mixins.CreateModelMixin,
             field_type=json.dumps(serializer.validated_data.get('field_type', [])),
             fields=json.dumps(serializer.validated_data.get('fields', [])),
             indices=json.dumps(serializer.validated_data['indices']))
+
         self.update_project_indices(serializer, project_obj)
 
 
     def update_project_indices(self, serializer, project_obj):
         ''' add new_index included in the request to the relevant project object '''
         indices_to_add = serializer.validated_data['new_index']
+        ec = ElasticCore()
+        ec.create_index(indices_to_add)
         index, is_open = Index.objects.get_or_create(name=indices_to_add)
         project_obj.indices.add(index)
         project_obj.save()
