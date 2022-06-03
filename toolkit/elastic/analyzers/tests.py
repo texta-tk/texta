@@ -21,14 +21,6 @@ class SnowballElasticStemmerViewTest(APITestCase):
         self.client.login(username='user', password='pw')
 
 
-    def test_elastic_stemmer_without_language_specified(self):
-        url = reverse(f"{VERSION_NAMESPACE}:snowball")
-        payload = {"text": "This is some text without any language specified!"}
-        response = self.client.post(url, data=payload, format="json")
-        print_output("test_elastic_stemmer_without_language_specified:response.data", response.data)
-        self.assertTrue(response.status_code == status.HTTP_200_OK)
-
-
     def test_elastic_stemmer_on_english_text(self):
         url = reverse(f"{VERSION_NAMESPACE}:snowball")
         payload = {"text": "This is some text parsed by the english stemmer!", "language": "english"}

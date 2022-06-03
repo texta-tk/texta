@@ -1,19 +1,23 @@
 import logging
 from typing import List
 
+from texta_elastic.searcher import ElasticSearcher
 from texta_mlp.document import Document
 from texta_mlp.mlp import MLP
 
 from toolkit.elastic.choices import map_iso_to_snowball
-from texta_elastic.searcher import ElasticSearcher
+from toolkit.mlp.helpers import parse_doc_texts
 from toolkit.settings import INFO_LOGGER, MLP_MODEL_DIRECTORY
 from toolkit.tools.lemmatizer import ElasticAnalyzer
-from toolkit.mlp.helpers import parse_doc_texts
 
 
 def apply_stemming(texts: List[str], mlp: MLP, strip_html: bool, detect_lang: bool = False, stemmer_lang: str = None, tokenizer="standard"):
     analyzer = ElasticAnalyzer(language=None)
     processed_texts = []
+    # Initiate this here so a value would always be passed to return in case
+    # there are no texts. Should be useful for most single-text cases.
+    lang = stemmer_lang
+
     for text in texts:
         if detect_lang:
             lang = mlp.detect_language(text)
@@ -21,8 +25,9 @@ def apply_stemming(texts: List[str], mlp: MLP, strip_html: bool, detect_lang: bo
             analyzed_text = analyzer.stem_text(text, language=lang, strip_html=strip_html, tokenizer=tokenizer) if lang else text
         else:
             analyzed_text = analyzer.stem_text(text, language=stemmer_lang, strip_html=strip_html, tokenizer=tokenizer)
+
         processed_texts.append(analyzed_text)
-    return processed_texts
+    return processed_texts, lang
 
 
 def apply_tokenization(texts: List[str], tokenizer: str = "standard"):
@@ -60,11 +65,13 @@ def process_analyzer_actions(
             for field in fields_to_parse:
                 texts = parse_doc_texts(doc_path=field, document=source)
                 if "stemmer" in analyzers:
-                    stemmed_texts = apply_stemming(texts, mlp=mlp, strip_html=strip_html, detect_lang=detect_lang, stemmer_lang=snowball_language, tokenizer=tokenizer)
+                    stemmed_texts, lang = apply_stemming(texts, mlp=mlp, strip_html=strip_html, detect_lang=detect_lang, stemmer_lang=snowball_language, tokenizer=tokenizer)
                     if stemmed_texts:
                         text = stemmed_texts[0]
                         new_field = f"{field}_es.stems"
                         source = Document.edit_doc(source, new_field, text)
+                        source = Document.edit_doc(source, f"{field}_es.stem_lang", lang)
+
                 if "tokenizer" in analyzers:
                     tokenized_texts = apply_tokenization(texts, tokenizer=tokenizer)
                     if tokenized_texts:

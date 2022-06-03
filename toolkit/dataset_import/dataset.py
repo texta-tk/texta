@@ -1,8 +1,8 @@
 import os
 
 import pandas as pd
-
 from texta_elastic.document import ElasticDocument
+
 from toolkit.helper_functions import chunks
 
 
@@ -43,16 +43,16 @@ class Dataset:
         return False, None
 
 
-    def import_dataset(self):
-        errors = []
+    def import_dataset(self) -> list:
+        error_container = []
         # retrieve content from file
         success, file_content = self._get_file_content()
         file_content = file_content.dropna(how="all")
 
         # check if file was parsed
         if not success:
-            errors.append('unknown file type')
-            return errors
+            error_container.append('unknown file type')
+            return error_container
 
         # convert content to list of records (dicts)
         records = file_content.to_dict(orient='records')
@@ -80,7 +80,7 @@ class Dataset:
                 self.show_progress.update(success)
 
             for error in list(errors):
-                message = error["index"]["error"]["reason"] if isinstance(error, dict) else error
-                errors.append(message)
+                message = error["index"]["error"]["reason"] if isinstance(error, dict) else str(error)
+                error_container.append(message)
 
-        return errors
+        return error_container

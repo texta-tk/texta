@@ -31,8 +31,9 @@ class ShowProgress(object):
             return
         self.n_count += amount
         percentage = 100.0 * (self.n_count / self.n_total)
-    
+
         self.update_view(percentage)
+
 
     @avoid_db_timeout
     def update_view(self, percentage):
@@ -40,6 +41,7 @@ class ShowProgress(object):
         if task.status != task.STATUS_RUNNING:
             task.update_status(task.STATUS_RUNNING)
         task.update_progress(percentage, self.step)
+
 
     @avoid_db_timeout
     def update_errors(self, error: str):

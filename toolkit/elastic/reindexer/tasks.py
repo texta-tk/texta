@@ -126,11 +126,12 @@ def reindex_task(reindexer_task_id):
         # declare the job done
         task_object.complete()
 
+        logging.getLogger(INFO_LOGGER).info("Reindexing succesfully completed.")
+        return True
+
+
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(e)
         task_object.add_error(str(e))
         task_object.update_status(Task.STATUS_FAILED)
         raise e
-
-    logging.getLogger(INFO_LOGGER).info("Reindexing succesfully completed.")
-    return True
