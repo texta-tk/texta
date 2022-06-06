@@ -50,7 +50,7 @@ DEFAULT_SNOWBALL_LANGUAGE = None
 
 
 def map_iso_to_snowball(iso_code: str) -> Optional[str]:
-    mapping = {**ES7_SNOWBALL_MAPPING, **ES7_SNOWBALL_MAPPING}
+    mapping = {**ES6_SNOWBALL_MAPPING, **ES7_SNOWBALL_MAPPING}
     language = mapping.get(iso_code, None)
     return language
 

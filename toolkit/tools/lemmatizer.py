@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 import elasticsearch
 from celery.result import allow_join_result
@@ -67,7 +68,7 @@ class ElasticAnalyzer:
         return body
 
 
-    def stem_text(self, text: str, language: str, strip_html=True, tokenizer="standard"):
+    def stem_text(self, text: str, language: Optional[str], strip_html=True, tokenizer="standard"):
         analysed_chunks = []
         text_chunks = self.chunk_input(text)
         for chunk in text_chunks:
