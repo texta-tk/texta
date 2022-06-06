@@ -473,6 +473,12 @@ class TorchTaggerViewTests(APITransactionTestCase):
     def run_tag_and_feedback_and_retrain(self):
         """Tests feeback extra action."""
         tagger_id = self.test_tagger_id
+
+        tagger_orm: TorchTagger = TorchTagger.objects.get(pk=self.test_tagger_id)
+        model_path = pathlib.Path(tagger_orm.model.path)
+        print_output('run_tag_and_feedback_and_retrain:assert that previous model doesnt exist', data=model_path.exists())
+        self.assertTrue(model_path.exists())
+
         payload = {
             "text": "This is some test text for the Tagger Test",
             "feedback_enabled": True
@@ -516,6 +522,14 @@ class TorchTaggerViewTests(APITransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue('result' in response.data)
         self.assertTrue('probability' in response.data)
+
+        # Ensure that previous tagger is deleted properly.
+        print_output('test_model_retrain:assert that previous model doesnt exist', data=model_path.exists())
+        self.assertFalse(model_path.exists())
+        # Ensure that the freshly created model wasn't deleted.
+        tagger_orm.refresh_from_db()
+        self.assertNotEqual(tagger_orm.model.path, str(model_path))
+
         # delete feedback
         feedback_delete_url = f'{self.url}{tagger_id}/feedback/'
         response = self.client.delete(feedback_delete_url)

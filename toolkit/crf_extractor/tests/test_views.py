@@ -1,26 +1,21 @@
-import pathlib
-from time import sleep
-from io import BytesIO
 import json
+import pathlib
+from io import BytesIO
+from time import sleep
 
 from django.test import override_settings
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
-
-from texta_elastic.searcher import EMPTY_QUERY
-from toolkit.core.task.models import Task
-from toolkit.helper_functions import reindex_test_dataset
-from toolkit.crf_extractor.models import CRFExtractor
-from toolkit.test_settings import (
-    CRF_TEST_FIELD,
-    TEST_KEEP_PLOT_FILES,
-    TEST_VERSION_PREFIX,
-    CRF_TEST_INDEX,
-    TEST_INDEX
-)
 from texta_elastic.aggregator import ElasticAggregator
 from texta_elastic.core import ElasticCore
+from texta_elastic.searcher import EMPTY_QUERY
+
+from toolkit.core.task.models import Task
+from toolkit.crf_extractor.models import CRFExtractor
+from toolkit.helper_functions import reindex_test_dataset
 from toolkit.settings import RELATIVE_MODELS_PATH
+from toolkit.test_settings import (CRF_TEST_FIELD, CRF_TEST_INDEX, TEST_INDEX, TEST_KEEP_PLOT_FILES, TEST_VERSION_PREFIX)
 from toolkit.tools.utils_for_tests import (
     create_test_user,
     print_output,
@@ -34,6 +29,8 @@ class CRFExtractorViewTests(APITransactionTestCase):
     """
     Tests CRF Extractor.
     """
+
+
     def setUp(self):
         self.test_incorrect_index_name = TEST_INDEX
         self.test_index_name = CRF_TEST_INDEX
@@ -88,21 +85,23 @@ class CRFExtractorViewTests(APITransactionTestCase):
         self.run_test_export_import()
         self.run_apply_crf_to_index()
         self.run_apply_crf_to_index_with_specified_label_suffix()
+        self.run_retraining_view_on_trained_crf_model()
+
 
     def run_create_crf_training_and_task_signal(self):
         for embedding_id in self.embedding_ids:
             payload = {
-                    "description": "TestCRF",
-                    "test_size": 0.2,
-                    "suffix_len": [2,3],
-                    "c_values": [0.01, 0.1],
-                    "query": json.dumps(EMPTY_QUERY),
-                    "feature_fields": ["lemmas", "text"],
-                    "context_feature_fields": ["lemmas", "text"],
-                    "labels": ["GPE", "ORG", "PER"],
-                    "mlp_field": CRF_TEST_FIELD,
-                    "indices": [{"name": self.test_index_name}],
-                    "embedding": embedding_id
+                "description": "TestCRF",
+                "test_size": 0.2,
+                "suffix_len": [2, 3],
+                "c_values": [0.01, 0.1],
+                "query": json.dumps(EMPTY_QUERY),
+                "feature_fields": ["lemmas", "text"],
+                "context_feature_fields": ["lemmas", "text"],
+                "labels": ["GPE", "ORG", "PER"],
+                "mlp_field": CRF_TEST_FIELD,
+                "indices": [{"name": self.test_index_name}],
+                "embedding": embedding_id
             }
             response = self.client.post(self.url, payload, format='json')
             print_output('test_create_tagger_training_and_task_signal:response.data', response.data)
@@ -122,8 +121,9 @@ class CRFExtractorViewTests(APITransactionTestCase):
             self.assertEqual(created.task.status, Task.STATUS_COMPLETED)
 
 
-    def run_list_features(self):
-        for test_tagger_id in self.test_crf_ids:
+    def run_list_features(self, tagger_id=None):
+        taggers_to_test = self.test_crf_ids if tagger_id is None else [tagger_id]
+        for test_tagger_id in taggers_to_test:
             url = f'{self.url}{test_tagger_id}/list_features/'
             response = self.client.get(url)
             print_output('test_list_features:response.data', response.data)
@@ -173,7 +173,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
         # Check whether the model was saved into the right location.
         self.assertTrue(str(tagger_model_dir) in str(tagger.model.path))
 
-        #self.run_tag_text([imported_tagger_id])
+        # self.run_tag_text([imported_tagger_id])
         self.add_cleanup_files(test_model_id)
         self.add_cleanup_files(imported_tagger_id)
 
@@ -236,8 +236,28 @@ class CRFExtractorViewTests(APITransactionTestCase):
         self.assertTrue(len(results) > 1)
 
 
+    def run_retraining_view_on_trained_crf_model(self):
+        tagger_id = self.test_crf_ids[0]
+        tagger_orm: CRFExtractor = CRFExtractor.objects.get(pk=tagger_id)
+        model_path = pathlib.Path(tagger_orm.model.path)
+        print_output('run_retraining_view_on_trained_crf_model:assert that previous model doesnt exist', data=model_path.exists())
+        self.assertTrue(model_path.exists())
+
+        url = reverse("v2:crf_extractor-retrain-extractor", kwargs={"project_pk": self.project.pk, "pk": tagger_id})
+        response = self.client.post(url)
+        print_output("run_retraining_view_on_trained_crf_model:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        self.run_list_features(tagger_id=tagger_id)
+
+        # Ensure that previous tagger is deleted properly.
+        print_output('run_retraining_view_on_trained_crf_model:assert that previous model doesnt exist', data=model_path.exists())
+        self.assertFalse(model_path.exists())
+        # Ensure that the freshly created model wasn't deleted.
+        tagger_orm.refresh_from_db()
+        self.assertNotEqual(tagger_orm.model.path, str(model_path))
+
+
 # TODO: test training with incorrect fields & labels
 
-# TODO: tests for retraining the model.
 
 # TODO: test for incorrect MLP field.
