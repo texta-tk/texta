@@ -44,6 +44,19 @@ class HealthViewsTests(APITestCase):
             self.assertTrue("unit" in device_0["memory"])
 
 
-    # TODO Figure out a way to properly overwrite core variables for testing purposes.
     def test_health_without_proper_elasticsearch_connection(self):
-        pass
+        from toolkit.core.core_variable.models import CoreVariable
+
+        es_url = CoreVariable.objects.create(name="TEXTA_ES_URL", value="http://not_legit_its_a_test.com")
+
+        response = self.client.get(f'{TEST_VERSION_PREFIX}/health/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        print_output('test_health_without_proper_elasticsearch_connection:response.data', response.data)
+        self.assertTrue(isinstance(response.data, dict))
+        self.assertTrue('host' in response.data)
+        self.assertTrue('services' in response.data)
+        self.assertTrue('toolkit' in response.data)
+        self.assertTrue(response.data["services"]["elastic"]["alive"] is False)
+
+        # Just to be sure, manual cleanup.
+        es_url.delete()

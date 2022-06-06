@@ -9,18 +9,17 @@ from celery import group
 from celery.decorators import task
 from celery.result import allow_join_result
 from elasticsearch.helpers import streaming_bulk
-from texta_tagger.tagger import Tagger as TextTagger
+from texta_elastic.core import ElasticCore
+from texta_elastic.document import ElasticDocument
+from texta_elastic.query import Query
+from texta_elastic.searcher import ElasticSearcher
 from texta_embedding.embedding import W2VEmbedding
+from texta_tagger.tagger import Tagger as TextTagger
 
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from texta_elastic.core import ElasticCore
 from toolkit.elastic.tools.data_sample import DataSample
-from texta_elastic.document import ElasticDocument
-from toolkit.elastic.tools.feedback import Feedback
-from texta_elastic.query import Query
-from texta_elastic.searcher import ElasticSearcher
 from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import add_finite_url_to_feedback, get_indices_from_object, load_stop_words
 from toolkit.mlp.tasks import apply_mlp_on_list
@@ -28,7 +27,6 @@ from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE,
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.tools.plots import create_tagger_plot
 from toolkit.tools.show_progress import ShowProgress
-
 
 
 def create_tagger_batch(tagger_group_id, taggers_to_create):
@@ -164,7 +162,7 @@ def train_tagger_task(tagger_id: int):
             classifier=tagger_object.classifier,
             vectorizer=tagger_object.vectorizer,
             analyzer=tagger_object.analyzer
-            )
+        )
         tagger.train(
             data_sample.data,
             pos_label=tagger_object.pos_label,
@@ -175,7 +173,6 @@ def train_tagger_task(tagger_id: int):
         # save tagger to disk
         tagger_full_path, relative_tagger_path = tagger_object.generate_name("tagger")
         tagger.save(tagger_full_path)
-        task_object.save()
 
         # Save the image before its path.
         image_name = f'{secrets.token_hex(15)}.png'
@@ -195,7 +192,8 @@ def train_tagger_task(tagger_id: int):
             "num_examples": num_examples,
             "confusion_matrix": tagger.report.confusion.tolist(),
             "model_size": round(float(os.path.getsize(tagger_full_path)) / 1000000, 1),  # bytes to mb
-            "plot": str(image_path)
+            "plot": str(image_path),
+            "classes": tagger.report.classes
         }
 
     except Exception as e:
@@ -211,6 +209,10 @@ def save_tagger_results(result_data: dict):
         tagger_id = result_data['id']
         logging.getLogger(INFO_LOGGER).info(f"Starting task results for tagger with ID: {tagger_id}!")
         tagger_object = Tagger.objects.get(pk=tagger_id)
+
+        # Handle previous tagger models that exist in case of retrains.
+        model_path = pathlib.Path(tagger_object.model.path) if tagger_object.model else None
+
         task_object = tagger_object.task
         show_progress = ShowProgress(task_object, multiplier=1)
         # update status to saving
@@ -225,8 +227,14 @@ def save_tagger_results(result_data: dict):
         tagger_object.model_size = result_data["model_size"]
         tagger_object.plot.name = result_data["plot"]
         tagger_object.confusion_matrix = result_data["confusion_matrix"]
+        tagger_object.classes = json.dumps(result_data["classes"], ensure_ascii=False)
         tagger_object.save()
         task_object.complete()
+
+        # Cleanup after the transaction to ensure integrity database records.
+        if model_path and model_path.exists():
+            model_path.unlink(missing_ok=True)
+
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(e)
         task_object.add_error(str(e))
@@ -275,7 +283,6 @@ def get_mlp(tagger_group_id: int, text: str, lemmatize: bool = False, use_ner: b
         logging.getLogger(INFO_LOGGER).info(f"[Get MLP] Detected {len(tags)} with NER.")
 
     return text, tags
-
 
 
 def get_tag_candidates(tagger_group_id: int, text: str, ignore_tags: List[str] = [], n_similar_docs: int = 10, max_candidates: int = 10):

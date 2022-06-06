@@ -5,8 +5,8 @@ from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.annotator.models import Annotator, Comment, Labelset, Record
-from toolkit.annotator.serializers import AnnotatorProjectSerializer, AnnotatorSerializer, BinaryAnnotationSerializer, CommentSerializer, DocumentEditSerializer, DocumentIDSerializer, EntityAnnotationSerializer, LabelsetSerializer, MultilabelAnnotationSerializer, RecordSerializer, \
+from toolkit.annotator.models import Annotator, AnnotatorGroup, Comment, Labelset, Record
+from toolkit.annotator.serializers import AnnotatorProjectSerializer, AnnotatorGroupSerializer, AnnotatorSerializer, BinaryAnnotationSerializer, CommentSerializer, DocumentEditSerializer, DocumentIDSerializer, EntityAnnotationSerializer, LabelsetSerializer, MultilabelAnnotationSerializer, RecordSerializer, \
     ValidateDocumentSerializer
 from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
@@ -46,13 +46,14 @@ class LabelsetViewset(mixins.CreateModelMixin,
 
 
     def get_queryset(self):
-        return Labelset.objects.filter().order_by('-id')
+        return Labelset.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
 
 class AnnotatorViewset(mixins.CreateModelMixin,
                        mixins.ListModelMixin,
                        mixins.RetrieveModelMixin,
                        mixins.DestroyModelMixin,
+                       mixins.UpdateModelMixin,
                        viewsets.GenericViewSet,
                        BulkDelete):
     serializer_class = AnnotatorSerializer
@@ -62,7 +63,7 @@ class AnnotatorViewset(mixins.CreateModelMixin,
     )
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
-
+    http_method_names = ["get", "post", "patch", "delete", "options"]
 
     def _enrich_document_with_meta(self, document: dict, annotator: Annotator):
 
@@ -154,8 +155,28 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         serializer: DocumentIDSerializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         annotator: Annotator = self.get_object()
-        annotator.skip_document(serializer.validated_data["document_id"], serializer.validated_data["index"], user=request.user)
-        return Response({"detail": f"Skipped document with ID: {serializer.validated_data['document_id']}"})
+
+        ed = ElasticDocument(index=annotator.get_indices())
+        document_id = serializer.validated_data["document_id"]
+        document = ed.get(document_id)
+        texta_annotations = document["_source"].get("texta_annotator", [])
+
+        processed_timestamp = None
+        if texta_annotations:
+            for texta_annotation in texta_annotations:
+                processed_timestamp = texta_annotation.get("processed_timestamp_utc", None)
+
+                if processed_timestamp:
+                    return Response(
+                        {"detail": f"Document with ID: {serializer.validated_data['document_id']} is already annotated"})
+
+            annotator.skip_document(serializer.validated_data["document_id"], serializer.validated_data["index"],
+                                    user=request.user)
+            return Response({"detail": f"Skipped document with ID: {serializer.validated_data['document_id']}"})
+        else:
+            annotator.skip_document(serializer.validated_data["document_id"], serializer.validated_data["index"],
+                                    user=request.user)
+            return Response({"detail": f"Skipped document with ID: {serializer.validated_data['document_id']}"})
 
 
     @action(detail=True, methods=["POST"], serializer_class=ValidateDocumentSerializer)
@@ -178,14 +199,11 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         annotator: Annotator = self.get_object()
         annotator.add_entity(
             document_id=serializer.validated_data["document_id"],
-            fact_name=serializer.validated_data["fact_name"],
-            fact_value=serializer.validated_data["fact_value"],
-            field=serializer.validated_data["field"],
-            spans=serializer.validated_data["spans"],
+            texta_facts=serializer.validated_data["texta_facts"],
             index=serializer.validated_data["index"],
             user=request.user
         )
-        return Response({"detail": f"Skipped document with ID: {serializer.validated_data['document_id']}"})
+        return Response({"detail": f"Annotated document with ID: {serializer.validated_data['document_id']}"})
 
 
     @action(detail=True, methods=["POST"], serializer_class=BinaryAnnotationSerializer)
@@ -249,3 +267,22 @@ class AnnotatorProjectViewset(mixins.ListModelMixin, viewsets.GenericViewSet):
 
     def get_queryset(self):
         return Annotator.objects.filter(annotator_users=self.request.user).order_by('-id')
+
+
+class AnnotatorGroupViewset(mixins.CreateModelMixin,
+                       mixins.ListModelMixin,
+                       mixins.RetrieveModelMixin,
+                       mixins.DestroyModelMixin,
+                       mixins.UpdateModelMixin,
+                       viewsets.GenericViewSet,
+                       BulkDelete):
+    serializer_class = AnnotatorGroupSerializer
+    permission_classes = (
+        ProjectAccessInApplicationsAllowed,
+        permissions.IsAuthenticated,
+    )
+
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+
+    def get_queryset(self):
+        return AnnotatorGroup.objects.filter(project=self.kwargs['project_pk']).order_by('-id')

@@ -20,8 +20,8 @@ class TaskModel(models.Model):
     indices = models.ManyToManyField(Index, default=[], help_text=INDICES_HELPTEXT)
     fields = models.TextField(default=json.dumps([]))
 
-    bulk_size = models.IntegerField(default=100, help_text=BULK_SIZE_HELPTEXT, validators=[MinValueValidator(0), MaxValueValidator(ES_BULK_SIZE_MAX)])
-    es_timeout = models.IntegerField(default=10, help_text=ES_TIMEOUT_HELPTEXT, validators=[MinValueValidator(0), MaxValueValidator(ES_TIMEOUT_MAX)])
+    bulk_size = models.IntegerField(default=100, help_text=BULK_SIZE_HELPTEXT, validators=[MinValueValidator(1), MaxValueValidator(ES_BULK_SIZE_MAX)])
+    es_timeout = models.IntegerField(default=10, help_text=ES_TIMEOUT_HELPTEXT, validators=[MinValueValidator(1), MaxValueValidator(ES_TIMEOUT_MAX)])
 
 
     class Meta:

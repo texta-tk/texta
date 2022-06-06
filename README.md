@@ -93,6 +93,8 @@ Toolkit is installed:
 * TEXTA_SHORT_MAX_TASKS - Number of tasks per worker for short term tasks (Default: 10).
 * TEXTA_LONG_MAX_TASKS - Number of tasks per worker for long term tasks (Default: 10).
 * TEXTA_MLP_MAX_TASKS - Number of tasks per worker for MLP based tasks (Default: 10).
+* TEXTA_BEAT_LOG_LEVEL - Which log level should beat output within the Docker image (Default: WARNING).
+* TEXTA_CELERY_LOG_LEVEL - Which log level should Celery workers output within the Docker image (Default: WARNING).
 
 
 * TEXTA_DATA_DIR - Path to the directory in which TEXTA Toolkit saves the models it generates, and the binary model

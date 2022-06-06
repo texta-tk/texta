@@ -10,11 +10,11 @@ from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.core import ElasticCore
 
 from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
-from texta_elastic.aggregator import ElasticAggregator
-from texta_elastic.core import ElasticCore
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.settings import RELATIVE_MODELS_PATH
 from toolkit.tagger.models import Tagger
@@ -36,8 +36,8 @@ class TaggerViewTests(APITransactionTestCase):
         self.multitag_text_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/taggers/multitag_text/'
 
         # set vectorizer & classifier options
-        self.vectorizer_opts = ('Count Vectorizer', 'Hashing Vectorizer', 'TfIdf Vectorizer')
-        self.classifier_opts = ('Logistic Regression', 'LinearSVC')
+        self.vectorizer_opts = ('TfIdf Vectorizer',)
+        self.classifier_opts = ('LinearSVC',)
 
         # list tagger_ids for testing. is populated during training test
         self.test_tagger_ids = []
@@ -108,6 +108,8 @@ class TaggerViewTests(APITransactionTestCase):
         response = self.client.post(url, data=payload, format="json")
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
         print_output("test_training_tagger_with_embedding:response.data", response.data)
+        self.assertTrue(isinstance(response.data["classes"], list))
+        self.assertTrue(len(response.data["classes"]) >= 2)
         self.run_tag_text([response.data["id"]])
         self.add_cleanup_files(response.data["id"])
 
@@ -153,8 +155,7 @@ class TaggerViewTests(APITransactionTestCase):
 
     def run_create_tagger_training_and_task_signal(self):
         """Tests the endpoint for a new Tagger, and if a new Task gets created via the signal"""
-        lemmatize = True
-        # run test for each vectorizer & classifier option
+
         for vectorizer_opt in self.vectorizer_opts:
             for classifier_opt in self.classifier_opts:
                 payload = {
@@ -162,7 +163,6 @@ class TaggerViewTests(APITransactionTestCase):
                     "query": json.dumps(TEST_QUERY),
                     "fields": TEST_FIELD_CHOICE,
                     "indices": [{"name": self.test_index_name}],
-                    "lemmatize": lemmatize,
                     "vectorizer": vectorizer_opt,
                     "classifier": classifier_opt,
                     "maximum_sample_size": 500,
@@ -170,8 +170,6 @@ class TaggerViewTests(APITransactionTestCase):
                     "score_threshold": 0.1,
                     "stop_words": ["asdfghjkl"]
                 }
-                # as lemmatization is slow, do it only once
-                lemmatize = False
                 # procees to analyze result
                 response = self.client.post(self.url, payload, format='json')
                 print_output('test_create_tagger_training_and_task_signal:response.data', response.data)
@@ -188,6 +186,9 @@ class TaggerViewTests(APITransactionTestCase):
                 self.assertTrue(created_tagger.task is not None)
                 # Check if Tagger gets trained and completed
                 self.assertEqual(created_tagger.task.status, Task.STATUS_COMPLETED)
+                # Check if Tagger object contains classes
+                self.assertTrue(isinstance(response.data["classes"], list))
+                self.assertTrue(len(response.data["classes"]) == 2)
 
 
     def run_create_tagger_with_incorrect_fields(self):
@@ -280,7 +281,7 @@ class TaggerViewTests(APITransactionTestCase):
         payloads = [
             {"text": "This is some test text for the Tagger Test"},
             {"text": "test"}
-            ]
+        ]
         for payload in payloads:
             for test_tagger_id in test_tagger_ids:
                 tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
@@ -520,6 +521,13 @@ class TaggerViewTests(APITransactionTestCase):
     def run_model_retrain(self):
         """Tests the endpoint for the model_retrain action"""
         test_tagger_id = self.test_tagger_ids[0]
+
+        # Get basic information to check for previous tagger deletion after retraining has finished.
+        tagger_orm: Tagger = Tagger.objects.get(pk=test_tagger_id)
+        model_path = pathlib.Path(tagger_orm.model.path)
+        print_output('test_model_retrain:assert that previous model doesnt exist', data=model_path.exists())
+        self.assertTrue(model_path.exists())
+
         # Check if stop word present in features
         url = f'{self.url}{test_tagger_id}/list_features/'
         response = self.client.get(url)
@@ -534,6 +542,14 @@ class TaggerViewTests(APITransactionTestCase):
         response = self.client.post(url)
         print_output('test_model_retrain:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Ensure that previous tagger is deleted properly.
+        print_output('test_model_retrain:assert that previous model doesnt exist', data=model_path.exists())
+        self.assertFalse(model_path.exists())
+        # Ensure that the freshly created model wasn't deleted.
+        tagger_orm.refresh_from_db()
+        self.assertNotEqual(tagger_orm.model.path, str(model_path))
+
         # Check if response data
         self.assertTrue(response.data)
         self.assertTrue('success' in response.data)

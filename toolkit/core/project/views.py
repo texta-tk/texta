@@ -15,32 +15,43 @@ from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.core import ElasticCore
+from texta_elastic.document import ElasticDocument
+from texta_elastic.query import Query
+from texta_elastic.searcher import ElasticSearcher
+from texta_elastic.spam_detector import SpamDetector
 
 from toolkit.core.project.models import Project
 from toolkit.core.project.serializers import (
     CountIndicesSerializer,
     ExportSearcherResultsSerializer,
-    HandleIndicesSerializer, HandleProjectAdministratorsSerializer, HandleUsersSerializer, ProjectDocumentSerializer,
+    HandleIndicesSerializer,
+    HandleProjectAdministratorsSerializer,
+    HandleUsersSerializer,
+    ProjectDocumentSerializer,
     ProjectGetFactsSerializer,
     ProjectGetSpamSerializer,
+    ProjectFactAggregatorSerializer,
     ProjectSearchByQuerySerializer,
     ProjectSerializer,
     ProjectSimplifiedSearchSerializer,
     ProjectSuggestFactNamesSerializer,
     ProjectSuggestFactValuesSerializer
 )
+from toolkit.elastic.decorators import elastic_view
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import IndexSerializer
-from texta_elastic.aggregator import ElasticAggregator
-from texta_elastic.core import ElasticCore
-from texta_elastic.document import ElasticDocument
-from texta_elastic.query import Query
-from texta_elastic.searcher import ElasticSearcher
 from toolkit.elastic.tools.serializers import ElasticScrollSerializer
-from texta_elastic.spam_detector import SpamDetector
 from toolkit.exceptions import InvalidInputDocument, ProjectValidationFailed, SerializerNotValid
 from toolkit.helper_functions import hash_string
-from toolkit.permissions.project_permissions import (AuthorProjAdminSuperadminAllowed, ExtraActionAccessInApplications, OnlySuperadminAllowed, ProjectAccessInApplicationsAllowed, ProjectEditAccessAllowed)
+from toolkit.permissions.project_permissions import (
+    AuthorProjAdminSuperadminAllowed,
+    ExtraActionAccessInApplications,
+    OnlySuperadminAllowed,
+    ProjectAccessInApplicationsAllowed,
+    ProjectEditAccessAllowed
+)
 from toolkit.settings import RELATIVE_PROJECT_DATA_PATH, SEARCHER_FOLDER_KEY
 from toolkit.tools.autocomplete import Autocomplete
 from toolkit.view_constants import FeedbackIndexView
@@ -50,6 +61,7 @@ class ExportSearchView(APIView):
     permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
+    @elastic_view
     def post(self, request, project_pk: int):
         try:
             serializer = ExportSearcherResultsSerializer(data=request.data)
@@ -93,6 +105,7 @@ class ScrollView(APIView):
     permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
+    @elastic_view
     def post(self, request, project_pk: int):
         serializer = ElasticScrollSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -119,6 +132,7 @@ class GetSpamView(APIView):
     permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
+    @elastic_view
     def post(self, request, project_pk: int):
         """
         Analyses Elasticsearch inside the project to detect frequently occuring texts.
@@ -147,6 +161,7 @@ class GetFieldsView(APIView):
     permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
+    @elastic_view
     def get(self, request, project_pk: int):
         """Returns list of fields from all Elasticsearch indices inside the project."""
         project_object = get_object_or_404(Project, pk=project_pk)
@@ -176,6 +191,7 @@ class GetFactsView(APIView):
     permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
+    @elastic_view
     def post(self, request, project_pk: int):
         """
         Returns existing fact names and values from Elasticsearch.
@@ -197,13 +213,30 @@ class GetFactsView(APIView):
             return Response([])
 
         vals_per_name = serializer.validated_data['values_per_name']
-        include_values = serializer.validated_data['output_type']
+        include_values = serializer.validated_data['include_values']
         fact_name = serializer.validated_data['fact_name']
-        doc_path = serializer.validated_data['doc_path']
-        fact_map = ElasticAggregator(indices=project_indices).facts(size=vals_per_name, include_values=include_values, filter_by_fact_name=fact_name, include_doc_path=doc_path)
+        include_doc_path = serializer.validated_data['include_doc_path']
+        exclude_zero_spans = serializer.validated_data['exclude_zero_spans']
+        mlp_doc_path = serializer.validated_data['mlp_doc_path']
+
+        aggregator = ElasticAggregator(indices=project_indices)
+
+        if mlp_doc_path and exclude_zero_spans:
+            # If exclude_zerp_spans is enabled and mlp_doc_path specified, the other values don't have any effect -
+            # this behaviour might need to change at some point
+            fact_map = aggregator.facts(size=1, include_values=True, include_doc_path=True, exclude_zero_spans=exclude_zero_spans)
+
+        else:
+            fact_map = aggregator.facts(size=vals_per_name, include_values=include_values, filter_by_fact_name=fact_name, include_doc_path=include_doc_path, exclude_zero_spans=exclude_zero_spans)
 
         if fact_name:
             fact_map_list = [v for v in fact_map]
+
+        elif mlp_doc_path and exclude_zero_spans:
+            # Return only fact names where doc_path contains mlp_doc_path as a parent field and facts have spans.
+            # NB! Doesn't take into account the situation where facts have the same name, but different doc paths! Could happen!
+            fact_map_list = [k for k, v in fact_map.items() if v and mlp_doc_path == v[0]["doc_path"].rsplit(".", 1)[0]]
+
         elif include_values:
             fact_map_list = [{'name': k, 'values': v} for k, v in fact_map.items()]
         else:
@@ -211,10 +244,51 @@ class GetFactsView(APIView):
         return Response(fact_map_list, status=status.HTTP_200_OK)
 
 
+class AggregateFactsView(APIView):
+    permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
+
+
+    @elastic_view
+    def post(self, request, project_pk: int):
+        """
+        Returns existing fact names and values from Elasticsearch.
+        """
+        serializer = ProjectFactAggregatorSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            raise SerializerNotValid(detail=serializer.errors)
+
+        indices = serializer.validated_data["indices"]
+        indices = [index["name"] for index in indices]
+
+        # retrieve and validate project indices
+        project = get_object_or_404(Project, pk=project_pk)
+        self.check_object_permissions(request, project)
+        project_indices = project.get_available_or_all_project_indices(indices)  # Gives all if n   one, the default, is entered.
+
+        if not project_indices:
+            return Response([])
+
+        key_field = serializer.validated_data["key_field"]
+        value_field = serializer.validated_data["value_field"]
+        filter_by_key = serializer.validated_data["filter_by_key"]
+        max_count = serializer.validated_data["max_count"]
+        query = serializer.validated_data["query"]
+
+        if isinstance(query, str):
+            query = json.loads(query)
+
+        aggregator = ElasticAggregator(indices=project_indices, query=query)
+        results = aggregator.facts_abstract(key_field=key_field, value_field=value_field, filter_by_key=filter_by_key, size=max_count)
+
+        return Response(results, status=status.HTTP_200_OK)
+
+
 class GetIndicesView(APIView):
     permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
+    @elastic_view
     def get(self, request, project_pk: int):
         """Returns list of available indices in project."""
         project_object = get_object_or_404(Project, pk=project_pk)
@@ -227,6 +301,7 @@ class SearchView(APIView):
     permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
+    @elastic_view
     def post(self, request, project_pk: int):
         """Simplified search interface for making Elasticsearch queries."""
         serializer = ProjectSimplifiedSearchSerializer(data=request.data)
@@ -274,6 +349,7 @@ class SearchByQueryView(APIView):
     permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
 
 
+    @elastic_view
     def post(self, request, project_pk: int):
         """Executes **raw** Elasticsearch query on all project indices."""
         project = get_object_or_404(Project, pk=project_pk)
@@ -300,11 +376,14 @@ class SearchByQueryView(APIView):
 
 
 class DocumentView(GenericAPIView):
+    """Get document by ID from specified indices."""
+
     permission_classes = [IsAuthenticated, ProjectAccessInApplicationsAllowed]
+    serializer_class = ProjectDocumentSerializer
 
 
+    @elastic_view
     def post(self, request, project_pk: int):
-        """Get document by ID from specified indices."""
         project: Project = get_object_or_404(Project, pk=project_pk)
         self.check_object_permissions(request, project)
 

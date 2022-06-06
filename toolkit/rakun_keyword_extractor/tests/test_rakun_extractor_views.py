@@ -1,14 +1,16 @@
 import json
+
 from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
-from toolkit.embedding.models import Embedding
 from texta_elastic.core import ElasticCore
+
 from toolkit.core.task.models import Task
+from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import reindex_test_dataset
-from toolkit.tools.utils_for_tests import create_test_user, project_creation, print_output
-from toolkit.test_settings import (TEST_VERSION_PREFIX, VERSION_NAMESPACE, TEST_FIELD_CHOICE, TEST_RAKUN_QUERY, TEST_QUERY)
+from toolkit.test_settings import (TEST_FIELD_CHOICE, TEST_QUERY, TEST_RAKUN_QUERY, TEST_VERSION_PREFIX, VERSION_NAMESPACE)
+from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
@@ -23,6 +25,8 @@ class RakunViewTest(APITransactionTestCase):
 
         self.rakun_id = None
         self.client.login(username='user', password='pw')
+
+        self.new_stopwords = ["New_word1", "New_word2"]
 
         """Create FastText Embedding, which will save facebook_model"""
         fasttext_payload = {
@@ -48,7 +52,7 @@ class RakunViewTest(APITransactionTestCase):
         self.assertEqual(created_embedding.task.status, Task.STATUS_COMPLETED)
 
         self.ids = []
-        payloads = [
+        self.payloads = [
             {
                 "description": "test_all",
                 "distance_method": "fasttext",
@@ -74,10 +78,11 @@ class RakunViewTest(APITransactionTestCase):
         ]
 
         rakun_url = reverse(f"{VERSION_NAMESPACE}:rakun_extractor-list", kwargs={"project_pk": self.project.pk})
-        for payload in payloads:
+        for payload in self.payloads:
             response = self.client.post(rakun_url, payload)
             self.assertTrue(response.status_code == status.HTTP_201_CREATED)
             self.ids.append(int(response.data["id"]))
+
 
     def tearDown(self) -> None:
         ec = ElasticCore()
@@ -87,6 +92,7 @@ class RakunViewTest(APITransactionTestCase):
         ElasticCore().delete_index(index=self.test_index_name, ignore=[400, 404])
         print_output(f"Delete Rakun FASTTEXT Embeddings", None)
 
+
     def test(self):
         self.run_test_apply_rakun_extractor_to_index()
         self.run_test_rakun_extractor_duplicate()
@@ -94,19 +100,22 @@ class RakunViewTest(APITransactionTestCase):
         self.run_test_rakun_extractor_from_text()
         self.run_test_rakun_extractor_stopwords()
         self.run_test_rakun_extractor_edit()
+        self.run_check_that_patch_doesnt_delete_stopwords()
+
 
     def run_test_apply_rakun_extractor_to_index(self):
         index_payload = {
-                    "indices": [{"name": self.test_index_name}],
-                    "description": "test_apply_rakun_to_index",
-                    "fields": TEST_FIELD_CHOICE,
-                    "query": json.dumps(TEST_RAKUN_QUERY)
-                }
+            "indices": [{"name": self.test_index_name}],
+            "description": "test_apply_rakun_to_index",
+            "fields": TEST_FIELD_CHOICE,
+            "query": json.dumps(TEST_RAKUN_QUERY)
+        }
         for rakun_id in self.ids:
             rakun_apply_to_index_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{rakun_id}/apply_to_index/'
             response = self.client.post(rakun_apply_to_index_url, index_payload)
             print_output(f"Apply Rakun to Index for ID: {rakun_id}", response.json())
             self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+
 
     def run_test_rakun_extractor_duplicate(self):
         duplicate_payload = {}
@@ -116,16 +125,18 @@ class RakunViewTest(APITransactionTestCase):
             print_output(f"Duplicate Rakun for ID: {rakun_id}", response.json())
             self.assertTrue(response.status_code == status.HTTP_200_OK)
 
+
     def run_test_rakun_extractor_from_random_doc(self):
         random_payload = {
-                    "indices": [{"name": self.test_index_name}],
-                    "fields": TEST_FIELD_CHOICE
-                }
+            "indices": [{"name": self.test_index_name}],
+            "fields": TEST_FIELD_CHOICE
+        }
         for rakun_id in self.ids:
             rakun_random_doc_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{rakun_id}/extract_from_random_doc/'
             response = self.client.post(rakun_random_doc_url, random_payload)
             print_output(f"Rakun extract from random doc for ID: {rakun_id}", response.json())
             self.assertTrue(response.status_code == status.HTTP_200_OK)
+
 
     def run_test_rakun_extractor_from_text(self):
         text_payload = {
@@ -136,6 +147,7 @@ class RakunViewTest(APITransactionTestCase):
             response = self.client.post(rakun_text_url, text_payload)
             print_output(f"Rakun extract from text for ID: {rakun_id}", response.json())
             self.assertTrue(response.status_code == status.HTTP_200_OK)
+
 
     def run_test_rakun_extractor_stopwords(self):
         stopwords_payload = {
@@ -148,13 +160,25 @@ class RakunViewTest(APITransactionTestCase):
             print_output(f"Rakun stopwords for ID: {rakun_id}", response.json())
             self.assertTrue(response.status_code == status.HTTP_200_OK)
 
+
     def run_test_rakun_extractor_edit(self):
         rakun_extractor_edit_payload = {
-                "description": "test_edit",
-                "stopwords": ["New_word1", "New_word2"]
-            }
+            "description": "test_edit",
+            "stopwords": self.new_stopwords
+        }
         for rakun_id in self.ids:
             rakun_edit_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{rakun_id}/'
             response = self.client.put(rakun_edit_url, rakun_extractor_edit_payload)
             print_output(f"Editing Rakun Extractor for ID: {rakun_id}", response.json())
             self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+
+    def run_check_that_patch_doesnt_delete_stopwords(self):
+        url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{self.ids[0]}/'
+        response = self.client.patch(url, data={"description": "hello there"}, format="json")
+        print_output("run_check_that_patch_doesnt_delete_stopwords:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        stopwords_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/rakun_extractors/{self.ids[0]}/stop_words/'
+        stopwords_response = self.client.get(stopwords_url, format="json")
+        stopwords = stopwords_response.data["stopwords"]
+        self.assertTrue(stopwords == self.payloads[0]["stopwords"] or stopwords == ["New_word1", "New_word2"])

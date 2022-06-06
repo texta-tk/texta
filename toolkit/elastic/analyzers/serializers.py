@@ -6,16 +6,11 @@ from rest_framework.exceptions import ValidationError
 
 from .models import ApplyESAnalyzerWorker
 from ..choices import DEFAULT_ELASTIC_TOKENIZER, DEFAULT_SNOWBALL_LANGUAGE, ELASTIC_TOKENIZERS, get_snowball_choices
-from texta_elastic.searcher import EMPTY_QUERY
 from ...core.task.serializers import TaskSerializer
-from ...core.user_profile.serializers import UserSerializer
-from ...serializer_constants import FieldsValidationSerializerMixin, IndicesSerializerMixin
+from ...serializer_constants import ToolkitTaskSerializer
 
 
-class ApplyESAnalyzerWorkerSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldsValidationSerializerMixin):
-    author = UserSerializer(read_only=True)
-    query = serializers.JSONField(help_text='Query in JSON format', default=json.dumps(EMPTY_QUERY))
-    fields = serializers.ListField(child=serializers.CharField(), required=False, allow_empty=False, help_text="Which field to stem.")
+class ApplyESAnalyzerWorkerSerializer(serializers.ModelSerializer, ToolkitTaskSerializer):
     url = serializers.SerializerMethodField()
 
     analyzers = serializers.MultipleChoiceField(allow_blank=False, choices=(("stemmer", "stemmer"), ("tokenizer", "tokenizer")))
@@ -68,4 +63,4 @@ class ApplyESAnalyzerWorkerSerializer(serializers.ModelSerializer, IndicesSerial
 
 class SnowballSerializer(serializers.Serializer):
     text = serializers.CharField()
-    language = serializers.ChoiceField(choices=get_snowball_choices(), default=DEFAULT_SNOWBALL_LANGUAGE)
+    language = serializers.ChoiceField(choices=get_snowball_choices(), required=True)

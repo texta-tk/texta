@@ -7,9 +7,9 @@ from elasticsearch import NotFoundError
 from elasticsearch_dsl import Q, Search
 from rest_framework import status
 from rest_framework.test import APITestCase
-
 from texta_elastic.core import ElasticCore
-from toolkit.helper_functions import reindex_test_dataset
+
+from toolkit.helper_functions import reindex_test_dataset, set_core_setting
 from toolkit.test_settings import VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
@@ -206,15 +206,26 @@ class DocumentImporterAPITestCase(APITestCase):
         self.assertTrue("page" not in document["_source"])
 
 
-    # def test_updating_split_documents(self):
-    #     url = reverse(f"{VERSION_NAMESPACE}:update_split_document", kwargs={"pk": self.project.pk, "index": self.test_index_name})
-    #     payload = {"id_field": "uuid", "id_value": self.uuid, "text_field": "hello", "content": "hell"}
-    #     response = self.client.patch(url, data=payload, format="json")
-    #     print_output("test_updating_split_documents:response.data", response.data)
-    #     self.assertTrue(response.status_code == status.HTTP_200_OK)
-    #
-    #     query = Search().query(Q("term", **{"uuid.keyword": self.uuid})).to_dict()
-    #     hits = self.ec.es.search(index="*", body=query)
-    #     hits = hits["hits"]["hits"]
-    #     document = hits[0]["_source"]
-    #     self.assertTrue(document["hello"] == "hell")
+    def test_that_indexes_do_rollover_after_a_certain_count(self):
+        set_core_setting("TEXTA_ES_MAX_DOCS_PER_INDEX", "50")
+        url = reverse(f"{VERSION_NAMESPACE}:document_import", kwargs={"pk": self.project.pk})
+        response = self.client.post(url, data={"documents": [{"_source": {"value": i}} for i in range(51)], "split_text_in_fields": []}, format="json")
+        print_output("test_that_indexes_do_rollover_after_a_certain_count:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+        # Send a batch for the second time to see if the documents rolled over properly.
+        clean_up_container = ["texta-1-import-project-1"]
+        for i in range(1, 12):
+            response = self.client.post(url, data={"documents": [{"_source": {"value": i}} for i in range(51)], "split_text_in_fields": []}, format="json")
+
+            self.assertTrue(response.status_code == status.HTTP_200_OK)
+            if i == 1:
+                self.assertTrue(self.project.indices.filter(name="texta-1-import-project-1").exists())
+            else:
+                # i-1 because the first request doesn't add the rollover index counter.
+                rollover_index_name = f"texta-1-import-project-1-{i - 1}"
+                self.assertTrue(self.project.indices.filter(name=rollover_index_name).exists())
+                clean_up_container.append(rollover_index_name)
+
+        # Cleanup
+        self.ec.delete_index(index=",".join(clean_up_container))

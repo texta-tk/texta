@@ -7,8 +7,9 @@ import torch
 from celery.task.control import inspect
 from pynvml import nvmlDeviceGetHandleByIndex, nvmlDeviceGetMemoryInfo, nvmlInit
 from rest_framework import exceptions
-
 from texta_elastic.core import ElasticCore
+from texta_elastic.exceptions import NotFoundError
+
 from toolkit.helper_functions import get_core_setting
 from toolkit.settings import BASE_DIR, BROKER_URL, ERROR_LOGGER
 
@@ -30,17 +31,18 @@ def reform_float_info(input_str):
     return float(input_str.replace("gb", "").replace("tb", "").replace("mb", ""))
 
 
-def get_elastic_status(is_anon=False, ES_URL=get_core_setting("TEXTA_ES_URL")):
+def get_elastic_status(is_anon=False, uri=None):
     """
     Checks Elasticsearch connection status and version.
     """
+    es_url = uri or get_core_setting("TEXTA_ES_URL")
     es_info = {"alive": False}
     try:
-        es_core = ElasticCore(ES_URL=ES_URL)
+        es_core = ElasticCore(ES_URL=es_url)
         if es_core.connection:
             es_info["alive"] = True
             if is_anon is False:
-                es_info["url"] = ES_URL
+                es_info["url"] = es_url
                 es_info["status"] = es_core.es.info()
                 es_info["disk"] = []
                 for node in es_core.es.cat.allocation(format="json"):
@@ -60,6 +62,9 @@ def get_elastic_status(is_anon=False, ES_URL=get_core_setting("TEXTA_ES_URL")):
     except exceptions.ValidationError:
         return es_info
 
+    except NotFoundError:
+        return es_info
+
 
 def get_redis_status(is_anon: bool = False):
     """
@@ -69,10 +74,7 @@ def get_redis_status(is_anon: bool = False):
         parser = urlparse(BROKER_URL)
         r = redis.Redis(host=parser.hostname, port=parser.port, socket_timeout=3)
         info = r.info()
-        redis_status = {
-            "alive": True,
-
-        }
+        redis_status = {"alive": True}
 
         if is_anon is False:
             redis_status = {

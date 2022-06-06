@@ -1,26 +1,23 @@
 import json
+import logging
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Avg, Sum
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from texta_elastic.searcher import EMPTY_QUERY
 
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
-from toolkit.embedding.models import Embedding
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choices
-from texta_elastic.searcher import EMPTY_QUERY
+from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import load_stop_words
-from toolkit.serializer_constants import (
-    FieldParseSerializer,
-    IndicesSerializerMixin,
-    ElasticScrollMixIn,
-    ProjectResourceUrlSerializer,
-    ProjectFilteredPrimaryKeyRelatedField
-)
+from toolkit.serializer_constants import (ElasticScrollMixIn, FieldParseSerializer, IndicesSerializerMixin, ProjectFilteredPrimaryKeyRelatedField, ProjectResourceUrlSerializer)
+from toolkit.settings import ERROR_LOGGER
 from toolkit.tagger import choices
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.validator_constants import validate_pos_label
+
 
 # NB! Currently not used
 class ApplyTaggersSerializer(FieldParseSerializer, IndicesSerializerMixin, ElasticScrollMixIn):
@@ -162,9 +159,9 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Indice
         model = Tagger
         fields = ('id', 'url', 'author', 'description', 'query', 'fact_name', 'indices', 'fields', 'detect_lang', 'embedding', 'vectorizer', 'analyzer', 'classifier', 'stop_words',
                   'maximum_sample_size', 'minimum_sample_size', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score', 'snowball_language', 'scoring_function',
-                  'num_features', 'num_examples', 'confusion_matrix', 'plot', 'task', 'tagger_groups', 'ignore_numbers', 'balance', 'balance_to_max_limit', 'pos_label')
-        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'num_examples', 'tagger_groups', 'confusion_matrix')
-        fields_to_parse = ('fields',)
+                  'num_features', 'num_examples', 'confusion_matrix', 'plot', 'task', 'tagger_groups', 'ignore_numbers', 'balance', 'balance_to_max_limit', 'pos_label', 'classes')
+        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'num_examples', 'tagger_groups', 'confusion_matrix', 'classes')
+        fields_to_parse = ('fields', 'classes',)
 
 
     def validate(self, data):
@@ -202,6 +199,7 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     fact_name = serializers.CharField(default=choices.DEFAULT_TAGGER_GROUP_FACT_NAME, help_text=f'Fact name used to filter tags (fact values). Default: {choices.DEFAULT_TAGGER_GROUP_FACT_NAME}')
     tagger = TaggerSerializer(write_only=True, remove_fields=['description', 'query', 'fact_name', 'minimum_sample_size'])
     num_tags = serializers.IntegerField(read_only=True)
+    blacklisted_facts = serializers.ListField(child=serializers.CharField(), default=[], help_text="Which fact values to ignore when creating the taggers.")
     tagger_status = serializers.SerializerMethodField()
     tagger_statistics = serializers.SerializerMethodField()
     tagger_params = serializers.SerializerMethodField()
@@ -209,9 +207,18 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     task = TaskSerializer(read_only=True)
 
 
+    def to_representation(self, instance):
+        data = super(TaggerGroupSerializer, self).to_representation(instance)
+        try:
+            data["blacklisted_facts"] = json.loads(instance.blacklisted_facts)
+        except Exception as e:
+            logging.getLogger(ERROR_LOGGER).exception(e)
+        return data
+
+
     class Meta:
         model = TaggerGroup
-        fields = ('id', 'url', 'author', 'description', 'fact_name', 'num_tags', 'minimum_sample_size',
+        fields = ('id', 'url', 'author', 'description', 'fact_name', 'num_tags', 'blacklisted_facts', 'minimum_sample_size',
                   'tagger_status', 'tagger_params', 'tagger', 'tagger_statistics', 'task')
 
 
@@ -244,13 +251,28 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
             return tagger_stats
 
 
+    def _embedding_details(self, instance: Tagger):
+        if instance.embedding:
+            return {"id": instance.embedding.pk, "description": instance.embedding.description}
+        else:
+            return None
+
+
     def get_tagger_params(self, obj):
         if obj.taggers.exists():
-            first_tagger = obj.taggers.first()
+            first_tagger: Tagger = obj.taggers.first()
             params = {
                 'fields': json.loads(first_tagger.fields),
+                'detect_lang': first_tagger.detect_lang,
+                'scoring_function': first_tagger.scoring_function,
+                'maximum_sample_size': first_tagger.maximum_sample_size,
+                'negative_multiplier': first_tagger.negative_multiplier,
+                'snowball_language': first_tagger.snowball_language,
+                'embedding': self._embedding_details(first_tagger),
+                'indices': first_tagger.get_indices(),
                 'vectorizer': first_tagger.vectorizer,
                 'classifier': first_tagger.classifier,
+                'analyzer': first_tagger.analyzer,
                 'stop_words': load_stop_words(first_tagger.stop_words),
                 'ignore_numbers': first_tagger.ignore_numbers,
                 'balance': first_tagger.balance,

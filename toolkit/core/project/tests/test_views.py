@@ -1,15 +1,19 @@
 import os
-import json
 import pathlib
+import uuid
+import json
 
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
+from texta_elastic.core import ElasticCore
+from time import sleep
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.index.models import Index
+from toolkit.helper_functions import reindex_test_dataset
 from toolkit.settings import RELATIVE_PROJECT_DATA_PATH, SEARCHER_FOLDER_KEY
-from toolkit.test_settings import REINDEXER_TEST_INDEX, TEST_FACT_NAME, TEST_FIELD, TEST_INDEX, TEST_MATCH_TEXT, TEST_QUERY, TEST_VERSION_PREFIX, VERSION_NAMESPACE
+from toolkit.test_settings import REINDEXER_TEST_INDEX, TEST_INDEX, TEST_FACT_NAME, TEST_FIELD, TEST_MATCH_TEXT, TEST_QUERY, TEST_VERSION_PREFIX, VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -35,15 +39,26 @@ class ProjectViewTests(APITestCase):
         self.admin = create_test_user(name='admin', password='pw')
         self.admin.is_superuser = True
         self.admin.save()
-
         self.project_name = "testproj"
         self.project = project_creation(self.project_name, TEST_INDEX, self.user)
         self.project.users.add(self.project_user)
+        self.project.save()
         self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
         self.export_url = reverse(f"{VERSION_NAMESPACE}:project-export-search", kwargs={"project_pk": self.project.pk})
 
         self.client = APIClient()
         self.client.login(username='project_user', password='pw')
+
+
+    def __reindex_test_index(self):
+        self.test_index_name = reindex_test_dataset()
+        self.__add_indices_to_project([self.test_index_name])
+
+
+    def __remove_reindexed_test_index(self):
+        ec = ElasticCore()
+        result = ec.delete_index(index=self.test_index_name, ignore=[400, 404])
+        print_output(f"Deleting ProjectViewTests test index {self.test_index_name}", result)
 
 
     def __create_project(self):
@@ -58,6 +73,7 @@ class ProjectViewTests(APITestCase):
         for index in index_names:
             index_model, is_created = Index.objects.get_or_create(name=index)
             self.project.indices.add(index_model)
+        self.project.save()
 
 
     def test_get_fields(self):
@@ -78,23 +94,127 @@ class ProjectViewTests(APITestCase):
         self.assertTrue(TEST_FACT_NAME in [field['name'] for field in response.data])
 
 
+    def test_get_facts_with_exclude_zero_spans(self):
+        """Tests get_facts endpoint with param 'exclude_zero_spans'."""
+        self.__reindex_test_index()
+        # Add facts for testing
+        doc_id = str(uuid.uuid4())
+        ec = ElasticCore()
+        test_facts = [
+            {"str_val": "dracula", "fact": "MONSTER", "spans": json.dumps([[17,28]]), "doc_path": "text_mlp.text"},
+            {"str_val": "potato", "fact": "FOOD", "spans": json.dumps([[0,0]]), "doc_path": "text"},
+            {"str_val": "titanic", "fact": "BOAT", "spans": json.dumps([[18,38]]), "doc_path": "text_mlp.text_mlp.lemmas"},
+            {"str_val": "cat", "fact": "ANIMAL", "spans": json.dumps([[0,0]]), "doc_path": "text"}
+        ]
+        es_response = ec.es.index(index=self.test_index_name, id=doc_id, body={"texta_facts": test_facts}, refresh="wait_for")
+        print_output('test_get_facts_with_exclude_zero_spans:es.index.response', es_response)
+        url = f'{self.project_url}/elastic/get_facts/'
+        response = self.client.post(url, data={"exclude_zero_spans": True, "include_values": False}, format="json")
+        print_output('test_get_facts_with_exclude_zero_spans:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue("MONSTER" in response.data)
+        self.assertTrue("BOAT" in response.data)
+        self.assertFalse("FOOD" in response.data)
+        self.assertFalse("ANIMAL" in response.data)
+        self.__remove_reindexed_test_index()
+
+
+    def test_get_facts_with_mlp_doc_path_and_spans(self):
+        """Tests get_facts endpoint with param 'exclude_zero_spans' and 'mlp_doc_path'."""
+        self.__reindex_test_index()
+        # Add facts for testing
+        doc_id = str(uuid.uuid4())
+        ec = ElasticCore()
+        test_facts = [
+            {"str_val": "dracula", "fact": "MONSTER", "spans": json.dumps([[17,28]]), "doc_path": "text_mlp.text"},
+            {"str_val": "potato", "fact": "FOOD", "spans": json.dumps([[18,38]]), "doc_path": "text"},
+            {"str_val": "titanic", "fact": "BOAT", "spans": json.dumps([[18,38]]), "doc_path": "text_mlp.text_mlp.lemmas"},
+            {"str_val": "cat", "fact": "ANIMAL", "spans": json.dumps([[0,0]]), "doc_path": "text"}
+        ]
+        es_response = ec.es.index(index=self.test_index_name, id=doc_id, body={"texta_facts": test_facts}, refresh="wait_for")
+        print_output('test_get_facts_with_mlp_doc_path_and_spans:es.index.response', es_response)
+        url = f'{self.project_url}/elastic/get_facts/'
+        response = self.client.post(url, data={"indices": [{"name": self.test_index_name}], "exclude_zero_spans": True, "mlp_doc_path": "text_mlp"}, format="json")
+        print_output('test_get_facts_with_mlp_doc_path_and_spans:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue("MONSTER" in response.data)
+        self.assertFalse("BOAT" in response.data)
+        self.assertFalse("FOOD" in response.data)
+        self.assertFalse("ANIMAL" in response.data)
+        self.__remove_reindexed_test_index()
+
+
     def test_get_facts_with_indices(self):
         url = f'{self.project_url}/elastic/get_facts/'
         response = self.client.post(url, format="json", data={"indices": [{"name": TEST_INDEX}]})
-        print_output('get_facts:response.data', response.data)
+        print_output('get_facts_with_indices:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue(TEST_FACT_NAME in [field['name'] for field in response.data])
 
-    def test_get_facts_with_doc_path(self):
+
+    def test_get_facts_with_include_doc_path(self):
         url = f'{self.project_url}/elastic/get_facts/'
-        response = self.client.post(url, format="json", data={"doc_path": True})
-        print_output('get_facts_with_doc_path:response.data', response.data)
+        response = self.client.post(url, format="json", data={"include_doc_path": True})
+        print_output('get_facts_with_include_doc_path:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, list))
         for field in response.data:
             for value in field['values']:
                 self.assertTrue('doc_path' in value)
+
+
+    def test_aggregate_facts(self):
+        url = f'{self.project_url}/elastic/aggregate_facts/'
+
+        payload = {
+            "incides": [{"name": TEST_INDEX}],
+            "key_field": "fact",
+            "value_field": "doc_path"
+        }
+        response = self.client.post(url, payload)
+        print_output('project:aggregate_facts:key=fact:value=doc_path:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, dict))
+        self.assertTrue(TEST_FACT_NAME in response.data)
+        self.assertTrue("comment_content" in response.data[TEST_FACT_NAME])
+
+        payload = {
+            "incides": [{"name": TEST_INDEX}],
+            "key_field": "doc_path",
+            "value_field": "fact",
+            "filter_by_key": "comment_content"
+        }
+
+        response = self.client.post(url, payload)
+        print_output('project:aggregate_facts:key=doc_path:value=fact:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue(TEST_FACT_NAME in response.data)
+
+
+    def test_aggregate_facts_invalid(self):
+        url = f'{self.project_url}/elastic/aggregate_facts/'
+
+        payload = {
+            "incides": [{"name": TEST_INDEX}],
+            "key_field": "fact",
+            "value_field": "fact"
+        }
+        response = self.client.post(url, payload)
+        print_output('project:aggregate_facts_invalid_input:key=fact:value=fact:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        payload = {
+            "incides": [{"name": TEST_INDEX}],
+            "key_field": "fact",
+            "value_field": "brr"
+        }
+        response = self.client.post(url, payload)
+        print_output('project:aggregate_facts_invalid_input:key=fact:value=brr:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
     def test_search(self):
@@ -218,6 +338,7 @@ class ProjectViewTests(APITestCase):
         payload = {"indices": [TEST_INDEX], "query": {"this": "is invalid"}}
         response = self.client.post(self.export_url, data=payload, format="json")
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+
 
     def test_search_export_with_all_fields(self):
         payload = {"indices": [TEST_INDEX], "fields": []}
@@ -461,17 +582,17 @@ class ProjectViewTests(APITestCase):
         self.assertTrue(response.status_code == status.HTTP_200_OK)
 
 
-    def test_project_creation_with_scope(self):
-        pass
-
-
-    def test_updating_scopes(self):
-        pass
-
-
-    def test_that_normal_users_can_only_add_scopes_they_are_in(self):
-        pass
-
-
-    def test_that_admins_can_pick_any_scope_they_want_to(self):
-        pass
+    # def test_project_creation_with_scope(self):
+    #     pass
+    #
+    #
+    # def test_updating_scopes(self):
+    #     pass
+    #
+    #
+    # def test_that_normal_users_can_only_add_scopes_they_are_in(self):
+    #     pass
+    #
+    #
+    # def test_that_admins_can_pick_any_scope_they_want_to(self):
+    #     pass

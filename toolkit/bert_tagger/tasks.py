@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import pathlib
 import secrets
 from typing import Dict, List, Union
 
@@ -51,6 +52,10 @@ def apply_persistent_bert_tagger(tagger_input: Union[str, Dict], tagger_id: int,
 def train_bert_tagger(tagger_id, testing=False):
     # retrieve neurotagger & task objects
     tagger_object = BertTaggerObject.objects.get(pk=tagger_id)
+
+    # Handle previous tagger models that exist in case of retrains.
+    model_path = pathlib.Path(tagger_object.model.path) if tagger_object.model else None
+
     task_object = tagger_object.task
     try:
         show_progress = ShowProgress(task_object, multiplier=1)
@@ -120,6 +125,7 @@ def train_bert_tagger(tagger_id, testing=False):
             tagger.config.use_state_dict = False
             pos_label = ""
 
+
         # train tagger and get result statistics
         report = tagger.train(
             data_sample.data,
@@ -161,16 +167,24 @@ def train_bert_tagger(tagger_id, testing=False):
         tagger_object.num_examples = json.dumps({k: len(v) for k, v in list(data_sample.data.items())})
         tagger_object.adjusted_batch_size = tagger.config.batch_size
         tagger_object.confusion_matrix = json.dumps(report.confusion.tolist())
+        tagger_object.classes = json.dumps(report.classes, ensure_ascii=False)
         # save tagger object
         tagger_object.save()
         # declare the job done
         task_object.complete()
+
+        # Cleanup after the transaction to ensure integrity database records.
+        if model_path and model_path.exists():
+            model_path.unlink(missing_ok=True)
+
         return True
 
 
     except Exception as e:
-        task_object.add_error(str(e))
-        task_object.update_status(Task.STATUS_FAILED)
+        logging.getLogger(ERROR_LOGGER).exception(e)
+        error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
+        tagger_object.task.add_error(error_message)
+        tagger_object.task.update_status(Task.STATUS_FAILED)
         raise
 
 

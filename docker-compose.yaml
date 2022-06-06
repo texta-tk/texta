@@ -2,26 +2,9 @@ version: '3'
 
 services:
 
-  dps:
-    image: defreitas/dns-proxy-server
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /etc/resolv.conf:/etc/resolv.conf
-    environment:
-      MG_LOG_LEVEL: ERROR
-    hostname: dns.mageddo
-    networks:
-      dps:
-        ipv4_address: 172.0.0.10
-
   texta-uaa:
     image: docker.texta.ee/texta/texta-uaa:latest
     container_name: texta-uaa
-    hostname: texta-uaa
-    dns:
-      - 172.0.0.10
-    networks:
-        - dps
     ports:
       - 8080
     environment:
@@ -30,14 +13,9 @@ services:
       TEXTA_UAA_EMAIL: test@test.com
       TEXTA_UAA_PWD: test
       TEXTA_UAA_URL: http://localhost:8080
-  
+
   texta-elasticsearch:
     container_name: texta-elasticsearch
-    hostname: texta-elasticsearch
-    dns:
-      - 172.0.0.10
-    networks:
-      - dps
     restart: on-failure
     image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.0
     ports:
@@ -51,27 +29,17 @@ services:
         hard: -1
     volumes:
       - elastic-data:/usr/share/elasticsearch/data
-  
+
   texta-redis:
     container_name: texta-redis
-    hostname: texta-redis
-    dns:
-      - 172.0.0.10
-    networks:
-      - dps
     image: redis
     ports:
       - 6379
     restart: always
-  
+
   texta-mariadb:
     container_name: texta-mariadb
     image: mariadb:10.3.28
-    hostname: texta-mariadb
-    dns:
-      - 172.0.0.10
-    networks:
-      - dps
     restart: on-failure
     ports:
       - 3306
@@ -85,15 +53,10 @@ services:
       MYSQL_PASSWORD: docker
     volumes:
       - mariadb-data:/var/lib/mysql
-  
+
   texta-rest:
     image: docker.texta.ee/texta/texta-rest:latest
     container_name: texta-rest
-    hostname: texta-rest
-    dns:
-      - 172.0.0.10
-    networks:
-      - dps
     build:
       context: .
       dockerfile: ./docker/Dockerfile
@@ -106,7 +69,7 @@ services:
     depends_on:
       - texta-mariadb
       - texta-elasticsearch
-  
+
   # texta-rest-gpu:
   #   container_name: texta-rest-gpu
   #   image: docker.texta.ee/texta/texta-rest:latest-gpu
@@ -133,9 +96,3 @@ volumes:
   elastic-data:
   toolkit-data:
   mariadb-data:
-
-networks:
-  dps:
-    ipam:
-      config:
-        - subnet: 172.0.0.0/24

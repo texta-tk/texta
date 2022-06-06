@@ -4,21 +4,19 @@ import rest_framework.filters as drf_filters
 from django.db import transaction
 from django.http import JsonResponse
 from django_filters import rest_framework as filters
-from rest_auth import views
-from rest_framework import mixins, status, viewsets
+from rest_framework import mixins, status, views, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from texta_elastic.core import ElasticCore
 
 from toolkit.elastic.exceptions import ElasticIndexAlreadyExists
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import (
-    AddTextaFactsMapping,
     IndexBulkDeleteSerializer, IndexSerializer, IndexUpdateSerializer
 )
-from texta_elastic.core import ElasticCore
 from toolkit.permissions.project_permissions import IsSuperUser
+from toolkit.serializer_constants import EmptySerializer
 from toolkit.settings import TEXTA_TAGS_KEY
-from datetime import datetime
 
 
 class IndicesFilter(filters.FilterSet):
@@ -247,13 +245,13 @@ class IndexViewSet(mixins.CreateModelMixin,
         return Response(info, status=status.HTTP_200_OK)
 
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], serializer_class=EmptySerializer)
     def sync_indices(self, request, pk=None, project_pk=None):
         ElasticCore().syncher()
         return Response({"message": "Synched everything successfully!"}, status=status.HTTP_204_NO_CONTENT)
 
 
-    @action(detail=True, methods=['patch'])
+    @action(detail=True, methods=['patch'], serializer_class=EmptySerializer)
     def close_index(self, request, pk=None, project_pk=None):
         es_core = ElasticCore()
         index = Index.objects.get(pk=pk)
@@ -263,7 +261,7 @@ class IndexViewSet(mixins.CreateModelMixin,
         return Response({"message": f"Closed the index {index.name}"})
 
 
-    @action(detail=True, methods=['patch'])
+    @action(detail=True, methods=['patch'], serializer_class=EmptySerializer)
     def open_index(self, request, pk=None, project_pk=None):
         es_core = ElasticCore()
         index = Index.objects.get(pk=pk)
@@ -275,7 +273,7 @@ class IndexViewSet(mixins.CreateModelMixin,
         return Response({"message": f"Opened the index {index.name}"})
 
 
-    @action(detail=True, methods=['post'], serializer_class=AddTextaFactsMapping)
+    @action(detail=True, methods=['post'], serializer_class=EmptySerializer)
     def add_facts_mapping(self, request, pk=None, project_pk=None):
         es_core = ElasticCore()
         index = Index.objects.get(pk=pk)

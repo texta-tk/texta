@@ -39,7 +39,8 @@ CORE_SETTINGS = {
     "TEXTA_ES_PREFIX": env("TEXTA_ES_PREFIX", default=""),
     "TEXTA_ES_USERNAME": env("TEXTA_ES_USER", default=""),
     "TEXTA_ES_PASSWORD": env("TEXTA_ES_PASSWORD", default=""),
-    "TEXTA_EVALUATOR_MEMORY_BUFFER_GB": env("TEXTA_EVALUATOR_MEMORY_BUFFER_GB", default="")
+    "TEXTA_EVALUATOR_MEMORY_BUFFER_GB": env("TEXTA_EVALUATOR_MEMORY_BUFFER_GB", default=""),
+    "TEXTA_ES_MAX_DOCS_PER_INDEX": env.int("TEXTA_ES_MAX_DOCS_PER_INDEX", default=100000)
 }
 ### END OF CORE SETTINGS ###
 
@@ -102,12 +103,11 @@ INSTALLED_APPS = [
     # https://github.com/goinnn/django-multiselectfield
     "multiselectfield",
     "django_filters",
-    # "rest_auth" https://github.com/Tivix/django-rest-auth
-    "rest_auth",
-    "allauth",
+    "dj_rest_auth",
+    "dj_rest_auth.registration",
+    "allauth",  # Comes with dj-rest-auth[with_social].
     "allauth.account",
     "allauth.socialaccount",
-    "rest_auth.registration",
     "django_extensions",
     "drf_yasg",
 ]

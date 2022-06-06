@@ -1,15 +1,15 @@
-from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
 import re
 
-from ..choices import CORE_VARIABLE_CHOICES
+from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
+
 from .models import CoreVariable
-from ...settings import CORE_SETTINGS
+from ..choices import CORE_VARIABLE_CHOICES
 from ..health.utils import get_elastic_status
+from ...settings import CORE_SETTINGS
 
 
 class CoreVariableSerializer(serializers.HyperlinkedModelSerializer):
-
     name = serializers.ChoiceField(
         help_text="Name of the core variable.",
         choices=CORE_VARIABLE_CHOICES,
@@ -27,10 +27,12 @@ class CoreVariableSerializer(serializers.HyperlinkedModelSerializer):
         model = CoreVariable
         fields = ("url", "name", "value", "env_value")
 
+
     def get_env_value(self, obj):
         """Retrieves value for the variable from env."""
         variable_name = obj.name
         return CORE_SETTINGS.get(variable_name, "")
+
 
     def validate(self, data):
         """Validate value by checking the URL availability."""
@@ -48,9 +50,8 @@ class CoreVariableSerializer(serializers.HyperlinkedModelSerializer):
             raise serializers.ValidationError(f"Entered value should not contain metasymbols.")
         service_alive = True
         if name == "TEXTA_ES_URL":
-            try:
-                service_alive = get_elastic_status(ES_URL=value)["alive"]
-            except Exception:
+            service_alive = get_elastic_status(uri=value)["alive"]
+            if service_alive is False:
                 raise serializers.ValidationError(f"Invalid TEXTA_ES_URL {value}")
         if name == "TEXTA_EVALUATOR_MEMORY_BUFFER_GB":
             if value:

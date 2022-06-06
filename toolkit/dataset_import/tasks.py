@@ -42,6 +42,5 @@ def import_dataset(dataset_import_id):
 
     except Exception as e:
         # declare the job failed
-        task_object.add_error(str(e))
-        task_object.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
         raise e

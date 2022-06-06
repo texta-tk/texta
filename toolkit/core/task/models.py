@@ -1,4 +1,5 @@
 import json
+import logging
 import uuid
 
 from django.db import models
@@ -7,6 +8,7 @@ from django.utils.timezone import now
 
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.helper_functions import avoid_db_timeout
+from toolkit.settings import ERROR_LOGGER
 
 
 class Task(models.Model):
@@ -51,11 +53,30 @@ class Task(models.Model):
 
 
     @avoid_db_timeout
-    def add_error(self, error: str):
+    def add_error(self, error):
+        """
+        Saves an error into the Task model
+        :param error: Either a list of errors or a single string.
+        """
         errors = json.loads(self.errors)
-        errors = errors + [error]
-        self.errors = json.dumps(errors)
+
+        if isinstance(error, str):
+            error = error[:100]
+            errors = errors + [error]
+        elif isinstance(error, list):
+            for e in errors:
+                errors.append(str(e[:100]))
+
+        unique_errors = list(set(errors))
+        self.errors = json.dumps(unique_errors, ensure_ascii=False)
         self.save()
+
+
+    @avoid_db_timeout
+    def handle_failed_task(self, e: Exception):
+        logging.getLogger(ERROR_LOGGER).exception(e)
+        self.add_error(str(e))
+        self.update_status(Task.STATUS_FAILED)
 
 
     @avoid_db_timeout
@@ -64,6 +85,13 @@ class Task(models.Model):
         self.time_completed = now()
         self.step = ""
         self.num_processed = self.total
+        self.save()
+
+
+    @avoid_db_timeout
+    def set_total(self, total: int):
+        self.last_update = now()
+        self.total = total
         self.save()
 
 

@@ -43,8 +43,8 @@ class TaggerViewTests(APITransactionTestCase):
         self.multitag_text_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/taggers/multitag_text/'
 
         # set vectorizer & classifier options
-        self.vectorizer_opts = ('Count Vectorizer', 'Hashing Vectorizer', 'TfIdf Vectorizer')
-        self.classifier_opts = ('Logistic Regression', 'LinearSVC')
+        self.vectorizer_opts = ('TfIdf Vectorizer',)
+        self.classifier_opts = ('Logistic Regression',)
 
         # list tagger_ids for testing. is populated during training test
         self.test_tagger_ids = []
@@ -145,6 +145,9 @@ class TaggerViewTests(APITransactionTestCase):
                 self.assertTrue(created_tagger.task is not None)
                 # Check if Tagger gets trained and completed
                 self.assertEqual(created_tagger.task.status, Task.STATUS_COMPLETED)
+                # Check if Tagger object contains classes
+                self.assertTrue(isinstance(response.data["classes"], list))
+                self.assertTrue(len(response.data["classes"]) >= 2)
 
 
     def run_create_multiclass_tagger_with_insufficient_number_of_examples(self):

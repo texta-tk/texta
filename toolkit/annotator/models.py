@@ -4,12 +4,13 @@ from typing import List, Optional
 
 from django.contrib.auth.models import User
 from django.db import models
+from texta_elastic.document import ESDocObject
 
 from toolkit.core.project.models import Project
+from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from texta_elastic.document import ESDocObject
 from toolkit.model_constants import TaskModel
-from toolkit.settings import DESCRIPTION_CHAR_LIMIT
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, DESCRIPTION_CHAR_LIMIT
 
 
 # Create your models here.
@@ -39,6 +40,7 @@ class Label(models.Model):
 
 
 class Labelset(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, default=None, null=True)
     indices = models.ManyToManyField(Index)
     fact_names = models.TextField(null=True)
     value_limit = models.IntegerField(null=True)
@@ -62,9 +64,14 @@ class EntityAnnotatorConfiguration(models.Model):
 
 
 class Annotator(TaskModel):
+    annotator_uid = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, default="", help_text="Unique Identifier for Annotator")
     annotation_type = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, choices=ANNOTATION_CHOICES, help_text="Which type of annotation does the user wish to perform")
 
     annotator_users = models.ManyToManyField(User, default=None, related_name="annotators", help_text="Who are the users who will be annotating.")
+
+    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
+
+    add_facts_mapping = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     modified_at = models.DateTimeField(auto_now=True, null=True)
@@ -106,19 +113,41 @@ class Annotator(TaskModel):
 
     @property
     def skipped(self):
-        restraint = Record.objects.filter(annotated_utc__isnull=True, skipped_utc__isnull=False)
+        restraint = Record.objects.filter(annotated_utc__isnull=True, skipped_utc__isnull=False, annotation_job=self)
         return restraint.count()
+
+
+    def create_annotator_task(self):
+        new_task = Task.objects.create(annotator=self, status='created')
+        self.task = new_task
+        self.save()
+
+        annotator_obj = Annotator.objects.get(pk=self.pk)
+        annotator_group, is_created = AnnotatorGroup.objects.get_or_create(project=annotator_obj.project,
+                                                                           parent=annotator_obj)
+
+        from toolkit.annotator.tasks import annotator_task
+        annotator_task.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
 
     def add_pos_label(self, document_id: str, index: str, user):
         """
         Adds a positive label to the Elasticsearch document for Binary annotation.
-        :param user_pk:
+        :param user: User that does the annotation.
         :param index: Which index does said Elasticsearch document reside in.
         :param document_id: Elasticsearch document ID of the comment in question.
         :return:
         """
         ed = ESDocObject(document_id=document_id, index=index)
+        if "texta_facts" in ed.document["_source"]:
+            for facts in ed.document["_source"]["texta_facts"]:
+                if facts["fact"] == self.binary_configuration.fact_name and facts["source"] == "annotator":
+                    if facts["str_val"] != self.binary_configuration.pos_value:
+                        facts["str_val"] = self.binary_configuration.pos_value
+                        ed.update()
+                        return
+                    else:
+                        return
         fact = ed.add_fact(fact_value=self.binary_configuration.pos_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field)
         ed.add_annotated(annotator_model=self, user=user)
         ed.update()
@@ -147,13 +176,22 @@ class Annotator(TaskModel):
         :return:
         """
         ed = ESDocObject(document_id=document_id, index=index)
+        if "texta_facts" in ed.document["_source"]:
+            for facts in ed.document["_source"]["texta_facts"]:
+                if facts["fact"] == self.binary_configuration.fact_name and facts["source"] == "annotator":
+                    if facts["str_val"] != self.binary_configuration.neg_value:
+                        facts["str_val"] = self.binary_configuration.neg_value
+                        ed.update()
+                        return
+                    else:
+                        return
         fact = ed.add_fact(fact_value=self.binary_configuration.neg_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field)
         ed.add_annotated(self, user)
         ed.update()
         self.generate_record(document_id, index=index, user_pk=user.pk, fact=fact, do_annotate=True, fact_id=fact["id"])
 
 
-    def add_labels(self, document_id: str, labels: List[str], index: str, user):
+    def add_labels(self, document_id: str, labels: List[str], index: str, user: User):
         """
         Adds a label to Elasticsearch documents during multilabel annotations.
         :param index:
@@ -163,8 +201,10 @@ class Annotator(TaskModel):
         """
         ed = ESDocObject(document_id=document_id, index=index)
         for label in labels:
-            ed.add_fact(fact_value=label, fact_name=self.multilabel_configuration.labelset.category.value, doc_path=self.target_field)
-        ed.add_annotated(self, user)
+            fact = ed.add_fact(fact_value=label, fact_name=self.multilabel_configuration.labelset.category.value, doc_path=self.target_field, author=user.username)
+            ed.add_annotated(self, user)
+            self.generate_record(document_id, index=index, user_pk=user.pk, fact=fact, do_annotate=True,
+                                 fact_id=fact["id"])
         ed.update()
 
 
@@ -173,23 +213,17 @@ class Annotator(TaskModel):
         return fact_name, value, spans, field, fact_id
 
 
-    def add_entity(self, document_id: str, spans: List, fact_name: str, field: str, fact_value: str, index: str, user):
+    def add_entity(self, document_id: str, texta_facts: List[dict], index: str, user: User):
         """
         Adds an entity label to Elasticsearch documents during entity annotations.
-        :param index:
-        :param field: Which field was used to annotate.
+        :param user: Which user is adding the Facts.
+        :param texta_facts: Facts to store inside Elasticsearch.
+        :param index: Index into which the Facts are stored.
         :param document_id: Elasticsearch document ID of the comment in question.
-        :param spans: At which position in the text does the label belong to.
-        :param fact_name: Which fact name to give to the Elasticsearch document.
-        :param fact_value: Which fact value to give to the Elasticsearch document.
         :return:
         """
-        ed = ESDocObject(document_id=document_id, index=index)
-        first, last = spans
-        ed.add_fact(fact_value=fact_value, fact_name=fact_name, doc_path=field, spans=json.dumps([first, last]))
-        ed.add_annotated(self, user)
-        ed.update()
-
+        from toolkit.annotator.tasks import add_entity_task
+        add_entity_task.apply_async(args=(self.pk, document_id, texta_facts, index, user.pk), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
     def pull_document(self) -> Optional[dict]:
         """
@@ -267,9 +301,9 @@ class Annotator(TaskModel):
         ec = ElasticCore()
         json_query = json.loads(self.query)
         indices = self.get_indices()
-        query = ec.get_annotation_validation_query(json_query)
+        query = ec.get_annotated_annotation_query(query=json_query, job_pk=self.pk)
         document = ESDocObject.random_document(indices=indices, query=query)
-        # At one point in time, the documents will rune out.
+        # At one point in time, the documents will run out.
         if document:
             return document.document
         else:
@@ -298,6 +332,26 @@ class Annotator(TaskModel):
         ec = ElasticCore()
         for index in indices:
             ec.add_annotator_mapping(index)
+
+
+    @staticmethod
+    def add_texta_meta_mapping(indices: List[str]):
+        """
+        Adds the mapping for texta_meta.
+        :param indices: Which indices to target for the schemas.
+        :return:
+        """
+        from texta_elastic.core import ElasticCore
+
+        ec = ElasticCore()
+        for index in indices:
+            ec.add_texta_meta_mapping(index)
+
+
+class AnnotatorGroup(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, default=None, null=True)
+    parent = models.ForeignKey(Annotator, on_delete=models.CASCADE)
+    children = models.ManyToManyField(Annotator, default=None, related_name="annotator_group_children")
 
 
 class Comment(models.Model):

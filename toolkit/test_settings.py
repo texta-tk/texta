@@ -10,6 +10,7 @@ TEST_DOCTYPE = "texta_test_index"
 TEST_INDEX_REINDEX = f"{TEST_INDEX}_reindexed"
 TEST_INDEX_LARGE = "texta_test_index_large"
 TEST_INDEX_EVALUATOR = "texta_test_index_evaluator"
+TEST_INDEX_ENTITY_EVALUATOR = "texta_test_index_entity_evaluator"
 REINDEXER_TEST_INDEX = "reindexer_test_index"
 
 CRF_TEST_INDEX = "texta_crf_test_index"
@@ -27,6 +28,7 @@ INDEX_SPLITTING_TEST_INDEX = "splitting_test"
 INDEX_SPLITTING_TRAIN_INDEX = "splitting_train"
 
 TEST_FIELD = "comment_content_lemmas"
+TEST_FIELD_RENAMED = "comment"
 TEST_NESTED_FIELDS = "comment_content_clean.text"
 TEST_FIELD_CHOICE = [TEST_FIELD]
 TEST_FIELD_UNLEMMATIZED = "comment_content"

@@ -106,7 +106,7 @@ class AnonymizerViewSet(viewsets.ModelViewSet, BulkDelete):
         anonymizer = NameAnonymizer(
             replace_misspelled_names=anonymizer_object.replace_misspelled_names,
             replace_single_last_names=anonymizer_object.replace_single_last_names,
-            replace_single_first_names=anonymizer_object.replace_single_last_names,
+            replace_single_first_names=anonymizer_object.replace_single_first_names,
             misspelling_threshold=anonymizer_object.misspelling_threshold,
             mimic_casing=anonymizer_object.mimic_casing,
             auto_adjust_threshold=anonymizer_object.auto_adjust_threshold

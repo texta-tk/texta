@@ -35,6 +35,8 @@ class ReindexerViewTests(APITransactionTestCase):
         self.ec = ElasticCore()
         self.client.login(username=self.default_username, password=self.default_password)
 
+        self.new_index_name = f"{TEST_FIELD}_2"
+
 
     def tearDown(self) -> None:
         self.ec.delete_index(index=self.test_index_name, ignore=[400, 404])
@@ -84,6 +86,7 @@ class ReindexerViewTests(APITransactionTestCase):
             "new_index": TEST_INDEX_REINDEX,
             "random_size": 500,
         }
+
         update_field_type_payload = {
             "description": "TestReindexerUpdateFieldType",
             "fields": [],
@@ -119,7 +122,7 @@ class ReindexerViewTests(APITransactionTestCase):
                 join_indices_fields_payload,
                 test_query_payload,
                 random_docs_payload,
-                update_field_type_payload
+                update_field_type_payload,
         ):
             url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/elastic/reindexer/'
             self.run_create_reindexer_task_signal(self.project, url, payload)
@@ -229,3 +232,28 @@ class ReindexerViewTests(APITransactionTestCase):
         self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
         get_response = self.client.get(task_url)
         self.assertEqual(get_response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+    def test_that_changing_field_names_works(self):
+        payload = {
+            "description": "RenameFieldName",
+            "new_index": self.new_index_name,
+            "fields": [TEST_FIELD],
+            "field_type": [{"path": TEST_FIELD, "new_path_name": TEST_FIELD_RENAMED, "field_type": "text"}],
+            "indices": [self.test_index_name],
+            "add_facts_mapping": True
+        }
+
+        # Reindex the test index into a new one.
+        url = reverse("v2:reindexer-list", kwargs={"project_pk": self.project.pk})
+        reindex_response = self.client.post(url, data=payload, format='json')
+        print_output('test_that_changing_field_names_works:response.data', reindex_response.data)
+
+        # Check that the fields have been changed.
+        es = ElasticSearcher(indices=[self.new_index_name])
+        for document in es:
+            self.assertTrue(TEST_FIELD not in document)
+            self.assertTrue(TEST_FIELD_RENAMED in document)
+
+        # Manual clean up.
+        es.core.delete_index(self.new_index_name)

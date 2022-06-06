@@ -5,7 +5,7 @@ import os
 import subprocess
 import uuid
 from time import sleep
-
+from django.core import management
 import django  # For making sure the correct Python environment is used.
 from django.db import connections
 from django.db.utils import OperationalError
@@ -65,14 +65,11 @@ def check_mysql_connection():
     return connected
 
 
-def migrate(custom_apps, arguments: argparse.Namespace):
-    log_message = 'Toolkit: Detecting database changes.'
+def migrate(arguments: argparse.Namespace):
+    log_message = 'Toolkit: Applying migrations.'
     print(log_message)
-    make_migrations_output = subprocess.check_output(['python', 'manage.py', 'makemigrations', '--noinput'] + custom_apps)
-    log_message = 'Toolkit: Making database changes.'
-    print(log_message)
-    sleep(2)
-    migrate_output = subprocess.check_output(['python', 'manage.py', 'migrate'])
+
+    management.call_command('migrate', verbosity=3)
     log_message = 'Toolkit: Creating Admin user if necessary.'
     print(log_message)
     sleep(2)
@@ -82,18 +79,13 @@ def migrate(custom_apps, arguments: argparse.Namespace):
     return True
 
 
-# CREATE LIST OF CUSTOM APPS
-cwd = os.path.realpath(os.path.dirname(__file__))
-custom_apps = [app.split('.')[-1] for app in INSTALLED_APPS if app.startswith(BASE_APP_NAME)]  # Migration works for custom apps only. Manage.py can't detect relevant built-in django apps.
-print('Running migrations for apps:', ', '.join(custom_apps))
-
 # CONNECT TO DATABASE & MIGRATE
 connected = False
 n_try = 0
 while connected is False and n_try <= 10:
     connected = check_mysql_connection()
     if connected:
-        migrate(custom_apps, args)
+        migrate(args)
     else:
         n_try += 1
         print('Toolkit migration attempt {}: No connection to database. Sleeping for 10 sec and trying again.'.format(n_try))

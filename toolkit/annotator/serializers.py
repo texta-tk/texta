@@ -1,17 +1,19 @@
 import json
 
+from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.searcher import ElasticSearcher
 
-from toolkit.annotator.models import Annotator, BinaryAnnotatorConfiguration, Category, Comment, EntityAnnotatorConfiguration, Label, Labelset, MultilabelAnnotatorConfiguration, Record
+from toolkit.annotator.choices import MAX_VALUE
+from toolkit.annotator.models import Annotator, AnnotatorGroup, BinaryAnnotatorConfiguration, Category, Comment, EntityAnnotatorConfiguration, Label, Labelset, MultilabelAnnotatorConfiguration, Record
 from toolkit.core.project.models import Project
+from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.models import Index
-from texta_elastic.searcher import ElasticSearcher
-from texta_elastic.aggregator import ElasticAggregator
 from toolkit.serializer_constants import FieldParseSerializer, ToolkitTaskSerializer
-from toolkit.annotator.choices import MAX_VALUE
 
 
 ANNOTATION_MAPPING = {
@@ -35,16 +37,26 @@ class RecordSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class LabelsetSerializer(serializers.Serializer):
+class LabelsetSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance: Labelset):
         data = super(LabelsetSerializer, self).to_representation(instance)
         data["id"] = instance.id
         return data
 
+
     class Meta:
         model = Labelset
-        fields = "__all__"
+        fields = (
+            'id',
+            'indices',
+            'values',
+            'fact_names',
+            'value_limit',
+            'category',
+        )
+        fields_to_parse = ("fields",)
+
 
     indices = serializers.ListSerializer(child=serializers.CharField(), default="[]", required=False, help_text="List of indices.")
     fact_names = serializers.ListSerializer(child=serializers.CharField(), default="[]", required=False, help_text="List of fact_names.")
@@ -54,7 +66,13 @@ class LabelsetSerializer(serializers.Serializer):
 
 
     def create(self, validated_data):
-        indices = validated_data["indices"]
+        request = self.context.get('request')
+        project_pk = request.parser_context.get('kwargs').get("project_pk")
+        project_obj = Project.objects.get(id=project_pk)
+
+        indices = [index for index in validated_data["indices"]]
+        indices = project_obj.get_available_or_all_project_indices(indices)
+
         fact_names = validated_data["fact_names"]
         value_limit = validated_data["value_limit"]
         category = validated_data["category"]
@@ -89,7 +107,7 @@ class LabelsetSerializer(serializers.Serializer):
             label, is_created = Label.objects.get_or_create(value=value)
             value_container.append(label)
 
-        labelset, is_created = Labelset.objects.get_or_create(category=category)
+        labelset, is_created = Labelset.objects.get_or_create(project=project_obj, category=category)
         labelset.indices.add(*index_container)
         labelset.fact_names = fact_names
         labelset.value_limit = value_limit
@@ -147,14 +165,18 @@ class BinaryAnnotationSerializer(serializers.Serializer):
 class EntityAnnotationSerializer(serializers.Serializer):
     document_id = serializers.CharField()
     index = serializers.CharField()
-    field = serializers.CharField()
-    # Add proper validation for the structure here.
-    spans = serializers.ListSerializer(child=serializers.IntegerField(), default=[0, 0])
-    fact_name = serializers.CharField()
-    fact_value = serializers.CharField()
+    texta_facts = serializers.ListSerializer(child=serializers.JSONField())
 
 
 class MultilabelAnnotatorConfigurationSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance: MultilabelAnnotatorConfiguration):
+        data = super(MultilabelAnnotatorConfigurationSerializer, self).to_representation(instance)
+        data["id"] = instance.id
+        data["labelset"] = instance.labelset_id
+        data["category"] = str(instance.labelset.category)
+        return data
+
     class Meta:
         model = MultilabelAnnotatorConfiguration
         fields = "__all__"
@@ -178,6 +200,24 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
     entity_configuration = EntityAnnotatorConfigurationSerializer(required=False)
     url = serializers.SerializerMethodField()
     annotator_users = UserSerializer(many=True, read_only=True)
+    annotating_users = serializers.ListField(child=serializers.CharField(), write_only=True, default=[], help_text="Names of users that will be annotating.")
+    add_facts_mapping = serializers.BooleanField(
+        help_text='Add texta facts mapping. NB! If texta_facts is present in annotator fields, the mapping is always created.',
+        required=False, default=True)
+    task = TaskSerializer(read_only=True)
+
+
+    def update(self, instance: Annotator, validated_data: dict):
+        request = self.context.get('request')
+        project_pk = request.parser_context.get('kwargs').get("project_pk")
+
+        try:
+            instance.description = validated_data["description"]
+            instance.save()
+        except Exception as e:
+            raise serializers.ValidationError(e)
+
+        return instance
 
 
     def get_url(self, obj):
@@ -218,6 +258,18 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
         fields = validated_data.pop("fields")
 
         validated_data.pop("indices")
+        users = validated_data.pop("annotating_users")
+
+        add_facts_mapping = validated_data.pop("add_facts_mapping")
+
+        annotating_users = []
+        for user in users:
+            annotating_user = User.objects.get(username=user)
+            try:
+                if project_obj.users.get(username=annotating_user):
+                    annotating_users.append(annotating_user)
+            except Exception as e:
+                raise serializers.ValidationError(e)
 
         configuration = self.__get_configurations(validated_data)
         total = self.__get_total(indices=indices, query=json.loads(validated_data["query"]))
@@ -228,10 +280,11 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
             project=project_obj,
             total=total,
             fields=json.dumps(fields),
+            add_facts_mapping=add_facts_mapping,
             **configuration,
         )
 
-        annotator.annotator_users.add(request.user)
+        annotator.annotator_users.add(*annotating_users)
 
         for index in Index.objects.filter(name__in=indices, is_open=True):
             annotator.indices.add(index)
@@ -240,20 +293,38 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
 
         annotator.add_annotation_mapping(indices)
 
+        annotator.create_annotator_task()
+
         return annotator
 
 
     def validate(self, attrs: dict):
-        annotator_type = attrs["annotation_type"]
-        if annotator_type == "binary":
-            if not attrs.get("binary_configuration", None):
-                raise ValidationError("When choosing the binary annotation, relevant configurations must be added!")
-        elif annotator_type == "multilabel":
-            if not attrs.get("multilabel_configuration", None):
-                raise ValidationError("When choosing the binary annotation, relevant configurations must be added!")
-        elif annotator_type == "entity":
-            if not attrs.get("entity_configuration", None):
-                raise ValidationError("When choosing the entity annotation, relevant configurations must be added!")
+        annotator_type = ""
+        if self.context['request'].method != "PATCH":
+            annotator_type = attrs["annotation_type"]
+            if annotator_type == "binary":
+                if not attrs.get("binary_configuration", None):
+                    raise ValidationError("When choosing the binary annotation, relevant configurations must be added!")
+            elif annotator_type == "multilabel":
+                if not attrs.get("multilabel_configuration", None):
+                    raise ValidationError("When choosing the binary annotation, relevant configurations must be added!")
+            elif annotator_type == "entity":
+                if not attrs.get("entity_configuration", None):
+                    raise ValidationError("When choosing the entity annotation, relevant configurations must be added!")
+        else:
+            if "annotation_type" in attrs:
+                annotator_type = attrs["annotation_type"]
+            if annotator_type == "entity":
+                # Since the way fields are handled comes with the serializer and model mixins (being shared by all annotation types), the sanest solution
+                # to ensure only a single field is inserted is by checking it pre-everything else in the first stages of validation.
+                fields = attrs.get("fields", [])
+                if len(fields) != 1:
+                    raise ValidationError("Please ensure only one 'field' is chosen!")
+            if "annotating_users" in attrs:
+                users = attrs.get("annotating_users", [])
+                if len(users) < 1:
+                    raise ValidationError("Please ensure at least 'one' user is chosen.")
+
         return attrs
 
 
@@ -262,14 +333,18 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
         fields = (
             'id',
             'url',
+            'annotator_uid',
             'author',
             'description',
             'indices',
+            'task',
             'target_field',
             'fields',
+            'add_facts_mapping',
             'query',
             'annotation_type',
             'annotator_users',
+            'annotating_users',
             'created_at',
             'modified_at',
             'completed_at',
@@ -283,7 +358,7 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
             "bulk_size",
             "es_timeout"
         )
-        read_only_fields = ["annotator_users", "author", "total", "annotated", "validated", "skipped", "created_at", "modified_at", "completed_at"]
+        read_only_fields = ["annotator_uid", "author", "annotator_users", "total", "annotated", "validated", "skipped", "created_at", "modified_at", "completed_at"]
         fields_to_parse = ("fields",)
 
 
@@ -294,3 +369,34 @@ class AnnotatorProjectSerializer(AnnotatorSerializer):
         result = super(AnnotatorProjectSerializer, self).to_representation(instance)
         result["project_pk"] = instance.project.pk
         return result
+
+
+class AnnotatorGroupSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = AnnotatorGroup
+        fields = (
+            'id',
+            'parent',
+            'children',
+        )
+        fields_to_parse = ("fields",)
+
+    def to_representation(self, instance: AnnotatorGroup):
+        result = super(AnnotatorGroupSerializer, self).to_representation(instance)
+        result["parent"] = AnnotatorSerializer(instance=instance.parent, context={'request': self.context['request']}).data
+        result["children"] = AnnotatorSerializer(instance=instance.children, many=True, context={'request': self.context['request']}).data
+        return result
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        project_pk = request.parser_context.get('kwargs').get("project_pk")
+        project_obj = Project.objects.get(id=project_pk)
+
+        parent = validated_data["parent"]
+        children = [child for child in validated_data["children"] if child != parent]
+
+        annotator_group, is_created = AnnotatorGroup.objects.get_or_create(project=project_obj, parent=parent)
+        annotator_group.children.add(*children)
+
+        return annotator_group

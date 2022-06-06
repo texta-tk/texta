@@ -27,7 +27,7 @@ dependencies:
       - django-cors-headers
       - django-extensions
       - django-filter
-      - django-rest-auth[with_social]
+      - dj-rest-auth[with_social]
       - djangorestframework==3.11.*
       - drf-nested-routers
       - celery==4.*
@@ -42,7 +42,7 @@ dependencies:
       - xlrd==1.2.0
       - dill
       - texta-anonymizer==1.*
-      - texta-mlp==1.15.*
+      - texta-mlp==1.16.*
       - texta-lexicon-matcher==1.*
       - texta-tools==2.*
       - texta-embedding==1.*
@@ -51,7 +51,8 @@ dependencies:
       - texta-torch-tagger==2.*
       - texta-bert-tagger==2.3.*
       - texta-crf-extractor==1.*
-      - torch==1.7.1
+      - torch==1.11.0+cu113
+      - -f https://download.pytorch.org/whl/torch_stable.html
       - pyjwt<2
       - beautifulsoup4
       - nltk==3.6.*
@@ -60,3 +61,4 @@ dependencies:
       - mrakun
       - pelecanus
       - openpyxl
+      - scipy==1.5.*

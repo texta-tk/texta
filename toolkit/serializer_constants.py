@@ -163,8 +163,8 @@ class ElasticScrollMixIn(serializers.Serializer):
 class ToolkitTaskSerializer(IndicesSerializerMixin, FieldsValidationSerializerMixin):
     description = serializers.CharField(max_length=100, help_text=DESCRIPTION_HELPTEXT)
     author = UserSerializer(read_only=True)
-    fields = serializers.ListField(child=serializers.CharField(), help_text=FIELDS_HELPTEXT)
+    fields = serializers.ListField(child=serializers.CharField(), required=True, allow_empty=False, help_text=FIELDS_HELPTEXT)
     query = serializers.JSONField(required=False, help_text=QUERY_HELPTEXT, default=json.dumps(EMPTY_QUERY))
 
-    bulk_size = serializers.IntegerField(default=100, min_value=0, max_value=ES_BULK_SIZE_MAX, help_text=BULK_SIZE_HELPTEXT)
-    es_timeout = serializers.IntegerField(default=10, min_value=0, max_value=ES_TIMEOUT_MAX, help_text=ES_TIMEOUT_HELPTEXT)
+    bulk_size = serializers.IntegerField(default=100, min_value=1, max_value=ES_BULK_SIZE_MAX, help_text=BULK_SIZE_HELPTEXT)
+    es_timeout = serializers.IntegerField(default=10, min_value=1, max_value=ES_TIMEOUT_MAX, help_text=ES_TIMEOUT_HELPTEXT)

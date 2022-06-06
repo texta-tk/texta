@@ -1,6 +1,8 @@
 import json
+import pathlib
 
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from texta_elastic.searcher import EMPTY_QUERY
 
 from toolkit.bert_tagger import choices
@@ -94,9 +96,22 @@ class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, In
         fields = ('url', 'author', 'id', 'description', 'query', 'fields', 'use_gpu', 'f1_score', 'precision', 'recall', 'accuracy',
                   'validation_loss', 'training_loss', 'maximum_sample_size', 'minimum_sample_size', 'num_epochs', 'plot', 'task', 'pos_label', 'fact_name',
                   'indices', 'bert_model', 'learning_rate', 'eps', 'max_length', 'batch_size', 'adjusted_batch_size',
-                  'split_ratio', 'negative_multiplier', 'checkpoint_model', 'num_examples', 'confusion_matrix', 'balance', 'use_sentence_shuffle', 'balance_to_max_limit')
+                  'split_ratio', 'negative_multiplier', 'checkpoint_model', 'num_examples', 'confusion_matrix', 'balance', 'use_sentence_shuffle', 'balance_to_max_limit', 'classes')
 
         read_only_fields = ('project', 'fields', 'f1_score', 'precision', 'recall', 'accuracy', 'validation_loss', 'training_loss', 'plot',
-                            'task', 'num_examples', 'adjusted_batch_size', 'confusion_matrix')
+                            'task', 'num_examples', 'adjusted_batch_size', 'confusion_matrix', 'classes')
 
-        fields_to_parse = ['fields']
+        fields_to_parse = ['fields', 'classes']
+
+
+class DeleteBERTModelSerializer(serializers.Serializer):
+    model_name = serializers.CharField(help_text="Name of the BERT model to delete.")
+
+
+    def validate_model_name(self, value: str):
+        from texta_bert_tagger.tagger import BertTagger
+        file_name = BertTagger.normalize_name(value)
+        path = pathlib.Path(BERT_PRETRAINED_MODEL_DIRECTORY) / file_name
+        if path.exists() is False:
+            raise ValidationError(f"Model with the name of '{value}' does not exist in the file system!")
+        return value

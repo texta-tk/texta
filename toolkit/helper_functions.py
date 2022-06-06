@@ -16,7 +16,31 @@ from django.views.static import serve
 from rest_framework import serializers
 
 
+def is_float(element) -> bool:
+    try:
+        float(element)
+        return True
+    except ValueError:
+        return False
+
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+
+
 def avoid_db_timeout(func):
+    """
+    Decorator to be used in long term tasks to prevent database timeouts
+    that happen when you pull an item through the ORM before said task and try
+    to modify it afterwards, as the connection has already expired at that point.
+    """
+
+
     def inner_wrapper(*args, **kwargs):
         for conn in connections.all():
             conn.close_if_unusable_or_obsolete()
@@ -103,7 +127,18 @@ def get_core_setting(setting_name: str):
             return CORE_SETTINGS[setting_name]
         else:
             # return value from db
-            return variable_match[0].value
+            value = variable_match[0].value
+            if is_float(value):
+                return float(value)
+            elif str.isnumeric(value):
+                return int(value)
+            elif value.lower() == "false":
+                return False
+            elif value.lower() == "true":
+                return True
+            else:
+                return value
+
     except Exception as e:
         return CORE_SETTINGS[setting_name]
 
@@ -173,7 +208,8 @@ def download_bert_requirements(model_directory: str, supported_models: List[str]
 
 
 def download_nltk_resources(data_directory: str):
-    """ Download NLTK resources.
+    """
+    Download NLTK resources.
     """
     import nltk
     punkt_tokenizers_dir = os.path.join(data_directory, "tokenizers", "punkt")
@@ -184,12 +220,13 @@ def download_nltk_resources(data_directory: str):
 
 
 def get_downloaded_bert_models(model_directory: str) -> List[str]:
-    """ Retrieve list of downloaded pretrained BERT models.
+    """
+    Retrieve list of downloaded pretrained BERT models.
     """
     from texta_bert_tagger.tagger import BertTagger
     normalized_model_names = os.listdir(model_directory)
     bert_models = [BertTagger.restore_name(normalized_name) for normalized_name in normalized_model_names]
-    return bert_models
+    return sorted(bert_models)
 
 
 def chunks(lst: list, n: int):

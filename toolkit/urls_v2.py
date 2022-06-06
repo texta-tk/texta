@@ -10,6 +10,7 @@ from toolkit.celery_management.views import CeleryQueueCount, CeleryStats, Purge
 from toolkit.core.core_variable.views import CoreVariableViewSet
 from toolkit.core.health.views import HealthView
 from toolkit.core.project.views import (
+    AggregateFactsView,
     DocumentView,
     ExportSearchView,
     GetFactsView,
@@ -99,8 +100,8 @@ urlpatterns = [
     # health
     url('health', HealthView.as_view()),
     # auth
-    path('rest-auth/', include('rest_auth.urls')),
-    path('rest-auth/registration/', include('rest_auth.registration.urls')),
+    path('rest-auth/', include('dj_rest_auth.urls')),
+    path('rest-auth/registration/', include('dj_rest_auth.registration.urls')),
     # tasks
     path("task/", TaskAPIView.as_view(), name="task_api"),
     # mlp
@@ -131,6 +132,7 @@ urlpatterns = [
     path('projects/<int:project_pk>/elastic/document/', DocumentView.as_view(), name="project-document"),
     path('projects/<int:project_pk>/elastic/get_spam/', GetSpamView.as_view(), name="project-get-spam"),
     path('projects/<int:project_pk>/elastic/get_facts/', GetFactsView.as_view(), name="get_facts"),
+    path('projects/<int:project_pk>/elastic/aggregate_facts/', AggregateFactsView.as_view(), name="aggregate_facts"),
     path('projects/<int:project_pk>/elastic/get_fields/', GetFieldsView.as_view(), name="get_fields"),
     path('projects/<int:project_pk>/elastic/get_indices/', GetIndicesView.as_view(), name="get_project_indices"),
     path('elastic/get_indices/', ElasticGetIndices.as_view(), name="get_indices_for_project_creation"),

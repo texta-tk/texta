@@ -37,7 +37,7 @@ class TorchTagger(models.Model):
     fields = models.TextField(default=json.dumps([]))
     indices = models.ManyToManyField(Index, default=None)
 
-    embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE, default=None)
+    embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE)
 
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     fact_name = models.CharField(max_length=MAX_DESC_LEN, null=True)
@@ -57,6 +57,7 @@ class TorchTagger(models.Model):
     balance_to_max_limit = models.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT)
 
     num_examples = models.TextField(default="{}", null=True)
+    classes = models.TextField(default=json.dumps([]))
 
     # RESULTS
     label_index = models.TextField(default=json.dumps({}))

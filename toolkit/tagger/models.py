@@ -63,6 +63,7 @@ class Tagger(models.Model):
     num_examples = models.TextField(default="{}", null=True)
     confusion_matrix = models.TextField(default="[]", null=True, blank=True)
     scoring_function = models.CharField(default=choices.DEFAULT_SCORING_FUNCTION, max_length=MAX_DESC_LEN, null=True, blank=True)
+    classes = models.TextField(default=json.dumps([]))
 
     model = models.FileField(null=True, verbose_name='', default=None)
     model_size = models.FloatField(default=None, null=True)
@@ -283,6 +284,7 @@ class TaggerGroup(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     fact_name = models.CharField(max_length=MAX_DESC_LEN)
+    blacklisted_facts = models.TextField(default='[]')
     num_tags = models.IntegerField(default=0)
     minimum_sample_size = models.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE)
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)

@@ -6,15 +6,16 @@ from io import BytesIO
 from time import sleep, time_ns
 
 from django.test import override_settings
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 from texta_bert_tagger.tagger import BertTagger
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.core import ElasticCore
 
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
 from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
-from texta_elastic.aggregator import ElasticAggregator
-from texta_elastic.core import ElasticCore
 from toolkit.helper_functions import (
     download_bert_requirements,
     get_downloaded_bert_models,
@@ -38,7 +39,7 @@ from toolkit.test_settings import (
     TEST_QUERY,
     TEST_VERSION_PREFIX
 )
-from toolkit.tools.utils_for_tests import(
+from toolkit.tools.utils_for_tests import (
     create_test_user,
     print_output,
     project_creation,
@@ -53,8 +54,10 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         # Owner of the project
         self.test_index_name = reindex_test_dataset()
         self.user = create_test_user('BertTaggerOwner', 'my@email.com', 'pw')
+        self.admin_user = create_test_user("AdminBertUser", 'my@email.com', 'pw', superuser=True)
         self.project = project_creation("BertTaggerTestProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
+        self.project.users.add(self.admin_user)
         self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/bert_taggers/'
         self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
 
@@ -95,6 +98,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.test_imported_binary_cpu_tagger_id = self.import_test_model(TEST_BERT_TAGGER_BINARY_CPU)
         self.ec = ElasticCore()
 
+
     def import_test_model(self, file_path: str):
         """Import fine-tuned models for testing."""
         print_output("Importing model from file:", file_path)
@@ -127,6 +131,9 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.run_apply_multiclass_tagger_to_index()
         self.run_apply_tagger_to_index_invalid_input()
         self.run_bert_tag_text_persistent()
+
+        self.run_test_that_user_cant_delete_pretrained_model()
+        self.run_test_that_admin_users_can_delete_pretrained_model()
 
         self.add_cleanup_files(self.test_tagger_id)
         self.add_cleanup_folders()
@@ -176,6 +183,11 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         print_output('test_multiclass_bert_tagger_has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
+
+        print_output('test_multiclass_bert_tagger_has_classes:response.data.classes', response.data["classes"])
+        self.assertTrue(isinstance(response.data["classes"], list))
+        self.assertTrue(len(response.data["classes"]) > 2)
+
         self.add_cleanup_files(tagger_id)
 
 
@@ -205,6 +217,11 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         print_output('test_binary_multiclass_bert_tagger_has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
+
+        print_output('test_binary_multiclass_bert_tagger_has_classes:response.data.classes', response.data["classes"])
+        self.assertTrue(isinstance(response.data["classes"], list))
+        self.assertTrue(len(response.data["classes"]) == 2)
+
         self.add_cleanup_files(tagger_id)
 
 
@@ -277,6 +294,10 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
 
+        print_output('test_balanced_multiclass_bert_tagger_has_classes:response.data.classes', response.data["classes"])
+        self.assertTrue(isinstance(response.data["classes"], list))
+        self.assertTrue(len(response.data["classes"]) >= 2)
+
         num_examples = json.loads(response.data["num_examples"])
         print_output('test_balanced_bert_tagger_num_examples_correct:num_examples', num_examples)
         for class_size in num_examples.values():
@@ -312,6 +333,10 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
 
+        print_output('test_binary_bert_tagger_has_classes:response.data.classes', response.data["classes"])
+        self.assertTrue(isinstance(response.data["classes"], list))
+        self.assertTrue(len(response.data["classes"]) == 2)
+
         # set trained tagger as active tagger
         self.test_tagger_id = tagger_id
         self.add_cleanup_files(tagger_id)
@@ -341,9 +366,13 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         sleep(5)
         tagger_id = response.data['id']
         response = self.client.get(f'{self.url}{tagger_id}/')
-        print_output('test_train_bert_tagger_from_checkpoint_model_bin2bin:GET:response.data', response.data)
+        print_output('test_train_bert_tagger_from_checkpoint_model_bin2bin.has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
+
+        print_output('test_train_bert_tagger_from_checkpoint_model.has_stats:response.data.classes', response.data["classes"])
+        self.assertTrue(isinstance(response.data["classes"], list))
+        self.assertTrue(len(response.data["classes"]) >= 2)
 
         self.add_cleanup_files(tagger_id)
 
@@ -372,9 +401,13 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         sleep(5)
         tagger_id = response.data['id']
         response = self.client.get(f'{self.url}{tagger_id}/')
-        print_output('test_train_bert_tagger_from_checkpoint_model_bin2mc:GET:response.data', response.data)
+        print_output('test_train_bert_tagger_from_checkpoint_model_bin2mc.has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
+
+        print_output('test_train_bert_tagger_from_checkpoint_model_bin2mc.has_classes:response.data.classes', response.data["classes"])
+        self.assertTrue(isinstance(response.data["classes"], list))
+        self.assertTrue(len(response.data["classes"]) >= 2)
 
         self.add_cleanup_files(tagger_id)
 
@@ -511,6 +544,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
     def run_bert_download_pretrained_model(self):
         """Test endpoint for downloading pretrained BERT model."""
+        self.client.login(username="AdminBertUser", password='pw')
         url = f'{self.url}download_pretrained_model/'
         # Test endpoint with valid payload
         valid_payload = {"bert_model": "prajjwal1/bert-tiny"}
@@ -667,6 +701,12 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
     def run_bert_tag_and_feedback_and_retrain(self):
         """Tests feeback extra action."""
 
+        # Get basic information to check for previous tagger deletion after retraining has finished.
+        tagger_orm: BertTaggerObject = BertTaggerObject.objects.get(pk=self.test_tagger_id)
+        model_path = pathlib.Path(tagger_orm.model.path)
+        print_output('run_bert_tag_and_feedback_and_retrain:assert that previous model doesnt exist', data=model_path.exists())
+        self.assertTrue(model_path.exists())
+
         payload = {
             "text": "This is some test text for the Tagger Test",
             "feedback_enabled": True
@@ -707,6 +747,14 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue('result' in response.data)
         self.assertTrue('probability' in response.data)
+
+        # Ensure that previous tagger is deleted properly.
+        print_output('test_model_retrain:assert that previous model doesnt exist', data=model_path.exists())
+        self.assertFalse(model_path.exists())
+        # Ensure that the freshly created model wasn't deleted.
+        tagger_orm.refresh_from_db()
+        self.assertNotEqual(tagger_orm.model.path, str(model_path))
+
         # delete feedback
         feedback_delete_url = f'{self.url}{self.test_tagger_id}/feedback/'
         response = self.client.delete(feedback_delete_url)
@@ -738,7 +786,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         # First try
         start_1 = time_ns()
         response = self.client.post(f'{self.url}{self.test_tagger_id}/tag_text/', payload)
-        end_1 = time_ns()-start_1
+        end_1 = time_ns() - start_1
 
         # Give time for persistent taggers to load
         sleep(1)
@@ -746,7 +794,30 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         # Second try
         start_2 = time_ns()
         response = self.client.post(f'{self.url}{self.test_tagger_id}/tag_text/', payload)
-        end_2 = time_ns()-start_2
+        end_2 = time_ns() - start_2
         # Test if second attempt faster
         print_output('test_bert_tagger_persistent speed:', (end_1, end_2))
         assert end_2 < end_1
+
+
+    def run_test_that_user_cant_delete_pretrained_model(self):
+        self.client.login(username='BertTaggerOwner', password='pw')
+
+        url = reverse("v2:bert_tagger-delete-pretrained-model", kwargs={"project_pk": self.project.pk})
+        resp = self.client.post(url, data={"model_name": "EMBEDDIA/finest-bert"})
+        print_output("run_test_that_user_cant_delete_pretrained_model:response.data", data=resp.data)
+        self.assertTrue(resp.status_code == status.HTTP_401_UNAUTHORIZED or resp.status_code == status.HTTP_403_FORBIDDEN)
+
+
+    def run_test_that_admin_users_can_delete_pretrained_model(self):
+        self.client.login(username="AdminBertUser", password='pw')
+
+        url = reverse("v2:bert_tagger-delete-pretrained-model", kwargs={"project_pk": self.project.pk})
+        model_name = "prajjwal1/bert-tiny"
+        file_name = BertTagger.normalize_name(model_name)
+        model_path = pathlib.Path(BERT_PRETRAINED_MODEL_DIRECTORY) / file_name
+        self.assertTrue(model_path.exists() is True)
+        resp = self.client.post(url, data={"model_name": model_name})
+        print_output("run_test_that_admin_users_can_delete_pretrained_model:response.data", data=resp.data)
+        self.assertTrue(resp.status_code == status.HTTP_200_OK)
+        self.assertTrue(model_path.exists() is False)

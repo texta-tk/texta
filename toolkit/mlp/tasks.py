@@ -4,12 +4,12 @@ from typing import List, Optional
 
 from celery import group
 from celery.decorators import task
+from texta_elastic.document import ElasticDocument
+from texta_elastic.searcher import ElasticSearcher
 from texta_mlp.mlp import MLP
 
 from toolkit.base_tasks import BaseTask, QuietTransactionAwareTask, TransactionAwareTask
 from toolkit.core.task.models import Task
-from texta_elastic.document import ElasticDocument
-from texta_elastic.searcher import ElasticSearcher
 from toolkit.helper_functions import chunks_iter
 from toolkit.mlp.helpers import process_lang_actions
 from toolkit.mlp.models import ApplyLangWorker, MLPWorker
@@ -66,7 +66,8 @@ def apply_mlp_on_documents(documents: List[dict], analyzers: List[str], field_da
     # Apply MLP
     try:
         load_mlp()
-        documents = mlp.process_docs(documents, analyzers=analyzers, doc_paths=field_data)
+        spans = "sentence" if "sentences" in analyzers or "all" in analyzers else "text"
+        documents = mlp.process_docs(documents, analyzers=analyzers, doc_paths=field_data, spans=spans)
         return documents
 
     except Exception as e:
@@ -136,44 +137,52 @@ def start_mlp_worker(self, mlp_id: int):
     """
     Scrolls the document ID-s and passes them to MLP worker.
     """
-    logging.getLogger(INFO_LOGGER).info(f"Applying mlp on the index for MLP Task ID: {mlp_id}")
-    mlp_object = MLPWorker.objects.get(pk=mlp_id)
-    # init progress
-    show_progress = ShowProgress(mlp_object.task, multiplier=1)
-    show_progress.update_step('Scrolling document IDs')
-    show_progress.update_view(0)
-    # Get the necessary fields.
-    indices: List[str] = mlp_object.get_indices()
-    es_scroll_size = mlp_object.es_scroll_size
-    es_timeout = mlp_object.es_timeout
+    try:
+        logging.getLogger(INFO_LOGGER).info(f"Applying mlp on the index for MLP Task ID: {mlp_id}")
+        mlp_object = MLPWorker.objects.get(pk=mlp_id)
+        # init progress
+        show_progress = ShowProgress(mlp_object.task, multiplier=1)
+        show_progress.update_step('Scrolling document IDs')
+        show_progress.update_view(0)
+        # Get the necessary fields.
+        indices: List[str] = mlp_object.get_indices()
+        es_scroll_size = mlp_object.es_scroll_size
+        es_timeout = mlp_object.es_timeout
 
-    # create searcher object for scrolling ids
-    searcher = ElasticSearcher(
-        query=json.loads(mlp_object.query),
-        indices=indices,
-        output=ElasticSearcher.OUT_META,
-        callback_progress=show_progress,
-        scroll_size=es_scroll_size,
-        scroll_timeout=f"{es_timeout}m"
-    )
-    # add texta facts mappings to the indices if needed
-    for index in indices:
-        searcher.core.add_texta_facts_mapping(index=index)
+        # create searcher object for scrolling ids
+        searcher = ElasticSearcher(
+            query=json.loads(mlp_object.query),
+            indices=indices,
+            output=ElasticSearcher.OUT_META,
+            callback_progress=show_progress,
+            scroll_size=es_scroll_size,
+            scroll_timeout=f"{es_timeout}m"
+        )
+        # add texta facts mappings to the indices if needed
+        for index in indices:
+            searcher.core.add_texta_facts_mapping(index=index)
 
-    doc_chunks = list(chunks_iter(searcher, MLP_BATCH_SIZE))
+        doc_chunks = list(chunks_iter(searcher, MLP_BATCH_SIZE))
 
-    # update progress
-    show_progress.update_step(f'Applying MLP to {len(doc_chunks)} documents')
-    show_progress.update_view(0)
-    # update total doc count
-    task_object = mlp_object.task
-    task_object.total = sum([len(chunk) for chunk in doc_chunks])
-    task_object.save()
+        # update progress
+        show_progress.update_step(f'Applying MLP to {len(doc_chunks)} documents')
+        show_progress.update_view(0)
+        # update total doc count
+        task_object = mlp_object.task
+        task_object.total = searcher.count()
+        task_object.save()
 
-    # pass document id-s to the next task
-    chain = group(apply_mlp_on_es_docs.s([doc["_id"] for doc in meta_chunk], mlp_id) for meta_chunk in doc_chunks) | end_mlp_task.si(mlp_id)
-    chain.delay()
-    return True
+        # pass document id-s to the next task
+        chain = group(apply_mlp_on_es_docs.s([doc["_id"] for doc in meta_chunk], mlp_id) for meta_chunk in doc_chunks) | end_mlp_task.si(mlp_id)
+        chain.delay()
+        return True
+
+    except Exception as e:
+        logging.getLogger(ERROR_LOGGER).exception(e)
+        error_message = f"{str(e)[:100]}..." if str(e) else str(type(e).__name__)  # Take first 100 characters in case the error message is massive.
+        mlp_object.task.add_error(error_message)
+        mlp_object.task.update_status(Task.STATUS_FAILED)
+        raise
 
 
 @task(name="end_mlp_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)

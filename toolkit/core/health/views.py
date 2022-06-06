@@ -21,9 +21,15 @@ class HealthView(views.APIView):
         is_anon = request.user.is_anonymous
 
         toolkit_status["services"]["elastic"] = get_elastic_status(is_anon)
+        toolkit_status["services"]["redis"] = get_redis_status(is_anon)
 
         toolkit_status["toolkit"]["version"] = get_version()
         toolkit_status["toolkit"]["available_langs"] = DEFAULT_MLP_LANGUAGE_CODES
+
+        if is_anon is True:
+            toolkit_status.pop("host")
+            toolkit_status["toolkit"].pop("available_langs")
+            return Response(toolkit_status, status=status.HTTP_200_OK)
 
         disk_total, disk_used, disk_free = shutil.disk_usage("/")
         toolkit_status["host"]["disk"] = {
@@ -43,17 +49,10 @@ class HealthView(views.APIView):
 
         toolkit_status["host"]["cpu"] = {"percent": psutil.cpu_percent(), "count": os.cpu_count()}
 
-        toolkit_status["services"]["redis"] = get_redis_status(is_anon)
-
         gpu_count = torch.cuda.device_count()
         gpu_devices = get_gpu_devices()
 
         toolkit_status["host"]["gpu"] = {"count": gpu_count, "devices": gpu_devices}
         toolkit_status["toolkit"]["active_tasks"] = get_active_tasks(toolkit_status["services"]["redis"]["alive"])
-
-        if is_anon is True:
-            toolkit_status.pop("host")
-            toolkit_status["toolkit"].pop("available_langs")
-            toolkit_status["toolkit"].pop("active_tasks")
 
         return Response(toolkit_status, status=status.HTTP_200_OK)
