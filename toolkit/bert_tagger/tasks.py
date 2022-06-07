@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import pathlib
 import secrets
 from typing import Dict, List, Union
 
@@ -51,6 +52,10 @@ def apply_persistent_bert_tagger(tagger_input: Union[str, Dict], tagger_id: int,
 def train_bert_tagger(tagger_id, testing=False):
     # retrieve neurotagger & task objects
     tagger_object = BertTaggerObject.objects.get(pk=tagger_id)
+
+    # Handle previous tagger models that exist in case of retrains.
+    model_path = pathlib.Path(tagger_object.model.path) if tagger_object.model else None
+
     task_object = tagger_object.task
     try:
         show_progress = ShowProgress(task_object, multiplier=1)
@@ -167,6 +172,11 @@ def train_bert_tagger(tagger_id, testing=False):
         tagger_object.save()
         # declare the job done
         task_object.complete()
+
+        # Cleanup after the transaction to ensure integrity database records.
+        if model_path and model_path.exists():
+            model_path.unlink(missing_ok=True)
+
         return True
 
 

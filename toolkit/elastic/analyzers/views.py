@@ -30,7 +30,7 @@ class SnowballProcessor(views.APIView):
         lemmatizer = ElasticAnalyzer(language=language)
         lemmatized = lemmatizer.stem_text(text, language=language)
 
-        return Response({"text": lemmatized})
+        return Response({"text": lemmatized, "language": language})
 
 
     def get(self, request):

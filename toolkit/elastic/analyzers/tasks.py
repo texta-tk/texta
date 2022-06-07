@@ -1,16 +1,14 @@
 import json
-import logging
 from typing import List
 
 from celery.task import task
-
-from toolkit.base_tasks import TransactionAwareTask
-from toolkit.core.task.models import Task
-from toolkit.elastic.analyzers.helpers import process_analyzer_actions
-from toolkit.elastic.analyzers.models import ApplyESAnalyzerWorker
 from texta_elastic.document import ElasticDocument
 from texta_elastic.searcher import ElasticSearcher
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER
+
+from toolkit.base_tasks import TransactionAwareTask
+from toolkit.elastic.analyzers.helpers import process_analyzer_actions
+from toolkit.elastic.analyzers.models import ApplyESAnalyzerWorker
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.tools.show_progress import ShowProgress
 
 
@@ -43,6 +41,8 @@ def apply_analyzers_on_indices(self, worker_id: int):
             scroll_timeout=scroll_timeout
         )
 
+        task_object.set_total(searcher.count())
+
         actions = process_analyzer_actions(
             generator=searcher,
             worker=worker_object,
@@ -63,7 +63,5 @@ def apply_analyzers_on_indices(self, worker_id: int):
         return worker_id
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        task_object.add_error(str(e))
-        task_object.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
         raise e
