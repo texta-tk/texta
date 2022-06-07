@@ -50,11 +50,18 @@ def unflatten_doc(doc):
     return unflattened_doc
 
 
-def apply_custom_processing(elastic_search, flatten_doc=False):
+def apply_custom_processing(elastic_search: ElasticSearcher, flatten_doc=False):
     for document in elastic_search:
         new_doc = document
         if not flatten_doc:
             new_doc = unflatten_doc(new_doc)
+
+        # Make sure that only the meta fields for the included fields is included.
+        # Through the magic of mutable dictionaries, popping it after getting it also changes the document itself.
+        if TEXTA_MLP_META_KEY in new_doc:
+            mlp_meta = new_doc.get(TEXTA_MLP_META_KEY)
+            fields = elastic_search.field_data
+            new_doc[TEXTA_MLP_META_KEY] = {field_name: meta for field_name, meta in mlp_meta.items() if field_name in fields}
 
         yield new_doc
 
@@ -66,10 +73,6 @@ def apply_field_changes_generator(generator, index: str, field_data: List[dict])
             if old_path in document:
                 new_field = field["new_path_name"]
                 document[new_field] = document.pop(old_path)
-
-            mlp_meta = document.get(TEXTA_MLP_META_KEY, {})
-            if old_path not in mlp_meta:
-                mlp_meta.pop(old_path)
 
         yield {
             "_index": index,
@@ -93,7 +96,7 @@ def reindex_task(reindexer_task_id: int):
         reindexer_obj = Reindexer.objects.get(pk=reindexer_task_id)
         task_object = reindexer_obj.task
         indices = json.loads(reindexer_obj.indices)
-        fields = json.loads(reindexer_obj.fields)
+        fields = json.loads(reindexer_obj.fields) + [TEXTA_MLP_META_KEY]
         random_size = reindexer_obj.random_size
         field_type = json.loads(reindexer_obj.field_type)
         scroll_size = reindexer_obj.scroll_size
@@ -109,7 +112,7 @@ def reindex_task(reindexer_task_id: int):
         show_progress.update_step("scrolling data")
         show_progress.update_view(0)
 
-        elastic_search = ElasticSearcher(indices=indices, field_data=fields + [settings.TEXTA_MLP_META_KEY], callback_progress=show_progress, query=query, scroll_size=scroll_size)
+        elastic_search = ElasticSearcher(indices=indices, field_data=fields, callback_progress=show_progress, query=query, scroll_size=scroll_size)
         elastic_doc = ElasticDocument(new_index)
 
         if random_size > 0:
@@ -126,7 +129,7 @@ def reindex_task(reindexer_task_id: int):
         create_index_res = ElasticCore().create_index(new_index, updated_schema)
         Index.objects.get_or_create(name=new_index)
 
-        logger.info("Indexing documents.")
+        logger.info(f"Indexing documents into '{new_index}'!")
         # set new_index name as mapping name, perhaps make it customizable in the future
         bulk_add_documents(elastic_search, elastic_doc, index=new_index, chunk_size=scroll_size, flatten_doc=FLATTEN_DOC, field_data=field_type)
 

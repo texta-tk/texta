@@ -1,13 +1,11 @@
 from typing import List
-import json
 
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
+from texta_elastic.core import ElasticCore
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
-from texta_elastic.core import ElasticCore
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.validators import (
     check_for_banned_beginning_chars,
@@ -35,7 +33,7 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
                                           check_for_upper_case
                                       ])
     field_type = serializers.ListField(help_text=f'Used to update the fieldname and the field type of chosen paths.', required=False)
-    add_facts_mapping = serializers.BooleanField(help_text='Add texta facts mapping. NB! If texta_facts is present in reindexed fields, the mapping is always created.', required=False, default=False)
+    add_facts_mapping = serializers.BooleanField(help_text='Add texta facts mapping. NB! If texta_facts is present in reindexed fields, the mapping is always created.', default=True)
     task = TaskSerializer(read_only=True)
     fields = serializers.ListField(
         child=serializers.CharField(),
