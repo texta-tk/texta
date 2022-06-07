@@ -10,7 +10,6 @@ from texta_elastic.mapping_tools import update_field_types, update_mapping
 from texta_elastic.searcher import ElasticSearcher
 
 from toolkit.base_tasks import BaseTask
-from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.settings import TEXTA_MLP_META_KEY
@@ -92,9 +91,11 @@ def bulk_add_documents(elastic_search: ElasticSearcher, elastic_doc: ElasticDocu
 def reindex_task(reindexer_task_id: int):
     logger = logging.getLogger(settings.INFO_LOGGER)
     logger.info(f"Starting task 'reindex' with id: {str(reindexer_task_id)}.")
+
+    reindexer_obj = Reindexer.objects.get(pk=reindexer_task_id)
+    task_object = reindexer_obj.task
+
     try:
-        reindexer_obj = Reindexer.objects.get(pk=reindexer_task_id)
-        task_object = reindexer_obj.task
         indices = json.loads(reindexer_obj.indices)
         fields = json.loads(reindexer_obj.fields) + [TEXTA_MLP_META_KEY]
         random_size = reindexer_obj.random_size
@@ -136,11 +137,9 @@ def reindex_task(reindexer_task_id: int):
         # declare the job done
         task_object.complete()
 
-    except Exception as e:
-        logging.getLogger(settings.ERROR_LOGGER).exception(e)
-        task_object.add_error(str(e))
-        task_object.update_status(Task.STATUS_FAILED)
-        raise e
+        logger.info(f"Reindexing of task-id {reindexer_task_id} successfully completed.")
+        return True
 
-    logger.info(f"Reindexing of task-id {reindexer_task_id} successfully completed.")
-    return True
+    except Exception as e:
+        task_object.handle_failed_task(e)
+        raise e
