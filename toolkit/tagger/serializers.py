@@ -204,7 +204,15 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     tagger_statistics = serializers.SerializerMethodField()
     tagger_params = serializers.SerializerMethodField()
     url = serializers.SerializerMethodField()
-    task = TaskSerializer(read_only=True)
+    task = serializers.SerializerMethodField()
+
+
+    def get_task(self, instance):
+        if instance.task:
+            data = {"time_started": instance.task.time_started, "time_completed": instance.task.time_completed}
+        else:
+            data = None
+        return data
 
 
     def to_representation(self, instance):

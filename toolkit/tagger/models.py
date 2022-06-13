@@ -6,14 +6,14 @@ import pathlib
 import secrets
 import tempfile
 import zipfile
-from typing import List, Union, Dict
+from typing import Dict, List, Union
 
 from django.contrib.auth.models import User
 from django.core import serializers
 from django.db import models, transaction
 from django.dispatch import receiver
 from django.http import HttpResponse
-
+from texta_elastic.searcher import EMPTY_QUERY
 from texta_embedding.embedding import W2VEmbedding
 from texta_tagger.tagger import Tagger as TextTagger
 
@@ -23,13 +23,12 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choices
 from toolkit.elastic.index.models import Index
-from texta_elastic.searcher import EMPTY_QUERY
-from toolkit.embedding.models import Embedding
-from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, RELATIVE_MODELS_PATH
-from toolkit.helper_functions import load_stop_words
-from toolkit.tools.lemmatizer import CeleryLemmatizer, ElasticAnalyzer
-from toolkit.tagger import choices
 from toolkit.elastic.tools.feedback import Feedback
+from toolkit.embedding.models import Embedding
+from toolkit.helper_functions import load_stop_words
+from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, RELATIVE_MODELS_PATH
+from toolkit.tagger import choices
+from toolkit.tools.lemmatizer import CeleryLemmatizer, ElasticAnalyzer
 
 
 class Tagger(models.Model):
@@ -203,7 +202,7 @@ class Tagger(models.Model):
 
     def load_tagger(self, lemmatize: bool = False, use_logger: bool = True):
         """Loading tagger model from disc."""
-        #if use_logger:
+        # if use_logger:
         #    logging.getLogger(INFO_LOGGER).info(f"Loading tagger with ID: {tagger_id} with params (lemmatize: {lemmatize})")
         # get lemmatizer/stemmer
         if self.snowball_language:
@@ -290,6 +289,12 @@ class TaggerGroup(models.Model):
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
     taggers = models.ManyToManyField(Tagger, default=None)
+
+
+    def save(self, *args, **kwargs):
+        task = Task.objects.create(taggergroup=self, status=Task.STATUS_CREATED, task_type=Task.TYPE_TRAIN)
+        self.task = task
+        super(TaggerGroup, self).save(*args, **kwargs)
 
 
     def export_resources(self) -> HttpResponse:

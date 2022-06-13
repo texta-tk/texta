@@ -94,6 +94,8 @@ def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries,
         create_tagger_batch(tagger_group_id, taggers_to_create)
 
     logging.getLogger(INFO_LOGGER).info(f"Completed task 'create_tagger_objects' for TaggerGroup with ID: {tagger_group_id}!")
+    tg = TaggerGroup.objects.get(pk=tagger_group_id)
+    tg.task.complete()
     return True
 
 
