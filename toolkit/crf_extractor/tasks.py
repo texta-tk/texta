@@ -11,7 +11,6 @@ from texta_elastic.document import ElasticDocument
 from texta_elastic.searcher import ElasticSearcher
 
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
-from toolkit.core.task.models import Task
 from toolkit.helper_functions import get_indices_from_object
 from toolkit.settings import (
     CELERY_LONG_TERM_TASK_QUEUE,
@@ -101,11 +100,7 @@ def train_crf_task(crf_id: int):
             "plot": str(image_path),
         }
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        crf_object = CRFExtractorObject.objects.get(pk=crf_id)
-        task_object = crf_object.task
-        task_object.add_error(str(e))
-        task_object.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
         raise e
 
 
@@ -144,11 +139,7 @@ def save_crf_results(result_data: dict):
 
         return True
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        crf_object = CRFExtractorObject.objects.get(pk=crf_id)
-        task_object = crf_object.task
-        task_object.add_error(str(e))
-        task_object.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
         raise e
 
 
@@ -231,6 +222,7 @@ def apply_crf_extractor_to_index(
             output=ElasticSearcher.OUT_RAW,
             timeout=f"{es_timeout}m",
             callback_progress=progress,
+            scroll_size=bulk_size
         )
         # create update actions
         actions = update_generator(
@@ -252,8 +244,5 @@ def apply_crf_extractor_to_index(
         return True
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        error_message = f"{str(e)[:100]}..."
-        crf_object = CRFExtractorObject.objects.get(pk=object_id)
-        crf_object.task.add_error(error_message)
-        crf_object.task.update_status(Task.STATUS_FAILED)
+        crf_object.task.handle_failed_task(e)
+        raise e
