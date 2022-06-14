@@ -3,24 +3,23 @@ import json
 import logging
 
 from celery.decorators import task
-
-from toolkit.base_tasks import TransactionAwareTask
-from toolkit.core.task.models import Task
-from toolkit.elastic.choices import LABEL_DISTRIBUTION
-from toolkit.elastic.index_splitter.models import IndexSplitter
 from texta_elastic.aggregator import ElasticAggregator
 from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
 from texta_elastic.mapping_tools import update_field_types, update_mapping
 from texta_elastic.searcher import ElasticSearcher
-from toolkit.settings import ERROR_LOGGER, INFO_LOGGER
+
+from toolkit.base_tasks import TransactionAwareTask
+from toolkit.elastic.choices import LABEL_DISTRIBUTION
+from toolkit.elastic.index_splitter.models import IndexSplitter
+from toolkit.settings import INFO_LOGGER
 from toolkit.tools.show_progress import ShowProgress
 
 
 FLATTEN_DOC = False
 
 
-def elastic_random_split_generator(generator, ratio, train_ix: str, test_ix: str):
+def elastic_random_split_generator(generator: ElasticSearcher, ratio, train_ix: str, test_ix: str):
     docs_count = generator.count()
 
     for ix, document in enumerate(generator):
@@ -141,7 +140,20 @@ def index_splitting_task(index_splitting_task_id):
         if (distribution == LABEL_DISTRIBUTION[0][0]):  # random
             logging.getLogger(INFO_LOGGER).info("Splitting documents randomly.")
 
-            elastic_search = ElasticSearcher(indices=indices, field_data=fields, callback_progress=show_progress, query=query, scroll_size=scroll_size)
+            elastic_search = ElasticSearcher(
+                indices=indices,
+                field_data=fields,
+                callback_progress=show_progress,
+                query=query,
+                scroll_size=scroll_size,
+                flatten=FLATTEN_DOC,
+                # ElasticSearcher has a legacy method for filtering fields depending on field data which doesn't work with objects, which is risky to remove.
+                # Hence, that behavior is just removed through a passable callback.
+                filter_callback=lambda x: x
+            )
+            task_object.set_total(elastic_search.count())
+
+
             actions = elastic_random_split_generator(elastic_search, test_size, train_index, test_index)
 
             # Since the index name is specified in the generator already, we can use either one of the ElasticDocument object.
@@ -163,8 +175,18 @@ def index_splitting_task(index_splitting_task_id):
             filtered_query = {"query": {"bool": {"must": [query["query"],
                                                           fact_filter_query["query"]]}}}
 
-            elastic_search = ElasticSearcher(indices=indices, field_data=fields, callback_progress=show_progress, query=filtered_query, scroll_size=scroll_size)
-
+            elastic_search = ElasticSearcher(
+                indices=indices,
+                field_data=fields,
+                callback_progress=show_progress,
+                query=filtered_query,
+                scroll_size=scroll_size,
+                flatten=FLATTEN_DOC,
+                # ElasticSearcher has a legacy method for filtering fields depending on field data which doesn't work with objects, which is risky to remove.
+                # Hence, that behavior is just removed through a passable callback.
+                filter_callback=lambda x: x
+            )
+            task_object.set_total(elastic_search.count())
             aggregator = ElasticAggregator(indices=indices, query=copy.deepcopy(filtered_query))
             labels_distribution = aggregator.get_fact_values_distribution(fact_name)
 
@@ -194,12 +216,9 @@ def index_splitting_task(index_splitting_task_id):
                 elastic_doc.bulk_add_generator(actions=actions, chunk_size=scroll_size, refresh="wait_for")
 
         task_object.complete()
+        logging.getLogger(INFO_LOGGER).info("Index splitting succesfully completed.")
+        return True
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        task_object.add_error(str(e))
-        task_object.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
         raise e
-
-    logging.getLogger(INFO_LOGGER).info("Index splitting succesfully completed.")
-    return True
