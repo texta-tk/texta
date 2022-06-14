@@ -3,13 +3,13 @@ import logging
 from typing import List
 
 from celery.decorators import task
-
-from toolkit.base_tasks import QuietTransactionAwareTask
-from toolkit.core.task.models import Task
-from toolkit.elastic.document_api.models import DeleteFactsByQueryTask, EditFactsByQueryTask
 from texta_elastic.document import ElasticDocument
 from texta_elastic.searcher import ElasticSearcher
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, TEXTA_TAGS_KEY
+
+from toolkit.base_tasks import QuietTransactionAwareTask
+from toolkit.elastic.document_api.helpers import check_if_dict_is_subdict
+from toolkit.elastic.document_api.models import DeleteFactsByQueryTask, EditFactsByQueryTask
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, TEXTA_TAGS_KEY
 from toolkit.tools.show_progress import ShowProgress
 
 
@@ -19,32 +19,35 @@ def start_fact_delete_query_task(self, worker_id: int):
     Scrolls the document ID-s and passes them to MLP worker.
     """
     worker_object = DeleteFactsByQueryTask.objects.get(pk=worker_id)
-    logging.getLogger(INFO_LOGGER).info(f"Celery: Starting task for deleting facts by query for project with ID: {worker_object.pk}")
 
-    # init progress
-    show_progress = ShowProgress(worker_object.task, multiplier=1)
-    show_progress.update_step('Scrolling document IDs')
-    show_progress.update_view(0)
+    try:
+        logging.getLogger(INFO_LOGGER).info(f"Celery: Starting task for deleting facts by query for project with ID: {worker_object.pk}")
 
-    # create searcher object for scrolling ids
-    searcher = ElasticSearcher(
-        query=json.loads(worker_object.query),
-        indices=worker_object.get_indices(),
-        output=ElasticSearcher.OUT_DOC,
-        callback_progress=show_progress,
-        scroll_size=worker_object.scroll_size,
-        field_data=["texta_facts"]
-    )
+        # init progress
+        show_progress = ShowProgress(worker_object.task, multiplier=1)
+        show_progress.update_step('Scrolling document IDs')
+        show_progress.update_view(0)
 
-    count = searcher.count()
-    show_progress.update_step(f'Deleting facts from {count} documents')
-    show_progress.update_view(0)
-    # update total doc count
-    task_object = worker_object.task
-    task_object.total = count
-    task_object.save()
+        # create searcher object for scrolling ids
+        searcher = ElasticSearcher(
+            query=json.loads(worker_object.query),
+            indices=worker_object.get_indices(),
+            output=ElasticSearcher.OUT_DOC,
+            callback_progress=show_progress,
+            scroll_size=worker_object.scroll_size,
+            field_data=["texta_facts"]
+        )
 
-    return True
+        count = searcher.count()
+
+        show_progress.update_step(f'Deleting facts from {count} documents')
+        show_progress.update_view(0)
+        worker_object.task.set_total(count)
+        return True
+
+    except Exception as e:
+        worker_object.task.handle_failed_task(e)
+        raise e
 
 
 def query_delete_actions_generator(searcher, target_facts: List[dict]):
@@ -55,7 +58,7 @@ def query_delete_actions_generator(searcher, target_facts: List[dict]):
             new_facts = []
             for index_count, existing_fact in enumerate(existing_facts):
                 for fact in target_facts:
-                    if not (fact.items() <= existing_fact.items()):
+                    if not check_if_dict_is_subdict(main_dict=existing_fact, potential_subdict=fact):
                         new_facts.append(existing_fact)
 
             document["_source"][TEXTA_TAGS_KEY] = new_facts
@@ -71,6 +74,7 @@ def query_delete_actions_generator(searcher, target_facts: List[dict]):
 @task(name="fact_delete_query_task", base=QuietTransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
 def fact_delete_query_task(self, worker_id: int):
     worker_object = DeleteFactsByQueryTask.objects.get(pk=worker_id)
+
     try:
         show_progress = ShowProgress(worker_object.task, multiplier=1)
         show_progress.update_step('Scrolling through the indices to delete the facts.')
@@ -100,9 +104,7 @@ def fact_delete_query_task(self, worker_id: int):
         return worker_id
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        worker_object.task.add_error(str(e))
-        worker_object.task.update_status(Task.STATUS_FAILED)
+        worker_object.task.handle_failed_task(e)
         raise e
 
 
@@ -112,32 +114,34 @@ def start_fact_edit_query_task(self, worker_id: int):
     Scrolls the document ID-s and passes them to MLP worker.
     """
     worker_object = EditFactsByQueryTask.objects.get(pk=worker_id)
-    logging.getLogger(INFO_LOGGER).info(f"Celery: Starting task for editing facts by query for project with ID: {worker_object.pk}")
+    try:
+        logging.getLogger(INFO_LOGGER).info(f"Celery: Starting task for editing facts by query for project with ID: {worker_object.pk}")
 
-    # init progress
-    show_progress = ShowProgress(worker_object.task, multiplier=1)
-    show_progress.update_step('Scrolling document IDs')
-    show_progress.update_view(0)
+        # init progress
+        show_progress = ShowProgress(worker_object.task, multiplier=1)
+        show_progress.update_step('Scrolling document IDs')
+        show_progress.update_view(0)
 
-    # create searcher object for scrolling ids
-    searcher = ElasticSearcher(
-        query=json.loads(worker_object.query),
-        indices=worker_object.get_indices(),
-        output=ElasticSearcher.OUT_DOC,
-        callback_progress=show_progress,
-        scroll_size=worker_object.scroll_size,
-        field_data=[TEXTA_TAGS_KEY]
-    )
+        # create searcher object for scrolling ids
+        searcher = ElasticSearcher(
+            query=json.loads(worker_object.query),
+            indices=worker_object.get_indices(),
+            output=ElasticSearcher.OUT_DOC,
+            callback_progress=show_progress,
+            scroll_size=worker_object.scroll_size,
+            field_data=[TEXTA_TAGS_KEY]
+        )
 
-    count = searcher.count()
-    show_progress.update_step(f'Editing facts from {count} documents')
-    show_progress.update_view(0)
-    # update total doc count
-    task_object = worker_object.task
-    task_object.total = count
-    task_object.save()
+        count = searcher.count()
+        show_progress.update_step(f'Editing facts from {count} documents')
+        show_progress.update_view(0)
 
-    return True
+        worker_object.task.set_total(count)
+        return True
+
+    except Exception as e:
+        worker_object.task.handle_failed_task(e)
+        raise e
 
 
 def query_edit_actions_generator(searcher, target_facts: List[dict], resulting_fact: dict):
@@ -147,7 +151,7 @@ def query_edit_actions_generator(searcher, target_facts: List[dict], resulting_f
             existing_facts = source.get(TEXTA_TAGS_KEY, [])
             for index_count, existing_fact in enumerate(existing_facts):
                 for fact in target_facts:
-                    if fact.items() <= existing_fact.items():
+                    if check_if_dict_is_subdict(main_dict=existing_fact, potential_subdict=fact):
                         existing_facts[index_count] = resulting_fact
 
             document["_source"][TEXTA_TAGS_KEY] = existing_facts
@@ -193,7 +197,5 @@ def fact_edit_query_task(self, worker_id: int):
         return worker_id
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        worker_object.task.add_error(str(e))
-        worker_object.task.update_status(Task.STATUS_FAILED)
+        worker_object.task.handle_failed_task(e)
         raise e

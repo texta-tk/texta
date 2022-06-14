@@ -50,7 +50,7 @@ class DeleteFactsByQueryTask(models.Model):
 
     def process(self):
         from .tasks import start_fact_delete_query_task, fact_delete_query_task
-        new_task = Task.objects.create(deletefactsbyquerytask=self, status='created')
+        new_task = Task.objects.create(deletefactsbyquerytask=self, status=Task.STATUS_CREATED)
         self.task = new_task
         self.save()
         chain = start_fact_delete_query_task.s() | fact_delete_query_task.s()
