@@ -144,7 +144,12 @@ def start_fact_edit_query_task(self, worker_id: int):
         raise e
 
 
-def query_edit_actions_generator(searcher, target_facts: List[dict], resulting_fact: dict):
+def query_edit_actions_generator(searcher: ElasticSearcher, target_facts: List[dict], resulting_fact: dict):
+    """
+    :param searcher: Iterator which outputs pure Elasticsearch documents.
+    :param target_facts: Which facts should be targeted for updates.
+    :param resulting_fact: Fact to which the targets should be updated to.
+    """
     for documents in searcher:
         for document in documents:
             source = document.get("_source")
@@ -192,7 +197,6 @@ def fact_edit_query_task(self, worker_id: int):
         ed.bulk_update(actions, chunk_size=scroll_size)
 
         worker_object.task.complete()
-        worker_object.save()
 
         return worker_id
 

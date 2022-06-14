@@ -1,6 +1,7 @@
 # Create your tests here.
 import json
 import random
+import time
 import uuid
 
 from django.test import override_settings
@@ -9,8 +10,8 @@ from elasticsearch import NotFoundError
 from elasticsearch_dsl import Q, Search
 from rest_framework import status
 from rest_framework.test import APITestCase, APITransactionTestCase
-
 from texta_elastic.core import ElasticCore
+
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.settings import TEXTA_TAGS_KEY
 from toolkit.test_settings import TEST_FIELD, TEST_QUERY, VERSION_NAMESPACE
@@ -319,13 +320,30 @@ class FactManagementApplicationTests(APITransactionTestCase):
             ]
         }
         self.ec = ElasticCore()
-        self.ec.es.index(index=self.test_index_name, id=self.uuid, body=self.source)
+        self.ec.es.index(index=self.test_index_name, id=self.uuid, body=self.source, refresh="wait_for")
         self.kwargs = {"project_pk": self.project.pk}
         self.client.login(username='first_user', password='pw')
 
 
     def tearDown(self) -> None:
         self.ec.es.indices.delete(index=self.test_index_name, ignore=[400, 404])
+
+
+    # For some reason, deletion only is failing, so we add a retry + backoff to it
+    # in hopes that it updates in Elastics side after a bit.
+    def __wait_for_document_update(self, retry_count=5, backoff=1):
+        counter = 0
+        while counter <= retry_count:
+            document = self.ec.es.get(index=self.test_index_name, doc_type="_doc", id=self.uuid)["_source"]
+            self.assertTrue(TEXTA_TAGS_KEY in document)
+            facts = document.get(TEXTA_TAGS_KEY, [])
+            if facts:
+                delay = backoff * 2 ** counter
+                print_output("__wait_for_document_update:waiting_for_update.seconds", f"{delay} seconds, {counter}/{retry_count}")
+                time.sleep(delay)
+            else:
+                return document
+            counter += 1
 
 
     def test_delete_facts_by_query(self):
@@ -347,8 +365,8 @@ class FactManagementApplicationTests(APITransactionTestCase):
         print_output("test_delete_facts_by_query:document", document)
         self.assertTrue(document[TEST_FIELD] == self.content)
         # Fact field should still stay in the document, it should just be empty.
-        self.assertTrue(TEXTA_TAGS_KEY in document)
-        facts = document.get(TEXTA_TAGS_KEY, [])
+        document = self.__wait_for_document_update()
+        facts = document.get(TEXTA_TAGS_KEY)
         print_output("test_delete_facts_by_query:facts", facts)
         self.assertTrue(facts == [])
 
