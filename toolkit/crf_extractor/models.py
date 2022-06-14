@@ -78,6 +78,10 @@ class CRFExtractor(models.Model):
         return list(without_text)
 
 
+    def __str__(self):
+        return f"{self.description} by @{self.author.username}"
+
+
     def get_labels(self):
         return json.loads(self.labels)
 
