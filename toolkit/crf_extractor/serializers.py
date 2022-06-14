@@ -100,7 +100,7 @@ class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, 
             'labels', 'feature_fields', 'context_feature_fields', 'feature_extractors', 'context_feature_extractors',
             'embedding', 'task', 'precision', 'recall', 'f1_score', 'c_values'
         )
-        read_only_fields = ()
+        read_only_fields = ('precision', 'task', 'recall', 'f1_score', 'best_c1', 'best_c2')
         fields_to_parse = ('labels', 'suffix_len', 'c_values')
 
 

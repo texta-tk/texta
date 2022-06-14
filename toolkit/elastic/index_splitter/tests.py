@@ -4,14 +4,14 @@ from time import sleep
 from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
-
-from toolkit.core.task.models import Task
-from toolkit.elastic.index_splitter.models import IndexSplitter
 from texta_elastic.aggregator import ElasticAggregator
 from texta_elastic.core import ElasticCore
 from texta_elastic.searcher import ElasticSearcher
+
+from toolkit.core.task.models import Task
+from toolkit.elastic.index_splitter.models import IndexSplitter
 from toolkit.helper_functions import reindex_test_dataset
-from toolkit.test_settings import (INDEX_SPLITTING_TEST_INDEX, INDEX_SPLITTING_TRAIN_INDEX, TEST_QUERY, TEST_VERSION_PREFIX)
+from toolkit.test_settings import (INDEX_SPLITTING_TEST_INDEX, INDEX_SPLITTING_TRAIN_INDEX, TEST_INDEX_OBJECT_FIELD, TEST_QUERY, TEST_VERSION_PREFIX)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -278,3 +278,26 @@ class IndexSplitterViewTests(APITransactionTestCase):
 
     def is_between_limits(self, value, base, ratio):
         return value <= base * ratio + 1 and value >= base * ratio - 1
+
+
+    # There used to be a bug in which objects were flattened in the split index unintentionally.
+    def test_that_split_index_with_nested_field_still_has_nested_field(self):
+        payload = {
+            "description": "Random index splitting",
+            "indices": [{"name": self.test_index_name}],
+            "train_index": INDEX_SPLITTING_TRAIN_INDEX,
+            "test_index": INDEX_SPLITTING_TEST_INDEX,
+            "distribution": "random",
+            "test_size": 20
+        }
+
+        response = self.client.post(self.url, data=payload, format="json")
+        print_output('test_that_split_index_with_nested_field_still_has_nested_field:response.data', response.data)
+        at_least_once = False
+        es = ElasticSearcher(indices=[INDEX_SPLITTING_TEST_INDEX, INDEX_SPLITTING_TEST_INDEX], field_data=[TEST_INDEX_OBJECT_FIELD], flatten=False)
+        for item in es:
+            data = item.get(TEST_INDEX_OBJECT_FIELD, None)
+            if data:
+                self.assertTrue(isinstance(data, dict))
+                at_least_once = True
+        self.assertTrue(at_least_once)
