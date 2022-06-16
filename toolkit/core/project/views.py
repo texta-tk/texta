@@ -23,8 +23,22 @@ from texta_elastic.searcher import ElasticSearcher
 from texta_elastic.spam_detector import SpamDetector
 
 from toolkit.core.project.models import Project
-from toolkit.core.project.serializers import (CountIndicesSerializer, ExportSearcherResultsSerializer, HandleIndicesSerializer, HandleProjectAdministratorsSerializer, HandleUsersSerializer, ProjectDocumentSerializer, ProjectFactAggregatorSerializer, ProjectGetFactsSerializer,
-                                              ProjectGetSpamSerializer, ProjectSearchByQuerySerializer, ProjectSerializer, ProjectSimplifiedSearchSerializer, ProjectSuggestFactNamesSerializer, ProjectSuggestFactValuesSerializer)
+from toolkit.core.project.serializers import (
+    CountIndicesSerializer,
+    ExportSearcherResultsSerializer,
+    HandleIndicesSerializer,
+    HandleProjectAdministratorsSerializer,
+    HandleUsersSerializer,
+    ProjectDocumentSerializer,
+    ProjectGetFactsSerializer,
+    ProjectGetSpamSerializer,
+    ProjectFactAggregatorSerializer,
+    ProjectSearchByQuerySerializer,
+    ProjectSerializer,
+    ProjectSimplifiedSearchSerializer,
+    ProjectSuggestFactNamesSerializer,
+    ProjectSuggestFactValuesSerializer
+)
 from toolkit.elastic.decorators import elastic_view
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import IndexSerializer
@@ -433,9 +447,9 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             else:
                 query_filter = (in_user | in_admin)
 
-            return query_filter.distinct().order_by('-id').prefetch_related("users", "administrators", "indices").select_related("author")
+            return query_filter.distinct().order_by('-id').prefetch_related("users", "administrators", "indices")
         else:
-            return Project.objects.all().order_by('-id').prefetch_related("users", "administrators", "indices").select_related("author")
+            return Project.objects.all().order_by('-id').prefetch_related("users", "administrators", "indices")
 
 
     @action(detail=True, methods=['post'], serializer_class=HandleIndicesSerializer, permission_classes=[OnlySuperadminAllowed])
