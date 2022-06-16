@@ -271,6 +271,8 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
                 'elastic/dataset_imports',
                 'elastic/search_query_tagger',
                 'elastic/search_fields_tagger',
+                'elastic/delete_facts_by_query',
+                'elastic/edit_facts_by_query',
                 'elastic/scroll',
                 'elastic/apply_analyzers',
                 'searches',

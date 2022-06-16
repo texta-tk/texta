@@ -42,7 +42,7 @@ def elastic_connection(func):
             raise ElasticTimeoutException(f"Connection to Elasticsearch timed out!")
 
         except NotFoundError as e:
-            raise APIException("Could not connect to Elasticsearch, have you set up the URL right?")
+            raise APIException("Could not access requested resource.")
 
 
     return func_wrapper
