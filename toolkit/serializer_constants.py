@@ -4,14 +4,13 @@ from collections import OrderedDict
 from json import JSONDecodeError
 
 from rest_framework import serializers
+from texta_elastic.searcher import EMPTY_QUERY
 
+from toolkit.choice_constants import DEFAULT_BULK_SIZE, DEFAULT_ES_TIMEOUT, DEFAULT_MAX_CHUNK_BYTES
 from toolkit.core.project.models import Project
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.serializers import IndexSerializer
-from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.validators import check_for_existence
-from toolkit.choice_constants import DEFAULT_ES_TIMEOUT, DEFAULT_BULK_SIZE, DEFAULT_MAX_CHUNK_BYTES
-
 # Helptext constants to ensure consistent values inside Toolkit.
 from toolkit.settings import ES_BULK_SIZE_MAX, ES_TIMEOUT_MAX
 
@@ -53,7 +52,7 @@ class FieldsValidationSerializerMixin:
             if no "fields" field is declared in the serializer, no validation
             to write custom validation for serializers with FieldParseSerializer, simply override validate_fields in the project serializer"""
         project_id = self.context['view'].kwargs['project_pk']
-        project_obj = Project.objects.get(id=project_id)
+        project_obj = Project.objects.prefetch_related("users", "administrators", "indices").select_related("author").get(id=project_id)
         project_fields = set(project_obj.get_elastic_fields(path_list=True))
         if not value or not set(value).issubset(project_fields):
             raise serializers.ValidationError(f'Entered fields not in current project fields: {project_fields}')
@@ -65,7 +64,7 @@ class FieldValidationSerializerMixin:
 
     def validate_field(self, value):
         project_id = self.context['view'].kwargs['project_pk']
-        project_obj = Project.objects.get(id=project_id)
+        project_obj = Project.objects.prefetch_related("users", "administrators", "indices").select_related("author").get(id=project_id)
         project_fields = set(project_obj.get_elastic_fields(path_list=True))
         if not value or not {value}.issubset(project_fields):
             raise serializers.ValidationError(f'Entered field not in current project fields: {project_fields}')
@@ -82,14 +81,20 @@ class FieldParseSerializer(FieldsValidationSerializerMixin):
     def to_representation(self, instance):
         # self is the parent class obj in this case
         result = super(FieldParseSerializer, self).to_representation(instance)
-        model_obj = self.Meta.model.objects.get(id=instance.id)
         fields_to_parse = self.Meta.fields_to_parse
+
+        # Without this, taggers will throw an exception that they don't
+        # have enough classes in them.
+        # TODO Look for an alternative to this.
+        if instance.__class__.__name__ != "Project":
+            instance = self.Meta.model.objects.get(id=instance.id)
+
         for field in fields_to_parse:
-            if getattr(model_obj, field):
+            if getattr(instance, field):
                 try:
-                    result[field] = json.loads(getattr(model_obj, field))
+                    result[field] = json.loads(getattr(instance, field))
                 except JSONDecodeError:
-                    result[field] = getattr(model_obj, field)
+                    result[field] = getattr(instance, field)
         return OrderedDict([(key, result[key]) for key in result])
 
 
@@ -159,6 +164,7 @@ class ElasticScrollMixIn(serializers.Serializer):
         default=DEFAULT_MAX_CHUNK_BYTES,
         help_text=f"Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors. Default:{DEFAULT_MAX_CHUNK_BYTES}."
     )
+
 
 class ToolkitTaskSerializer(IndicesSerializerMixin, FieldsValidationSerializerMixin):
     description = serializers.CharField(max_length=100, help_text=DESCRIPTION_HELPTEXT)
