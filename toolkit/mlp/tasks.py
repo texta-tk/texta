@@ -73,8 +73,7 @@ def apply_mlp_on_documents(documents: List[dict], analyzers: List[str], field_da
     except Exception as e:
         # In case MLP fails, add error to document
         worker: MLPWorker = MLPWorker.objects.get(pk=mlp_id)
-        logging.getLogger(ERROR_LOGGER).error(str(e))
-        worker.task.add_error(str(e))
+        worker.task.handle_failed_task(e)
         return documents
 
 
@@ -137,9 +136,10 @@ def start_mlp_worker(self, mlp_id: int):
     """
     Scrolls the document ID-s and passes them to MLP worker.
     """
+    mlp_object = MLPWorker.objects.get(pk=mlp_id)
+
     try:
         logging.getLogger(INFO_LOGGER).info(f"Applying mlp on the index for MLP Task ID: {mlp_id}")
-        mlp_object = MLPWorker.objects.get(pk=mlp_id)
         # init progress
         show_progress = ShowProgress(mlp_object.task, multiplier=1)
         show_progress.update_step('Scrolling document IDs')
@@ -167,10 +167,9 @@ def start_mlp_worker(self, mlp_id: int):
         # update progress
         show_progress.update_step(f'Applying MLP to {len(doc_chunks)} documents')
         show_progress.update_view(0)
-        # update total doc count
-        task_object = mlp_object.task
-        task_object.total = searcher.count()
-        task_object.save()
+
+        mlp_object.task.set_total(searcher.count())
+        mlp_object.task.update_status(Task.STATUS_RUNNING)
 
         # pass document id-s to the next task
         chain = group(apply_mlp_on_es_docs.s([doc["_id"] for doc in meta_chunk], mlp_id) for meta_chunk in doc_chunks) | end_mlp_task.si(mlp_id)
@@ -178,10 +177,7 @@ def start_mlp_worker(self, mlp_id: int):
         return True
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        error_message = f"{str(e)[:100]}..." if str(e) else str(type(e).__name__)  # Take first 100 characters in case the error message is massive.
-        mlp_object.task.add_error(error_message)
-        mlp_object.task.update_status(Task.STATUS_FAILED)
+        mlp_object.task.handle_failed_task(e)
         raise
 
 
@@ -231,7 +227,5 @@ def apply_lang_on_indices(self, apply_worker_id: int):
         return apply_worker_id
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        task_object.add_error(str(e))
-        task_object.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
         raise e
