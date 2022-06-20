@@ -197,6 +197,7 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
     def __enrich_payload_with_orm(self, base, data):
         author = self.context["request"].user
         fields = ["users_write", "administrators_write"]
+
         for field in fields:
             usernames = data.get(field, None)
             if not usernames:

@@ -447,9 +447,9 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             else:
                 query_filter = (in_user | in_admin)
 
-            return query_filter.distinct().order_by('-id').prefetch_related("users", "administrators", "indices")
+            return query_filter.distinct().order_by('-id').prefetch_related("users", "administrators", "indices").select_related("author", "author__profile")
         else:
-            return Project.objects.all().order_by('-id').prefetch_related("users", "administrators", "indices")
+            return Project.objects.all().order_by('-id').prefetch_related("users", "administrators", "indices").select_related("author", "author__profile")
 
 
     @action(detail=True, methods=['post'], serializer_class=HandleIndicesSerializer, permission_classes=[OnlySuperadminAllowed])
