@@ -73,8 +73,7 @@ def apply_mlp_on_documents(documents: List[dict], analyzers: List[str], field_da
     except Exception as e:
         # In case MLP fails, add error to document
         worker: MLPWorker = MLPWorker.objects.get(pk=mlp_id)
-        logging.getLogger(ERROR_LOGGER).error(str(e))
-        worker.task.add_error(str(e))
+        worker.task.handle_failed_task(e)
         return documents
 
 
@@ -137,44 +136,49 @@ def start_mlp_worker(self, mlp_id: int):
     """
     Scrolls the document ID-s and passes them to MLP worker.
     """
-    logging.getLogger(INFO_LOGGER).info(f"Applying mlp on the index for MLP Task ID: {mlp_id}")
     mlp_object = MLPWorker.objects.get(pk=mlp_id)
-    # init progress
-    show_progress = ShowProgress(mlp_object.task, multiplier=1)
-    show_progress.update_step('Scrolling document IDs')
-    show_progress.update_view(0)
-    # Get the necessary fields.
-    indices: List[str] = mlp_object.get_indices()
-    es_scroll_size = mlp_object.es_scroll_size
-    es_timeout = mlp_object.es_timeout
 
-    # create searcher object for scrolling ids
-    searcher = ElasticSearcher(
-        query=json.loads(mlp_object.query),
-        indices=indices,
-        output=ElasticSearcher.OUT_META,
-        callback_progress=show_progress,
-        scroll_size=es_scroll_size,
-        scroll_timeout=f"{es_timeout}m"
-    )
-    # add texta facts mappings to the indices if needed
-    for index in indices:
-        searcher.core.add_texta_facts_mapping(index=index)
+    try:
+        logging.getLogger(INFO_LOGGER).info(f"Applying mlp on the index for MLP Task ID: {mlp_id}")
+        # init progress
+        show_progress = ShowProgress(mlp_object.task, multiplier=1)
+        show_progress.update_step('Scrolling document IDs')
+        show_progress.update_view(0)
+        # Get the necessary fields.
+        indices: List[str] = mlp_object.get_indices()
+        es_scroll_size = mlp_object.es_scroll_size
+        es_timeout = mlp_object.es_timeout
 
-    doc_chunks = list(chunks_iter(searcher, MLP_BATCH_SIZE))
+        # create searcher object for scrolling ids
+        searcher = ElasticSearcher(
+            query=json.loads(mlp_object.query),
+            indices=indices,
+            output=ElasticSearcher.OUT_META,
+            callback_progress=show_progress,
+            scroll_size=es_scroll_size,
+            scroll_timeout=f"{es_timeout}m"
+        )
+        # add texta facts mappings to the indices if needed
+        for index in indices:
+            searcher.core.add_texta_facts_mapping(index=index)
 
-    # update progress
-    show_progress.update_step(f'Applying MLP to {len(doc_chunks)} documents')
-    show_progress.update_view(0)
-    # update total doc count
-    task_object = mlp_object.task
-    task_object.total = sum([len(chunk) for chunk in doc_chunks])
-    task_object.save()
+        doc_chunks = list(chunks_iter(searcher, MLP_BATCH_SIZE))
 
-    # pass document id-s to the next task
-    chain = group(apply_mlp_on_es_docs.s([doc["_id"] for doc in meta_chunk], mlp_id) for meta_chunk in doc_chunks) | end_mlp_task.si(mlp_id)
-    chain.delay()
-    return True
+        # update progress
+        show_progress.update_step(f'Applying MLP to {len(doc_chunks)} documents')
+        show_progress.update_view(0)
+
+        mlp_object.task.set_total(searcher.count())
+        mlp_object.task.update_status(Task.STATUS_RUNNING)
+
+        # pass document id-s to the next task
+        chain = group(apply_mlp_on_es_docs.s([doc["_id"] for doc in meta_chunk], mlp_id) for meta_chunk in doc_chunks) | end_mlp_task.si(mlp_id)
+        chain.delay()
+        return True
+
+    except Exception as e:
+        mlp_object.task.handle_failed_task(e)
+        raise
 
 
 @task(name="end_mlp_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
@@ -223,7 +227,5 @@ def apply_lang_on_indices(self, apply_worker_id: int):
         return apply_worker_id
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        task_object.add_error(str(e))
-        task_object.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
         raise e

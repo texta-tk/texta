@@ -47,10 +47,10 @@ dependencies:
       - texta-tools==2.*
       - texta-embedding==1.*
       - texta-elastic-tools==1.*
-      - texta-tagger==2.*
-      - texta-torch-tagger==2.*
+      - texta-tagger==3.*
+      - texta-torch-tagger==3.*
       - texta-bert-tagger==2.3.*
-      - texta-crf-extractor==1.*
+      - texta-crf-extractor==2.*
       - torch==1.11.0+cu113
       - -f https://download.pytorch.org/whl/torch_stable.html
       - pyjwt<2

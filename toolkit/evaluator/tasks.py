@@ -72,6 +72,8 @@ def evaluate_entity_tags_task(object_id: int, indices: List[str], query: dict, e
 
         # Get number of documents
         n_docs = searcher.count()
+        evaluator_object.task.total = n_docs
+        evaluator_object.task.save()
 
         evaluator_object.document_count = n_docs
         evaluator_object.scores_imprecise = False
@@ -180,6 +182,8 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
 
         # Get number of documents in the query to estimate memory imprint
         n_docs = searcher.count()
+        evaluator_object.task.total = n_docs
+        evaluator_object.task.save()
 
         logging.getLogger(INFO_LOGGER).info(f"Number of documents: {n_docs} | Number of classes: {len(classes)}")
 
@@ -246,7 +250,7 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
         evaluator_object.accuracy = scores["accuracy"]
         evaluator_object.confusion_matrix = json.dumps(scores["confusion_matrix"])
 
-        evaluator_object.individual_results = json.dumps(remove_not_found(bin_scores))
+        evaluator_object.individual_results = json.dumps(remove_not_found(bin_scores), ensure_ascii=False)
         evaluator_object.add_misclassified_examples = False
 
 

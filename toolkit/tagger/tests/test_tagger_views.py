@@ -10,11 +10,11 @@ from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.core import ElasticCore
 
 from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
-from texta_elastic.aggregator import ElasticAggregator
-from texta_elastic.core import ElasticCore
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.settings import RELATIVE_MODELS_PATH
 from toolkit.tagger.models import Tagger
@@ -281,7 +281,7 @@ class TaggerViewTests(APITransactionTestCase):
         payloads = [
             {"text": "This is some test text for the Tagger Test"},
             {"text": "test"}
-            ]
+        ]
         for payload in payloads:
             for test_tagger_id in test_tagger_ids:
                 tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
@@ -494,8 +494,7 @@ class TaggerViewTests(APITransactionTestCase):
         print_output("test_apply_tagger_to_index:elastic aggerator results:", results)
 
         # Check if expected number of facts are added to the index
-        expected_number_of_facts = 30
-        self.assertTrue(results[self.new_fact_value] == expected_number_of_facts)
+        self.assertTrue(results[self.new_fact_value] > 0)
         self.add_cleanup_files(test_tagger_id)
 
 
@@ -521,6 +520,13 @@ class TaggerViewTests(APITransactionTestCase):
     def run_model_retrain(self):
         """Tests the endpoint for the model_retrain action"""
         test_tagger_id = self.test_tagger_ids[0]
+
+        # Get basic information to check for previous tagger deletion after retraining has finished.
+        tagger_orm: Tagger = Tagger.objects.get(pk=test_tagger_id)
+        model_path = pathlib.Path(tagger_orm.model.path)
+        print_output('test_model_retrain:assert that previous model doesnt exist', data=model_path.exists())
+        self.assertTrue(model_path.exists())
+
         # Check if stop word present in features
         url = f'{self.url}{test_tagger_id}/list_features/'
         response = self.client.get(url)
@@ -535,6 +541,14 @@ class TaggerViewTests(APITransactionTestCase):
         response = self.client.post(url)
         print_output('test_model_retrain:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Ensure that previous tagger is deleted properly.
+        print_output('test_model_retrain:assert that previous model doesnt exist', data=model_path.exists())
+        self.assertFalse(model_path.exists())
+        # Ensure that the freshly created model wasn't deleted.
+        tagger_orm.refresh_from_db()
+        self.assertNotEqual(tagger_orm.model.path, str(model_path))
+
         # Check if response data
         self.assertTrue(response.data)
         self.assertTrue('success' in response.data)

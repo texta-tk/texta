@@ -10,12 +10,12 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 from texta_bert_tagger.tagger import BertTagger
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.core import ElasticCore
 
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
 from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
-from texta_elastic.aggregator import ElasticAggregator
-from texta_elastic.core import ElasticCore
 from toolkit.helper_functions import (
     download_bert_requirements,
     get_downloaded_bert_models,
@@ -701,6 +701,12 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
     def run_bert_tag_and_feedback_and_retrain(self):
         """Tests feeback extra action."""
 
+        # Get basic information to check for previous tagger deletion after retraining has finished.
+        tagger_orm: BertTaggerObject = BertTaggerObject.objects.get(pk=self.test_tagger_id)
+        model_path = pathlib.Path(tagger_orm.model.path)
+        print_output('run_bert_tag_and_feedback_and_retrain:assert that previous model doesnt exist', data=model_path.exists())
+        self.assertTrue(model_path.exists())
+
         payload = {
             "text": "This is some test text for the Tagger Test",
             "feedback_enabled": True
@@ -741,6 +747,14 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue('result' in response.data)
         self.assertTrue('probability' in response.data)
+
+        # Ensure that previous tagger is deleted properly.
+        print_output('test_model_retrain:assert that previous model doesnt exist', data=model_path.exists())
+        self.assertFalse(model_path.exists())
+        # Ensure that the freshly created model wasn't deleted.
+        tagger_orm.refresh_from_db()
+        self.assertNotEqual(tagger_orm.model.path, str(model_path))
+
         # delete feedback
         feedback_delete_url = f'{self.url}{self.test_tagger_id}/feedback/'
         response = self.client.delete(feedback_delete_url)

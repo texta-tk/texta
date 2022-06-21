@@ -1,21 +1,17 @@
-from celery.decorators import task
-from typing import List
-import pathlib
 import logging
-import secrets
-import json
 import os
+import pathlib
+import secrets
+from typing import List
 
+from celery.decorators import task
 from texta_crf_extractor.crf_extractor import CRFExtractor
-
-from toolkit.base_tasks import BaseTask, TransactionAwareTask
-from toolkit.core.task.models import Task
-from texta_elastic.searcher import ElasticSearcher
 from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
-from toolkit.tools.show_progress import ShowProgress
+from texta_elastic.searcher import ElasticSearcher
+
+from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.helper_functions import get_indices_from_object
-from toolkit.tools.plots import create_tagger_plot
 from toolkit.settings import (
     CELERY_LONG_TERM_TASK_QUEUE,
     CELERY_SHORT_TERM_TASK_QUEUE,
@@ -23,6 +19,8 @@ from toolkit.settings import (
     INFO_LOGGER,
     MEDIA_URL
 )
+from toolkit.tools.plots import create_tagger_plot
+from toolkit.tools.show_progress import ShowProgress
 from .models import CRFExtractor as CRFExtractorObject
 
 
@@ -84,7 +82,7 @@ def train_crf_task(crf_id: int):
         extractor = CRFExtractor(config=config, embedding=embedding)
         # train the CRF model
         model_full_path, relative_model_path = crf_object.generate_name("crf")
-        report, _ = extractor.train(documents, save_path = model_full_path, mlp_field = mlp_field)
+        report, _ = extractor.train(documents, save_path=model_full_path, mlp_field=mlp_field)
         # Save the image before its path.
         image_name = f'{secrets.token_hex(15)}.png'
         crf_object.plot.save(image_name, create_tagger_plot(report.to_dict()), save=False)
@@ -102,11 +100,7 @@ def train_crf_task(crf_id: int):
             "plot": str(image_path),
         }
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        crf_object = CRFExtractorObject.objects.get(pk=crf_id)
-        task_object = crf_object.task
-        task_object.add_error(str(e))
-        task_object.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
         raise e
 
 
@@ -119,6 +113,9 @@ def save_crf_results(result_data: dict):
         crf_id = result_data['id']
         logging.getLogger(INFO_LOGGER).info(f"Starting task results for CRFExtractor with ID: {crf_id}!")
         crf_object = CRFExtractorObject.objects.get(pk=crf_id)
+
+        model_path = pathlib.Path(crf_object.model.path) if crf_object.model else None
+
         task_object = crf_object.task
         show_progress = ShowProgress(task_object, multiplier=1)
         # update status to saving
@@ -135,13 +132,14 @@ def save_crf_results(result_data: dict):
         crf_object.plot.name = result_data["plot"]
         crf_object.save()
         task_object.complete()
+
+        # Cleanup after the transaction to ensure integrity database records.
+        if model_path and model_path.exists():
+            model_path.unlink(missing_ok=True)
+
         return True
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        crf_object = CRFExtractorObject.objects.get(pk=crf_id)
-        task_object = crf_object.task
-        task_object.add_error(str(e))
-        task_object.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
         raise e
 
 
@@ -160,13 +158,13 @@ def apply_crf_extractor(crf_id: int, mlp_document: dict):
 
 
 def update_generator(
-    generator: ElasticSearcher,
-    ec: ElasticCore,
-    mlp_fields: List[str],
-    label_suffix: str,
-    object_id: int,
-    extractor: CRFExtractor = None
-    ):
+        generator: ElasticSearcher,
+        ec: ElasticCore,
+        mlp_fields: List[str],
+        label_suffix: str,
+        object_id: int,
+        extractor: CRFExtractor = None
+):
     """
     Tags & updates documents in ES.
     """
@@ -195,15 +193,15 @@ def update_generator(
 
 @task(name="apply_crf_extractor_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def apply_crf_extractor_to_index(
-    object_id: int,
-    indices: List[str],
-    mlp_fields: List[str],
-    label_suffix: str,
-    query: dict,
-    bulk_size: int,
-    max_chunk_bytes: int,
-    es_timeout: int
-    ):
+        object_id: int,
+        indices: List[str],
+        mlp_fields: List[str],
+        label_suffix: str,
+        query: dict,
+        bulk_size: int,
+        max_chunk_bytes: int,
+        es_timeout: int
+):
     """
     Applies Extractor to ES index.
     """
@@ -224,6 +222,7 @@ def apply_crf_extractor_to_index(
             output=ElasticSearcher.OUT_RAW,
             timeout=f"{es_timeout}m",
             callback_progress=progress,
+            scroll_size=bulk_size
         )
         # create update actions
         actions = update_generator(
@@ -245,8 +244,5 @@ def apply_crf_extractor_to_index(
         return True
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        error_message = f"{str(e)[:100]}..."
-        crf_object = CRFExtractorObject.objects.get(pk=object_id)
-        crf_object.task.add_error(error_message)
-        crf_object.task.update_status(Task.STATUS_FAILED)
+        crf_object.task.handle_failed_task(e)
+        raise e

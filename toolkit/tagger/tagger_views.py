@@ -35,6 +35,7 @@ from toolkit.view_constants import (
 
 class TaggerFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
+    tg_description = filters.CharFilter('taggergroup__description', lookup_expr='icontains')
     task_status = filters.CharFilter('task__status', lookup_expr='icontains')
 
 

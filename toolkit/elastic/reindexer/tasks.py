@@ -24,7 +24,7 @@ from toolkit.tools.show_progress import ShowProgress
 FLATTEN_DOC = False
 
 
-def unflatten_doc(doc):
+def unflatten_doc(doc: dict):
     """ Unflatten document retrieved from ElasticSearcher.
     """
     unflattened_doc = {}
@@ -49,7 +49,7 @@ def unflatten_doc(doc):
     return unflattened_doc
 
 
-def apply_custom_processing(elastic_search, flatten_doc=False):
+def apply_custom_processing(elastic_search: ElasticSearcher, flatten_doc=False):
     for document in elastic_search:
         new_doc = document
         if not flatten_doc:
@@ -81,8 +81,8 @@ def bulk_add_documents(elastic_search: ElasticSearcher, elastic_doc: ElasticDocu
 
 
 @task(name="reindex_task", base=BaseTask)
-def reindex_task(reindexer_task_id):
-    logging.getLogger(INFO_LOGGER).info("Starting task 'reindex'.")
+def reindex_task(reindexer_task_id: int):
+    logging.getLogger(INFO_LOGGER).info(f"Starting task 'reindex' with ID {reindexer_task_id}.")
     try:
         reindexer_obj = Reindexer.objects.get(pk=reindexer_task_id)
         task_object = reindexer_obj.task
@@ -104,6 +104,7 @@ def reindex_task(reindexer_task_id):
         show_progress.update_view(0)
 
         elastic_search = ElasticSearcher(indices=indices, field_data=fields, callback_progress=show_progress, query=query, scroll_size=scroll_size)
+        task_object.set_total(elastic_search.count())
         elastic_doc = ElasticDocument(new_index)
 
         if random_size > 0:
@@ -126,11 +127,10 @@ def reindex_task(reindexer_task_id):
         # declare the job done
         task_object.complete()
 
-    except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        task_object.add_error(str(e))
-        task_object.update_status(Task.STATUS_FAILED)
-        raise e
+        logging.getLogger(INFO_LOGGER).info("Reindexing succesfully completed.")
+        return True
 
-    logging.getLogger(INFO_LOGGER).info("Reindexing succesfully completed.")
-    return True
+
+    except Exception as e:
+        task_object.handle_failed_task(e)
+        raise e

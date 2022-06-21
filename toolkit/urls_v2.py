@@ -10,6 +10,7 @@ from toolkit.celery_management.views import CeleryQueueCount, CeleryStats, Purge
 from toolkit.core.core_variable.views import CoreVariableViewSet
 from toolkit.core.health.views import HealthView
 from toolkit.core.project.views import (
+    AggregateFactsView,
     DocumentView,
     ExportSearchView,
     GetFactsView,
@@ -28,6 +29,7 @@ from toolkit.dataset_import.views import DatasetImportViewSet
 from toolkit.docparser.views import DocparserView
 from toolkit.elastic.analyzers.views import ApplyEsAnalyzerOnIndices, SnowballProcessor
 from toolkit.elastic.document_importer.views import DocumentImportView, DocumentInstanceView, UpdateSplitDocument
+from toolkit.elastic.document_api.views import AddFactsView, DeleteFactsByQueryViewset, DeleteFactsView, DocumentImportView, DocumentInstanceView, EditFactsByQueryViewset, UpdateFactsView, UpdateSplitDocument
 from toolkit.elastic.index.views import ElasticGetIndices
 from toolkit.elastic.index_splitter.views import IndexSplitterViewSet
 from toolkit.elastic.reindexer.views import ReindexerViewSet
@@ -80,6 +82,8 @@ project_router.register('elastic/index_splitter', IndexSplitterViewSet, basename
 project_router.register('elastic/apply_analyzers', ApplyEsAnalyzerOnIndices, basename='apply_analyzers')
 project_router.register('elastic/search_query_tagger', SearchQueryTaggerViewSet, basename='search_query_tagger')
 project_router.register('elastic/search_fields_tagger', SearchFieldsTaggerViewSet, basename='search_fields_tagger')
+project_router.register('elastic/delete_facts_by_query', DeleteFactsByQueryViewset, basename='delete_facts_by_query')
+project_router.register('elastic/edit_facts_by_query', EditFactsByQueryViewset, basename='edit_facts_by_query')
 
 # TODO Look for putting this into a better place.
 project_router.register(r'topic_analyzer', TopicAnalyzerViewset, basename='topic_analyzer')
@@ -118,12 +122,17 @@ urlpatterns = [
     path('projects/<int:pk>/elastic/documents/', DocumentImportView.as_view(), name="document_import"),
     path('projects/<int:pk>/elastic/documents/<str:index>/<str:document_id>/', DocumentInstanceView.as_view(), name="document_instance"),
     path('projects/<int:pk>/elastic/documents/<str:index>/update_split', UpdateSplitDocument.as_view(), name="update_split_document"),
+    path('projects/<int:pk>/elastic/documents/<str:index>/<str:document_id>/delete_facts', DeleteFactsView.as_view(), name="delete_facts"),
+    path('projects/<int:pk>/elastic/documents/<str:index>/<str:document_id>/update_facts', UpdateFactsView.as_view(), name="update_facts"),
+    path('projects/<int:pk>/elastic/documents/<str:index>/<str:document_id>/add_facts', AddFactsView.as_view(), name="add_facts"),
+
 
     # Previous projects extra actions.
     path('projects/<int:project_pk>/elastic/export_search/', ExportSearchView.as_view(), name="project-export-search"),
     path('projects/<int:project_pk>/elastic/document/', DocumentView.as_view(), name="project-document"),
     path('projects/<int:project_pk>/elastic/get_spam/', GetSpamView.as_view(), name="project-get-spam"),
     path('projects/<int:project_pk>/elastic/get_facts/', GetFactsView.as_view(), name="get_facts"),
+    path('projects/<int:project_pk>/elastic/aggregate_facts/', AggregateFactsView.as_view(), name="aggregate_facts"),
     path('projects/<int:project_pk>/elastic/get_fields/', GetFieldsView.as_view(), name="get_fields"),
     path('projects/<int:project_pk>/elastic/get_indices/', GetIndicesView.as_view(), name="get_project_indices"),
     path('elastic/get_indices/', ElasticGetIndices.as_view(), name="get_indices_for_project_creation"),

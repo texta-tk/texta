@@ -1,33 +1,38 @@
 import json
-import os
-import secrets
 import logging
+import os
+import pathlib
+import secrets
+from typing import Dict, List, Union
+
 from celery.decorators import task
 from django.db import connections
 from elasticsearch.helpers import streaming_bulk
-from texta_torch_tagger.tagger import TorchTagger
-from texta_embedding.embedding import W2VEmbedding
-
-from toolkit.core.task.models import Task
-from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
-from toolkit.tools.show_progress import ShowProgress
-from toolkit.base_tasks import TransactionAwareTask
-from toolkit.elastic.tools.data_sample import DataSample
-from toolkit.elastic.tools.feedback import Feedback
-from texta_elastic.searcher import ElasticSearcher
 from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
-from toolkit.tools.plots import create_tagger_plot
-from toolkit.settings import RELATIVE_MODELS_PATH, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, ERROR_LOGGER
-from toolkit.helper_functions import get_indices_from_object
+from texta_elastic.searcher import ElasticSearcher
+from texta_embedding.embedding import W2VEmbedding
+from texta_torch_tagger.tagger import TorchTagger
 
-from typing import Union, List, Dict
+from toolkit.base_tasks import TransactionAwareTask
+from toolkit.core.task.models import Task
+from toolkit.elastic.tools.data_sample import DataSample
+from toolkit.helper_functions import get_indices_from_object
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, RELATIVE_MODELS_PATH
+from toolkit.tools.plots import create_tagger_plot
+from toolkit.tools.show_progress import ShowProgress
+from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
+
 
 @task(name="train_torchtagger", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def train_torchtagger(tagger_id, testing=False):
     try:
         # retrieve neurotagger & task objects
         tagger_object = TorchTaggerObject.objects.get(pk=tagger_id)
+
+        # Handle previous tagger models that exist in case of retrains.
+        model_path = pathlib.Path(tagger_object.model.path) if tagger_object.model else None
+
         task_object = tagger_object.task
         model_type = TorchTaggerObject.MODEL_TYPE
         show_progress = ShowProgress(task_object, multiplier=1)
@@ -93,6 +98,11 @@ def train_torchtagger(tagger_id, testing=False):
         tagger_object.save()
         # declare the job done
         task_object.complete()
+
+        # Cleanup after the transaction to ensure integrity database records.
+        if model_path and model_path.exists():
+            model_path.unlink(missing_ok=True)
+
         return True
 
 

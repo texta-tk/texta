@@ -71,7 +71,10 @@ class ReindexerViewSet(mixins.CreateModelMixin,
 
     def update_project_indices(self, serializer, project_obj):
         ''' add new_index included in the request to the relevant project object '''
-        indices_to_add = serializer.validated_data['new_index']
-        index, is_open = Index.objects.get_or_create(name=indices_to_add)
+        index_to_add = serializer.validated_data['new_index']
+        from texta_elastic.core import ElasticCore
+        ec = ElasticCore()
+        ec.create_index(index_to_add)
+        index, is_open = Index.objects.get_or_create(name=index_to_add)
         project_obj.indices.add(index)
         project_obj.save()
