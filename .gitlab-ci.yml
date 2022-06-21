@@ -38,6 +38,7 @@ stages:
   - build-test-image
   - test-and-build-front
   - build-final-image
+  - update_changelog
 
 
 TestBack:
@@ -68,7 +69,6 @@ BuildTestImage:
   only:
     - master
 
-
 TestAndBuildFront:
   # Executes front pipeline
   stage: test-and-build-front
@@ -89,3 +89,16 @@ BuildFinalImage:
     - docker system prune -a
   only:
     - tags
+
+update-changelog:
+  stage: update_changelog
+  tags:
+    - ci-update-version
+  script:
+    - currentVersion=$(grep -m1 '' VERSION)
+    - |
+      curl --header "PRIVATE-TOKEN: $TTK_GITLAB_TOKEN" --data "version=$currentVersion&branch=master" "https://git.texta.ee/api/v4/projects/77/repository/changelog"
+  except:
+    - tags
+  only:
+    - master
