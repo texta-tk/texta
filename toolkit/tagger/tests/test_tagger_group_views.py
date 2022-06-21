@@ -31,6 +31,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
         self.project.users.add(self.user)
         self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/tagger_groups/'
         self.test_tagger_group_id = None
+        self.description = "TestTaggerGroup"
 
         self.client.login(username='taggerOwner', password='pw')
         # new fact name and value used when applying tagger to index
@@ -80,6 +81,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
         self.run_apply_tagger_group_to_index_invalid_input()
         self.run_model_export_import()
         self.run_tagger_instances_have_mention_to_tagger_group()
+        self.run_check_that_filtering_taggers_by_tagger_group_description_works()
 
 
     def add_cleanup_files(self, tagger_id):
@@ -130,7 +132,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
         url = reverse(f"{VERSION_NAMESPACE}:tagger_group-list", kwargs={"project_pk": self.project.pk})
         embedding_id = self.__train_embedding_for_tagger()
         payload = {
-            "description": "TestTaggerGroup",
+            "description": self.description,
             "minimum_sample_size": 50,
             "fact_name": TEST_FACT_NAME,
             "tagger": {
@@ -153,7 +155,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
     def run_create_tagger_group_training_and_task_signal(self):
         """Tests the endpoint for a new Tagger Group, and if a new Task gets created via the signal"""
         payload = {
-            "description": "TestTaggerGroup",
+            "description": self.description,
             "minimum_sample_size": 50,
             "fact_name": TEST_FACT_NAME,
             "tagger": {
@@ -180,7 +182,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
     def run_create_balanced_tagger_group_training_and_task_signal(self):
         """Tests the endpoint for a new balanced Tagger Group, and if a new Task gets created via the signal"""
         payload = {
-            "description": "TestTaggerGroup",
+            "description": self.description,
             "minimum_sample_size": 50,
             "fact_name": TEST_FACT_NAME,
             "tagger": {
@@ -206,7 +208,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
 
     def create_taggers_with_empty_fields(self):
         payload = {
-            "description": "TestTaggerGroup",
+            "description": self.description,
             "minimum_sample_size": 50,
             "fact_name": TEST_FACT_NAME,
             "tagger": {
@@ -390,7 +392,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
 
     def run_create_and_delete_tagger_group_removes_related_children_models_plots(self):
         payload = {
-            "description": "TestTaggerGroup",
+            "description": self.description,
             "minimum_sample_size": 50,
             "fact_name": TEST_FACT_NAME,
             "tagger": {
@@ -526,3 +528,18 @@ class TaggerGroupViewTests(APITransactionTestCase):
         get_response = self.client.get(url)
         self.assertTrue(get_response.status_code == status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data["blacklisted_facts"], list))
+
+
+    def run_check_that_filtering_taggers_by_tagger_group_description_works(self):
+        tagger_list_uri = reverse("v1:tagger-list", kwargs={"project_pk": self.project.pk})
+        response = self.client.get(tagger_list_uri, {"tg_description": self.description})
+        print_output("run_check_that_filtering_taggers_by_tagger_group_description_works:exists:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        self.assertTrue(len(response.data["results"]) > 0)
+        for tg in response.data["results"]:
+            for data in tg["tagger_groups"]:
+                self.assertTrue(data["description"] == self.description)
+
+        response = self.client.get(tagger_list_uri, {"tg_description": f"{uuid.uuid4().hex}"})
+        print_output("run_check_that_filtering_taggers_by_tagger_group_description_works:doesnt_exist:response.data", response.data)
+        self.assertTrue(len(response.data["results"]) == 0)
