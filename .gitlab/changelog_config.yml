@@ -3,7 +3,7 @@ categories:
   feature: Features
   refactor: Refactored changes
   bug: Bug fixes
-  update: Version update
+  update: Updates
   performance: Performance improvements
 template: |
   {% if categories %}
