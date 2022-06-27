@@ -5,13 +5,14 @@ from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
+from texta_elastic.core import ElasticCore
+from texta_elastic.searcher import ElasticSearcher
 
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.reindexer.models import Reindexer
-from texta_elastic.core import ElasticCore
-from texta_elastic.searcher import ElasticSearcher
 from toolkit.helper_functions import reindex_test_dataset
+from toolkit.settings import TEXTA_TAGS_KEY
 from toolkit.test_settings import *
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
@@ -257,3 +258,28 @@ class ReindexerViewTests(APITransactionTestCase):
 
         # Manual clean up.
         es.core.delete_index(self.new_index_name)
+
+
+    def test_that_texta_facts_structure_is_nested(self):
+        payload = {
+            "description": "TestTextaFacts",
+            "new_index": self.new_index_name,
+            "fields": [TEST_FIELD, TEXTA_TAGS_KEY],
+            "indices": [self.test_index_name],
+            "add_facts_mapping": True
+        }
+
+        # Reindex the test index into a new one.
+        url = reverse("v2:reindexer-list", kwargs={"project_pk": self.project.pk})
+        reindex_response = self.client.post(url, data=payload, format='json')
+        print_output('test_that_texta_facts_structure_is_nested:response.data', reindex_response.data)
+
+        # Check that the fields have been changed.
+
+        mapping = self.ec.get_mapping(self.new_index_name)
+        print_output("reindexed_mapping.data", mapping)
+        facts_mapping = mapping[self.new_index_name]["mappings"]["properties"]["texta_facts"]
+        self.assertTrue(facts_mapping["type"] == "nested")
+
+        # Manual clean up.
+        self.ec.delete_index(self.new_index_name)
