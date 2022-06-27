@@ -17,6 +17,8 @@ warnings.simplefilter(action="ignore", category=Warning)
 
 env_file_path = os.getenv("TEXTA_ENV_FILE", None)
 if env_file_path:
+    import termcolor
+    termcolor.cprint(f"Loading env file: {env_file_path}!", color="green")
     environ.Env.read_env(env_file=env_file_path)
 
 env = environ.Env()
@@ -274,7 +276,6 @@ ELASTIC_CLUSTER_VERSION = env.int("TEXTA_ELASTIC_VERSION", default=7)
 DESCRIPTION_CHAR_LIMIT = 100
 ES_TIMEOUT_MAX = 100
 ES_BULK_SIZE_MAX = 500
-
 
 # OTHER ELASTICSEARCH OPTIONS
 ES_CONNECTION_PARAMETERS = {
