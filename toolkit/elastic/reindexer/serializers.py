@@ -35,7 +35,7 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
                                           check_for_upper_case
                                       ])
     field_type = serializers.ListField(help_text=f'Used to update the fieldname and the field type of chosen paths.', required=False)
-    add_facts_mapping = serializers.BooleanField(help_text='Add texta facts mapping. NB! If texta_facts is present in reindexed fields, the mapping is always created.', required=False, default=False)
+    add_facts_mapping = serializers.BooleanField(help_text='Add texta facts mapping. NB! If texta_facts is present in reindexed fields, the mapping is always created.', required=False, default=True)
     task = TaskSerializer(read_only=True)
     fields = serializers.ListField(
         child=serializers.CharField(),

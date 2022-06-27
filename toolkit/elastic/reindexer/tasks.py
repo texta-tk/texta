@@ -110,24 +110,26 @@ def reindex_task(reindexer_task_id: int):
         if random_size > 0:
             elastic_search = elastic_search.random_documents(size=random_size)
 
-        logging.getLogger(INFO_LOGGER).info("Updating index schema.")
+        logging.getLogger(INFO_LOGGER).info(f"Updating index schema for index '{new_index}'.")
         ''' the operations that don't require a mapping update have been completed '''
         schema_input = update_field_types(indices, fields, field_type, flatten_doc=FLATTEN_DOC)
         updated_schema = update_mapping(schema_input, new_index, reindexer_obj.add_facts_mapping, add_texta_meta_mapping=False)
 
-        logging.getLogger(INFO_LOGGER).info("Creating new index.")
+        logging.getLogger(INFO_LOGGER).info(f"Creating new index: '{new_index}'.")
         # create new_index
         create_index_res = ElasticCore().create_index(new_index, updated_schema)
-        Index.objects.get_or_create(name=new_index)
+        index, is_created = Index.objects.get_or_create(name=new_index, added_by=reindexer_obj.author.username)
 
-        logging.getLogger(INFO_LOGGER).info("Indexing documents.")
+        logging.getLogger(INFO_LOGGER).info(f"Indexing documents into index '{new_index}'.")
         # set new_index name as mapping name, perhaps make it customizable in the future
         bulk_add_documents(elastic_search, elastic_doc, index=new_index, chunk_size=scroll_size, flatten_doc=FLATTEN_DOC, field_data=field_type)
+
+        reindexer_obj.project.indices.add(index)
 
         # declare the job done
         task_object.complete()
 
-        logging.getLogger(INFO_LOGGER).info("Reindexing succesfully completed.")
+        logging.getLogger(INFO_LOGGER).info(f"Reindexing into index '{new_index}' succesfully completed.")
         return True
 
 
