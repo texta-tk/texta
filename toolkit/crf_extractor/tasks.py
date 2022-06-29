@@ -111,7 +111,7 @@ def save_crf_results(result_data: dict):
     """
     try:
         crf_id = result_data['id']
-        logging.getLogger(INFO_LOGGER).info(f"Starting task results for CRFExtractor with ID: {crf_id}!")
+        logging.getLogger(INFO_LOGGER).info(f"Saving task results for CRFExtractor with ID: {crf_id}!")
         crf_object = CRFExtractorObject.objects.get(pk=crf_id)
 
         model_path = pathlib.Path(crf_object.model.path) if crf_object.model else None

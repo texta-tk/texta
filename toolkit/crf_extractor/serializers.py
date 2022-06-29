@@ -1,21 +1,15 @@
 import json
+
 from rest_framework import serializers
-from texta_crf_extractor.feature_extraction import DEFAULT_LAYERS, DEFAULT_EXTRACTORS
-from toolkit.core.user_profile.serializers import UserSerializer
-from toolkit.core.task.serializers import TaskSerializer
+from texta_crf_extractor.feature_extraction import DEFAULT_EXTRACTORS, DEFAULT_LAYERS
 from texta_elastic.searcher import EMPTY_QUERY
-from toolkit.serializer_constants import (
-    FieldParseSerializer,
-    IndicesSerializerMixin,
-    ElasticScrollMixIn,
-    ProjectResourceUrlSerializer,
-    ProjectFilteredPrimaryKeyRelatedField,
-    QUERY_HELPTEXT,
-    DESCRIPTION_HELPTEXT
-)
+
+from toolkit.core.task.serializers import TaskSerializer
+from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.embedding.models import Embedding
+from toolkit.serializer_constants import (DESCRIPTION_HELPTEXT, ElasticScrollMixIn, FieldParseSerializer, IndicesSerializerMixin, ProjectFilteredPrimaryKeyRelatedField, ProjectResourceUrlSerializer, QUERY_HELPTEXT)
+from .choices import FEATURE_EXTRACTOR_CHOICES, FEATURE_FIELDS_CHOICES
 from .models import CRFExtractor
-from .choices import FEATURE_FIELDS_CHOICES, FEATURE_EXTRACTOR_CHOICES
 
 
 class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
@@ -55,11 +49,11 @@ class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, 
     window_size = serializers.IntegerField(
         default=2,
         help_text="Number of words before and after the observed word analyzed.",
-        )
+    )
     suffix_len = serializers.JSONField(
-        default=json.dumps((2,2)),
+        default=json.dumps((2, 2)),
         help_text="Number of characters (min, max) used for word suffixes as features."
-        )
+    )
     feature_fields = serializers.MultipleChoiceField(
         choices=FEATURE_FIELDS_CHOICES,
         default=DEFAULT_LAYERS,
@@ -118,3 +112,7 @@ class ApplyCRFExtractorSerializer(FieldParseSerializer, IndicesSerializerMixin, 
 
 class CRFExtractorTagTextSerializer(serializers.Serializer):
     text = serializers.CharField(help_text="Use the CRF model on text.")
+
+
+class TagRandomDocSerializer(IndicesSerializerMixin):
+    mlp_field = serializers.CharField()

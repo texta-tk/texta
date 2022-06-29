@@ -2,30 +2,28 @@ import json
 import os
 
 import rest_framework.filters as drf_filters
+from celery.result import allow_join_result
+from django.db import transaction
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import APIException
 from rest_framework.response import Response
-from celery.result import allow_join_result
-from django.db import transaction
+from texta_elastic.searcher import ElasticSearcher
 
-from toolkit.settings import CELERY_MLP_TASK_QUEUE, CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.core.project.models import Project
-from toolkit.elastic.index.models import Index
 from toolkit.core.task.models import Task
+from toolkit.elastic.index.models import Index
+from toolkit.exceptions import NonExistantModelError, SerializerNotValid
+from toolkit.mlp.tasks import apply_mlp_on_list
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
-from toolkit.mlp.tasks import apply_mlp_on_list
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE
 from toolkit.view_constants import BulkDelete
-from toolkit.exceptions import NonExistantModelError, SerializerNotValid
-from .tasks import apply_crf_extractor, apply_crf_extractor_to_index
 from .models import CRFExtractor
-from .serializers import (
-    CRFExtractorSerializer,
-    CRFExtractorTagTextSerializer,
-    ApplyCRFExtractorSerializer
-)
+from .serializers import (ApplyCRFExtractorSerializer, CRFExtractorSerializer, CRFExtractorTagTextSerializer, TagRandomDocSerializer)
+from .tasks import apply_crf_extractor, apply_crf_extractor_to_index
 
 
 class CRFExtractorFilter(filters.FilterSet):
@@ -164,9 +162,39 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             max_chunk_bytes = serializer.validated_data["max_chunk_bytes"]
             es_timeout = serializer.validated_data["es_timeout"]
 
-
             args = (pk, indices, mlp_fields, label_suffix, query, bulk_size, max_chunk_bytes, es_timeout)
             transaction.on_commit(lambda: apply_crf_extractor_to_index.apply_async(args=args, queue=CELERY_LONG_TERM_TASK_QUEUE))
 
             message = "Started process of applying Tagger with id: {}".format(extractor.id)
             return Response({"message": message}, status=status.HTTP_201_CREATED)
+
+
+    @action(detail=True, methods=['post'], serializer_class=TagRandomDocSerializer)
+    def tag_random_doc(self, request, pk=None, project_pk=None):
+        """Returns prediction for a random document in Elasticsearch."""
+        # get tagger object
+        tagger_object: CRFExtractor = self.get_object()
+        # check if tagger exists
+
+        if not tagger_object.model.path:
+            raise NonExistantModelError()
+
+        serializer = TagRandomDocSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        mlp_field = serializer.validated_data["mlp_field"]
+
+        indices = [index["name"] for index in serializer.validated_data["indices"]]
+        indices = tagger_object.get_available_or_all_indices(indices)
+        # retrieve random document
+        random_doc = ElasticSearcher(indices=indices, flatten=False, field_data=[mlp_field]).random_documents(size=1)[0]
+
+        # apply tagge
+        try:
+            crf_extractor = tagger_object.load_extractor()
+            tagger_response = crf_extractor.tag(mlp_document=random_doc, field_name=mlp_field)
+            response = {"document": random_doc, "prediction": tagger_response}
+            return Response(response, status=status.HTTP_200_OK)
+
+        except KeyError:
+            raise APIException("Randomly chosen doc does not have the given mlp field!", code=status.HTTP_400_BAD_REQUEST)

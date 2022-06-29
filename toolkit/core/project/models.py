@@ -53,7 +53,7 @@ class Project(models.Model):
         if indices:
             indices = self.indices.filter(name__in=indices, is_open=True)
             if not indices:
-                raise ValidationError(f"Inserted indices {indices} are not available to you.")
+                raise ValidationError(f"Inserted indices are not available to you.")
         else:
             indices = self.indices.all()
 

@@ -258,13 +258,10 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         """Returns prediction for a random document in Elasticsearch."""
         # get tagger object
         tagger_object = self.get_object()
-        # check if tagger exists
 
+        # check if tagger exists
         if not tagger_object.model.path:
             raise NonExistantModelError()
-
-        if not tagger_object.model.path:
-            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = TagRandomDocSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

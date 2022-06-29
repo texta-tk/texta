@@ -14,7 +14,7 @@ from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.core.task.models import Task
 from toolkit.crf_extractor.models import CRFExtractor
 from toolkit.helper_functions import reindex_test_dataset
-from toolkit.settings import RELATIVE_MODELS_PATH
+from toolkit.settings import RELATIVE_MODELS_PATH, TEXTA_TAGS_KEY
 from toolkit.test_settings import (CRF_TEST_FIELD, CRF_TEST_INDEX, TEST_INDEX, TEST_KEEP_PLOT_FILES, TEST_VERSION_PREFIX)
 from toolkit.tools.utils_for_tests import (
     create_test_user,
@@ -86,6 +86,7 @@ class CRFExtractorViewTests(APITransactionTestCase):
         self.run_apply_crf_to_index()
         self.run_apply_crf_to_index_with_specified_label_suffix()
         self.run_retraining_view_on_trained_crf_model()
+        self.run_test_for_tagging_random_document()
 
 
     def run_create_crf_training_and_task_signal(self):
@@ -255,6 +256,18 @@ class CRFExtractorViewTests(APITransactionTestCase):
         # Ensure that the freshly created model wasn't deleted.
         tagger_orm.refresh_from_db()
         self.assertNotEqual(tagger_orm.model.path, str(model_path))
+
+
+    def run_test_for_tagging_random_document(self):
+        url = reverse("v2:crf_extractor-tag-random-doc", kwargs={"project_pk": self.project.pk, "pk": self.test_crf_ids[0]})
+        response = self.client.post(url, data={"mlp_field": CRF_TEST_FIELD, "indices": [{"name": self.test_index_copy}]}, format="json")
+        print_output("run_test_for_tagging_random_document:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+        data = response.data
+        self.assertTrue(CRF_TEST_FIELD in data["document"])
+        self.assertTrue(CRF_TEST_FIELD in data["prediction"])
+        self.assertTrue(TEXTA_TAGS_KEY in data["prediction"])
 
 
 # TODO: test training with incorrect fields & labels
