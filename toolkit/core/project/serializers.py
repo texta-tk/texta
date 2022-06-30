@@ -1,13 +1,13 @@
 import json
 from typing import List
 
-from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.urls import reverse
-
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from texta_elastic.searcher import EMPTY_QUERY
 
 from toolkit.core import choices as choices
 from toolkit.core.project.models import Project
@@ -15,7 +15,6 @@ from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.core.user_profile.validators import check_if_username_exist
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import IndexSerializer
-from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.validators import check_for_existence
 from toolkit.helper_functions import wrap_in_list
 from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin
@@ -131,6 +130,7 @@ class ProjectFactAggregatorSerializer(IndicesSerializerMixin):
         required=False,
         help_text='Query in JSON format.'
     )
+
 
     def validate(self, data):
         """ Apply custom validation checks."""
@@ -251,8 +251,8 @@ class ProjectSerializer(FieldParseSerializer, serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ('url', 'id', 'title', 'author', 'administrators_write', 'administrators', 'users', 'users_write', 'indices', 'indices_write', 'scopes', 'resources', 'resource_count',)
-        read_only_fields = ('author', 'resources',)
+        fields = ('url', 'id', 'title', 'author', 'administrators_write', 'administrators', 'users', 'users_write', 'indices', 'indices_write', 'scopes', 'resources', 'created_at', 'modified_at', 'resource_count',)
+        read_only_fields = ('author', 'resources', 'created_at', 'modified_at')
         fields_to_parse = ("scopes",)
 
 
