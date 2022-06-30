@@ -35,9 +35,10 @@ class LangDetectView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
 
-    def _enrich_language_info(self, language: str):
+    def _enrich_language_info(self, text: str, language: str):
         mapping = {**ES6_SNOWBALL_MAPPING, **ES7_SNOWBALL_MAPPING}
         result = {
+            "text": text,
             "language_code": language,
             "language": None
         }
@@ -52,7 +53,7 @@ class LangDetectView(APIView):
         text = serializer.validated_data["text"]
         language = MLP.detect_language("", text)
         if language:
-            result = self._enrich_language_info(language)
+            result = self._enrich_language_info(text, language)
             return Response(result, status=status.HTTP_200_OK)
         else:
             raise CouldNotDetectLanguageException()
