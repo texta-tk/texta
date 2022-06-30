@@ -8,19 +8,16 @@ from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
-from toolkit.core.project.models import Project
-from toolkit.core.task.models import Task
 from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
 from texta_elastic.searcher import ElasticSearcher
+
+from toolkit.core.project.models import Project
+from toolkit.core.task.models import Task
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup
-from toolkit.regex_tagger.serializers import (
-    ApplyRegexTaggerGroupSerializer, RegexGroupTaggerTagTextSerializer, RegexMultitagTextSerializer, RegexTaggerGroupMultitagDocsSerializer, RegexTaggerGroupMultitagTextSerializer,
-    RegexTaggerGroupSerializer, RegexTaggerGroupTagDocumentSerializer, RegexTaggerSerializer,
-    RegexTaggerTagDocsSerializer, RegexTaggerTagTextsSerializer, TagRandomDocSerializer, ApplyRegexTaggerSerializer
-)
+from toolkit.regex_tagger.serializers import (ApplyRegexTaggerGroupSerializer, ApplyRegexTaggerSerializer, RegexGroupTaggerTagTextSerializer, RegexMultitagTextSerializer, RegexTaggerGroupMultitagDocsSerializer, RegexTaggerGroupMultitagTextSerializer, RegexTaggerGroupSerializer,
+                                              RegexTaggerGroupTagDocumentSerializer, RegexTaggerSerializer, RegexTaggerTagDocsSerializer, RegexTaggerTagTextsSerializer, TagRandomDocSerializer)
 from toolkit.serializer_constants import GeneralTextSerializer, ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.view_constants import BulkDelete
@@ -79,6 +76,7 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
     def duplicate(self, request, pk=None, project_pk=None):
         tagger_object: RegexTagger = self.get_object()
         tagger_object.pk = None
+        tagger_object.task = None
         tagger_object.description = f"{tagger_object.description}_copy"
         tagger_object.author = self.request.user
         tagger_object.save()
@@ -270,6 +268,7 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         results["matches"] = final_matches
         return Response(results, status=status.HTTP_200_OK)
 
+
     @action(detail=True, methods=['post'], serializer_class=ApplyRegexTaggerSerializer)
     def apply_to_index(self, request, pk=None, project_pk=None):
         from toolkit.regex_tagger.tasks import apply_regex_tagger
@@ -286,7 +285,7 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
 
             project = Project.objects.get(pk=project_pk)
             indices = [index["name"] for index in serializer.validated_data["indices"]]
-            #indices = project.get_available_or_all_project_indices(indices)
+            # indices = project.get_available_or_all_project_indices(indices)
 
             fields = serializer.validated_data["fields"]
             query = serializer.validated_data["query"]
