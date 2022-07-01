@@ -16,12 +16,13 @@ from toolkit.elastic.index.models import Index
 from toolkit.embedding.models import Embedding
 from toolkit.embedding.serializers import EmbeddingPredictSimilarWordsSerializer, EmbeddingSerializer
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, SerializerNotValid
+from toolkit.filter_constants import FavoriteFilter
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import GeneralTextSerializer, ProjectResourceImportModelSerializer
-from toolkit.view_constants import BulkDelete
+from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing
 
 
-class EmbeddingFilter(filters.FilterSet):
+class EmbeddingFilter(FavoriteFilter):
     description = filters.CharFilter('description', lookup_expr='icontains')
     task_status = filters.CharFilter('task__status', lookup_expr='icontains')
 
@@ -31,7 +32,7 @@ class EmbeddingFilter(filters.FilterSet):
         fields = []
 
 
-class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
+class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, FavoriteModelViewMixing):
     queryset = Embedding.objects.all()
     serializer_class = EmbeddingSerializer
     permission_classes = (

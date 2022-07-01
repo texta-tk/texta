@@ -2,16 +2,17 @@ import json
 import re
 from collections import OrderedDict
 from json import JSONDecodeError
+from typing import List
 
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+from texta_elastic.searcher import EMPTY_QUERY
 
+from toolkit.choice_constants import DEFAULT_BULK_SIZE, DEFAULT_ES_TIMEOUT, DEFAULT_MAX_CHUNK_BYTES
 from toolkit.core.project.models import Project
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.serializers import IndexSerializer
-from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.validators import check_for_existence
-from toolkit.choice_constants import DEFAULT_ES_TIMEOUT, DEFAULT_BULK_SIZE, DEFAULT_MAX_CHUNK_BYTES
-
 # Helptext constants to ensure consistent values inside Toolkit.
 from toolkit.settings import ES_BULK_SIZE_MAX, ES_TIMEOUT_MAX
 
@@ -110,6 +111,16 @@ class FeedbackSerializer(serializers.Serializer):
     correct_result = serializers.CharField()
 
 
+# You have to use metaclass because DRF serializers won't accept fields of classes
+# that don't subclass serializers.Serializer.
+class CommonModelMixinSerializer(metaclass=serializers.SerializerMetaclass):
+    is_favorited = serializers.SerializerMethodField(read_only=True)
+
+
+    def get_is_favorited(self, instance):
+        return instance.favorited_users.filter(username=instance.author.username).exists()
+
+
 class ProjectFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
     def get_queryset(self):
         request = self.context.get("request", None)
@@ -159,6 +170,7 @@ class ElasticScrollMixIn(serializers.Serializer):
         default=DEFAULT_MAX_CHUNK_BYTES,
         help_text=f"Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors. Default:{DEFAULT_MAX_CHUNK_BYTES}."
     )
+
 
 class ToolkitTaskSerializer(IndicesSerializerMixin, FieldsValidationSerializerMixin):
     description = serializers.CharField(max_length=100, help_text=DESCRIPTION_HELPTEXT)

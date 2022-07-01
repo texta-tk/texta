@@ -18,11 +18,11 @@ from toolkit.rakun_keyword_extractor.models import RakunExtractor
 from toolkit.rakun_keyword_extractor.serializers import RakunExtractorIndexSerializer, RakunExtractorTextSerializer, StopWordSerializer
 from toolkit.rakun_keyword_extractor.tasks import apply_rakun_extractor_to_index
 from toolkit.serializer_constants import GeneralTextSerializer
-from toolkit.view_constants import BulkDelete
+from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing
 from .serializers import RakunExtractorRandomDocSerializer, RakunExtractorSerializer
 
 
-class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
+class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete, FavoriteModelViewMixing):
     serializer_class = RakunExtractorSerializer
     permission_classes = (
         ProjectAccessInApplicationsAllowed,

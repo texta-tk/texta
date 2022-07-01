@@ -4,6 +4,7 @@ import os
 import rest_framework.filters as drf_filters
 from celery import group
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
@@ -18,6 +19,7 @@ from toolkit.elastic.index.models import Index
 from texta_elastic.core import ElasticCore
 from texta_elastic.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, SerializerNotValid
+from toolkit.filter_constants import FavoriteFilter
 from toolkit.helper_functions import add_finite_url_to_feedback, load_stop_words
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
@@ -29,14 +31,22 @@ from toolkit.tagger.validators import validate_input_document
 from toolkit.tools.lemmatizer import CeleryLemmatizer
 from toolkit.view_constants import (
     BulkDelete,
-    FeedbackModelView,
+    FavoriteModelViewMixing, FeedbackModelView,
 )
 
 
-class TaggerFilter(filters.FilterSet):
+class TaggerFilter(FavoriteFilter):
     description = filters.CharFilter('description', lookup_expr='icontains')
     tg_description = filters.CharFilter('taggergroup__description', lookup_expr='icontains')
     task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+    is_favorited = filters.BooleanFilter(field_name="favorited_users", method="get_is_favorited")
+
+
+    def get_is_favorited(self, queryset, name, value):
+        if value is True:
+            return queryset.filter(favorited_users__username=self.request.user.username)
+        else:
+            return queryset.filter(~Q(favorited_users__username=self.request.user.username))
 
 
     class Meta:
@@ -44,7 +54,7 @@ class TaggerFilter(filters.FilterSet):
         fields = []
 
 
-class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
+class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, FavoriteModelViewMixing):
     serializer_class = TaggerSerializer
     permission_classes = (
         ProjectAccessInApplicationsAllowed,

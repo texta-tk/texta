@@ -12,7 +12,7 @@ from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choices
 from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import load_stop_words
-from toolkit.serializer_constants import (ElasticScrollMixIn, FieldParseSerializer, IndicesSerializerMixin, ProjectFilteredPrimaryKeyRelatedField, ProjectResourceUrlSerializer)
+from toolkit.serializer_constants import (CommonModelMixinSerializer, ElasticScrollMixIn, FieldParseSerializer, IndicesSerializerMixin, ProjectFilteredPrimaryKeyRelatedField, ProjectResourceUrlSerializer)
 from toolkit.settings import ERROR_LOGGER
 from toolkit.tagger import choices
 from toolkit.tagger.models import Tagger, TaggerGroup
@@ -124,7 +124,7 @@ class TaggerGroupTagDocumentSerializer(serializers.Serializer):
     feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 
-class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
+class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, CommonModelMixinSerializer):
     author = UserSerializer(read_only=True)
     description = serializers.CharField(help_text=f'Description for the Tagger. Will be used as tag.')
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
@@ -158,8 +158,8 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Indice
     class Meta:
         model = Tagger
         fields = ('id', 'url', 'author', 'description', 'query', 'fact_name', 'indices', 'fields', 'detect_lang', 'embedding', 'vectorizer', 'analyzer', 'classifier', 'stop_words',
-                  'maximum_sample_size', 'minimum_sample_size', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score', 'snowball_language', 'scoring_function',
-                  'num_features', 'num_examples', 'confusion_matrix', 'plot', 'task', 'tagger_groups', 'ignore_numbers', 'balance', 'balance_to_max_limit', 'pos_label', 'classes')
+                  'maximum_sample_size', 'minimum_sample_size', 'is_favorited', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score', 'snowball_language', 'scoring_function',
+                  'num_features', 'num_examples', 'confusion_matrix', 'is_favorited', 'plot', 'task', 'tagger_groups', 'ignore_numbers', 'balance', 'balance_to_max_limit', 'pos_label', 'classes')
         read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'num_examples', 'tagger_groups', 'confusion_matrix', 'classes')
         fields_to_parse = ('fields', 'classes',)
 
@@ -192,7 +192,7 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Indice
         return json.loads(value.tagger_groups)
 
 
-class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
+class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer, CommonModelMixinSerializer):
     author = UserSerializer(read_only=True)
     description = serializers.CharField(help_text=f'Description for the Tagger Group.')
     minimum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, help_text=f'Minimum number of documents required to train a model. Default: {choices.DEFAULT_MIN_SAMPLE_SIZE}')
@@ -219,7 +219,7 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     class Meta:
         model = TaggerGroup
         fields = ('id', 'url', 'author', 'description', 'fact_name', 'num_tags', 'blacklisted_facts', 'minimum_sample_size',
-                  'tagger_status', 'tagger_params', 'tagger', 'tagger_statistics', 'task')
+                  'tagger_status', 'tagger_params', 'tagger', 'tagger_statistics', 'is_favorited', 'task')
 
 
     def get_tagger_status(self, obj):

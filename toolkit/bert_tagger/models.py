@@ -21,10 +21,11 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.feedback import Feedback
+from toolkit.model_constants import CommonModelMixin
 from toolkit.settings import (BASE_DIR, BERT_CACHE_DIR, BERT_FINETUNED_MODEL_DIRECTORY, BERT_PRETRAINED_MODEL_DIRECTORY, CELERY_LONG_TERM_TASK_QUEUE)
 
 
-class BertTagger(models.Model):
+class BertTagger(CommonModelMixin):
     MODEL_TYPE = 'bert_tagger'
     MODEL_JSON_NAME = "model.json"
 
@@ -117,6 +118,7 @@ class BertTagger(models.Model):
                 bert_tagger_json = json.loads(json_string)
 
                 indices = bert_tagger_json.pop("indices")
+                bert_tagger_json.pop("favorited_users", None)
 
                 bert_tagger_model = BertTagger(**bert_tagger_json)
 

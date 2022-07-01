@@ -17,7 +17,7 @@ from toolkit.core.task.models import Task
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.mlp.tasks import apply_mlp_on_list
-from toolkit.view_constants import BulkDelete
+from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing
 from toolkit.exceptions import NonExistantModelError, SerializerNotValid
 from .tasks import apply_crf_extractor, apply_crf_extractor_to_index
 from .models import CRFExtractor
@@ -26,9 +26,10 @@ from .serializers import (
     CRFExtractorTagTextSerializer,
     ApplyCRFExtractorSerializer
 )
+from ..filter_constants import FavoriteFilter
 
 
-class CRFExtractorFilter(filters.FilterSet):
+class CRFExtractorFilter(FavoriteFilter):
     description = filters.CharFilter('description', lookup_expr='icontains')
     task_status = filters.CharFilter('task__status', lookup_expr='icontains')
 
@@ -38,7 +39,7 @@ class CRFExtractorFilter(filters.FilterSet):
         fields = []
 
 
-class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
+class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete, FavoriteModelViewMixing):
     serializer_class = CRFExtractorSerializer
     permission_classes = (
         ProjectAccessInApplicationsAllowed,

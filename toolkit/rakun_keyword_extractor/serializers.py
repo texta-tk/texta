@@ -6,11 +6,11 @@ from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.rakun_keyword_extractor import choices
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
-from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, ProjectFasttextFilteredPrimaryKeyRelatedField
+from toolkit.serializer_constants import CommonModelMixinSerializer, FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, ProjectFasttextFilteredPrimaryKeyRelatedField
 from toolkit import serializer_constants
 
 
-class RakunExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin):
+class RakunExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin, CommonModelMixinSerializer,):
     author_username = serializers.CharField(source="author.profile.get_display_name", read_only=True)
     description = serializers.CharField(required=True, help_text=serializer_constants.DESCRIPTION_HELPTEXT)
     distance_method = serializers.ChoiceField(choices=choices.DEFAULT_DISTANCE_METHOD_CHOICES, default=choices.DEFAULT_DISTANCE_METHOD,
@@ -31,7 +31,7 @@ class RakunExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer
     class Meta:
         model = RakunExtractor
         fields = ('id', 'url', 'author_username', 'description', 'distance_method', 'distance_threshold', 'num_keywords', 'pair_diff_length',
-                  'stopwords', 'bigram_count_threshold', 'min_tokens', 'max_tokens', 'max_similar', 'max_occurrence',
+                  'stopwords', 'bigram_count_threshold', 'min_tokens', 'is_favorited', 'max_tokens', 'max_similar', 'max_occurrence',
                   'fasttext_embedding', 'task')
         fields_to_parse = ()
 
