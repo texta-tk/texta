@@ -5,10 +5,10 @@ from io import BytesIO
 
 from django.test import TransactionTestCase, override_settings
 from rest_framework import status
-
-from toolkit.core.task.models import Task
 from texta_elastic.core import ElasticCore
 from texta_elastic.searcher import EMPTY_QUERY
+
+from toolkit.core.task.models import Task
 from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.settings import RELATIVE_MODELS_PATH
@@ -56,6 +56,7 @@ class EmbeddingViewTests(TransactionTestCase):
             "fields": TEST_FIELD_CHOICE,
             "max_vocab": 10000,
             "min_freq": 5,
+            "stop_words": ["loll", "taun"],
             "num_dimensions": 100
         }
 
@@ -69,6 +70,10 @@ class EmbeddingViewTests(TransactionTestCase):
         print_output("created default embedding task status", created_embedding.task.status)
         # Check if Task gets created via a signal
         self.assertTrue(created_embedding.task is not None)
+
+        stop_words = response.data["stop_words"]
+        self.assertTrue(isinstance(stop_words, list))
+        self.assertTrue("loll" in stop_words and "taun" in stop_words)
 
         # Check that the model actually exists in the filesystem.
         self.assertTrue(created_embedding.embedding_model.path)
