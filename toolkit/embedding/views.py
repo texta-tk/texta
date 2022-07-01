@@ -81,7 +81,8 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
             embedding: Embedding = serializer.save(
                 author=self.request.user,
                 project=Project.objects.get(id=self.kwargs['project_pk']),
-                fields=json.dumps(serializer.validated_data['fields'])
+                fields=json.dumps(serializer.validated_data['fields']),
+                stop_words=json.dumps(serializer.validated_data["stop_words"], ensure_ascii=False)
             )
 
             for index in Index.objects.filter(name__in=indices, is_open=True):

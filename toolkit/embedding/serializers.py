@@ -14,6 +14,7 @@ class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSeri
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     snowball_language = serializers.ChoiceField(choices=get_snowball_choices(), default=DEFAULT_SNOWBALL_LANGUAGE, help_text=f'Uses Snowball stemmer with specified language to normalize the texts. Default: {DEFAULT_SNOWBALL_LANGUAGE}')
     max_documents = serializers.IntegerField(default=choices.DEFAULT_MAX_DOCUMENTS)
+    stop_words = serializers.ListField(child=serializers.CharField(), allow_empty=False, default=[])
     num_dimensions = serializers.IntegerField(
         default=choices.DEFAULT_NUM_DIMENSIONS,
         help_text=f'Default: {choices.DEFAULT_NUM_DIMENSIONS}'
@@ -35,9 +36,9 @@ class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSeri
 
     class Meta:
         model = Embedding
-        fields = ('id', 'url', 'author', 'description', 'indices', 'fields', 'use_phraser', 'embedding_type', 'snowball_language', 'query', 'num_dimensions', 'max_documents', 'min_freq', 'window_size', 'num_epochs', 'vocab_size', 'task')
+        fields = ('id', 'url', 'author', 'description', 'indices', 'fields', 'use_phraser', 'embedding_type', 'snowball_language', 'query', 'stop_words', 'num_dimensions', 'max_documents', 'min_freq', 'window_size', 'num_epochs', 'vocab_size', 'task')
         read_only_fields = ('vocab_size',)
-        fields_to_parse = ('fields',)
+        fields_to_parse = ('fields', 'stop_words')
 
 
 class EmbeddingPredictSimilarWordsSerializer(serializers.Serializer):
