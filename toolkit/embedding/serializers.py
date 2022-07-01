@@ -5,10 +5,10 @@ from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choices
 from toolkit.embedding import choices
 from toolkit.embedding.models import Embedding
-from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer
+from toolkit.serializer_constants import CommonModelMixinSerializer, FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer
 
 
-class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin):
+class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer, CommonModelMixinSerializer, IndicesSerializerMixin):
     author = UserSerializer(read_only=True)
     task = TaskSerializer(read_only=True)
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
@@ -36,7 +36,7 @@ class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSeri
 
     class Meta:
         model = Embedding
-        fields = ('id', 'url', 'author', 'description', 'indices', 'fields', 'use_phraser', 'embedding_type', 'snowball_language', 'query', 'stop_words', 'num_dimensions', 'max_documents', 'min_freq', 'window_size', 'num_epochs', 'vocab_size', 'task')
+        fields = ('id', 'url', 'author', 'description', 'indices', 'fields', 'use_phraser', 'embedding_type', 'is_favorited', 'snowball_language', 'query', 'stop_words', 'num_dimensions', 'max_documents', 'min_freq', 'window_size', 'num_epochs', 'vocab_size', 'task')
         read_only_fields = ('vocab_size',)
         fields_to_parse = ('fields', 'stop_words')
 

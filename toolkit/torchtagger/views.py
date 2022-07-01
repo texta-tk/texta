@@ -15,6 +15,7 @@ from toolkit.elastic.index.models import Index
 from texta_elastic.core import ElasticCore
 from texta_elastic.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed
+from toolkit.filter_constants import FavoriteFilter
 from toolkit.helper_functions import add_finite_url_to_feedback
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
@@ -24,10 +25,10 @@ from toolkit.torchtagger import choices
 from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
 from toolkit.torchtagger.serializers import ApplyTaggerSerializer, EpochReportSerializer, TagRandomDocSerializer, TorchTaggerSerializer
 from toolkit.torchtagger.tasks import apply_tagger, apply_tagger_to_index, train_torchtagger
-from toolkit.view_constants import BulkDelete, FeedbackModelView
+from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing, FeedbackModelView
 
 
-class TorchTaggerFilter(filters.FilterSet):
+class TorchTaggerFilter(FavoriteFilter):
     description = filters.CharFilter('description', lookup_expr='icontains')
     task_status = filters.CharFilter('task__status', lookup_expr='icontains')
 
@@ -37,7 +38,7 @@ class TorchTaggerFilter(filters.FilterSet):
         fields = []
 
 
-class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
+class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, FavoriteModelViewMixing):
     serializer_class = TorchTaggerSerializer
     permission_classes = (
         permissions.IsAuthenticated,

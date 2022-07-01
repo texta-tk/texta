@@ -52,3 +52,11 @@ class TaskModel(models.Model):
 
     def __str__(self):
         return '{0} - {1}'.format(self.pk, self.description)
+
+
+class CommonModelMixin(models.Model):
+    favorited_users = models.ManyToManyField(User, related_name="%(app_label)s_%(class)s_favorited_user")
+
+
+    class Meta:
+        abstract = True

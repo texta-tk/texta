@@ -20,10 +20,11 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE
 from toolkit.elastic.index.models import Index
 from toolkit.embedding.choices import FASTTEXT_EMBEDDING, W2V_EMBEDDING
+from toolkit.model_constants import CommonModelMixin
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
 
 
-class Embedding(models.Model):
+class Embedding(CommonModelMixin):
     MODEL_JSON_NAME = "model.json"
 
     description = models.CharField(max_length=MAX_DESC_LEN)
@@ -183,6 +184,8 @@ class Embedding(models.Model):
             json_string = archive.read(Embedding.MODEL_JSON_NAME).decode()
             original_json = json.loads(json_string)
             model_json = original_json["fields"]
+            model_json.pop("favorited_users", None)
+
             # Create the new embedding object and save it to the DB.
             new_model = Embedding.create_embedding_object(model_json, request.user.id, pk)
             new_model = Embedding.add_file_to_embedding_object(archive, new_model, model_json, "embedding", "embedding_model")

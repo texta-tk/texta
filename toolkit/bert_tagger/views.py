@@ -27,11 +27,12 @@ from toolkit.helper_functions import add_finite_url_to_feedback, download_bert_r
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.settings import ALLOW_BERT_MODEL_DOWNLOADS, BERT_CACHE_DIR, BERT_PRETRAINED_MODEL_DIRECTORY, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER
-from toolkit.view_constants import BulkDelete, FeedbackModelView
+from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing, FeedbackModelView
 from .tasks import apply_persistent_bert_tagger
+from ..filter_constants import FavoriteFilter
 
 
-class BertTaggerFilter(filters.FilterSet):
+class BertTaggerFilter(FavoriteFilter):
     description = filters.CharFilter('description', lookup_expr='icontains')
     task_status = filters.CharFilter('task__status', lookup_expr='icontains')
 
@@ -41,7 +42,7 @@ class BertTaggerFilter(filters.FilterSet):
         fields = []
 
 
-class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
+class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, FavoriteModelViewMixing):
     serializer_class = BertTaggerSerializer
     permission_classes = (
         permissions.IsAuthenticated,

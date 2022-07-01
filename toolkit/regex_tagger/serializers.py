@@ -1,20 +1,15 @@
 from rest_framework import serializers
+from texta_elastic.searcher import EMPTY_QUERY
 
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
-from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.regex_tagger import choices
 from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup
 from toolkit.regex_tagger.validators import validate_patterns
-from toolkit.serializer_constants import (
-    FieldParseSerializer,
-    IndicesSerializerMixin,
-    ProjectResourceUrlSerializer,
-    ElasticScrollMixIn
-)
+from toolkit.serializer_constants import (CommonModelMixinSerializer, ElasticScrollMixIn, FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer)
 
 
-class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer):
+class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer, CommonModelMixinSerializer):
     description = serializers.CharField()
     author = UserSerializer(read_only=True)
     lexicon = serializers.ListField(child=serializers.CharField(required=True), validators=[validate_patterns], help_text="Words/phrases/regex patterns to match.")
@@ -45,7 +40,7 @@ class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, P
         fields = ('id', 'url', 'author',
                   'description', 'lexicon', 'counter_lexicon', 'operator', 'match_type', 'required_words',
                   'phrase_slop', 'counter_slop', 'n_allowed_edits', 'return_fuzzy_match', 'ignore_case',
-                  'ignore_punctuation', 'phrase_slop', 'counter_slop', 'n_allowed_edits', 'return_fuzzy_match',
+                  'ignore_punctuation', 'phrase_slop', 'is_favorited', 'counter_slop', 'n_allowed_edits', 'return_fuzzy_match',
                   'ignore_case', 'ignore_punctuation', 'tagger_groups', 'task')
         fields_to_parse = ('lexicon', 'counter_lexicon')
 
@@ -90,7 +85,7 @@ class RegexMultitagTextSerializer(serializers.Serializer):
     )
 
 
-class RegexTaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
+class RegexTaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer, CommonModelMixinSerializer):
     description = serializers.CharField()
     url = serializers.SerializerMethodField()
     task = TaskSerializer(read_only=True)
@@ -115,7 +110,7 @@ class RegexTaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrl
     class Meta:
         model = RegexTaggerGroup
         # regex_taggers is the field which to use to manipulate the related RegexTagger model objects.
-        fields = ('id', 'url', 'regex_taggers', 'author', 'task', 'description', 'tagger_info')
+        fields = ('id', 'url', 'regex_taggers', 'author', 'task', 'description', 'tagger_info', 'is_favorited')
 
 
 class RegexTaggerGroupMultitagTextSerializer(serializers.Serializer):

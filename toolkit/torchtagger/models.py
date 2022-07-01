@@ -22,12 +22,13 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
+from toolkit.model_constants import CommonModelMixin
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
 from toolkit.torchtagger import choices
 from toolkit.elastic.tools.feedback import Feedback
 
 
-class TorchTagger(models.Model):
+class TorchTagger(CommonModelMixin):
     MODEL_TYPE = 'torchtagger'
     MODEL_JSON_NAME = "model.json"
 
@@ -121,6 +122,7 @@ class TorchTagger(models.Model):
 
                 indices = torchtagger_json.pop("indices")
                 torchtagger_json.pop("embedding", None)
+                torchtagger_json.pop("favorited_users", None)
 
                 torchtagger_model = TorchTagger(**torchtagger_json)
 

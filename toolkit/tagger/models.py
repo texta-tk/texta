@@ -25,6 +25,7 @@ from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choi
 from toolkit.elastic.index.models import Index
 from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
+from toolkit.model_constants import CommonModelMixin
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, RELATIVE_MODELS_PATH
 from toolkit.helper_functions import load_stop_words
 from toolkit.tools.lemmatizer import CeleryLemmatizer, ElasticAnalyzer
@@ -32,7 +33,7 @@ from toolkit.tagger import choices
 from toolkit.elastic.tools.feedback import Feedback
 
 
-class Tagger(models.Model):
+class Tagger(CommonModelMixin):
     MODEL_TYPE = 'tagger'
     MODEL_JSON_NAME = "model.json"
 
@@ -69,6 +70,8 @@ class Tagger(models.Model):
     model_size = models.FloatField(default=None, null=True)
     plot = models.FileField(upload_to="data/media", null=True, verbose_name="")
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
+
+
 
     tagger_groups = models.TextField(default="[]", null=True, blank=True)
 
@@ -157,6 +160,7 @@ class Tagger(models.Model):
                 json_string = archive.read(Tagger.MODEL_JSON_NAME).decode()
                 model_json = json.loads(json_string)
                 indices = model_json.pop("indices")
+                model_json.pop("favorited_users", None)
 
                 new_model = Tagger(**model_json)
 
@@ -276,7 +280,7 @@ def auto_delete_file_on_delete(sender, instance: Tagger, **kwargs):
             os.remove(instance.model.path)
 
 
-class TaggerGroup(models.Model):
+class TaggerGroup(CommonModelMixin):
     MODEL_JSON_NAME = "model.json"
     MODEL_TYPE = "tagger_group"
 
@@ -315,7 +319,10 @@ class TaggerGroup(models.Model):
             with zipfile.ZipFile(zip_file, 'r') as archive:
                 json_string = archive.read(Tagger.MODEL_JSON_NAME).decode()
                 model_json: dict = json.loads(json_string)
+                model_json.pop("favorited_users", None)
+
                 tg_data = {key: model_json[key] for key in model_json if key != 'taggers'}
+                tg_data.pop("favorited_users", None)
                 new_model = TaggerGroup(**tg_data)
                 new_model.task = Task.objects.create(taggergroup=new_model, status=Task.STATUS_COMPLETED)
                 new_model.author = User.objects.get(id=request.user.id)
@@ -324,6 +331,8 @@ class TaggerGroup(models.Model):
 
                 for tagger in model_json["taggers"]:
                     indices = tagger.pop("indices")
+                    tagger.pop("favorited_users", None)
+
                     tagger_model = Tagger(**tagger)
 
                     tagger_model.task = Task.objects.create(tagger=tagger_model, status=Task.STATUS_COMPLETED)

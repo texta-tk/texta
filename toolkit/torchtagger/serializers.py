@@ -6,7 +6,7 @@ from toolkit.core.user_profile.serializers import UserSerializer
 from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.serializer_constants import (
-    FieldParseSerializer,
+    CommonModelMixinSerializer, FieldParseSerializer,
     IndicesSerializerMixin,
     ProjectResourceUrlSerializer,
     ProjectFilteredPrimaryKeyRelatedField,
@@ -33,7 +33,7 @@ class TagRandomDocSerializer(IndicesSerializerMixin):
     pass
 
 
-class TorchTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
+class TorchTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, CommonModelMixinSerializer):
     author = UserSerializer(read_only=True)
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     query = serializers.JSONField(help_text='Query in JSON format', required=False, default=json.dumps(EMPTY_QUERY))
@@ -65,7 +65,7 @@ class TorchTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, I
         model = TorchTagger
         fields = (
             'url', 'author', 'id', 'description', 'query', 'fields', 'embedding', 'f1_score', 'precision', 'recall', 'accuracy',
-            'model_architecture', 'maximum_sample_size', 'minimum_sample_size', 'num_epochs', 'plot', 'task', 'fact_name', 'indices', 'confusion_matrix', 'num_examples', 'balance', 'use_sentence_shuffle', 'balance_to_max_limit', 'pos_label', 'classes'
+            'model_architecture', 'maximum_sample_size', 'minimum_sample_size', 'is_favorited', 'num_epochs', 'plot', 'task', 'fact_name', 'indices', 'confusion_matrix', 'num_examples', 'balance', 'use_sentence_shuffle', 'balance_to_max_limit', 'pos_label', 'classes'
         )
         read_only_fields = ('project', 'fields', 'f1_score', 'precision', 'recall', 'accuracy', 'plot', 'task', 'confusion_matrix', 'num_examples', 'classes')
         fields_to_parse = ['fields', 'classes']

@@ -18,6 +18,7 @@ from toolkit.core.health.utils import get_redis_status
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, SerializerNotValid
+from toolkit.filter_constants import FavoriteFilter
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER
@@ -25,10 +26,10 @@ from toolkit.tagger.models import TaggerGroup
 from toolkit.tagger.serializers import (ApplyTaggerGroupSerializer, TagRandomDocSerializer, TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer)
 from toolkit.tagger.tasks import apply_tagger_group, apply_tagger_to_index, create_tagger_objects, get_mlp, get_tag_candidates, save_tagger_results, start_tagger_task, train_tagger_task
 from toolkit.tagger.validators import validate_input_document
-from toolkit.view_constants import BulkDelete, TagLogicViews
+from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing, TagLogicViews
 
 
-class TaggerGroupFilter(filters.FilterSet):
+class TaggerGroupFilter(FavoriteFilter):
     description = filters.CharFilter('description', lookup_expr='icontains')
 
 
@@ -44,7 +45,8 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
                          mixins.UpdateModelMixin,
                          viewsets.GenericViewSet,
                          TagLogicViews,
-                         BulkDelete):
+                         BulkDelete,
+                         FavoriteModelViewMixing):
     queryset = TaggerGroup.objects.all()
     serializer_class = TaggerGroupSerializer
     permission_classes = (

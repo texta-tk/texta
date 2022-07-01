@@ -5,7 +5,7 @@ from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.core.task.serializers import TaskSerializer
 from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.serializer_constants import (
-    FieldParseSerializer,
+    CommonModelMixinSerializer, FieldParseSerializer,
     IndicesSerializerMixin,
     ElasticScrollMixIn,
     ProjectResourceUrlSerializer,
@@ -18,7 +18,7 @@ from .models import CRFExtractor
 from .choices import FEATURE_FIELDS_CHOICES, FEATURE_EXTRACTOR_CHOICES
 
 
-class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
+class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, CommonModelMixinSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
     description = serializers.CharField(help_text=DESCRIPTION_HELPTEXT)
     author = UserSerializer(read_only=True)
     query = serializers.JSONField(
@@ -98,7 +98,7 @@ class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, 
             'id', 'url', 'author', 'description', 'query', 'indices', 'mlp_field',
             'window_size', 'test_size', 'num_iter', 'best_c1', 'best_c2', 'bias', 'suffix_len',
             'labels', 'feature_fields', 'context_feature_fields', 'feature_extractors', 'context_feature_extractors',
-            'embedding', 'task', 'precision', 'recall', 'f1_score', 'c_values'
+            'embedding', 'task', 'precision', 'recall', 'f1_score', 'c_values', 'is_favorited',
         )
         read_only_fields = ('precision', 'task', 'recall', 'f1_score', 'best_c1', 'best_c2')
         fields_to_parse = ('labels', 'suffix_len', 'c_values')

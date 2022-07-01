@@ -134,6 +134,7 @@ class TaggerViewTests(APITransactionTestCase):
         self.run_tag_and_feedback_and_retrain()
         self.create_tagger_with_empty_fields()
         self.create_tagger_then_delete_tagger_and_created_model()
+        self.run_check_for_add_model_as_favorite_and_test_filtering_by_it()
 
 
     def add_cleanup_files(self, tagger_id):
@@ -669,3 +670,23 @@ class TaggerViewTests(APITransactionTestCase):
         print_output("test_tagger_with_only_description_input:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
         self.assertTrue(response.data["fields"][0] == "This field is required.")
+
+
+    # Since this functionality is implemented by subclasses, the other apps should be covered by this test alone.
+    def run_check_for_add_model_as_favorite_and_test_filtering_by_it(self):
+        tagger_id = self.test_tagger_ids[0]
+        url = reverse("v2:tagger-add-favorite", kwargs={"project_pk": self.project.pk, "pk": tagger_id})
+        response = self.client.post(url, data={}, format="json")
+        print_output("test_add_model_as_favorite_and_test_filtering_by_it:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+        # Check that filter works when looking for favorited things.
+        list_url = reverse("v2:tagger-list", kwargs={"project_pk": self.project.pk})
+        response = self.client.get(list_url, data={"is_favorited": True})
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        self.assertTrue(response.data["count"] == 1)
+
+        # Check that not searching it with false doesn't break anything.
+        response = self.client.get(list_url, data={"is_favorited": False})
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        self.assertTrue(response.data["count"] != 1)
