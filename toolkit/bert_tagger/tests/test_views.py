@@ -555,6 +555,9 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         else:
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+        # Check that the cache_dir is respected instead of the home library.
+        self.assertFalse((pathlib.Path.home() / "huggingface" / "transformers").exists())
+
         # Test endpoint with invalid payload
         invalid_payload = {"bert_model": "foo"}
         response = self.client.post(url, format="json", data=invalid_payload)
