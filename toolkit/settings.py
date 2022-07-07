@@ -18,6 +18,8 @@ warnings.simplefilter(action="ignore", category=Warning)
 env_file_path = os.getenv("TEXTA_ENV_FILE", None)
 if env_file_path:
     import termcolor
+
+
     termcolor.cprint(f"Loading env file: {env_file_path}!", color="green")
     environ.Env.read_env(env_file=env_file_path)
 
@@ -338,6 +340,11 @@ EXTERNAL_DATA_DIR = env("TEXTA_EXTERNAL_DATA_DIR", default=os.path.join(DATA_DIR
 CACHE_DIR_DEFAULT = os.path.join(EXTERNAL_DATA_DIR, ".cache")
 CACHE_DIR = env("TEXTA_CACHE_DIR", default=CACHE_DIR_DEFAULT)
 BERT_CACHE_DIR = os.path.join(CACHE_DIR, "bert")
+
+# For whatever mythical reason, the transformer library does not respect the cache_dir parameter,
+# hence we set it through an env variable in a roundabout way...
+os.environ["TRANSFORMERS_CACHE"] = BERT_CACHE_DIR
+
 # tk trained models dir
 MODELS_DIR_DEFAULT = os.path.join(DATA_DIR, "models")
 RELATIVE_MODELS_PATH = env("TEXTA_RELATIVE_MODELS_DIR", default=MODELS_DIR_DEFAULT)
