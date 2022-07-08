@@ -1,3 +1,10 @@
+## 3.3.2 (2022-07-08)
+
+### Updates (1 change)
+
+- [update: Added missing functionality to remove favourited models.](texta/texta-rest@e95a2f6db7317cd022f39dd052520306cd74094a) by @mkollo
+ ([merge request](texta/texta-rest!155))
+
 ## 3.3.0 (2022-07-01)
 
 No changes.
