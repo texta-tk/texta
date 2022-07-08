@@ -675,10 +675,12 @@ class TaggerViewTests(APITransactionTestCase):
     # Since this functionality is implemented by subclasses, the other apps should be covered by this test alone.
     def run_check_for_add_model_as_favorite_and_test_filtering_by_it(self):
         tagger_id = self.test_tagger_ids[0]
+
         url = reverse("v2:tagger-add-favorite", kwargs={"project_pk": self.project.pk, "pk": tagger_id})
         response = self.client.post(url, data={}, format="json")
         print_output("test_add_model_as_favorite_and_test_filtering_by_it:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_200_OK)
+        self.assertTrue(Tagger.objects.get(pk=tagger_id).favorited_users.filter(pk=self.user.pk).exists())
 
         # Check that filter works when looking for favorited things.
         list_url = reverse("v2:tagger-list", kwargs={"project_pk": self.project.pk})
@@ -690,3 +692,7 @@ class TaggerViewTests(APITransactionTestCase):
         response = self.client.get(list_url, data={"is_favorited": False})
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         self.assertTrue(response.data["count"] != 1)
+
+        # Check that removing the user works.
+        response = self.client.post(url, data={}, format="json")
+        self.assertFalse(Tagger.objects.get(pk=tagger_id).favorited_users.filter(pk=self.user.pk).exists())
