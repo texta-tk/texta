@@ -8,14 +8,21 @@ from toolkit.elastic.tools.feedback import Feedback
 from toolkit.serializer_constants import (EmptySerializer, FeedbackSerializer, ProjectResourceBulkDeleteSerializer)
 
 
+# This should only be added to views the model has the favorite removal in it.
 class FavoriteModelViewMixing:
+
+
     @action(detail=True, methods=['post', ], serializer_class=EmptySerializer)
     def add_favorite(self, request, project_pk=None, pk=None):
         user = self.request.user
         orm = self.get_object()
-        orm.favorited_users.add(user)
 
-        return Response({"detail": "Added instance as a favorite!"})
+        if orm.favorited_users.filter(pk=user.pk).exists():
+            orm.favorited_users.remove(user)
+            return Response({"detail": "Removed instance as a favorite!"})
+        else:
+            orm.favorited_users.add(user)
+            return Response({"detail": "Added instance as a favorite!"})
 
 
 class TagLogicViews:
