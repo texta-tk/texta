@@ -175,7 +175,7 @@ class DocumentImportView(GenericAPIView):
         if has_new_index:
             ed.core.create_index(index_name)
             ed.core.add_texta_facts_mapping(index_name)
-            index, is_created = Index.objects.get_or_create(name=index_name, is_open=True)
+            index, is_created = Index.objects.get_or_create(name=index_name, is_open=True, defaults={"added_by": request.user.username})
             project.indices.add(index)
 
         # Send the documents to Elasticsearch.

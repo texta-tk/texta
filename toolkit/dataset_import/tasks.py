@@ -1,7 +1,6 @@
 from celery.decorators import task
 
 from toolkit.base_tasks import TransactionAwareTask
-from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.tools.show_progress import ShowProgress
 from .dataset import Dataset
@@ -33,7 +32,7 @@ def import_dataset(dataset_import_id):
 
         # add imported index to project indices
         project_obj = import_object.project
-        index, is_created = Index.objects.get_or_create(name=import_object.index)
+        index, is_created = Index.objects.get_or_create(name=import_object.index, defaults={"added_by": import_object.author.username})
         project_obj.indices.add(index)
         project_obj.save()
         # declare the job done

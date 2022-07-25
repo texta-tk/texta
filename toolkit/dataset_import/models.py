@@ -1,6 +1,7 @@
 import os
+
 from django.contrib.auth.models import User
-from django.db import models
+from django.db import models, transaction
 from django.dispatch import receiver
 
 from toolkit.constants import MAX_DESC_LEN
@@ -30,7 +31,7 @@ class DatasetImport(models.Model):
         self.task = new_task
         self.save()
         from toolkit.dataset_import.tasks import import_dataset
-        import_dataset.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
+        transaction.on_commit(lambda: import_dataset.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE))
 
 
 @receiver(models.signals.post_delete, sender=DatasetImport)

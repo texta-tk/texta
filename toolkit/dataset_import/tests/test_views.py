@@ -1,10 +1,12 @@
+from uuid import uuid4
+
 from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
+from texta_elastic.core import ElasticCore
 
 from toolkit.core.task.models import Task
 from toolkit.dataset_import.models import DatasetImport
-from texta_elastic.core import ElasticCore
 from toolkit.test_settings import TEST_DATASETS, TEST_IMPORT_DATASET, TEST_VERSION_PREFIX
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
@@ -24,13 +26,16 @@ class DatasetImportViewTests(APITransactionTestCase):
 
 
     def test_import_dataset(self):
+        from toolkit.elastic.index.models import Index
+
         """Tests the endpoint for importing dataset."""
         for i, file_path in enumerate(TEST_DATASETS):
+            index_name = f"{TEST_IMPORT_DATASET}-{uuid4().hex}"
             with open(file_path, 'rb') as fh:
                 payload = {
                     "description": "Testimport",
                     "file": fh,
-                    "index": f"{TEST_IMPORT_DATASET}-{i}"
+                    "index": index_name
                 }
                 response = self.client.post(self.url, payload)
                 print_output('test_import_dataset:response.data', response.data)
@@ -51,6 +56,9 @@ class DatasetImportViewTests(APITransactionTestCase):
                 # test delete
                 response = self.client.delete(import_url)
                 self.assertTrue(response.status_code == 204)
+
+                # Test that usernames are added automatically into the newly created index.
+                self.assertTrue(Index.objects.filter(name=index_name, added_by=self.user.username).exists())
 
 
     def test_elasticsearch_index_name_validation(self):
