@@ -79,11 +79,11 @@ def apply_field_changes_generator(generator, index: str, field_data: List[dict])
         }
 
 
-def bulk_add_documents(elastic_search: ElasticSearcher, elastic_doc: ElasticDocument, index: str, chunk_size: int, field_data: List[dict], flatten_doc=False, ):
+def bulk_add_documents(elastic_search: ElasticSearcher, elastic_doc: ElasticDocument, index: str, chunk_size: int, field_data: List[dict], flatten_doc=False, refresh="wait_for"):
     new_docs = apply_custom_processing(elastic_search, flatten_doc)
     actions = apply_field_changes_generator(new_docs, index, field_data)
     # No need to wait for indexing to actualize, hence refresh is False.
-    elastic_doc.bulk_add_generator(actions=actions, chunk_size=chunk_size, refresh="wait_for")
+    elastic_doc.bulk_add_generator(actions=actions, chunk_size=chunk_size, refresh=refresh)
 
 
 @task(name="reindex_task", base=BaseTask)
