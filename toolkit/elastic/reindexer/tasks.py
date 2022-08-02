@@ -69,7 +69,8 @@ def apply_field_changes_generator(generator, index: str, field_data: List[dict])
         # Remove parts of mlp meta that are not relevant to the selected fields.
         mlp_meta = document.get("_mlp_meta", {})
         mlp_meta = {k: v for k, v in mlp_meta.items() if k in all_field_names}
-        document["_mlp_meta"] = mlp_meta
+        if mlp_meta:
+            document["_mlp_meta"] = mlp_meta
 
         yield {
             "_index": index,
