@@ -3,16 +3,15 @@ import logging
 from typing import List
 
 from celery.decorators import task
-
-from toolkit.base_tasks import BaseTask
-from toolkit.core.task.models import Task
-from toolkit.elastic.index.models import Index
-from toolkit.elastic.reindexer.models import Reindexer
 from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
 from texta_elastic.mapping_tools import update_field_types, update_mapping
 from texta_elastic.searcher import ElasticSearcher
-from toolkit.settings import ERROR_LOGGER, INFO_LOGGER
+
+from toolkit.base_tasks import BaseTask
+from toolkit.elastic.index.models import Index
+from toolkit.elastic.reindexer.models import Reindexer
+from toolkit.settings import INFO_LOGGER
 from toolkit.tools.show_progress import ShowProgress
 
 
@@ -59,12 +58,18 @@ def apply_custom_processing(elastic_search: ElasticSearcher, flatten_doc=False):
 
 
 def apply_field_changes_generator(generator, index: str, field_data: List[dict]):
+    all_field_names = [field["path"] for field in field_data]
     for document in generator:
         for field in field_data:
             old_path = field["path"]
             if old_path in document:
                 new_field = field["new_path_name"]
                 document[new_field] = document.pop(old_path)
+
+        # Remove parts of mlp meta that are not relevant to the selected fields.
+        mlp_meta = document.get("_mlp_meta", {})
+        mlp_meta = {k: v for k, v in mlp_meta.items() if k in all_field_names}
+        document["_mlp_meta"] = mlp_meta
 
         yield {
             "_index": index,
@@ -103,7 +108,7 @@ def reindex_task(reindexer_task_id: int):
         show_progress.update_step("scrolling data")
         show_progress.update_view(0)
 
-        elastic_search = ElasticSearcher(indices=indices, field_data=fields, callback_progress=show_progress, query=query, scroll_size=scroll_size)
+        elastic_search = ElasticSearcher(indices=indices, field_data=fields + ["_mlp_meta"], callback_progress=show_progress, query=query, scroll_size=scroll_size)
         task_object.set_total(elastic_search.count())
         elastic_doc = ElasticDocument(new_index)
 
@@ -111,7 +116,7 @@ def reindex_task(reindexer_task_id: int):
             elastic_search = elastic_search.random_documents(size=random_size)
 
         logging.getLogger(INFO_LOGGER).info(f"Updating index schema for index '{new_index}'.")
-        ''' the operations that don't require a mapping update have been completed '''
+        # the operations that don't require a mapping update have been completed
         schema_input = update_field_types(indices, fields, field_type, flatten_doc=FLATTEN_DOC)
         updated_schema = update_mapping(schema_input, new_index, reindexer_obj.add_facts_mapping, add_texta_meta_mapping=False)
 
