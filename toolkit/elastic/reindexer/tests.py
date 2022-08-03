@@ -36,7 +36,8 @@ class ReindexerViewTests(APITransactionTestCase):
         self.project.users.add(self.user)
 
         self.mlp_test_index = self._setup_mlp_test_requirements()
-        self.project.indices.add(Index.objects.create(name=self.mlp_test_index))
+        self.mlp_index = Index.objects.create(name=self.mlp_test_index)
+        self.project.indices.add(self.mlp_index)
 
         self.ec = ElasticCore()
         self.client.login(username=self.default_username, password=self.default_password)
@@ -49,7 +50,7 @@ class ReindexerViewTests(APITransactionTestCase):
         self.ec.delete_index(index=self.mlp_test_index, ignore=[400, 404])
 
 
-    def _setup_mlp_test_requirements(self):
+    def _setup_mlp_test_requirements(self) -> str:
         document = {
             "comment_subject": "to lohutu",
             "comment_content": "Mis ajast homode vastasus määrab IQ-d.\nSelline arutlus sinult viitab sinu rumalusele,kel pole aimugu IQ-st",
@@ -69,17 +70,18 @@ class ReindexerViewTests(APITransactionTestCase):
         ec = ElasticCore()
         test_index = f"texta_test_reindexer_mlp_{uuid.uuid4().hex}"
         ec.create_index(test_index)
-        ec.es.index(index=test_index, body=document)
+        ec.es.index(index=test_index, body=document, refresh="wait_for")
         return test_index
 
 
     def test_reindexing_documents_with_mlp_keeps_meta_information(self):
         field_name = "comment_content"
+        new_index = f"{self.mlp_test_index}_2"
         payload = {
             "description": "Test that MLP meta is kept for specific fields.",
             "fields": [field_name],
             "indices": [self.mlp_test_index],
-            "new_index": f"{self.mlp_test_index}_2",
+            "new_index": new_index,
             "field_type": [{"path": field_name, "field_type": "text", "new_path_name": field_name}]
         }
         url = reverse(f"{VERSION_NAMESPACE}:reindexer-list", kwargs={"project_pk": self.project.pk})
@@ -87,7 +89,7 @@ class ReindexerViewTests(APITransactionTestCase):
         print_output("test_reindexing_documents_with_mlp_keeps_meta_information:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
 
-        result = self.ec.es.search(index=f"{self.mlp_test_index}_2")
+        result = self.ec.es.search(index=new_index)
         hits = result["hits"]["hits"]
         self.assertTrue(len(hits) == 1)  # Ensure that the index only has a single hit and setup was proper.
         mlp_meta = hits[0]["_source"]["_mlp_meta"]
