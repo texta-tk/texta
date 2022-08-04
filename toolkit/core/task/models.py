@@ -31,7 +31,7 @@ class Task(models.Model):
     step = models.CharField(max_length=MAX_DESC_LEN, default='')
     errors = models.TextField(default='[]')
     time_started = models.DateTimeField(auto_now_add=True)
-    last_update = models.DateTimeField(null=True, blank=True, default=None)
+    last_update = models.DateTimeField(null=True, blank=True, auto_now=True)
     time_completed = models.DateTimeField(null=True, blank=True, default=None)
     authtoken_hash = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
@@ -46,7 +46,6 @@ class Task(models.Model):
     @avoid_db_timeout
     def update_status(self, status, set_time_completed=False):
         self.status = status
-        self.last_update = now()
         if set_time_completed:
             self.time_completed = now()
         self.save()
@@ -90,7 +89,6 @@ class Task(models.Model):
 
     @avoid_db_timeout
     def set_total(self, total: int):
-        self.last_update = now()
         self.total = total
         self.save()
 
@@ -99,7 +97,6 @@ class Task(models.Model):
     def update_progress(self, progress: int, step: str):
         self.num_processed = F("num_processed") + progress
         self.step = step
-        self.last_update = now()
         self.save(update_fields=["num_processed"])
 
 
