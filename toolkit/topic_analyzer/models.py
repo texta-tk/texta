@@ -126,7 +126,7 @@ class ClusteringResult(models.Model):
         with transaction.atomic():
             from toolkit.topic_analyzer.tasks import start_clustering_task, perform_data_clustering, save_clustering_results, finish_clustering_task
 
-            new_task = Task.objects.create(clusteringresult=self, status='created')
+            new_task = Task.objects.create(clusteringresult=self, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
             self.task = new_task
             self.save()
 

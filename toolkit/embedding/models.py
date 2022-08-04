@@ -98,7 +98,7 @@ class Embedding(CommonModelMixin):
 
         # Create a task object to fill the new model object with.
         # Pull the user and project into which it's imported from the web request.
-        new_model.task = Task.objects.create(embedding=new_model, status=Task.STATUS_COMPLETED)
+        new_model.task = Task.objects.create(embedding=new_model, task_type=Task.TYPE_TRAIN, status=Task.STATUS_COMPLETED)
         new_model.author = User.objects.get(id=user_id)
         new_model.project = Project.objects.get(id=project_id)
         new_model.save()  # Save the intermediate results.
@@ -212,7 +212,7 @@ class Embedding(CommonModelMixin):
 
 
     def train(self):
-        new_task = Task.objects.create(embedding=self, status='created')
+        new_task = Task.objects.create(embedding=self, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
         self.task = new_task
         self.save()
         from toolkit.embedding.tasks import train_embedding

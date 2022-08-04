@@ -36,7 +36,7 @@ class MLPWorker(models.Model):
     def process(self):
         from toolkit.mlp.tasks import start_mlp_worker
 
-        new_task = Task.objects.create(mlpworker=self, status='created')
+        new_task = Task.objects.create(mlpworker=self, task_type=Task.TYPE_APPLY, status=Task.STATUS_CREATED)
         self.task = new_task
         self.save()
 
@@ -56,7 +56,7 @@ class ApplyLangWorker(models.Model):
     def process(self):
         from toolkit.mlp.tasks import apply_lang_on_indices
 
-        new_task = Task.objects.create(applylangworker=self, status='created')
+        new_task = Task.objects.create(applylangworker=self, task_type=Task.TYPE_APPLY, status=Task.STATUS_CREATED)
         self.task = new_task
         self.save()
 

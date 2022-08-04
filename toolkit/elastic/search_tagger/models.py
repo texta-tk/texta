@@ -36,7 +36,7 @@ class SearchQueryTagger(models.Model):
     def process(self):
         from toolkit.elastic.search_tagger.tasks import start_search_query_tagger_worker, apply_search_query_tagger_on_index, end_search_query_tagger_task
 
-        new_task = Task.objects.create(searchquerytagger=self, status='created', task_type=Task.TYPE_APPLY)
+        new_task = Task.objects.create(searchquerytagger=self, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
         self.task = new_task
         self.save()
 
@@ -71,7 +71,7 @@ class SearchFieldsTagger(models.Model):
     def process(self):
         from toolkit.elastic.search_tagger.tasks import start_search_fields_tagger_worker, apply_search_fields_tagger_on_index, end_search_fields_tagger_task
 
-        new_task = Task.objects.create(searchfieldstagger=self, status='created', task_type=Task.TYPE_APPLY)
+        new_task = Task.objects.create(searchfieldstagger=self, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
         self.task = new_task
         self.save()
 

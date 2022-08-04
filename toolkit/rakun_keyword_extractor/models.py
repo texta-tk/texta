@@ -63,7 +63,7 @@ class RakunExtractor(CommonModelMixin):
         return json_obj
 
     def apply_rakun(self):
-        new_task = Task.objects.create(rakunextractor=self, status='created', task_type=Task.TYPE_APPLY)
+        new_task = Task.objects.create(rakunextractor=self, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
         self.task = new_task
         self.save()
         from toolkit.rakun_keyword_extractor.tasks import start_rakun_task, apply_rakun_extractor_to_index

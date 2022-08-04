@@ -182,7 +182,7 @@ class BertTagger(CommonModelMixin):
 
 
     def train(self):
-        new_task = Task.objects.create(berttagger=self, status='created')
+        new_task = Task.objects.create(berttagger=self, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
         self.task = new_task
         self.save()
         from toolkit.bert_tagger.tasks import train_bert_tagger

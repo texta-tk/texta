@@ -228,7 +228,7 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
             'total': obj.num_tags,
             'completed': len(tagger_objects.filter(task__status='completed')),
             'training': len(tagger_objects.filter(task__status='running')),
-            'created': len(tagger_objects.filter(task__status='created')),
+            'created': len(tagger_objects.filter(task__status=Task.STATUS_CREATED)),
             'failed': len(tagger_objects.filter(task__status='failed'))
         }
         return tagger_status

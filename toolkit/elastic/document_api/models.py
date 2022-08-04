@@ -50,7 +50,7 @@ class DeleteFactsByQueryTask(models.Model):
 
     def process(self):
         from .tasks import start_fact_delete_query_task, fact_delete_query_task
-        new_task = Task.objects.create(deletefactsbyquerytask=self, status=Task.STATUS_CREATED)
+        new_task = Task.objects.create(deletefactsbyquerytask=self, task_type=Task.TYPE_APPLY, status=Task.STATUS_CREATED)
         self.task = new_task
         self.save()
         chain = start_fact_delete_query_task.s() | fact_delete_query_task.s()
@@ -100,7 +100,7 @@ class EditFactsByQueryTask(models.Model):
 
     def process(self):
         from .tasks import start_fact_edit_query_task, fact_edit_query_task
-        new_task = Task.objects.create(editfactsbyquerytask=self, status='created')
+        new_task = Task.objects.create(editfactsbyquerytask=self, task_type=Task.TYPE_APPLY, status=Task.STATUS_CREATED)
         self.task = new_task
         self.save()
         chain = start_fact_edit_query_task.s() | fact_edit_query_task.s()

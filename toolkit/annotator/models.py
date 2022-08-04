@@ -118,7 +118,7 @@ class Annotator(TaskModel):
 
 
     def create_annotator_task(self):
-        new_task = Task.objects.create(annotator=self, status='created')
+        new_task = Task.objects.create(annotator=self, task_type=Task.TYPE_APPLY, status=Task.STATUS_CREATED)
         self.task = new_task
         self.save()
 

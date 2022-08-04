@@ -127,7 +127,7 @@ class CRFExtractor(CommonModelMixin):
 
 
     def train(self):
-        new_task = Task.objects.create(crfextractor=self, status='created')
+        new_task = Task.objects.create(crfextractor=self, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
         self.task = new_task
         self.save()
         from toolkit.crf_extractor.tasks import start_crf_task, train_crf_task, save_crf_results

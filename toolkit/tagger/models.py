@@ -196,7 +196,7 @@ class Tagger(CommonModelMixin):
 
 
     def train(self):
-        new_task = Task.objects.create(tagger=self, status='created')
+        new_task = Task.objects.create(tagger=self, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
         self.task = new_task
         self.save()
         from toolkit.tagger.tasks import start_tagger_task, train_tagger_task, save_tagger_results

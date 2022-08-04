@@ -433,7 +433,7 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete, FavoriteModelVi
             serializer.is_valid(raise_exception=True)
 
             tagger_object: RegexTaggerGroup = self.get_object()
-            tagger_object.task = Task.objects.create(regextaggergroup=tagger_object, status=Task.STATUS_CREATED)
+            tagger_object.task = Task.objects.create(regextaggergroup=tagger_object, task_type=Task.TYPE_APPLY, status=Task.STATUS_CREATED)
             tagger_object.save()
 
             project = Project.objects.get(pk=project_pk)

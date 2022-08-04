@@ -200,7 +200,7 @@ class TorchTagger(CommonModelMixin):
 
 
     def train(self):
-        new_task = Task.objects.create(torchtagger=self, status='created')
+        new_task = Task.objects.create(torchtagger=self, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
         self.task = new_task
         self.save()
         from toolkit.torchtagger.tasks import train_torchtagger

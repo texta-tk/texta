@@ -35,7 +35,7 @@ class Reindexer(models.Model):
     @classmethod
     def create_reindexer_model(cls, sender, instance, created, **kwargs):
         if created:
-            new_task = Task.objects.create(reindexer=instance, status='created', task_type=Task.TYPE_APPLY)
+            new_task = Task.objects.create(reindexer=instance, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
             instance.task = new_task
             instance.save()
 
