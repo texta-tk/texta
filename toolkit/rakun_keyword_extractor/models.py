@@ -12,7 +12,7 @@ from django.contrib.auth.models import User
 from toolkit.embedding.models import Embedding
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from toolkit.model_constants import CommonModelMixin
+from toolkit.model_constants import FavoriteModelMixin
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, FACEBOOK_MODEL_SUFFIX
 from mrakun import RakunDetector
 from toolkit.helper_functions import load_stop_words
@@ -26,7 +26,7 @@ class RakunDetectorWrapper(RakunDetector):
         return self.model.similarity(key1, key2)
 
 
-class RakunExtractor(CommonModelMixin):
+class RakunExtractor(FavoriteModelMixin):
     MODEL_TYPE = 'rakun_extractor'
     MODEL_JSON_NAME = "model.json"
 

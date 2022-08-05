@@ -160,8 +160,9 @@ class ReindexerViewTests(APITransactionTestCase):
         else:
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             created_reindexer = Reindexer.objects.get(id=response.data['id'])
-            print_output("Re-index task status: ", created_reindexer.task.status)
-            self.assertEqual(created_reindexer.task.status, Task.STATUS_COMPLETED)
+            task_object = created_reindexer.tasks.last()
+            print_output("Re-index task status: ", task_object.status)
+            self.assertEqual(task_object.status, Task.STATUS_COMPLETED)
             # self.check_positive_doc_count()
             new_index = response.data['new_index']
             delete_response = self.ec.delete_index(new_index)

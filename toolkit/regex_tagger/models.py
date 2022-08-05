@@ -14,7 +14,7 @@ from toolkit.core.task.models import Task
 from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
 
-from toolkit.model_constants import CommonModelMixin
+from toolkit.model_constants import FavoriteModelMixin
 from toolkit.settings import TEXTA_TAGS_KEY
 
 from toolkit.regex_tagger import choices
@@ -40,7 +40,7 @@ def load_matcher(regex_tagger_object):
     return matcher
 
 
-class RegexTagger(CommonModelMixin):
+class RegexTagger(FavoriteModelMixin):
     MODEL_TYPE = "regex_tagger"
     MODEL_JSON_NAME = "model.json"
 
@@ -142,7 +142,7 @@ class RegexTagger(CommonModelMixin):
                 return new_model.id
 
 
-class RegexTaggerGroup(CommonModelMixin):
+class RegexTaggerGroup(FavoriteModelMixin):
     MODEL_TYPE = "regex_tagger_group"
     MODEL_JSON_NAME = "model.json"
 

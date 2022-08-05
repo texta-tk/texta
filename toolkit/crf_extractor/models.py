@@ -30,10 +30,10 @@ from toolkit.settings import (
     RELATIVE_MODELS_PATH
 )
 from .choices import FEATURE_EXTRACTOR_CHOICES, FEATURE_FIELDS_CHOICES
-from ..model_constants import CommonModelMixin
+from ..model_constants import FavoriteModelMixin
 
 
-class CRFExtractor(CommonModelMixin):
+class CRFExtractor(FavoriteModelMixin):
     MODEL_TYPE = 'crf_extractor'
     MODEL_JSON_NAME = "model.json"
 

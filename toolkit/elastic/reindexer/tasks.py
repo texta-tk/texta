@@ -3,16 +3,15 @@ import logging
 from typing import List
 
 from celery.decorators import task
-
-from toolkit.base_tasks import BaseTask
-from toolkit.core.task.models import Task
-from toolkit.elastic.index.models import Index
-from toolkit.elastic.reindexer.models import Reindexer
 from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
 from texta_elastic.mapping_tools import update_field_types, update_mapping
 from texta_elastic.searcher import ElasticSearcher
-from toolkit.settings import ERROR_LOGGER, INFO_LOGGER
+
+from toolkit.base_tasks import BaseTask
+from toolkit.elastic.index.models import Index
+from toolkit.elastic.reindexer.models import Reindexer
+from toolkit.settings import INFO_LOGGER
 from toolkit.tools.show_progress import ShowProgress
 
 
@@ -85,7 +84,7 @@ def reindex_task(reindexer_task_id: int):
     logging.getLogger(INFO_LOGGER).info(f"Starting task 'reindex' with ID {reindexer_task_id}.")
     try:
         reindexer_obj = Reindexer.objects.get(pk=reindexer_task_id)
-        task_object = reindexer_obj.task
+        task_object = reindexer_obj.tasks.last()
         indices = json.loads(reindexer_obj.indices)
         fields = json.loads(reindexer_obj.fields)
         random_size = reindexer_obj.random_size

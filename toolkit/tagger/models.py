@@ -6,14 +6,14 @@ import pathlib
 import secrets
 import tempfile
 import zipfile
-from typing import List, Union, Dict
+from typing import Dict, List, Union
 
 from django.contrib.auth.models import User
 from django.core import serializers
 from django.db import models, transaction
 from django.dispatch import receiver
 from django.http import HttpResponse
-
+from texta_elastic.searcher import EMPTY_QUERY
 from texta_embedding.embedding import W2VEmbedding
 from texta_tagger.tagger import Tagger as TextTagger
 
@@ -23,23 +23,19 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choices
 from toolkit.elastic.index.models import Index
-from texta_elastic.searcher import EMPTY_QUERY
-from toolkit.embedding.models import Embedding
-from toolkit.model_constants import CommonModelMixin
-from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, RELATIVE_MODELS_PATH
-from toolkit.helper_functions import load_stop_words
-from toolkit.tools.lemmatizer import CeleryLemmatizer, ElasticAnalyzer
-from toolkit.tagger import choices
 from toolkit.elastic.tools.feedback import Feedback
+from toolkit.embedding.models import Embedding
+from toolkit.helper_functions import load_stop_words
+from toolkit.model_constants import CommonModelMixin, FavoriteModelMixin
+from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, RELATIVE_MODELS_PATH
+from toolkit.tagger import choices
+from toolkit.tools.lemmatizer import CeleryLemmatizer, ElasticAnalyzer
 
 
-class Tagger(CommonModelMixin):
+class Tagger(FavoriteModelMixin, CommonModelMixin):
     MODEL_TYPE = 'tagger'
     MODEL_JSON_NAME = "model.json"
 
-    description = models.CharField(max_length=MAX_DESC_LEN)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     fact_name = models.CharField(max_length=MAX_DESC_LEN, null=True)
     pos_label = models.CharField(max_length=MAX_DESC_LEN, null=True, default="", blank=True)
@@ -69,9 +65,6 @@ class Tagger(CommonModelMixin):
     model = models.FileField(null=True, verbose_name='', default=None)
     model_size = models.FloatField(default=None, null=True)
     plot = models.FileField(upload_to="data/media", null=True, verbose_name="")
-    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
-
-
 
     tagger_groups = models.TextField(default="[]", null=True, blank=True)
 
@@ -133,7 +126,7 @@ class Tagger(CommonModelMixin):
         json_obj = json.loads(serialized)[0]["fields"]
         del json_obj["project"]
         del json_obj["author"]
-        del json_obj["task"]
+        del json_obj["tasks"]
         return json_obj
 
 
@@ -164,10 +157,12 @@ class Tagger(CommonModelMixin):
 
                 new_model = Tagger(**model_json)
 
-                new_model.task = Task.objects.create(tagger=new_model, status=Task.STATUS_COMPLETED)
+                task_object = Task.objects.create(tagger=new_model, status=Task.STATUS_COMPLETED)
                 new_model.author = User.objects.get(id=request.user.id)
                 new_model.project = Project.objects.get(id=pk)
                 new_model.save()  # Save the intermediate results.
+
+                new_model.tasks.add(task_object)
 
                 for index in indices:
                     index_model, is_created = Index.objects.get_or_create(name=index)
@@ -196,9 +191,9 @@ class Tagger(CommonModelMixin):
 
 
     def train(self):
-        new_task = Task.objects.create(tagger=self, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
-        self.task = new_task
-        self.save()
+        self.save()  # Save it before-hand to ensure that there is an object stored to save the task into.
+        task_object = Task.objects.create(tagger=self, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
+        self.tasks.add(task_object)
         from toolkit.tagger.tasks import start_tagger_task, train_tagger_task, save_tagger_results
         logging.getLogger(INFO_LOGGER).info(f"Celery: Starting task for training of tagger: {self.to_json()}")
         chain = start_tagger_task.s() | train_tagger_task.s() | save_tagger_results.s()
@@ -207,7 +202,7 @@ class Tagger(CommonModelMixin):
 
     def load_tagger(self, lemmatize: bool = False, use_logger: bool = True):
         """Loading tagger model from disc."""
-        #if use_logger:
+        # if use_logger:
         #    logging.getLogger(INFO_LOGGER).info(f"Loading tagger with ID: {tagger_id} with params (lemmatize: {lemmatize})")
         # get lemmatizer/stemmer
         if self.snowball_language:
@@ -280,18 +275,14 @@ def auto_delete_file_on_delete(sender, instance: Tagger, **kwargs):
             os.remove(instance.model.path)
 
 
-class TaggerGroup(CommonModelMixin):
+class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
     MODEL_JSON_NAME = "model.json"
     MODEL_TYPE = "tagger_group"
 
-    description = models.CharField(max_length=MAX_DESC_LEN)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
     fact_name = models.CharField(max_length=MAX_DESC_LEN)
     blacklisted_facts = models.TextField(default='[]')
     num_tags = models.IntegerField(default=0)
     minimum_sample_size = models.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE)
-    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
     taggers = models.ManyToManyField(Tagger, default=None)
 
@@ -324,10 +315,12 @@ class TaggerGroup(CommonModelMixin):
                 tg_data = {key: model_json[key] for key in model_json if key != 'taggers'}
                 tg_data.pop("favorited_users", None)
                 new_model = TaggerGroup(**tg_data)
-                new_model.task = Task.objects.create(taggergroup=new_model, status=Task.STATUS_COMPLETED)
                 new_model.author = User.objects.get(id=request.user.id)
                 new_model.project = Project.objects.get(id=pk)
                 new_model.save()  # Save the intermediate results.
+
+                task_object = Task.objects.create(taggergroup=new_model, status=Task.STATUS_COMPLETED)
+                new_model.tasks.add(task_object)
 
                 for tagger in model_json["taggers"]:
                     indices = tagger.pop("indices")
@@ -335,10 +328,12 @@ class TaggerGroup(CommonModelMixin):
 
                     tagger_model = Tagger(**tagger)
 
-                    tagger_model.task = Task.objects.create(tagger=tagger_model, status=Task.STATUS_COMPLETED)
+                    task_object = Task.objects.create(tagger=tagger_model, status=Task.STATUS_COMPLETED)
                     tagger_model.author = User.objects.get(id=request.user.id)
                     tagger_model.project = Project.objects.get(id=pk)
                     tagger_model.save()
+
+                    tagger_model.tasks.add(task_object)
 
                     for index_name in indices:
                         index, is_created = Index.objects.get_or_create(name=index_name)
@@ -367,7 +362,7 @@ class TaggerGroup(CommonModelMixin):
         json_obj["taggers"] = [tg.to_json() for tg in self.taggers.all()]
         del json_obj["project"]
         del json_obj["author"]
-        del json_obj["task"]
+        del json_obj["tasks"]
         return json_obj
 
 

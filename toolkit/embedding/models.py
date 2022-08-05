@@ -20,11 +20,11 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE
 from toolkit.elastic.index.models import Index
 from toolkit.embedding.choices import FASTTEXT_EMBEDDING, W2V_EMBEDDING
-from toolkit.model_constants import CommonModelMixin
+from toolkit.model_constants import FavoriteModelMixin
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
 
 
-class Embedding(CommonModelMixin):
+class Embedding(FavoriteModelMixin):
     MODEL_JSON_NAME = "model.json"
 
     description = models.CharField(max_length=MAX_DESC_LEN)

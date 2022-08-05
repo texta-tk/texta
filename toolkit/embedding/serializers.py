@@ -5,10 +5,10 @@ from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choices
 from toolkit.embedding import choices
 from toolkit.embedding.models import Embedding
-from toolkit.serializer_constants import CommonModelMixinSerializer, FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer
+from toolkit.serializer_constants import FavoriteModelSerializerMixin, FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer
 
 
-class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer, CommonModelMixinSerializer, IndicesSerializerMixin):
+class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer, FavoriteModelSerializerMixin, IndicesSerializerMixin):
     author = UserSerializer(read_only=True)
     task = TaskSerializer(read_only=True)
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')

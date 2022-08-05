@@ -2,14 +2,13 @@ import json
 import re
 from collections import OrderedDict
 from json import JSONDecodeError
-from typing import List
 
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 from texta_elastic.searcher import EMPTY_QUERY
 
 from toolkit.choice_constants import DEFAULT_BULK_SIZE, DEFAULT_ES_TIMEOUT, DEFAULT_MAX_CHUNK_BYTES
 from toolkit.core.project.models import Project
+from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.elastic.validators import check_for_existence
@@ -113,12 +112,20 @@ class FeedbackSerializer(serializers.Serializer):
 
 # You have to use metaclass because DRF serializers won't accept fields of classes
 # that don't subclass serializers.Serializer.
-class CommonModelMixinSerializer(metaclass=serializers.SerializerMetaclass):
+class FavoriteModelSerializerMixin(metaclass=serializers.SerializerMetaclass):
     is_favorited = serializers.SerializerMethodField(read_only=True)
 
 
     def get_is_favorited(self, instance):
         return instance.favorited_users.filter(username=instance.author.username).exists()
+
+
+# You have to use metaclass because DRF serializers won't accept fields of classes
+# that don't subclass serializers.Serializer.
+class CommonModelSerializerMixin(metaclass=serializers.SerializerMetaclass):
+    author = UserSerializer(read_only=True)
+    description = serializers.CharField(help_text=f'Description for the Tagger Group.')
+    tasks = TaskSerializer(many=True, read_only=True)
 
 
 class ProjectFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):

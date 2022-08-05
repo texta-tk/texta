@@ -6,11 +6,11 @@ from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.rakun_keyword_extractor import choices
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
-from toolkit.serializer_constants import CommonModelMixinSerializer, FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, ProjectFasttextFilteredPrimaryKeyRelatedField
+from toolkit.serializer_constants import FavoriteModelSerializerMixin, FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, ProjectFasttextFilteredPrimaryKeyRelatedField
 from toolkit import serializer_constants
 
 
-class RakunExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin, CommonModelMixinSerializer,):
+class RakunExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin, FavoriteModelSerializerMixin, ):
     author_username = serializers.CharField(source="author.profile.get_display_name", read_only=True)
     description = serializers.CharField(required=True, help_text=serializer_constants.DESCRIPTION_HELPTEXT)
     distance_method = serializers.ChoiceField(choices=choices.DEFAULT_DISTANCE_METHOD_CHOICES, default=choices.DEFAULT_DISTANCE_METHOD,

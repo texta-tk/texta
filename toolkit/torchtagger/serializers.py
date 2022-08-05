@@ -6,7 +6,7 @@ from toolkit.core.user_profile.serializers import UserSerializer
 from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.serializer_constants import (
-    CommonModelMixinSerializer, FieldParseSerializer,
+    FavoriteModelSerializerMixin, FieldParseSerializer,
     IndicesSerializerMixin,
     ProjectResourceUrlSerializer,
     ProjectFilteredPrimaryKeyRelatedField,
@@ -33,7 +33,7 @@ class TagRandomDocSerializer(IndicesSerializerMixin):
     pass
 
 
-class TorchTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, CommonModelMixinSerializer):
+class TorchTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, FavoriteModelSerializerMixin):
     author = UserSerializer(read_only=True)
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     query = serializers.JSONField(help_text='Query in JSON format', required=False, default=json.dumps(EMPTY_QUERY))

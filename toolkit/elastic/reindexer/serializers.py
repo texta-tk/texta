@@ -16,14 +16,12 @@ from toolkit.elastic.validators import (
     check_for_upper_case,
     check_for_wildcards
 )
-from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
+from toolkit.serializer_constants import CommonModelSerializerMixin, FieldParseSerializer, ProjectResourceUrlSerializer
 
 
-class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
-    author = UserSerializer(read_only=True)
+class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer, CommonModelSerializerMixin):
     url = serializers.SerializerMethodField()
     scroll_size = serializers.IntegerField(min_value=0, max_value=10000, required=False)  # Max value stems from Elasticsearch max doc count limitation.
-    description = serializers.CharField(help_text='Describe your re-indexing task', required=True, allow_blank=False)
     indices = serializers.ListField(child=serializers.CharField(), help_text=f'Add the indices, you wish to reindex into a new index.', required=True)
     query = serializers.JSONField(help_text='Add a query, if you wish to filter the new reindexed index.', required=False)
     new_index = serializers.CharField(help_text='Your new re-indexed index name', allow_blank=False, required=True,
@@ -36,7 +34,6 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
                                       ])
     field_type = serializers.ListField(help_text=f'Used to update the fieldname and the field type of chosen paths.', required=False)
     add_facts_mapping = serializers.BooleanField(help_text='Add texta facts mapping. NB! If texta_facts is present in reindexed fields, the mapping is always created.', required=False, default=True)
-    task = TaskSerializer(read_only=True)
     fields = serializers.ListField(
         child=serializers.CharField(),
         help_text=f'Empty fields chooses all posted indices fields. Fields content adds custom field content to the new index.',
@@ -52,7 +49,7 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
 
     class Meta:
         model = Reindexer
-        fields = ('id', 'url', 'author', 'description', 'indices', 'scroll_size', 'fields', 'query', 'new_index', 'random_size', 'field_type', 'add_facts_mapping', 'task')
+        fields = ('id', 'url', 'author', 'description', 'indices', 'scroll_size', 'fields', 'query', 'new_index', 'random_size', 'field_type', 'add_facts_mapping', 'tasks')
         fields_to_parse = ('fields', 'field_type', 'indices')
 
 

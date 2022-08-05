@@ -4,10 +4,12 @@ from typing import List
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-
-from toolkit.core.project.models import Project
-from toolkit.elastic.index.models import Index
 from texta_elastic.searcher import EMPTY_QUERY
+
+from toolkit.constants import MAX_DESC_LEN
+from toolkit.core.project.models import Project
+from toolkit.core.task.models import Task
+from toolkit.elastic.index.models import Index
 from toolkit.serializer_constants import BULK_SIZE_HELPTEXT, ES_TIMEOUT_HELPTEXT, INDICES_HELPTEXT
 from toolkit.settings import DESCRIPTION_CHAR_LIMIT, ES_BULK_SIZE_MAX, ES_TIMEOUT_MAX
 
@@ -54,8 +56,19 @@ class TaskModel(models.Model):
         return '{0} - {1}'.format(self.pk, self.description)
 
 
-class CommonModelMixin(models.Model):
+class FavoriteModelMixin(models.Model):
     favorited_users = models.ManyToManyField(User, related_name="%(app_label)s_%(class)s_favorited_user")
+
+
+    class Meta:
+        abstract = True
+
+
+class CommonModelMixin(models.Model):
+    description = models.CharField(max_length=MAX_DESC_LEN)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    tasks = models.ManyToManyField(Task)
 
 
     class Meta:

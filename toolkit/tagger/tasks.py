@@ -100,7 +100,7 @@ def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries,
 @task(name="start_tagger_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def start_tagger_task(tagger_id: int):
     tagger = Tagger.objects.get(pk=tagger_id)
-    task_object = tagger.task
+    task_object = tagger.tasks.last()
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('starting tagging')
     show_progress.update_view(0)
@@ -111,7 +111,7 @@ def start_tagger_task(tagger_id: int):
 def train_tagger_task(tagger_id: int):
     logging.getLogger(INFO_LOGGER).info(f"Starting task 'train_tagger' for tagger with ID: {tagger_id}!")
     tagger_object = Tagger.objects.get(id=tagger_id)
-    task_object = tagger_object.task
+    task_object = tagger_object.tasks.last()
     try:
         # create progress object
         show_progress = ShowProgress(task_object, multiplier=1)
@@ -213,7 +213,7 @@ def save_tagger_results(result_data: dict):
         # Handle previous tagger models that exist in case of retrains.
         model_path = pathlib.Path(tagger_object.model.path) if tagger_object.model else None
 
-        task_object = tagger_object.task
+        task_object = tagger_object.tasks.last()
         show_progress = ShowProgress(task_object, multiplier=1)
         # update status to saving
         show_progress.update_step('saving')
@@ -346,7 +346,7 @@ def apply_tagger_group(tagger_group_id: int, content: Union[str, Dict[str, str]]
     candidates_str = "|".join(tag_candidates)
     tagger_objects = tagger_group_object.taggers.filter(description__iregex=f"^({candidates_str})$")
     # filter out completed
-    tagger_objects = [tagger for tagger in tagger_objects if tagger.task.status == tagger.task.STATUS_COMPLETED]
+    tagger_objects = [tagger for tagger in tagger_objects if tagger.tasks.last().status == Task.STATUS_COMPLETED]
     logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Loaded {len(tagger_objects)} tagger objects.")
     # predict tags
     if use_async:
@@ -448,7 +448,8 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
         else:
             tagger_object = TaggerGroup.objects.get(pk=object_id)
 
-        progress = ShowProgress(tagger_object.task)
+        task_object = tagger_object.tasks.last()
+        progress = ShowProgress(task_object)
 
         ec = ElasticCore()
         [ec.add_texta_facts_mapping(index) for index in indices]
@@ -467,11 +468,9 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
             if not success:
                 logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
 
-        tagger_object.task.complete()
+        task_object.complete()
         return True
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
-        tagger_object.task.add_error(error_message)
-        tagger_object.task.update_status(Task.STATUS_FAILED)
+        task_object = tagger_object.tasks.last()
+        task_object.handle_failed_task(e)

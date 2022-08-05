@@ -313,7 +313,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
         # get project object
         project_object = Project.objects.get(pk=project_pk)
         # get available taggers from project
-        taggers = Tagger.objects.filter(project=project_object).filter(task__status=Task.STATUS_COMPLETED)
+        taggers = Tagger.objects.filter(project=project_object, tasks__status=Task.STATUS_COMPLETED)
         # filter again
         if serializer.validated_data['taggers']:
             taggers = taggers.filter(pk__in=serializer.validated_data['taggers'])
@@ -354,10 +354,8 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
             serializer.is_valid(raise_exception=True)
 
             tagger_object = self.get_object()
-            tagger_object.task = Task.objects.create(tagger=tagger_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
-            tagger_object.save()
+            tagger_object.tasks.add(Task.objects.create(tagger=tagger_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY))
 
-            project = Project.objects.get(pk=project_pk)
             indices = [index["name"] for index in serializer.validated_data["indices"]]
 
             fields = serializer.validated_data["fields"]

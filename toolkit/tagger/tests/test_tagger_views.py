@@ -180,13 +180,14 @@ class TaggerViewTests(APITransactionTestCase):
                 # add tagger to be tested
                 self.test_tagger_ids.append(created_tagger.pk)
                 # Check if not errors
-                self.assertEqual(created_tagger.task.errors, '[]')
+                task_object = created_tagger.tasks.last()
+                self.assertEqual(task_object.errors, '[]')
                 # Remove tagger files after test is done
                 self.add_cleanup_files(created_tagger.id)
                 # Check if Task gets created via a signal
-                self.assertTrue(created_tagger.task is not None)
+                self.assertTrue(task_object is not None)
                 # Check if Tagger gets trained and completed
-                self.assertEqual(created_tagger.task.status, Task.STATUS_COMPLETED)
+                self.assertEqual(task_object.status, Task.STATUS_COMPLETED)
                 # Check if Tagger object contains classes
                 self.assertTrue(isinstance(response.data["classes"], list))
                 self.assertTrue(len(response.data["classes"]) == 2)
@@ -466,8 +467,9 @@ class TaggerViewTests(APITransactionTestCase):
     def run_apply_tagger_to_index(self):
         """Tests applying tagger to index using apply_to_index endpoint."""
         # Make sure reindexer task has finished
-        while self.reindexer_object.task.status != Task.STATUS_COMPLETED:
-            print_output('test_apply_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
+        task_object = self.reindexer_object.tasks.last()
+        while task_object.status != Task.STATUS_COMPLETED:
+            print_output('test_apply_tagger_to_index: waiting for reindexer task to finish, current status:', task_object.status)
             sleep(2)
 
         test_tagger_id = self.test_imported_binary_tagger_id
@@ -487,8 +489,9 @@ class TaggerViewTests(APITransactionTestCase):
         tagger_object = Tagger.objects.get(pk=test_tagger_id)
 
         # Wait til the task has finished
-        while tagger_object.task.status != Task.STATUS_COMPLETED:
-            print_output('test_apply_tagger_to_index: waiting for applying tagger task to finish, current status:', tagger_object.task.status)
+        task_object = tagger_object.tasks.last()
+        while task_object.status != Task.STATUS_COMPLETED:
+            print_output('test_apply_tagger_to_index: waiting for applying tagger task to finish, current status:', task_object.status)
             sleep(2)
 
         results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution(self.new_fact_name)

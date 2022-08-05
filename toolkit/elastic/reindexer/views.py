@@ -5,7 +5,6 @@ from django_filters import rest_framework as filters
 from rest_framework import mixins, permissions, viewsets
 
 from toolkit.core.project.models import Project
-from toolkit.elastic.index.models import Index
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.reindexer.serializers import ReindexerCreateSerializer
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
@@ -56,6 +55,7 @@ class ReindexerViewSet(mixins.CreateModelMixin,
 
     def get_queryset(self):
         return Reindexer.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
+
 
     # Since reindexer task is triggered by a model signal, serializer.save() will also start the task.
     def perform_create(self, serializer):

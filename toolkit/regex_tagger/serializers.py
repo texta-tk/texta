@@ -6,10 +6,10 @@ from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.regex_tagger import choices
 from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup
 from toolkit.regex_tagger.validators import validate_patterns
-from toolkit.serializer_constants import (CommonModelMixinSerializer, ElasticScrollMixIn, FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer)
+from toolkit.serializer_constants import (FavoriteModelSerializerMixin, ElasticScrollMixIn, FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer)
 
 
-class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer, CommonModelMixinSerializer):
+class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer, FavoriteModelSerializerMixin):
     description = serializers.CharField()
     author = UserSerializer(read_only=True)
     lexicon = serializers.ListField(child=serializers.CharField(required=True), validators=[validate_patterns], help_text="Words/phrases/regex patterns to match.")
@@ -85,7 +85,7 @@ class RegexMultitagTextSerializer(serializers.Serializer):
     )
 
 
-class RegexTaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer, CommonModelMixinSerializer):
+class RegexTaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer, FavoriteModelSerializerMixin):
     description = serializers.CharField()
     url = serializers.SerializerMethodField()
     task = TaskSerializer(read_only=True)

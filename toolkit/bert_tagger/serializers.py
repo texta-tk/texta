@@ -10,7 +10,7 @@ from toolkit.bert_tagger.models import BertTagger
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.helper_functions import get_downloaded_bert_models
-from toolkit.serializer_constants import (CommonModelMixinSerializer, ElasticScrollMixIn, FieldParseSerializer, IndicesSerializerMixin, ProjectFilteredPrimaryKeyRelatedField, ProjectResourceUrlSerializer)
+from toolkit.serializer_constants import (FavoriteModelSerializerMixin, ElasticScrollMixIn, FieldParseSerializer, IndicesSerializerMixin, ProjectFilteredPrimaryKeyRelatedField, ProjectResourceUrlSerializer)
 from toolkit.settings import ALLOW_BERT_MODEL_DOWNLOADS, BERT_PRETRAINED_MODEL_DIRECTORY
 from toolkit.validator_constants import validate_pos_label
 
@@ -41,7 +41,7 @@ class TagRandomDocSerializer(IndicesSerializerMixin):
     fields = serializers.ListField(child=serializers.CharField(), default=[], required=False, allow_empty=True, help_text='Fields to apply the tagger. By default, the tagger is applied to the same fields it was trained on.')
 
 
-class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, CommonModelMixinSerializer):
+class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, FavoriteModelSerializerMixin):
     author = UserSerializer(read_only=True)
     fields = serializers.ListField(child=serializers.CharField(), help_text='Fields used to build the model.')
     query = serializers.JSONField(required=False, help_text='Query in JSON format', default=json.dumps(EMPTY_QUERY))

@@ -5,7 +5,7 @@ from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.core.task.serializers import TaskSerializer
 from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.serializer_constants import (
-    CommonModelMixinSerializer, FieldParseSerializer,
+    FavoriteModelSerializerMixin, FieldParseSerializer,
     IndicesSerializerMixin,
     ElasticScrollMixIn,
     ProjectResourceUrlSerializer,
@@ -18,7 +18,7 @@ from .models import CRFExtractor
 from .choices import FEATURE_FIELDS_CHOICES, FEATURE_EXTRACTOR_CHOICES
 
 
-class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, CommonModelMixinSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
+class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, FavoriteModelSerializerMixin, IndicesSerializerMixin, ProjectResourceUrlSerializer):
     description = serializers.CharField(help_text=DESCRIPTION_HELPTEXT)
     author = UserSerializer(read_only=True)
     query = serializers.JSONField(
