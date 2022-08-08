@@ -1,14 +1,12 @@
 from rest_framework import serializers
 
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
+from toolkit.serializer_constants import CommonModelSerializerMixin, FieldParseSerializer, ProjectResourceUrlSerializer
 from .models import DatasetImport
-from ..core.user_profile.serializers import UserSerializer
 from ..elastic.validators import check_for_banned_beginning_chars, check_for_colons, check_for_special_symbols, check_for_upper_case, check_for_wildcards
 
 
-class DatasetImportSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
-    author = UserSerializer(read_only=True)
+class DatasetImportSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, CommonModelSerializerMixin, ProjectResourceUrlSerializer):
     file = serializers.FileField(help_text='File to upload.', write_only=True)
     separator = serializers.CharField(help_text='Separator (CSV only).', required=False)
     index = serializers.CharField(
@@ -21,12 +19,11 @@ class DatasetImportSerializer(FieldParseSerializer, serializers.HyperlinkedModel
             check_for_wildcards
         ]
     )
-    task = TaskSerializer(read_only=True)
     url = serializers.SerializerMethodField()
 
 
     class Meta:
         model = DatasetImport
-        fields = ('id', 'url', 'author', 'description', 'index', 'separator', 'num_documents', 'num_documents_success', 'file', 'task')
+        fields = ('id', 'url', 'author', 'description', 'index', 'separator', 'num_documents', 'num_documents_success', 'file', 'tasks')
         fields_to_parse = ()
-        read_only_fields = ('id', 'author', 'num_documents', 'num_documents_success', 'task')
+        read_only_fields = ('id', 'author', 'num_documents', 'num_documents_success', 'tasks')

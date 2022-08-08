@@ -1,10 +1,10 @@
 from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
+from texta_elastic.core import ElasticCore
 
 from toolkit.core.task.models import Task
 from toolkit.dataset_import.models import DatasetImport
-from texta_elastic.core import ElasticCore
 from toolkit.test_settings import TEST_DATASETS, TEST_IMPORT_DATASET, TEST_VERSION_PREFIX
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
@@ -42,7 +42,8 @@ class DatasetImportViewTests(APITransactionTestCase):
                 self.created_indices.append(import_dataset.index)
                 self.addCleanup(remove_file, import_dataset.file.name)
                 # Check if Import is completed
-                self.assertEqual(import_dataset.task.status, Task.STATUS_COMPLETED)
+                task_object = import_dataset.tasks.last()
+                self.assertEqual(task_object.status, Task.STATUS_COMPLETED)
                 self.assertTrue(import_dataset.num_documents > 0)
                 self.assertTrue(import_dataset.num_documents_success > 0)
                 self.assertTrue(import_dataset.num_documents_success <= import_dataset.num_documents)
@@ -50,7 +51,7 @@ class DatasetImportViewTests(APITransactionTestCase):
                 self.assertTrue(import_dataset.index in import_dataset.project.get_indices())
                 # test delete
                 response = self.client.delete(import_url)
-                self.assertTrue(response.status_code == 204)
+                self.assertTrue(response.status_code == status.HTTP_204_NO_CONTENT)
 
 
     def test_elasticsearch_index_name_validation(self):

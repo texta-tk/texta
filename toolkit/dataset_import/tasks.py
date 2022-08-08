@@ -1,7 +1,6 @@
 from celery.decorators import task
 
 from toolkit.base_tasks import TransactionAwareTask
-from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.tools.show_progress import ShowProgress
 from .dataset import Dataset
@@ -12,7 +11,7 @@ from .models import DatasetImport
 def import_dataset(dataset_import_id):
     # retrieve object & task
     import_object = DatasetImport.objects.get(pk=dataset_import_id)
-    task_object = import_object.task
+    task_object = import_object.tasks.last()
     # create progress
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('importing dataset')
