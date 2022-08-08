@@ -23,7 +23,7 @@ class TopicAnalyzerTests(APITransactionTestCase):
     """
 
 
-    def _train_topic_cluster(self):
+    def _train_topic_cluster(self) -> int:
         response = self.client.post(self.clustering_url, format="json", data=self.payload)
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
         print_output("_train_topic_cluster", 201)

@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-from toolkit.core.task.serializers import TaskSerializer
 from toolkit.serializer_constants import CommonModelSerializerMixin, FieldParseSerializer, ProjectResourceUrlSerializer
 from .models import DatasetImport
 from ..elastic.validators import check_for_banned_beginning_chars, check_for_colons, check_for_special_symbols, check_for_upper_case, check_for_wildcards

@@ -6,18 +6,16 @@ from typing import List, Optional
 from django.contrib.auth.models import User
 from django.core import serializers
 from django.db import models, transaction
-from texta_lexicon_matcher.lexicon_matcher import LexiconMatcher
-
-from toolkit.constants import MAX_DESC_LEN
-from toolkit.core.project.models import Project
-from toolkit.core.task.models import Task
 from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
+from texta_lexicon_matcher.lexicon_matcher import LexiconMatcher
 
-from toolkit.model_constants import FavoriteModelMixin
+from toolkit.core.project.models import Project
+from toolkit.core.task.models import Task
+from toolkit.model_constants import CommonModelMixin, FavoriteModelMixin
+from toolkit.regex_tagger import choices
 from toolkit.settings import TEXTA_TAGS_KEY
 
-from toolkit.regex_tagger import choices
 
 def load_matcher(regex_tagger_object):
     # parse lexicons
@@ -40,13 +38,9 @@ def load_matcher(regex_tagger_object):
     return matcher
 
 
-class RegexTagger(FavoriteModelMixin):
+class RegexTagger(FavoriteModelMixin, CommonModelMixin):
     MODEL_TYPE = "regex_tagger"
     MODEL_JSON_NAME = "model.json"
-
-    description = models.CharField(max_length=MAX_DESC_LEN)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
 
     lexicon = models.TextField(default="")
     counter_lexicon = models.TextField(default="")
@@ -60,18 +54,17 @@ class RegexTagger(FavoriteModelMixin):
     ignore_case = models.BooleanField(default=choices.DEFAULT_IGNORE_CASE)
     ignore_punctuation = models.BooleanField(default=choices.DEFAULT_IGNORE_PUNCTUATION)
 
-    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
-
 
     def __str__(self):
         return self.description
+
 
     def to_json(self) -> dict:
         serialized = serializers.serialize('json', [self])
         json_obj = json.loads(serialized)[0]["fields"]
         del json_obj["project"]
         del json_obj["author"]
-        del json_obj["task"]
+        del json_obj["tasks"]
         return json_obj
 
 
@@ -94,7 +87,7 @@ class RegexTagger(FavoriteModelMixin):
                         new_fact = {
                             "fact": self.description if not fact_name else fact_name,
                             "str_val": match["str_val"] if not fact_value else fact_value,
-                            "spans": json.dumps([match["span"]]) if add_spans else json.dumps([[0,0]]),
+                            "spans": json.dumps([match["span"]]) if add_spans else json.dumps([[0, 0]]),
                             "doc_path": field,
                             "sent_index": 0
                         }
@@ -130,7 +123,7 @@ class RegexTagger(FavoriteModelMixin):
                 model_json = json.loads(json_string)[0]["fields"]
                 del model_json["project"]
                 del model_json["author"]
-                del model_json["task"]
+                del model_json["tasks"]
                 model_json.pop("favorited_users", None)
 
                 # create new object
@@ -142,19 +135,14 @@ class RegexTagger(FavoriteModelMixin):
                 return new_model.id
 
 
-class RegexTaggerGroup(FavoriteModelMixin):
+class RegexTaggerGroup(FavoriteModelMixin, CommonModelMixin):
     MODEL_TYPE = "regex_tagger_group"
     MODEL_JSON_NAME = "model.json"
 
-    description = models.CharField(max_length=MAX_DESC_LEN)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
     regex_taggers = models.ManyToManyField(RegexTagger, default=None)
 
-    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
-
-    def apply(self, texts: List[str] = [], field_path: Optional[str] = None, fact_name: str = "", fact_value: str = "", add_spans: bool= True):
+    def apply(self, texts: List[str] = [], field_path: Optional[str] = None, fact_name: str = "", fact_value: str = "", add_spans: bool = True):
         results = []
         for text in texts:
             if isinstance(text, str) and text:
@@ -164,7 +152,7 @@ class RegexTaggerGroup(FavoriteModelMixin):
                     if field_path:
                         texta_facts = [{"str_val": tagger.description, "spans": json.dumps([match["span"]]), "fact": self.description, "doc_path": field_path, "sent_index": 0} for match in matches]
                     else:
-                        texta_facts = [{"str_val": tagger.description, "spans": json.dumps([match["span"]]), "fact": self.description,"sent_index": 0} for match in matches]
+                        texta_facts = [{"str_val": tagger.description, "spans": json.dumps([match["span"]]), "fact": self.description, "sent_index": 0} for match in matches]
                     results.extend(texta_facts)
         return results
 

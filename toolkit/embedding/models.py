@@ -20,16 +20,13 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE
 from toolkit.elastic.index.models import Index
 from toolkit.embedding.choices import FASTTEXT_EMBEDDING, W2V_EMBEDDING
-from toolkit.model_constants import FavoriteModelMixin
+from toolkit.model_constants import CommonModelMixin, FavoriteModelMixin
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
 
 
-class Embedding(FavoriteModelMixin):
+class Embedding(FavoriteModelMixin, CommonModelMixin):
     MODEL_JSON_NAME = "model.json"
 
-    description = models.CharField(max_length=MAX_DESC_LEN)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     fields = models.TextField(default=json.dumps([]))
     indices = models.ManyToManyField(Index)
@@ -44,7 +41,6 @@ class Embedding(FavoriteModelMixin):
     snowball_language = models.CharField(default=DEFAULT_SNOWBALL_LANGUAGE, null=True, max_length=MAX_DESC_LEN)
     embedding_type = models.TextField(default=W2V_EMBEDDING)
     embedding_model = models.FileField(null=True, verbose_name='', default=None)
-    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
 
     @staticmethod
@@ -98,10 +94,12 @@ class Embedding(FavoriteModelMixin):
 
         # Create a task object to fill the new model object with.
         # Pull the user and project into which it's imported from the web request.
-        new_model.task = Task.objects.create(embedding=new_model, task_type=Task.TYPE_TRAIN, status=Task.STATUS_COMPLETED)
+        new_task = Task.objects.create(embedding=new_model, task_type=Task.TYPE_TRAIN, status=Task.STATUS_COMPLETED)
         new_model.author = User.objects.get(id=user_id)
         new_model.project = Project.objects.get(id=project_id)
         new_model.save()  # Save the intermediate results.
+
+        new_model.tasks.add(new_task)
 
         for index_name in indices:
             index, is_created = Index.objects.get_or_create(name=index_name)
@@ -153,7 +151,7 @@ class Embedding(FavoriteModelMixin):
         json_obj = {"fields": json.loads(serialized)[0]["fields"], "embedding_extras": []}
         json_obj["fields"].pop("project")
         json_obj["fields"].pop("author", None)
-        json_obj["fields"].pop("task", None)
+        json_obj["fields"].pop("tasks", None)
         json_obj["embedding_extras"] = Embedding.get_extra_model_file_names(self.embedding_model.path)
         return json_obj
 
@@ -213,8 +211,8 @@ class Embedding(FavoriteModelMixin):
 
     def train(self):
         new_task = Task.objects.create(embedding=self, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
-        self.task = new_task
         self.save()
+        self.tasks.add(new_task)
         from toolkit.embedding.tasks import train_embedding
         train_embedding.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
