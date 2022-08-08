@@ -610,8 +610,8 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
     def run_apply_binary_tagger_to_index(self):
         """Tests applying binary BERT tagger to index using apply_to_index endpoint."""
         # Make sure reindexer task has finished
-        while self.reindexer_object.task.status != Task.STATUS_COMPLETED:
-            print_output('test_apply_binary_bert_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
+        while self.reindexer_object.tasks.last().status != Task.STATUS_COMPLETED:
+            print_output('test_apply_binary_bert_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.tasks.last().status)
             sleep(2)
 
         url = f'{self.url}{self.test_imported_binary_gpu_tagger_id}/apply_to_index/'
@@ -629,8 +629,8 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         tagger_object = BertTaggerObject.objects.get(pk=self.test_imported_binary_gpu_tagger_id)
 
         # Wait til the task has finished
-        while tagger_object.task.status != Task.STATUS_COMPLETED:
-            print_output('test_apply_binary_bert_tagger_to_index: waiting for applying tagger task to finish, current status:', tagger_object.task.status)
+        while tagger_object.tasks.last().status != Task.STATUS_COMPLETED:
+            print_output('test_apply_binary_bert_tagger_to_index: waiting for applying tagger task to finish, current status:', tagger_object.tasks.last().status)
             sleep(2)
 
         results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution(self.new_fact_name)
@@ -646,8 +646,8 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
     def run_apply_multiclass_tagger_to_index(self):
         """Tests applying multiclass BERT tagger to index using apply_to_index endpoint."""
         # Make sure reindexer task has finished
-        while self.reindexer_object.task.status != Task.STATUS_COMPLETED:
-            print_output('test_apply_multiclass_bert_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
+        while self.reindexer_object.tasks.last().status != Task.STATUS_COMPLETED:
+            print_output('test_apply_multiclass_bert_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.tasks.last().status)
             sleep(2)
 
         url = f'{self.url}{self.test_imported_multiclass_gpu_tagger_id}/apply_to_index/'
@@ -665,8 +665,8 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         tagger_object = BertTaggerObject.objects.get(pk=self.test_imported_multiclass_gpu_tagger_id)
 
         # Wait til the task has finished
-        while tagger_object.task.status != Task.STATUS_COMPLETED:
-            print_output('test_apply_multiclass_bert_tagger_to_index: waiting for applying tagger task to finish, current status:', tagger_object.task.status)
+        while tagger_object.tasks.last().status != Task.STATUS_COMPLETED:
+            print_output('test_apply_multiclass_bert_tagger_to_index: waiting for applying tagger task to finish, current status:', tagger_object.tasks.last().status)
             sleep(2)
 
         results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution(self.new_multiclass_fact_name)

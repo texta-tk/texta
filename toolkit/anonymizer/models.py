@@ -1,15 +1,15 @@
+import json
 import tempfile
 import zipfile
-import json
 
 from django.contrib.auth.models import User
-from django.db import models, transaction
 from django.core import serializers
-
-from toolkit.core.project.models import Project
-from toolkit.constants import MAX_DESC_LEN
+from django.db import models, transaction
 
 from toolkit.anonymizer import choices
+from toolkit.constants import MAX_DESC_LEN
+from toolkit.core.project.models import Project
+
 
 class Anonymizer(models.Model):
     MODEL_TYPE = "anonymizer"
@@ -26,8 +26,10 @@ class Anonymizer(models.Model):
     mimic_casing = models.BooleanField(default=choices.DEFAULT_MIMIC_CASING)
     auto_adjust_threshold = models.BooleanField(default=choices.DEFAULT_AUTO_ADJUST)
 
+
     def __str__(self):
         return self.description
+
 
     def export_resources(self):
         with tempfile.SpooledTemporaryFile(encoding="utf8") as tmp:

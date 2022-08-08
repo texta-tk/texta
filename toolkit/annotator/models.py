@@ -69,8 +69,6 @@ class Annotator(TaskModel):
 
     annotator_users = models.ManyToManyField(User, default=None, related_name="annotators", help_text="Who are the users who will be annotating.")
 
-    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
-
     add_facts_mapping = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True, null=True)
@@ -118,13 +116,16 @@ class Annotator(TaskModel):
 
 
     def create_annotator_task(self):
-        new_task = Task.objects.create(annotator=self, task_type=Task.TYPE_APPLY, status=Task.STATUS_CREATED)
-        self.task = new_task
         self.save()
 
+        new_task = Task.objects.create(annotator=self, task_type=Task.TYPE_APPLY, status=Task.STATUS_CREATED)
+        self.tasks.add(new_task)
+
         annotator_obj = Annotator.objects.get(pk=self.pk)
-        annotator_group, is_created = AnnotatorGroup.objects.get_or_create(project=annotator_obj.project,
-                                                                           parent=annotator_obj)
+        annotator_group, is_created = AnnotatorGroup.objects.get_or_create(
+            project=annotator_obj.project,
+            parent=annotator_obj
+        )
 
         from toolkit.annotator.tasks import annotator_task
         annotator_task.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
@@ -224,6 +225,7 @@ class Annotator(TaskModel):
         """
         from toolkit.annotator.tasks import add_entity_task
         add_entity_task.apply_async(args=(self.pk, document_id, texta_facts, index, user.pk), queue=CELERY_LONG_TERM_TASK_QUEUE)
+
 
     def pull_document(self) -> Optional[dict]:
         """
