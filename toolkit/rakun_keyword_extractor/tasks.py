@@ -1,13 +1,14 @@
 import logging
 from typing import List
+
 from celery.decorators import task
 from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
 from texta_elastic.searcher import ElasticSearcher
-from toolkit.core.task.models import Task
+
 from toolkit.base_tasks import TransactionAwareTask
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER
-from toolkit.rakun_keyword_extractor.models import RakunExtractor, RakunDetectorWrapper
+from toolkit.rakun_keyword_extractor.models import RakunDetectorWrapper, RakunExtractor
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER
 from toolkit.tools.show_progress import ShowProgress
 
 
@@ -36,22 +37,25 @@ def update_generator(keyword_detector: RakunDetectorWrapper, generator: ElasticS
                 "_source": {"doc": {"texta_facts": existing_facts}}
             }
 
+
 @task(name="start_rakun_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
 def start_rakun_task(self, object_id: int):
     rakun = RakunExtractor.objects.get(pk=object_id)
-    task_object = rakun.task
+    task_object = rakun.tasks.last()
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('starting rakun')
     show_progress.update_view(0)
     return object_id
+
 
 @task(name="apply_rakun_extractor_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
 def apply_rakun_extractor_to_index(self, object_id: int, indices: List[str], fields: List[str], query: dict, es_timeout: int, bulk_size: int, fact_name: str, add_spans: bool):
     """Apply Rakun Keyword Extractor to index."""
     logging.getLogger(INFO_LOGGER).info(f"Starting task 'apply_rakun_extractor_to_index' with ID: {object_id}!")
     rakun_extractor_object = RakunExtractor.objects.get(id=object_id)
+    task_object = rakun_extractor_object.tasks.last()
     try:
-        progress = ShowProgress(rakun_extractor_object.task)
+        progress = ShowProgress(task_object)
 
         # retrieve fields
         field_data = fields
@@ -75,11 +79,9 @@ def apply_rakun_extractor_to_index(self, object_id: int, indices: List[str], fie
         ed = ElasticDocument("_all")
         elastic_response = ed.bulk_update(actions=actions)
 
-        rakun_extractor_object.task.complete()
+        task_object.complete()
         return True
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
-        rakun_extractor_object.task.add_error(error_message)
-        rakun_extractor_object.task.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
+        raise e

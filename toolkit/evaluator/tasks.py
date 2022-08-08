@@ -1,41 +1,26 @@
 import json
-import os
-import secrets
 import logging
-import pathlib
-
 import math
-import numpy as np
-
-from celery.decorators import task
+import pathlib
+import secrets
 from copy import deepcopy
+from typing import List
+
+import numpy as np
+from celery.decorators import task
 from django.db import connections
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.searcher import ElasticSearcher
 
 from toolkit.base_tasks import TransactionAwareTask
-from toolkit.core.task.models import Task
-
-from texta_elastic.searcher import ElasticSearcher
-from texta_elastic.aggregator import ElasticAggregator
-
-from toolkit.evaluator.models import Evaluator
 from toolkit.evaluator import choices
+from toolkit.evaluator.helpers.binary_and_multilabel_evaluator import (delete_empty_rows_and_cols, get_memory_imprint, is_enough_memory_available, remove_not_found, scroll_and_score)
 from toolkit.evaluator.helpers.entity_evaluator import scroll_and_score_entity
-from toolkit.evaluator.helpers.binary_and_multilabel_evaluator import (
-    scroll_and_score,
-    delete_empty_rows_and_cols,
-    is_enough_memory_available,
-    get_memory_imprint,
-    remove_not_found
-)
-
-from toolkit.helper_functions import get_core_setting, calculate_memory_buffer
-
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, ERROR_LOGGER, MEDIA_URL, EVALUATOR_MEMORY_BUFFER_RATIO
-
-from toolkit.tools.show_progress import ShowProgress
+from toolkit.evaluator.models import Evaluator
+from toolkit.helper_functions import calculate_memory_buffer, get_core_setting
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, EVALUATOR_MEMORY_BUFFER_RATIO, INFO_LOGGER, MEDIA_URL
 from toolkit.tools.plots import create_confusion_plot
-
-from typing import List, Union, Dict, Tuple
+from toolkit.tools.show_progress import ShowProgress
 
 
 @task(name="evaluate_entity_tags", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
@@ -44,7 +29,9 @@ def evaluate_entity_tags_task(object_id: int, indices: List[str], query: dict, e
         logging.getLogger(INFO_LOGGER).info(f"Starting entity evaluator task for Evaluator with ID {object_id}.")
 
         evaluator_object = Evaluator.objects.get(pk=object_id)
-        progress = ShowProgress(evaluator_object.task, multiplier=1)
+        task_object = evaluator_object.tasks.last()
+
+        progress = ShowProgress(task_object, multiplier=1)
 
         true_fact = evaluator_object.true_fact
         pred_fact = evaluator_object.predicted_fact
@@ -61,19 +48,19 @@ def evaluate_entity_tags_task(object_id: int, indices: List[str], query: dict, e
             doc_path = evaluator_object.field
 
         searcher = ElasticSearcher(
-            indices = indices,
-            field_data = [doc_path, "texta_facts"],
-            query = query,
-            output = ElasticSearcher.OUT_RAW,
-            timeout = f"{es_timeout}m",
+            indices=indices,
+            field_data=[doc_path, "texta_facts"],
+            query=query,
+            output=ElasticSearcher.OUT_RAW,
+            timeout=f"{es_timeout}m",
             callback_progress=progress,
-            scroll_size = scroll_size
+            scroll_size=scroll_size
         )
 
         # Get number of documents
         n_docs = searcher.count()
-        evaluator_object.task.total = n_docs
-        evaluator_object.task.save()
+        task_object.total = n_docs
+        task_object.save()
 
         evaluator_object.document_count = n_docs
         evaluator_object.scores_imprecise = False
@@ -84,16 +71,14 @@ def evaluate_entity_tags_task(object_id: int, indices: List[str], query: dict, e
         evaluator_object.save()
 
         # Get number of batches for the logger
-        n_batches = math.ceil(n_docs/scroll_size)
+        n_batches = math.ceil(n_docs / scroll_size)
 
         scores, misclassified = scroll_and_score_entity(searcher, evaluator_object, true_fact, pred_fact, doc_path, token_based, n_batches, add_misclassified_examples)
-
 
         logging.getLogger(INFO_LOGGER).info(f"Final scores: {scores}")
 
         for conn in connections.all():
             conn.close_if_unusable_or_obsolete()
-
 
         # Generate confusion matrix plot and save it
         image_name = f"{secrets.token_hex(15)}.png"
@@ -103,23 +88,23 @@ def evaluate_entity_tags_task(object_id: int, indices: List[str], query: dict, e
         evaluator_object.plot.name = str(image_path)
 
         evaluator_object.save()
-        evaluator_object.task.complete()
+        task_object.complete()
         return True
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
-        evaluator_object.task.add_error(error_message)
-        evaluator_object.task.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
+        raise e
 
 
 @task(name="evaluate_tags", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeout: int = 10, scroll_size: int = 100):
     try:
-        logging.getLogger(INFO_LOGGER).info(f"Starting evaluator task for Evaluator with ID {object_id}.")
+        logger = logging.getLogger(INFO_LOGGER)
+        logger.info(f"Starting evaluator task for Evaluator with ID {object_id}.")
 
         evaluator_object = Evaluator.objects.get(pk=object_id)
-        progress = ShowProgress(evaluator_object.task, multiplier=1)
+        task_object = evaluator_object.tasks.last()
+        progress = ShowProgress(task_object, multiplier=1)
 
         # Retreieve facts and sklearn average function from the model
         true_fact = evaluator_object.true_fact
@@ -131,18 +116,18 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
         add_individual_results = evaluator_object.add_individual_results
 
         searcher = ElasticSearcher(
-            indices = indices,
-            field_data = ["texta_facts"],
-            query = query,
-            output = ElasticSearcher.OUT_RAW,
-            timeout = f"{es_timeout}m",
+            indices=indices,
+            field_data=["texta_facts"],
+            query=query,
+            output=ElasticSearcher.OUT_RAW,
+            timeout=f"{es_timeout}m",
             callback_progress=progress,
-            scroll_size = scroll_size
+            scroll_size=scroll_size
         )
 
         # Binary
         if true_fact_value and pred_fact_value:
-            logging.getLogger(INFO_LOGGER).info(f"Starting binary evaluation. Comparing following fact and fact value pairs: TRUE: ({true_fact}: {true_fact_value}), PREDICTED: ({pred_fact}: {pred_fact_value}).")
+            logger.info(f"Starting binary evaluation. Comparing following fact and fact value pairs: TRUE: ({true_fact}: {true_fact_value}), PREDICTED: ({pred_fact}: {pred_fact_value}).")
 
             # Set the evaluation type in the model
             evaluator_object.evaluation_type = "binary"
@@ -155,7 +140,7 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
 
         # Multilabel/multiclass
         else:
-            logging.getLogger(INFO_LOGGER).info(f"Starting multilabel evaluation. Comparing facts TRUE: '{true_fact}', PRED: '{pred_fact}'.")
+            logger.info(f"Starting multilabel evaluation. Comparing facts TRUE: '{true_fact}', PRED: '{pred_fact}'.")
 
             # Make deepcopy of the query to avoid modifying Searcher's query.
             es_aggregator = ElasticAggregator(indices=indices, query=deepcopy(query))
@@ -174,7 +159,6 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
             # Add dummy classes for missing labels
             classes.extend([choices.MISSING_TRUE_LABEL, choices.MISSING_PRED_LABEL])
 
-
             ## Set the evaluation type in the model
             evaluator_object.evaluation_type = "multilabel"
 
@@ -182,10 +166,10 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
 
         # Get number of documents in the query to estimate memory imprint
         n_docs = searcher.count()
-        evaluator_object.task.total = n_docs
-        evaluator_object.task.save()
+        task_object.total = n_docs
+        task_object.save()
 
-        logging.getLogger(INFO_LOGGER).info(f"Number of documents: {n_docs} | Number of classes: {len(classes)}")
+        logger.info(f"Number of documents: {n_docs} | Number of classes: {len(classes)}")
 
         # Get the memory buffer value from core variables
         core_memory_buffer_value_gb = get_core_setting("TEXTA_EVALUATOR_MEMORY_BUFFER_GB")
@@ -215,15 +199,27 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
         # Save model updates
         evaluator_object.save()
 
-        logging.getLogger(INFO_LOGGER).info(f"Enough available memory: {enough_memory} | Score after scroll: {score_after_scroll}")
+        logger.info(f"Enough available memory: {enough_memory} | Score after scroll: {score_after_scroll}")
 
         # Get number of batches for the logger
-        n_batches = math.ceil(n_docs/scroll_size)
+        n_batches = math.ceil(n_docs / scroll_size)
 
         # Scroll and score tags
-        scores, bin_scores = scroll_and_score(generator=searcher, evaluator_object=evaluator_object, true_fact = true_fact, pred_fact = pred_fact, true_fact_value = true_fact_value, pred_fact_value=pred_fact_value, classes=classes, average=average, score_after_scroll=score_after_scroll, n_batches=n_batches, add_individual_results=add_individual_results)
+        scores, bin_scores = scroll_and_score(
+            generator=searcher,
+            evaluator_object=evaluator_object,
+            true_fact=true_fact,
+            pred_fact=pred_fact,
+            true_fact_value=true_fact_value,
+            pred_fact_value=pred_fact_value,
+            classes=classes,
+            average=average,
+            score_after_scroll=score_after_scroll,
+            n_batches=n_batches,
+            add_individual_results=add_individual_results
+        )
 
-        logging.getLogger(INFO_LOGGER).info(f"Final scores: {scores}")
+        logger.info(f"Final scores: {scores}")
 
         for conn in connections.all():
             conn.close_if_unusable_or_obsolete()
@@ -231,7 +227,7 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
         confusion = scores["confusion_matrix"]
         confusion = np.asarray(confusion, dtype="int64")
 
-        if len(classes) <=  choices.DEFAULT_MAX_CONFUSION_CLASSES:
+        if len(classes) <= choices.DEFAULT_MAX_CONFUSION_CLASSES:
             # Delete empty rows and columns corresponding to missing pred/true labels from the confusion matrix
             confusion, classes = delete_empty_rows_and_cols(confusion, classes)
 
@@ -253,13 +249,10 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
         evaluator_object.individual_results = json.dumps(remove_not_found(bin_scores), ensure_ascii=False)
         evaluator_object.add_misclassified_examples = False
 
-
         evaluator_object.save()
-        evaluator_object.task.complete()
+        task_object.complete()
         return True
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
-        evaluator_object.task.add_error(error_message)
-        evaluator_object.task.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
+        raise e

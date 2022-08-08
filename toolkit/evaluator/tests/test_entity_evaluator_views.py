@@ -2,18 +2,17 @@ import json
 import pathlib
 from io import BytesIO
 from time import sleep
-from typing import List
 
 import numpy as np
 from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
+from texta_elastic.query import Query
 
 from toolkit.core.task.models import Task
-from texta_elastic.query import Query
 from toolkit.evaluator import choices
 from toolkit.evaluator.models import Evaluator as EvaluatorObject
-from toolkit.helper_functions import reindex_test_dataset, set_core_setting
+from toolkit.helper_functions import reindex_test_dataset
 from toolkit.test_settings import (TEST_INDEX_ENTITY_EVALUATOR, TEST_KEEP_PLOT_FILES, TEST_VERSION_PREFIX)
 from toolkit.tools.utils_for_tests import (
     create_test_user,
@@ -295,7 +294,6 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
             "f1_score": 0.84
         }
 
-
         response = self.client.post(self.url, payload, format="json")
         print_output(f"entity_evaluator:run_test_entity_evaluation_token_based:response.data", response.data)
 
@@ -303,8 +301,9 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
 
         evaluator_id = response.data["id"]
         evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
-        while evaluator_object.task.status != Task.STATUS_COMPLETED:
-            print_output(f"entity_evaluator:run_test_entity_evaluation_token_based: waiting for evaluation task to finish, current status:", evaluator_object.task.status)
+        task_object = evaluator_object.tasks.last()
+        while task_object.status != Task.STATUS_COMPLETED:
+            print_output(f"entity_evaluator:run_test_entity_evaluation_token_based: waiting for evaluation task to finish, current status:", task_object.status)
             sleep(1)
 
         evaluator_json = evaluator_object.to_json()
@@ -336,7 +335,6 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
         self.add_cleanup_files(evaluator_id)
 
 
-
     def run_test_entity_evaluation_token_based_sent_index(self):
         """ Test token-based entity evaluation with sentence-level spans. """
 
@@ -359,7 +357,6 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
             "f1_score": 0.92
         }
 
-
         response = self.client.post(self.url, payload, format="json")
         print_output(f"entity_evaluator:run_test_entity_evaluation_token_based:response.data", response.data)
 
@@ -367,8 +364,9 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
 
         evaluator_id = response.data["id"]
         evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
-        while evaluator_object.task.status != Task.STATUS_COMPLETED:
-            print_output(f"entity_evaluator:run_test_entity_evaluation_token_based_sent_index: waiting for evaluation task to finish, current status:", evaluator_object.task.status)
+        task_object = evaluator_object.tasks.last()
+        while task_object.status != Task.STATUS_COMPLETED:
+            print_output(f"entity_evaluator:run_test_entity_evaluation_token_based_sent_index: waiting for evaluation task to finish, current status:", task_object.status)
             sleep(1)
 
         evaluator_json = evaluator_object.to_json()
@@ -422,7 +420,6 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
             "f1_score": 0.73
         }
 
-
         response = self.client.post(self.url, payload, format="json")
         print_output(f"entity_evaluator:run_test_entity_evaluation_value_based:response.data", response.data)
 
@@ -430,8 +427,9 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
 
         evaluator_id = response.data["id"]
         evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
-        while evaluator_object.task.status != Task.STATUS_COMPLETED:
-            print_output(f"entity_evaluator:run_test_entity_evaluation_value_based: waiting for evaluation task to finish, current status:", evaluator_object.task.status)
+        task_object = evaluator_object.tasks.last()
+        while task_object.status != Task.STATUS_COMPLETED:
+            print_output(f"entity_evaluator:run_test_entity_evaluation_value_based: waiting for evaluation task to finish, current status:", task_object.status)
             sleep(1)
 
         evaluator_json = evaluator_object.to_json()
@@ -485,7 +483,6 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
             "f1_score": 0.88
         }
 
-
         response = self.client.post(self.url, payload, format="json")
         print_output(f"entity_evaluator:run_test_entity_evaluation_value_based_sent_index:response.data", response.data)
 
@@ -493,8 +490,9 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
 
         evaluator_id = response.data["id"]
         evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
-        while evaluator_object.task.status != Task.STATUS_COMPLETED:
-            print_output(f"entity_evaluator:run_test_entity_evaluation_value_based_sent_index: waiting for evaluation task to finish, current status:", evaluator_object.task.status)
+        task_object = evaluator_object.tasks.last()
+        while task_object.status != Task.STATUS_COMPLETED:
+            print_output(f"entity_evaluator:run_test_entity_evaluation_value_based_sent_index: waiting for evaluation task to finish, current status:", task_object.status)
             sleep(1)
 
         evaluator_json = evaluator_object.to_json()
@@ -521,7 +519,6 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
         self.assertEqual(evaluator_object.token_based, False)
         self.assertEqual(evaluator_object.evaluation_type, "entity")
 
-
         self.value_based_sent_index_evaluator_id = evaluator_id
 
         self.add_cleanup_files(evaluator_id)
@@ -529,7 +526,6 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
 
     def run_test_misclassified_examples_get(self, evaluator_id: int):
         """ Test misclassified_examples endpoint with GET request. """
-
 
         evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
         token_based = evaluator_object.token_based
@@ -548,7 +544,6 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
             self.assertTrue(key in response.data)
             self.assertTrue(isinstance(response.data[key], list))
 
-
         value_types_dict = ["substrings", "superstrings", "partial"]
         value_types_str = ["false_negatives", "false_positives"]
 
@@ -562,12 +557,10 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
                 self.assertTrue("count" in response.data[key][0])
 
 
-
     def run_test_misclassified_examples_post(self, evaluator_id: int):
         """ Test misclassified examples endpoint with POST request."""
         evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
         token_based = evaluator_object.token_based
-
 
         url = f"{self.url}{evaluator_id}/misclassified_examples/"
 
@@ -598,8 +591,6 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
             for value in response.data[key]["values"]:
                 self.assertTrue(value["count"] >= payload_min_count["min_count"])
 
-
-
         # Test param `max_count`
         payload_max_count = {
             "max_count": 2
@@ -626,7 +617,6 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
             # Check that no value with bigger count than max count is present in the results
             for value in response.data[key]["values"]:
                 self.assertTrue(value["count"] <= payload_max_count["max_count"])
-
 
         # Test param `top_n`
         payload_top_n = {
@@ -675,12 +665,13 @@ class EntityEvaluatorObjectViewTests(APITransactionTestCase):
         evaluator_id = response.data["id"]
         evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
 
-        while evaluator_object.task.status != Task.STATUS_COMPLETED:
-            print_output(f"entity_evaluator:run_test_evaluation_with_query: waiting for evaluation task to finish, current status:", evaluator_object.task.status)
+        task_object = evaluator_object.tasks.last()
+        while task_object.status != Task.STATUS_COMPLETED:
+            print_output(f"entity_evaluator:run_test_evaluation_with_query: waiting for evaluation task to finish, current status:", task_object.status)
             sleep(1)
-            if evaluator_object.task.status == Task.STATUS_FAILED:
-                print_output(f"entity_evaluator:run_test_evaluation_with_query: status = failed: error:", evaluator_object.task.errors)
-            self.assertFalse(evaluator_object.task.status == Task.STATUS_FAILED)
+            if task_object.status == Task.STATUS_FAILED:
+                print_output(f"entity_evaluator:run_test_evaluation_with_query: status = failed: error:", task_object.errors)
+            self.assertFalse(task_object.status == Task.STATUS_FAILED)
 
         # Check if the document count is in sync with the query
         self.assertEqual(evaluator_object.document_count, 68)

@@ -1,20 +1,16 @@
-import json
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from toolkit.core.task.serializers import TaskSerializer
 from texta_elastic.searcher import EMPTY_QUERY
+
 from toolkit.embedding.models import Embedding
 from toolkit.rakun_keyword_extractor import choices
 from toolkit.rakun_keyword_extractor.models import RakunExtractor
-from toolkit.serializer_constants import FavoriteModelSerializerMixin, FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, ProjectFasttextFilteredPrimaryKeyRelatedField
-from toolkit import serializer_constants
+from toolkit.serializer_constants import CommonModelSerializerMixin, FavoriteModelSerializerMixin, FieldParseSerializer, IndicesSerializerMixin, ProjectFasttextFilteredPrimaryKeyRelatedField, ProjectResourceUrlSerializer
 
 
-class RakunExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin, FavoriteModelSerializerMixin, ):
-    author_username = serializers.CharField(source="author.profile.get_display_name", read_only=True)
-    description = serializers.CharField(required=True, help_text=serializer_constants.DESCRIPTION_HELPTEXT)
+class RakunExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, CommonModelSerializerMixin, ProjectResourceUrlSerializer, IndicesSerializerMixin, FavoriteModelSerializerMixin, ):
     distance_method = serializers.ChoiceField(choices=choices.DEFAULT_DISTANCE_METHOD_CHOICES, default=choices.DEFAULT_DISTANCE_METHOD,
-                                         help_text="Method for merging similar tokens.")
+                                              help_text="Method for merging similar tokens.")
     distance_threshold = serializers.FloatField(required=False, min_value=0.0, default=2.0, help_text="Distance between tokens that initiates the merge process (if more similar than this, the tokens are merged).")
     num_keywords = serializers.IntegerField(required=False, default=25, help_text="The number of keywords to be detected")
     pair_diff_length = serializers.IntegerField(required=False, default=2, help_text="If the difference in the length of the two tokens is smaller than this parameter, the tokens are considered for merging.")
@@ -26,20 +22,22 @@ class RakunExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer
     max_occurrence = serializers.IntegerField(required=False, default=3, help_text="How many of the most common keywords are to be considered during max_similar prunning step.")
     fasttext_embedding = ProjectFasttextFilteredPrimaryKeyRelatedField(queryset=Embedding.objects, many=False, read_only=False, allow_null=True, default=None, help_text=f'FastText embedding to use.')
     url = serializers.SerializerMethodField()
-    task = TaskSerializer(read_only=True)
+
 
     class Meta:
         model = RakunExtractor
-        fields = ('id', 'url', 'author_username', 'description', 'distance_method', 'distance_threshold', 'num_keywords', 'pair_diff_length',
+        fields = ('id', 'url', 'author', 'description', 'distance_method', 'distance_threshold', 'num_keywords', 'pair_diff_length',
                   'stopwords', 'bigram_count_threshold', 'min_tokens', 'is_favorited', 'max_tokens', 'max_similar', 'max_occurrence',
-                  'fasttext_embedding', 'task')
+                  'fasttext_embedding', 'tasks')
         fields_to_parse = ()
+
 
     def validate(self, data):
         if data.get("distance_method", None) == "fasttext":
             if data.get("distance_threshold", None) > 1:
                 raise ValidationError("Value 'distance_threshold' should not be greater than one if 'distance_method' is fasttext!")
         return data
+
 
     def to_representation(self, instance: RakunExtractor):
         data = super(RakunExtractorSerializer, self).to_representation(instance)
