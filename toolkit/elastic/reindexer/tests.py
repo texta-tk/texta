@@ -128,6 +128,9 @@ class ReindexerViewTests(APITransactionTestCase):
             url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/elastic/reindexer/'
             self.run_create_reindexer_task_signal(self.project, url, payload)
 
+        # Test that usernames are automatically added.
+        self.assertTrue(Index.objects.filter(name=TEST_INDEX_REINDEX, added_by=self.default_username).exists())
+
 
     def run_create_reindexer_task_signal(self, project, url, payload, overwrite=False):
         """ Tests the endpoint for a new Reindexer task, and if a new Task gets created via the signal

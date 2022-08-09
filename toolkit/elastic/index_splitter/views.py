@@ -53,16 +53,16 @@ class IndexSplitterViewSet(mixins.CreateModelMixin,
         for index in Index.objects.filter(name__in=indices, is_open=True):
             splitter_model.indices.add(index)
 
-        self.update_project_indices(serializer, project_obj)
+        self.update_project_indices(serializer, project_obj, self.request)
         splitter_model.start_task()
 
 
-    def update_project_indices(self, serializer, project_obj):
+    def update_project_indices(self, serializer, project_obj, request):
         ''' add new_index included in the request to the relevant project object '''
         train_ix_name = serializer.validated_data['train_index']
-        train_ix, is_open = Index.objects.get_or_create(name=train_ix_name)
+        train_ix, is_open = Index.objects.get_or_create(name=train_ix_name, defaults={"added_by": request.user.username})
         test_ix_name = serializer.validated_data['test_index']
-        test_ix, is_open = Index.objects.get_or_create(name=test_ix_name)
+        test_ix, is_open = Index.objects.get_or_create(name=test_ix_name, defaults={"added_by": request.user.username})
         project_obj.indices.add(train_ix)
         project_obj.indices.add(test_ix)
         project_obj.save()

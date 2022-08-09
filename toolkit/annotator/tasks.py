@@ -233,7 +233,7 @@ def annotator_task(self, annotator_task_id):
                         # create new_index
                         create_index_res = ElasticCore().create_index(new_index, updated_schema)
 
-                        index_model, is_created = Index.objects.get_or_create(name=new_index)
+                        index_model, is_created = Index.objects.get_or_create(name=new_index, defaults={"added_by": annotator_obj.author.username})
                         project_obj.indices.add(index_model)
                         index_user = index_model.name.rsplit('_', 2)[1]
                         if str(index_user) == str(new_annotator):
