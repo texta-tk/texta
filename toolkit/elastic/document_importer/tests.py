@@ -9,6 +9,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from texta_elastic.core import ElasticCore
 
+from toolkit.elastic.index.models import Index
 from toolkit.helper_functions import reindex_test_dataset, set_core_setting
 from toolkit.test_settings import VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
@@ -113,6 +114,10 @@ class DocumentImporterAPITestCase(APITestCase):
 
         self.assertTrue(document["_source"])
         self.assertTrue(self.project.indices.filter(name=normalized_project_title).exists())
+
+        # Test that usernames are added automatically into the newly created index.
+        self.assertTrue(Index.objects.filter(name=normalized_project_title, added_by=self.user.username).exists())
+
         print_output("test_adding_document_without_specified_index_and_that_index_is_added_into_project:response.data", response.data)
 
 
