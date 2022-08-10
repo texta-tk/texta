@@ -39,8 +39,8 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
     ordering_fields = (
         'id',
         'fields',
-        'task__time_started',
-        'task__time_completed',
+        'tasks__time_started',
+        'tasks__time_completed',
         'indices__name',
         'display_fields',
         'intracluster_similarity',
@@ -429,8 +429,8 @@ class TopicAnalyzerViewset(viewsets.ModelViewSet, BulkDelete):
         'author__username',
         'description',
         'fields',
-        'task__time_started',
-        'task__time_completed',
+        'tasks__time_started',
+        'tasks__time_completed',
         'clustering_algorithm',
         'vectorizer',
         'display_fields',
@@ -439,7 +439,7 @@ class TopicAnalyzerViewset(viewsets.ModelViewSet, BulkDelete):
         'num_dims',
         'document_limit',
         'indices__name',
-        'task__status'
+        'tasks__status'
     )
 
 

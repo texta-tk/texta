@@ -257,7 +257,7 @@ class DeleteFactsByQueryViewset(viewsets.ModelViewSet, BulkDelete):
     serializer_class = DeleteFactsByQuerySerializer
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     ordering_fields = (
-        'id', 'author__username', 'description', 'task__time_started', 'task__time_completed', 'task__status')
+        'id', 'author__username', 'description', 'tasks__time_started', 'tasks__time_completed', 'tasks__status')
     permission_classes = (
         ProjectAccessInApplicationsAllowed,
         permissions.IsAuthenticated,
@@ -292,7 +292,7 @@ class EditFactsByQueryViewset(viewsets.ModelViewSet, BulkDelete):
     serializer_class = EditFactsByQuerySerializer
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     ordering_fields = (
-        'id', 'author__username', 'description', 'task__time_started', 'task__time_completed', 'task__status')
+        'id', 'author__username', 'description', 'tasks__time_started', 'tasks__time_completed', 'tasks__status')
     permission_classes = (
         ProjectAccessInApplicationsAllowed,
         permissions.IsAuthenticated,

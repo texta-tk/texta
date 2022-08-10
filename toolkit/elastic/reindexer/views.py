@@ -49,8 +49,8 @@ class ReindexerViewSet(mixins.CreateModelMixin,
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = ReindexerFilter
     ordering_fields = ('id', 'author__username', 'description', 'fields', 'new_index', 'indices', 'random_size',
-                       'task__time_started', 'task__time_completed',
-                       'task__status')
+                       'tasks__time_started', 'tasks__time_completed',
+                       'tasks__status')
 
 
     def get_queryset(self):

@@ -26,7 +26,7 @@ from toolkit.view_constants import BulkDelete
 
 class EvaluatorFilter(filters.FilterSet):
     description = filters.CharFilter("description", lookup_expr="icontains")
-    task_status = filters.CharFilter("task__status", lookup_expr="icontains")
+    task_status = filters.CharFilter("tasks__status", lookup_expr="icontains")
 
 
     class Meta:
@@ -43,7 +43,7 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = EvaluatorFilter
-    ordering_fields = ("id", "author__username", "description", "task__time_started", "task__time_completed", "f1_score", "precision", "recall", "task__status")
+    ordering_fields = ("id", "author__username", "description", "tasks__time_started", "tasks__time_completed", "f1_score", "precision", "recall", "tasks__status")
 
 
     def get_queryset(self):

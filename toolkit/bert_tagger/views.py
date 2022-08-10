@@ -34,7 +34,7 @@ from ..filter_constants import FavoriteFilter
 
 class BertTaggerFilter(FavoriteFilter):
     description = filters.CharFilter('description', lookup_expr='icontains')
-    task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+    task_status = filters.CharFilter('tasks__status', lookup_expr='icontains')
 
 
     class Meta:
@@ -51,7 +51,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Fa
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = BertTaggerFilter
-    ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'f1_score', 'precision', 'recall', 'task__status')
+    ordering_fields = ('id', 'author__username', 'description', 'fields', 'tasks__time_started', 'tasks__time_completed', 'f1_score', 'precision', 'recall', 'tasks__status')
 
 
     def perform_create(self, serializer, **kwargs):
