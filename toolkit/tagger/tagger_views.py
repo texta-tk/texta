@@ -10,14 +10,14 @@ from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from texta_elastic.core import ElasticCore
+from texta_elastic.searcher import ElasticSearcher
 from texta_tagger.tagger import Tagger as TextTagger
 
 from toolkit.core.health.utils import get_redis_status
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from texta_elastic.core import ElasticCore
-from texta_elastic.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, SerializerNotValid
 from toolkit.filter_constants import FavoriteFilter
 from toolkit.helper_functions import add_finite_url_to_feedback, load_stop_words
@@ -26,7 +26,7 @@ from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.serializers import (ApplyTaggerSerializer, StopWordSerializer, TagRandomDocSerializer, TaggerListFeaturesSerializer, TaggerMultiTagSerializer, TaggerSerializer, TaggerTagDocumentSerializer, TaggerTagTextSerializer)
-from toolkit.tagger.tasks import apply_tagger, apply_tagger_to_index, save_tagger_results, start_tagger_task, train_tagger_task
+from toolkit.tagger.tasks import apply_tagger, apply_tagger_to_index
 from toolkit.tagger.validators import validate_input_document
 from toolkit.tools.lemmatizer import CeleryLemmatizer
 from toolkit.view_constants import (
@@ -38,7 +38,7 @@ from toolkit.view_constants import (
 class TaggerFilter(FavoriteFilter):
     description = filters.CharFilter('description', lookup_expr='icontains')
     tg_description = filters.CharFilter('taggergroup__description', lookup_expr='icontains')
-    task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+    task_status = filters.CharFilter('tasks__status', lookup_expr='icontains')
     is_favorited = filters.BooleanFilter(field_name="favorited_users", method="get_is_favorited")
 
 
@@ -63,7 +63,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = TaggerFilter
-    ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'f1_score', 'precision', 'recall', 'task__status')
+    ordering_fields = ('id', 'author__username', 'description', 'fields', 'tasks__time_started', 'tasks__time_completed', 'f1_score', 'precision', 'recall', 'tasks__status')
 
 
     def get_queryset(self):
