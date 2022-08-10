@@ -34,6 +34,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='crfextractor',
             name='description',
-            field=models.CharField(max_length=100),
+            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=100),
         ),
     ]

@@ -38,9 +38,10 @@ class Migration(migrations.Migration):
             name='author',
             field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL),
         ),
+
         migrations.AlterField(
             model_name='datasetimport',
             name='description',
-            field=models.CharField(max_length=100),
+            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=100),
         ),
     ]
