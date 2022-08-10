@@ -495,8 +495,10 @@ class TopicAnalyzerViewset(viewsets.ModelViewSet, BulkDelete):
                 ignored_ids=json.dumps(serializer.validated_data["ignored_ids"])
             )
 
-            clustering_result.task = Task.objects.create(clusteringresult=clustering_result)
+            new_task = Task.objects.create(clusteringresult=clustering_result)
             clustering_result.save()
+
+            clustering_result.tasks.add(new_task)
 
             for index in Index.objects.filter(name__in=indices, is_open=True):
                 clustering_result.indices.add(index)

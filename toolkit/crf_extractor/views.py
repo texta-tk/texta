@@ -154,8 +154,10 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete, FavoriteModelViewMi
             serializer.is_valid(raise_exception=True)
 
             extractor = self.get_object()
-            extractor.task = Task.objects.create(crfextractor=extractor, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
+            new_task = Task.objects.create(crfextractor=extractor, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
             extractor.save()
+
+            extractor.tasks.add(new_task)
 
             indices = [index["name"] for index in serializer.validated_data["indices"]]
             mlp_fields = serializer.validated_data["mlp_fields"]
