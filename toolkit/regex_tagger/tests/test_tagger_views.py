@@ -364,8 +364,9 @@ class RegexTaggerViewTests(APITransactionTestCase):
         """Tests applying tagger to index using apply_to_index endpoint."""
 
         # Make sure reindexer task has finished
-        while self.reindexer_object.task.status != Task.STATUS_COMPLETED:
-            print_output('[Regex Tagger] test_apply_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
+        task_object = self.reindexer_object.tasks.last()
+        while task_object.status != Task.STATUS_COMPLETED:
+            print_output('[Regex Tagger] test_apply_tagger_to_index: waiting for reindexer task to finish, current status:', task_object.status)
             sleep(2)
 
         tagger_payload = {

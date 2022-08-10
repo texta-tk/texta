@@ -101,8 +101,10 @@ def elastic_equal_split_generator(generator, test_size, fact_name, fact_value, l
 
 @task(name="index_splitting_task", base=TransactionAwareTask)
 def index_splitting_task(index_splitting_task_id):
+    info_logger = logging.getLogger(INFO_LOGGER)
     indexsplitter_obj = IndexSplitter.objects.get(pk=index_splitting_task_id)
-    task_object = indexsplitter_obj.task
+    task_object = indexsplitter_obj.tasks.last()
+
     indices = indexsplitter_obj.get_indices()
     fields = json.loads(indexsplitter_obj.fields)
     test_size = indexsplitter_obj.test_size
@@ -127,18 +129,18 @@ def index_splitting_task(index_splitting_task_id):
         # Use it just to insert data to elasticsearch. Index name does not matter. 
         elastic_doc = ElasticDocument(train_index)
 
-        logging.getLogger(INFO_LOGGER).info("Updating indices schema.")
+        info_logger.info("Updating indices schema.")
         schema_input = update_field_types(indices, fields, [], flatten_doc=FLATTEN_DOC)
         train_schema = update_mapping(schema_input, train_index, True, add_texta_meta_mapping=False)
         test_schema = update_mapping(schema_input, test_index, True, add_texta_meta_mapping=False)
 
-        logging.getLogger(INFO_LOGGER).info("Creating new index.")
+        info_logger.info(f"Creating new index: '{train_index}' and '{test_index}'.")
         # Creating new indices.
         _ = ElasticCore().create_index(train_index, train_schema)
         _ = ElasticCore().create_index(test_index, test_schema)
 
         if (distribution == LABEL_DISTRIBUTION[0][0]):  # random
-            logging.getLogger(INFO_LOGGER).info("Splitting documents randomly.")
+            info_logger.info("Splitting documents randomly.")
 
             elastic_search = ElasticSearcher(
                 indices=indices,
@@ -152,7 +154,6 @@ def index_splitting_task(index_splitting_task_id):
                 filter_callback=lambda x: x
             )
             task_object.set_total(elastic_search.count())
-
 
             actions = elastic_random_split_generator(elastic_search, test_size, train_index, test_index)
 
@@ -192,14 +193,14 @@ def index_splitting_task(index_splitting_task_id):
 
             if (distribution == LABEL_DISTRIBUTION[1][0]):  # original
 
-                logging.getLogger(INFO_LOGGER).info("Splitting documents while preserving original label distribution.")
+                info_logger.info("Splitting documents while preserving original label distribution.")
 
                 actions = elastic_original_split_generator(elastic_search, test_size, fact_name, fact_value, labels_distribution, train_index, test_index)
                 elastic_doc.bulk_add_generator(actions=actions, chunk_size=scroll_size, refresh="wait_for")
 
             elif (distribution == LABEL_DISTRIBUTION[2][0]):  # equal
 
-                logging.getLogger(INFO_LOGGER).info("Splitting documents while preserving equal label distribution.")
+                info_logger.info("Splitting documents while preserving equal label distribution.")
 
                 actions = elastic_equal_split_generator(elastic_search, test_size, fact_name, fact_value, labels_distribution, train_index, test_index)
                 elastic_doc.bulk_add_generator(actions=actions, chunk_size=scroll_size, refresh="wait_for")
@@ -208,7 +209,7 @@ def index_splitting_task(index_splitting_task_id):
 
                 custom_distributon = indexsplitter_obj.get_custom_distribution()
 
-                logging.getLogger(INFO_LOGGER).info("Splitting documents while preserving custom label distribution.")
+                info_logger.info("Splitting documents while preserving custom label distribution.")
 
                 # use original split generator but with ratio == 100
                 # we don't use fact value here even if it's given because we have a custom distribution
@@ -216,7 +217,7 @@ def index_splitting_task(index_splitting_task_id):
                 elastic_doc.bulk_add_generator(actions=actions, chunk_size=scroll_size, refresh="wait_for")
 
         task_object.complete()
-        logging.getLogger(INFO_LOGGER).info("Index splitting succesfully completed.")
+        info_logger.info("Index splitting succesfully completed.")
         return True
 
     except Exception as e:

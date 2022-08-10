@@ -8,12 +8,12 @@ from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from texta_elastic.core import ElasticCore
+from texta_elastic.searcher import ElasticSearcher
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from texta_elastic.core import ElasticCore
-from texta_elastic.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed
 from toolkit.filter_constants import FavoriteFilter
 from toolkit.helper_functions import add_finite_url_to_feedback
@@ -24,7 +24,7 @@ from toolkit.tagger.serializers import TaggerTagTextSerializer
 from toolkit.torchtagger import choices
 from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
 from toolkit.torchtagger.serializers import ApplyTaggerSerializer, EpochReportSerializer, TagRandomDocSerializer, TorchTaggerSerializer
-from toolkit.torchtagger.tasks import apply_tagger, apply_tagger_to_index, train_torchtagger
+from toolkit.torchtagger.tasks import apply_tagger, apply_tagger_to_index
 from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing, FeedbackModelView
 
 
@@ -185,10 +185,11 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, F
             serializer.is_valid(raise_exception=True)
 
             tagger_object = self.get_object()
-            tagger_object.task = Task.objects.create(torchtagger=tagger_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
+            new_task = Task.objects.create(torchtagger=tagger_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
             tagger_object.save()
 
-            project = Project.objects.get(pk=project_pk)
+            tagger_object.tasks.add(new_task)
+
             indices = [index["name"] for index in serializer.validated_data["indices"]]
             # indices = project.get_available_or_all_project_indices(indices)
 

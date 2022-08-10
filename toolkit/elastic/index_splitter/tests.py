@@ -56,10 +56,11 @@ class IndexSplitterViewTests(APITransactionTestCase):
         # Check if IndexSplitter object gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         # Check if Task gets created
-        self.assertTrue(splitter_obj.task is not None)
-        print_output("status of IndexSplitter's Task object", splitter_obj.task.status)
+        task_object = splitter_obj.tasks.last()
+        self.assertTrue(task_object is not None)
+        print_output("status of IndexSplitter's Task object", task_object.status)
         # Check if Task gets completed
-        self.assertEqual(splitter_obj.task.status, Task.STATUS_COMPLETED)
+        self.assertEqual(task_object.status, Task.STATUS_COMPLETED)
 
         sleep(5)
 

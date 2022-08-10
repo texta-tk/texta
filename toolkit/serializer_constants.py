@@ -120,12 +120,15 @@ class FavoriteModelSerializerMixin(metaclass=serializers.SerializerMetaclass):
         return instance.favorited_users.filter(username=instance.author.username).exists()
 
 
+class TasksMixinSerializer(metaclass=serializers.SerializerMetaclass):
+    tasks = TaskSerializer(many=True, read_only=True)
+
+
 # You have to use metaclass because DRF serializers won't accept fields of classes
 # that don't subclass serializers.Serializer.
-class CommonModelSerializerMixin(metaclass=serializers.SerializerMetaclass):
+class CommonModelSerializerMixin(TasksMixinSerializer):
     author = UserSerializer(read_only=True)
     description = serializers.CharField(help_text=f'Description for the Tagger Group.')
-    tasks = TaskSerializer(many=True, read_only=True)
 
 
 class ProjectFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
