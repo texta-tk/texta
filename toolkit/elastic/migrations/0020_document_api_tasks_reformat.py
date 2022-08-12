@@ -8,17 +8,22 @@ from django.db import migrations, models
 def transfer_delete_facts_tasks(apps, schema_editor):
     # We can't import the Person model directly as it may be a newer
     # version than this migration expects. We use the historical version.
+
     DeleteFactsByQueryTask = apps.get_model('elastic', 'DeleteFactsByQueryTask')
-    for delete_fact in DeleteFactsByQueryTask.objects.all():
-        delete_fact.tasks.add(delete_fact.task)
+    for orm in DeleteFactsByQueryTask.objects.filter(task__isnull=False):
+        task = getattr(orm, "task", None)
+        if task:
+            orm.tasks.add(orm.task)
 
 
 def transfer_edit_facts_tasks(apps, schema_editor):
     # We can't import the Person model directly as it may be a newer
     # version than this migration expects. We use the historical version.
     EditFactsByQueryTask = apps.get_model('elastic', 'EditFactsByQueryTask')
-    for edit_fact in EditFactsByQueryTask.objects.all():
-        edit_fact.tasks.add(edit_fact.task)
+    for orm in EditFactsByQueryTask.objects.filter(task__isnull=False):
+        task = getattr(orm, "task", None)
+        if task:
+            orm.tasks.add(orm.task)
 
 
 class Migration(migrations.Migration):
@@ -59,7 +64,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='deletefactsbyquerytask',
             name='description',
-            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=100),
+            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=1000),
         ),
         migrations.AlterField(
             model_name='editfactsbyquerytask',
@@ -69,6 +74,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='editfactsbyquerytask',
             name='description',
-            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=100),
+            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=1000),
         ),
     ]

@@ -9,8 +9,10 @@ def transfer_torchtagger_tasks(apps, schema_editor):
     # We can't import the Person model directly as it may be a newer
     # version than this migration expects. We use the historical version.
     TorchTagger = apps.get_model('torchtagger', 'TorchTagger')
-    for torchtagger in TorchTagger.objects.all():
-        torchtagger.tasks.add(torchtagger.task)
+    for orm in TorchTagger.objects.filter(task__isnull=False):
+        task = getattr(orm, "task", None)
+        if task:
+            orm.tasks.add(orm.task)
 
 
 class Migration(migrations.Migration):
@@ -41,6 +43,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='torchtagger',
             name='description',
-            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=100),
+            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=1000),
         ),
     ]

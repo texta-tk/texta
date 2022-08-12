@@ -8,9 +8,12 @@ from django.db import migrations, models
 def transfer_dataset_import_tasks(apps, schema_editor):
     # We can't import the Person model directly as it may be a newer
     # version than this migration expects. We use the historical version.
+
     DatasetImport = apps.get_model('dataset_import', 'DatasetImport')
-    for dataset_import in DatasetImport.objects.all():
-        dataset_import.tasks.add(dataset_import.task)
+    for orm in DatasetImport.objects.filter(task__isnull=False):
+        task = getattr(orm, "task", None)
+        if task:
+            orm.tasks.add(orm.task)
 
 
 class Migration(migrations.Migration):
@@ -42,6 +45,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='datasetimport',
             name='description',
-            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=100),
+            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=1000),
         ),
     ]

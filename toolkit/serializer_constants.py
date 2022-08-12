@@ -13,7 +13,7 @@ from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.elastic.validators import check_for_existence
 # Helptext constants to ensure consistent values inside Toolkit.
-from toolkit.settings import ES_BULK_SIZE_MAX, ES_TIMEOUT_MAX
+from toolkit.settings import DESCRIPTION_CHAR_LIMIT, ES_BULK_SIZE_MAX, ES_TIMEOUT_MAX
 
 
 BULK_SIZE_HELPTEXT = "How many documents should be sent into Elasticsearch in a single batch for update."
@@ -128,7 +128,7 @@ class TasksMixinSerializer(metaclass=serializers.SerializerMetaclass):
 # that don't subclass serializers.Serializer.
 class CommonModelSerializerMixin(TasksMixinSerializer):
     author = UserSerializer(read_only=True)
-    description = serializers.CharField(help_text=f'Description for the Tagger Group.')
+    description = serializers.CharField(help_text=f'Description for the Tagger Group.', max_length=DESCRIPTION_CHAR_LIMIT)
 
 
 class ProjectFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):

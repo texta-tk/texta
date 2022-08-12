@@ -9,8 +9,10 @@ def transfer_rakun_tasks(apps, schema_editor):
     # We can't import the Person model directly as it may be a newer
     # version than this migration expects. We use the historical version.
     RakunExtractor = apps.get_model('rakun_keyword_extractor', 'RakunExtractor')
-    for rakun in RakunExtractor.objects.all():
-        rakun.tasks.add(rakun.task)
+    for orm in RakunExtractor.objects.filter(task__isnull=False):
+        task = getattr(orm, "task", None)
+        if task:
+            orm.tasks.add(orm.task)
 
 
 class Migration(migrations.Migration):
@@ -42,6 +44,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='rakunextractor',
             name='description',
-            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=100),
+            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=1000),
         ),
     ]

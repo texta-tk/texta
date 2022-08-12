@@ -9,16 +9,21 @@ def transfer_regex_tagger_tasks(apps, schema_editor):
     # We can't import the Person model directly as it may be a newer
     # version than this migration expects. We use the historical version.
     RegexTagger = apps.get_model('regex_tagger', 'RegexTagger')
-    for rg in RegexTagger.objects.all():
-        rg.tasks.add(rg.task)
+    for orm in RegexTagger.objects.filter(task__isnull=False):
+        task = getattr(orm, "task", None)
+        if task:
+            orm.tasks.add(orm.task)
+
 
 
 def transfer_regex_tagger_group_tasks(apps, schema_editor):
     # We can't import the Person model directly as it may be a newer
     # version than this migration expects. We use the historical version.
     RegexTaggerGroup = apps.get_model('regex_tagger', 'RegexTaggerGroup')
-    for rtg in RegexTaggerGroup.objects.all():
-        rtg.tasks.add(rtg.task)
+    for orm in RegexTaggerGroup.objects.filter(task__isnull=False):
+        task = getattr(orm, "task", None)
+        if task:
+            orm.tasks.add(orm.task)
 
 
 class Migration(migrations.Migration):
@@ -59,7 +64,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='regextagger',
             name='description',
-            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=100),
+            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=1000),
         ),
         migrations.AlterField(
             model_name='regextaggergroup',
@@ -69,6 +74,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='regextaggergroup',
             name='description',
-            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=100),
+            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=1000),
         ),
     ]

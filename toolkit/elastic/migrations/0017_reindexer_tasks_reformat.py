@@ -6,9 +6,13 @@ from django.db import migrations, models
 def transfer_reindex_tasks(apps, schema_editor):
     # We can't import the Person model directly as it may be a newer
     # version than this migration expects. We use the historical version.
+
     Reindexer = apps.get_model('elastic', 'Reindexer')
-    for reindexer in Reindexer.objects.all():
-        reindexer.tasks.add(reindexer.task)
+    for orm in Reindexer.objects.filter(task__isnull=False):
+        task = getattr(orm, "task", None)
+        if task:
+            orm.tasks.add(orm.task)
+
 
 
 class Migration(migrations.Migration):

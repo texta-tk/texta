@@ -9,8 +9,10 @@ def transfer_topic_analyzer_extractor_tasks(apps, schema_editor):
     # We can't import the Person model directly as it may be a newer
     # version than this migration expects. We use the historical version.
     ClusteringResult = apps.get_model('topic_analyzer', 'ClusteringResult')
-    for topic_analyzer in ClusteringResult.objects.all():
-        topic_analyzer.tasks.add(topic_analyzer.task)
+    for orm in ClusteringResult.objects.filter(task__isnull=False):
+        task = getattr(orm, "task", None)
+        if task:
+            orm.tasks.add(orm.task)
 
 
 class Migration(migrations.Migration):
@@ -41,6 +43,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='clusteringresult',
             name='description',
-            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=100),
+            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=1000),
         ),
     ]

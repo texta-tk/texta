@@ -9,8 +9,10 @@ def transfer_evaluator_tasks(apps, schema_editor):
     # We can't import the Person model directly as it may be a newer
     # version than this migration expects. We use the historical version.
     Evaluator = apps.get_model('evaluator', 'Evaluator')
-    for evaluator in Evaluator.objects.all():
-        evaluator.tasks.add(evaluator.task)
+    for orm in Evaluator.objects.filter(task__isnull=False):
+        task = getattr(orm, "task", None)
+        if task:
+            orm.tasks.add(orm.task)
 
 
 class Migration(migrations.Migration):
@@ -41,6 +43,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='evaluator',
             name='description',
-            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=100),
+            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=1000),
         ),
     ]

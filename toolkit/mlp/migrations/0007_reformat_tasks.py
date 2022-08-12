@@ -9,16 +9,21 @@ def transfer_mlp_worker_tasks(apps, schema_editor):
     # We can't import the Person model directly as it may be a newer
     # version than this migration expects. We use the historical version.
     MLPWorker = apps.get_model('mlp', 'MLPWorker')
-    for mlp in MLPWorker.objects.all():
-        mlp.tasks.add(mlp.task)
+    for orm in MLPWorker.objects.filter(task__isnull=False):
+        task = getattr(orm, "task", None)
+        if task:
+            orm.tasks.add(orm.task)
 
 
 def transfer_lang_worker_tasks(apps, schema_editor):
     # We can't import the Person model directly as it may be a newer
     # version than this migration expects. We use the historical version.
     ApplyLangWorker = apps.get_model('mlp', 'ApplyLangWorker')
-    for lang_worker in ApplyLangWorker.objects.all():
-        lang_worker.tasks.add(lang_worker.task)
+    for orm in ApplyLangWorker.objects.filter(task__isnull=False):
+        task = getattr(orm, "task", None)
+        if task:
+            orm.tasks.add(orm.task)
+
 
 
 class Migration(migrations.Migration):
@@ -59,7 +64,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='applylangworker',
             name='description',
-            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=100),
+            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=1000),
         ),
         migrations.AlterField(
             model_name='mlpworker',
@@ -69,6 +74,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='mlpworker',
             name='description',
-            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=100),
+            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=1000),
         ),
     ]

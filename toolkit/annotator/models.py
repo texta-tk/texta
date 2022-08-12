@@ -15,6 +15,9 @@ from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, DESCRIPTION_CHAR_LIMIT
 
 # Create your models here.
 
+# MySQL does not allow higher char limits for unique fields than 255.
+# Although ES fields and others don't follow this convention, it's best to keep them short for now.
+SIZE_LIMIT = 255
 
 ANNOTATION_CHOICES = (
     ("binary", "binary"),
@@ -24,7 +27,7 @@ ANNOTATION_CHOICES = (
 
 
 class Category(models.Model):
-    value = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, unique=True)
+    value = models.CharField(max_length=SIZE_LIMIT, unique=True)
 
 
     def __str__(self):
@@ -32,7 +35,7 @@ class Category(models.Model):
 
 
 class Label(models.Model):
-    value = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, unique=True)
+    value = models.CharField(max_length=SIZE_LIMIT, unique=True)
 
 
     def __str__(self):
@@ -53,19 +56,19 @@ class MultilabelAnnotatorConfiguration(models.Model):
 
 
 class BinaryAnnotatorConfiguration(models.Model):
-    fact_name = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, help_text="Sets the value for the fact name for all annotated documents.")
+    fact_name = models.CharField(max_length=SIZE_LIMIT, help_text="Sets the value for the fact name for all annotated documents.")
     # Change these to a Label value.
-    pos_value = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, help_text="Sets the name for a fact value for positive documents.")
-    neg_value = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, help_text="Sets the name for a fact value for negative documents.")
+    pos_value = models.CharField(max_length=SIZE_LIMIT, help_text="Sets the name for a fact value for positive documents.")
+    neg_value = models.CharField(max_length=SIZE_LIMIT, help_text="Sets the name for a fact value for negative documents.")
 
 
 class EntityAnnotatorConfiguration(models.Model):
-    fact_name = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, help_text="Name of the fact which will be added.")
+    fact_name = models.CharField(max_length=SIZE_LIMIT, help_text="Name of the fact which will be added.")
 
 
 class Annotator(TaskModel):
-    annotator_uid = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, default="", help_text="Unique Identifier for Annotator")
-    annotation_type = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, choices=ANNOTATION_CHOICES, help_text="Which type of annotation does the user wish to perform")
+    annotator_uid = models.CharField(max_length=SIZE_LIMIT, default="", help_text="Unique Identifier for Annotator")
+    annotation_type = models.CharField(max_length=SIZE_LIMIT, choices=ANNOTATION_CHOICES, help_text="Which type of annotation does the user wish to perform")
 
     annotator_users = models.ManyToManyField(User, default=None, related_name="annotators", help_text="Who are the users who will be annotating.")
 
@@ -78,7 +81,7 @@ class Annotator(TaskModel):
     total = models.IntegerField(default=0, help_text="How many documents are going to be annotated.")
     validated = models.IntegerField(default=0, help_text="How many documents of the total have been validated.")
 
-    target_field = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, default='', help_text="Which Elasticsearch document field you use base the annotation on.")
+    target_field = models.CharField(max_length=SIZE_LIMIT, default='', help_text="Which Elasticsearch document field you use base the annotation on.")
 
     binary_configuration = models.ForeignKey(
         BinaryAnnotatorConfiguration,
@@ -160,7 +163,7 @@ class Annotator(TaskModel):
         record, is_created = Record.objects.get_or_create(document_id=document_id, index=index, user=user, annotation_job=self)
         if do_annotate:
             record.skipped_utc = None
-            record.fact = json.dumps(fact)
+            record.fact = json.dumps(fact, ensure_ascii=False)
             record.fact_id = fact_id
             record.annotated_utc = datetime.utcnow()
         if do_skip:
@@ -370,8 +373,8 @@ class Comment(models.Model):
 
 
 class Record(models.Model):
-    document_id = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, db_index=True)
-    index = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
+    document_id = models.CharField(max_length=SIZE_LIMIT, db_index=True)
+    index = models.CharField(max_length=SIZE_LIMIT)
     fact_id = models.TextField(default=None, null=True, db_index=True)
 
     fact = models.TextField(default=json.dumps({}))

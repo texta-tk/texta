@@ -9,16 +9,20 @@ def transfer_tagger_tasks(apps, schema_editor):
     # We can't import the Person model directly as it may be a newer
     # version than this migration expects. We use the historical version.
     Tagger = apps.get_model('tagger', 'Tagger')
-    for tagger in Tagger.objects.all():
-        tagger.tasks.add(tagger.task)
+    for orm in Tagger.objects.filter(task__isnull=False):
+        task = getattr(orm, "task", None)
+        if task:
+            orm.tasks.add(orm.task)
 
 
 def transfer_taggergroup_tasks(apps, schema_editor):
     # We can't import the Person model directly as it may be a newer
     # version than this migration expects. We use the historical version.
     TaggerGroup = apps.get_model('tagger', 'TaggerGroup')
-    for tg in TaggerGroup.objects.all():
-        tg.tasks.add(tg.task)
+    for orm in TaggerGroup.objects.filter(task__isnull=False):
+        task = getattr(orm, "task", None)
+        if task:
+            orm.tasks.add(orm.task)
 
 
 class Migration(migrations.Migration):
@@ -61,7 +65,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='tagger',
             name='description',
-            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=100),
+            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=1000),
         ),
         migrations.AlterField(
             model_name='taggergroup',
@@ -71,6 +75,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='taggergroup',
             name='description',
-            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=100),
+            field=models.CharField(help_text='Description of the task to distinguish it from others.', max_length=1000),
         ),
     ]
