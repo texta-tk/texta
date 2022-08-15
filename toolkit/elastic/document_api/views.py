@@ -117,7 +117,7 @@ class DocumentImportView(GenericAPIView):
         split_actions = self._split_text(correct_actions + missing_actions, split_fields)
 
         if has_new_index:
-            index, is_created = Index.objects.get_or_create(name=index_name, is_open=True)
+            index, is_created = Index.objects.get_or_create(name=index_name, is_open=True, defaults={"added_by": request.user.username})
             project.indices.add(index)
 
         # Send the documents to Elasticsearch.

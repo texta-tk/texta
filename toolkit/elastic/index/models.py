@@ -3,7 +3,7 @@ from django.db import models
 
 class Index(models.Model):
     """
-    To NOT in any circumstance sync model deletion and creation
+    Do NOT in any circumstance sync model deletion and creation
     with ANY index operation towards Elasticsearch if your life is dear
     to you. There are several places in tests that have Index.objects.delete.all()...
 
