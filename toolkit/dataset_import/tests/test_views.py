@@ -49,7 +49,6 @@ class DatasetImportViewTests(APITransactionTestCase):
                 self.assertTrue(index.count() == 1)
                 self.assertTrue(index.last().added_by == self.user.username)
 
-
                 import_dataset = DatasetImport.objects.get(pk=import_id)
                 self.created_indices.append(import_dataset.index)
                 self.addCleanup(remove_file, import_dataset.file.name)

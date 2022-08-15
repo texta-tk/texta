@@ -1,16 +1,12 @@
 import logging
 
-import logging
-
 from celery.decorators import task
 
 from toolkit.base_tasks import TransactionAwareTask
-from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.tools.show_progress import ShowProgress
 from .dataset import Dataset
 from .models import DatasetImport
-from ..settings import INFO_LOGGER
 from ..settings import ERROR_LOGGER, INFO_LOGGER
 
 
