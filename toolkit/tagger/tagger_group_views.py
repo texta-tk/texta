@@ -174,8 +174,8 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # start retraining tasks
         for tagger in instance.taggers.all():
             # update task status so statistics are correct during retraining
-            task_object = tagger.tasks.last()
-            task_object.status = Task.STATUS_CREATED
+            task_object = Task.objects.create(tagger=tagger, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
+            tagger.tasks.add(task_object)
             task_object.save()
             chain.apply_async(args=(tagger.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
@@ -326,7 +326,8 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
             serializer.is_valid(raise_exception=True)
 
             tagger_group_object = self.get_object()
-            tagger_group_object.tasks.add(Task.objects.create(taggergroup=tagger_group_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY))
+            task_object = Task.objects.create(taggergroup=tagger_group_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
+            tagger_group_object.tasks.add(task_object)
 
             if not get_redis_status()['alive']:
                 raise RedisNotAvailable('Redis not available. Check if Redis is running.')

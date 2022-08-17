@@ -216,13 +216,14 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
                   'tagger_status', 'tagger_params', 'tagger', 'tagger_statistics', 'is_favorited', 'tasks')
 
 
-    def get_tagger_status(self, obj):
+    # TODO This can be optimised into a single query.
+    def get_tagger_status(self, obj: TaggerGroup):
         tagger_status = {
             'total': obj.num_tags,
-            'completed': Task.objects.filter(taggergroup=obj, status=Task.STATUS_COMPLETED).count(),
-            'training': Task.objects.filter(taggergroup=obj, status=Task.STATUS_RUNNING).count(),
-            'created': Task.objects.filter(taggergroup=obj, status=Task.STATUS_CREATED).count(),
-            'failed': Task.objects.filter(taggergroup=obj, status=Task.STATUS_FAILED).count()
+            'completed': obj.taggers.filter(tasks__task_type=Task.TYPE_TRAIN, tasks__status=Task.STATUS_COMPLETED).distinct().count(),
+            'training': obj.taggers.filter(tasks__task_type=Task.TYPE_TRAIN, tasks__status=Task.STATUS_RUNNING).distinct().count(),
+            'created': obj.taggers.filter(tasks__task_type=Task.TYPE_TRAIN, tasks__status=Task.STATUS_CREATED).distinct().count(),
+            'failed': obj.taggers.filter(tasks__task_type=Task.TYPE_TRAIN, tasks__status=Task.STATUS_FAILED).distinct().count(),
         }
         return tagger_status
 

@@ -153,6 +153,18 @@ class TaggerGroupViewTests(APITransactionTestCase):
         self.run_tag_text(created_tagger_group.pk)
 
 
+    def _validate_tagger_status(self, pk: int):
+        tg = TaggerGroup.objects.get(pk=pk)
+        num_tags = tg.num_tags
+        url = reverse(f"{VERSION_NAMESPACE}:tagger_group-detail", kwargs={"project_pk": self.project.pk, "pk": pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["tagger_status"]["total"], num_tags)
+        self.assertEqual(response.data["tagger_status"]["completed"], num_tags)
+        self.assertEqual(response.data["tagger_status"]["failed"], 0)
+        self.assertEqual(response.data["tagger_status"]["training"], 0)
+
+
     def run_create_tagger_group_training_and_task_signal(self):
         """Tests the endpoint for a new Tagger Group, and if a new Task gets created via the signal"""
         payload = {
@@ -178,6 +190,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
         created_tagger_group = TaggerGroup.objects.get(id=response.data['id'])
         self.test_tagger_group_id = created_tagger_group.pk
         self.__cleanup_tagger_groups(created_tagger_group)
+        self._validate_tagger_status(self.test_tagger_group_id)
 
 
     def run_create_balanced_tagger_group_training_and_task_signal(self):
