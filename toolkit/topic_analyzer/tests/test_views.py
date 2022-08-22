@@ -87,6 +87,9 @@ class TopicAnalyzerTests(APITransactionTestCase):
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
         print_output("_train_topic_cluster", 201)
 
+        self.assertTrue("tasks" in response.data)
+        self.assertEqual(len(response.data["tasks"]), 1)
+
 
     def test_cluster_with_indices_field(self):
         """

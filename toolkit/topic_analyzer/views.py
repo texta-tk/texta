@@ -490,15 +490,10 @@ class TopicAnalyzerViewset(viewsets.ModelViewSet, BulkDelete):
                 project=project,
                 fields=json.dumps(serializer.validated_data["fields"]),
                 display_fields=json.dumps(serializer.validated_data["display_fields"]),
-                query=json.dumps(serializer.validated_data["query"]),
-                stop_words=json.dumps(serializer.validated_data["stop_words"]),
+                query=json.dumps(serializer.validated_data["query"], ensure_ascii=False),
+                stop_words=json.dumps(serializer.validated_data["stop_words"], ensure_ascii=False),
                 ignored_ids=json.dumps(serializer.validated_data["ignored_ids"])
             )
-
-            new_task = Task.objects.create(clusteringresult=clustering_result)
-            clustering_result.save()
-
-            clustering_result.tasks.add(new_task)
 
             for index in Index.objects.filter(name__in=indices, is_open=True):
                 clustering_result.indices.add(index)
