@@ -39,8 +39,8 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
     ordering_fields = (
         'id',
         'fields',
-        'task__time_started',
-        'task__time_completed',
+        'tasks__time_started',
+        'tasks__time_completed',
         'indices__name',
         'display_fields',
         'intracluster_similarity',
@@ -429,8 +429,8 @@ class TopicAnalyzerViewset(viewsets.ModelViewSet, BulkDelete):
         'author__username',
         'description',
         'fields',
-        'task__time_started',
-        'task__time_completed',
+        'tasks__time_started',
+        'tasks__time_completed',
         'clustering_algorithm',
         'vectorizer',
         'display_fields',
@@ -439,7 +439,7 @@ class TopicAnalyzerViewset(viewsets.ModelViewSet, BulkDelete):
         'num_dims',
         'document_limit',
         'indices__name',
-        'task__status'
+        'tasks__status'
     )
 
 
@@ -490,13 +490,10 @@ class TopicAnalyzerViewset(viewsets.ModelViewSet, BulkDelete):
                 project=project,
                 fields=json.dumps(serializer.validated_data["fields"]),
                 display_fields=json.dumps(serializer.validated_data["display_fields"]),
-                query=json.dumps(serializer.validated_data["query"]),
-                stop_words=json.dumps(serializer.validated_data["stop_words"]),
+                query=json.dumps(serializer.validated_data["query"], ensure_ascii=False),
+                stop_words=json.dumps(serializer.validated_data["stop_words"], ensure_ascii=False),
                 ignored_ids=json.dumps(serializer.validated_data["ignored_ids"])
             )
-
-            clustering_result.task = Task.objects.create(clusteringresult=clustering_result)
-            clustering_result.save()
 
             for index in Index.objects.filter(name__in=indices, is_open=True):
                 clustering_result.indices.add(index)

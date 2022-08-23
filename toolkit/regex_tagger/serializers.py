@@ -6,12 +6,10 @@ from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.regex_tagger import choices
 from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup
 from toolkit.regex_tagger.validators import validate_patterns
-from toolkit.serializer_constants import (CommonModelMixinSerializer, ElasticScrollMixIn, FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer)
+from toolkit.serializer_constants import (CommonModelSerializerMixin, FavoriteModelSerializerMixin, ElasticScrollMixIn, FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer)
 
 
-class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer, CommonModelMixinSerializer):
-    description = serializers.CharField()
-    author = UserSerializer(read_only=True)
+class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, CommonModelSerializerMixin, ProjectResourceUrlSerializer, FavoriteModelSerializerMixin):
     lexicon = serializers.ListField(child=serializers.CharField(required=True), validators=[validate_patterns], help_text="Words/phrases/regex patterns to match.")
     counter_lexicon = serializers.ListField(child=serializers.CharField(required=False), default=[], validators=[validate_patterns], help_text="Words/phrases/regex patterns to nullify lexicon matches. Default = [].")
 
@@ -26,7 +24,6 @@ class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, P
     ignore_punctuation = serializers.BooleanField(default=choices.DEFAULT_IGNORE_PUNCTUATION, required=False, help_text=f"If set False, end-of-sentence characters between lexicon entry words and/or counter lexicon entries, nullify the effect. Default = {choices.DEFAULT_IGNORE_PUNCTUATION}.")
     url = serializers.SerializerMethodField()
     tagger_groups = serializers.SerializerMethodField(read_only=True)
-    task = TaskSerializer(read_only=True)
 
 
     def get_tagger_groups(self, value: RegexTagger):
@@ -41,7 +38,7 @@ class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, P
                   'description', 'lexicon', 'counter_lexicon', 'operator', 'match_type', 'required_words',
                   'phrase_slop', 'counter_slop', 'n_allowed_edits', 'return_fuzzy_match', 'ignore_case',
                   'ignore_punctuation', 'phrase_slop', 'is_favorited', 'counter_slop', 'n_allowed_edits', 'return_fuzzy_match',
-                  'ignore_case', 'ignore_punctuation', 'tagger_groups', 'task')
+                  'ignore_case', 'ignore_punctuation', 'tagger_groups', 'tasks')
         fields_to_parse = ('lexicon', 'counter_lexicon')
 
 
@@ -85,11 +82,8 @@ class RegexMultitagTextSerializer(serializers.Serializer):
     )
 
 
-class RegexTaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer, CommonModelMixinSerializer):
-    description = serializers.CharField()
+class RegexTaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer, CommonModelSerializerMixin, FavoriteModelSerializerMixin):
     url = serializers.SerializerMethodField()
-    task = TaskSerializer(read_only=True)
-    author = UserSerializer(read_only=True)
     tagger_info = serializers.SerializerMethodField(read_only=True)  # Helper field for displaying tagger info in a friendly manner.
 
 
@@ -110,7 +104,7 @@ class RegexTaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrl
     class Meta:
         model = RegexTaggerGroup
         # regex_taggers is the field which to use to manipulate the related RegexTagger model objects.
-        fields = ('id', 'url', 'regex_taggers', 'author', 'task', 'description', 'tagger_info', 'is_favorited')
+        fields = ('id', 'url', 'regex_taggers', 'author', 'tasks', 'description', 'tagger_info', 'is_favorited')
 
 
 class RegexTaggerGroupMultitagTextSerializer(serializers.Serializer):

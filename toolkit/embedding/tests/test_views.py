@@ -67,9 +67,10 @@ class EmbeddingViewTests(TransactionTestCase):
         created_embedding = Embedding.objects.get(id=response.data['id'])
         self.test_embedding_id = created_embedding.id
         # Remove Embedding files after test is done
-        print_output("created default embedding task status", created_embedding.task.status)
+        task_object = created_embedding.tasks.last()
+        print_output("created default embedding task status", task_object.status)
         # Check if Task gets created via a signal
-        self.assertTrue(created_embedding.task is not None)
+        self.assertTrue(task_object is not None)
 
         stop_words = response.data["stop_words"]
         self.assertTrue(isinstance(stop_words, list))
@@ -79,8 +80,8 @@ class EmbeddingViewTests(TransactionTestCase):
         self.assertTrue(created_embedding.embedding_model.path)
 
         # Check if Embedding gets trained and completed
-        self.assertEqual(created_embedding.task.status, Task.STATUS_COMPLETED)
-        self.assertTrue(created_embedding.task.progress <= 100)
+        self.assertEqual(task_object.status, Task.STATUS_COMPLETED)
+        self.assertTrue(task_object.progress <= 100)
 
 
     def run_create_W2V_embedding_training_and_task_signal(self):
@@ -103,15 +104,16 @@ class EmbeddingViewTests(TransactionTestCase):
         print_output("W2V Embedding response data", response.data)
         self.test_embedding_id = created_embedding.id
         # Remove Embedding files after test is done
-        print_output("created W2V embedding task status", created_embedding.task.status)
+        task_object = created_embedding.tasks.last()
+        print_output("created W2V embedding task status", task_object.status)
 
         # Check that the model actually exists in the filesystem.
         self.assertTrue(created_embedding.embedding_model.path)
 
         # Check if Task gets created via a signal
-        self.assertTrue(created_embedding.task is not None)
+        self.assertTrue(task_object is not None)
         # Check if Embedding gets trained and completed
-        self.assertEqual(created_embedding.task.status, Task.STATUS_COMPLETED)
+        self.assertEqual(task_object.status, Task.STATUS_COMPLETED)
 
 
     def run_create_fasttext_embedding_training_and_task_signal(self):
@@ -138,11 +140,12 @@ class EmbeddingViewTests(TransactionTestCase):
         self.assertTrue(created_embedding.embedding_model.path)
 
         # Remove Embedding files after test is done
-        print_output("created fasttext embedding task status", created_embedding.task.status)
+        task_object = created_embedding.tasks.last()
+        print_output("created fasttext embedding task status", task_object.status)
         # Check if Task gets created via a signal
-        self.assertTrue(created_embedding.task is not None)
+        self.assertTrue(task_object is not None)
         # Check if Embedding gets trained and completed
-        self.assertEqual(created_embedding.task.status, Task.STATUS_COMPLETED)
+        self.assertEqual(task_object.status, Task.STATUS_COMPLETED)
 
 
     def create_embedding_then_delete_embedding_and_created_model(self):
@@ -277,4 +280,5 @@ class EmbeddingViewTests(TransactionTestCase):
         created_embedding = Embedding.objects.get(id=response.data['id'])
         self.test_embedding_id = created_embedding.id
         # Remove Embedding files after test is done
-        print_output("created embedding", created_embedding.task.status)
+        task_object = created_embedding.tasks.last()
+        print_output("created embedding", task_object.status)

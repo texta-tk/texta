@@ -109,7 +109,7 @@ class MLPElasticWorkerViewset(viewsets.ModelViewSet, BulkDelete):
     serializer_class = MLPWorkerSerializer
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
-    ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'task__status')
+    ordering_fields = ('id', 'author__username', 'description', 'fields', 'tasks__time_started', 'tasks__time_completed', 'tasks__status')
 
     permission_classes = (
         ProjectAccessInApplicationsAllowed,
@@ -148,7 +148,7 @@ class ApplyLangOnIndices(viewsets.ModelViewSet, BulkDelete):
     serializer_class = ApplyLangOnIndicesSerializer
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
-    ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'task__status')
+    ordering_fields = ('id', 'author__username', 'description', 'fields', 'tasks__time_started', 'tasks__time_completed', 'tasks__status')
 
     permission_classes = (
         ProjectAccessInApplicationsAllowed,

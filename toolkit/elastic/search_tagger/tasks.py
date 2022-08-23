@@ -3,14 +3,13 @@ import logging
 from typing import Any, List
 
 from celery.decorators import task
-
-from toolkit.base_tasks import TransactionAwareTask
-from toolkit.core.task.models import Task
-from toolkit.elastic.search_tagger.models import SearchFieldsTagger, SearchQueryTagger
 from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
 from texta_elastic.searcher import ElasticSearcher
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER
+
+from toolkit.base_tasks import TransactionAwareTask
+from toolkit.elastic.search_tagger.models import SearchFieldsTagger, SearchQueryTagger
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER
 from toolkit.tools.show_progress import ShowProgress
 
 
@@ -125,7 +124,8 @@ def update_search_fields_generator(
 def start_search_query_tagger_worker(self, object_id: int):
     logging.getLogger(INFO_LOGGER).info(f"Starting applying search query tagger on the index for model ID: {object_id}")
     searchquerytagger_object = SearchQueryTagger.objects.get(pk=object_id)
-    show_progress = ShowProgress(searchquerytagger_object.task, multiplier=1)
+    task_object = searchquerytagger_object.tasks.last()
+    show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('running search query tagger')
     show_progress.update_view(0)
     return object_id
@@ -134,7 +134,7 @@ def start_search_query_tagger_worker(self, object_id: int):
 @task(name="apply_search_query_tagger_on_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def apply_search_query_tagger_on_index(object_id: int):
     search_query_tagger = SearchQueryTagger.objects.get(pk=object_id)
-    task_object = search_query_tagger.task
+    task_object = search_query_tagger.tasks.last()
     """Apply Search Query Tagger to index."""
     try:
         progress = ShowProgress(task_object)
@@ -170,9 +170,7 @@ def apply_search_query_tagger_on_index(object_id: int):
         return object_id
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        task_object.add_error(str(e))
-        task_object.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
         raise e
 
 
@@ -180,7 +178,7 @@ def apply_search_query_tagger_on_index(object_id: int):
 def end_search_query_tagger_task(self, object_id):
     logging.getLogger(INFO_LOGGER).info(f"Finished applying search query tagger on the index for model ID: {object_id}")
     searchquerytagger_object = SearchQueryTagger.objects.get(pk=object_id)
-    searchquerytagger_object.task.complete()
+    searchquerytagger_object.tasks.last().complete()
     return True
 
 
@@ -188,7 +186,7 @@ def end_search_query_tagger_task(self, object_id):
 def start_search_fields_tagger_worker(self, object_id: int):
     logging.getLogger(INFO_LOGGER).info(f"Starting applying search fields tagger on the index for model ID: {object_id}")
     searchfieldstagger_object = SearchFieldsTagger.objects.get(pk=object_id)
-    show_progress = ShowProgress(searchfieldstagger_object.task, multiplier=1)
+    show_progress = ShowProgress(searchfieldstagger_object.tasks.last(), multiplier=1)
     show_progress.update_step('running search fields tagger')
     show_progress.update_view(0)
     return object_id
@@ -197,7 +195,7 @@ def start_search_fields_tagger_worker(self, object_id: int):
 @task(name="apply_search_fields_tagger_on_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def apply_search_fields_tagger_on_index(object_id: int):
     search_fields_tagger = SearchFieldsTagger.objects.get(pk=object_id)
-    task_object = search_fields_tagger.task
+    task_object = search_fields_tagger.tasks.last()
     """Apply Search Fields Tagger to index."""
     try:
         progress = ShowProgress(task_object)
@@ -242,9 +240,7 @@ def apply_search_fields_tagger_on_index(object_id: int):
         return object_id
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        task_object.add_error(str(e))
-        task_object.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
         raise e
 
 
@@ -252,5 +248,5 @@ def apply_search_fields_tagger_on_index(object_id: int):
 def end_search_fields_tagger_task(self, object_id):
     logging.getLogger(INFO_LOGGER).info(f"Finished applying search fields tagger on the index for model ID: {object_id}")
     searchfieldstagger_object = SearchFieldsTagger.objects.get(pk=object_id)
-    searchfieldstagger_object.task.complete()
+    searchfieldstagger_object.tasks.last().complete()
     return True

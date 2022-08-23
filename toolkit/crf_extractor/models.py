@@ -30,16 +30,13 @@ from toolkit.settings import (
     RELATIVE_MODELS_PATH
 )
 from .choices import FEATURE_EXTRACTOR_CHOICES, FEATURE_FIELDS_CHOICES
-from ..model_constants import CommonModelMixin
+from ..model_constants import CommonModelMixin, FavoriteModelMixin
 
 
-class CRFExtractor(CommonModelMixin):
+class CRFExtractor(FavoriteModelMixin, CommonModelMixin):
     MODEL_TYPE = 'crf_extractor'
     MODEL_JSON_NAME = "model.json"
 
-    description = models.CharField(max_length=MAX_DESC_LEN)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     indices = models.ManyToManyField(Index, default=None)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE, default=None, null=True)
@@ -69,7 +66,6 @@ class CRFExtractor(CommonModelMixin):
     model = models.FileField(null=True, verbose_name='', default=None, max_length=MAX_DESC_LEN)
     model_size = models.FloatField(default=None, null=True)
     plot = models.FileField(upload_to='data/media', null=True, verbose_name='')
-    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
 
     @property
@@ -122,14 +118,15 @@ class CRFExtractor(CommonModelMixin):
         json_obj = json.loads(serialized)[0]["fields"]
         del json_obj["project"]
         del json_obj["author"]
-        del json_obj["task"]
+        del json_obj["tasks"]
         return json_obj
 
 
     def train(self):
-        new_task = Task.objects.create(crfextractor=self, status='created')
-        self.task = new_task
+        new_task = Task.objects.create(crfextractor=self, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
         self.save()
+
+        self.tasks.add(new_task)
         from toolkit.crf_extractor.tasks import start_crf_task, train_crf_task, save_crf_results
         logging.getLogger(INFO_LOGGER).info(f"Celery: Starting task for training of CRFExtractor: {self.to_json()}")
         chain = start_crf_task.s() | train_crf_task.s() | save_crf_results.s()
@@ -159,10 +156,12 @@ class CRFExtractor(CommonModelMixin):
                 indices = model_json.pop("indices")
                 model_json.pop("favorited_users", None)
                 new_model = CRFExtractor(**model_json)
-                new_model.task = Task.objects.create(crfextractor=new_model, status=Task.STATUS_COMPLETED)
                 new_model.author = User.objects.get(id=request.user.id)
                 new_model.project = Project.objects.get(id=pk)
                 new_model.save()  # Save the intermediate results.
+
+                new_task = Task.objects.create(crfextractor=new_model, status=Task.STATUS_COMPLETED)
+                new_model.tasks.add(new_task)
 
                 for index in indices:
                     index_model, is_created = Index.objects.get_or_create(name=index)

@@ -31,7 +31,7 @@ from ..filter_constants import FavoriteFilter
 
 class CRFExtractorFilter(FavoriteFilter):
     description = filters.CharFilter('description', lookup_expr='icontains')
-    task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+    task_status = filters.CharFilter('tasks__status', lookup_expr='icontains')
 
 
     class Meta:
@@ -48,7 +48,7 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete, FavoriteModelViewMi
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = CRFExtractorFilter
-    ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'f1_score', 'precision', 'recall', 'task__status')
+    ordering_fields = ('id', 'author__username', 'description', 'fields', 'tasks__time_started', 'tasks__time_completed', 'f1_score', 'precision', 'recall', 'tasks__status')
 
 
     def get_queryset(self):
@@ -154,8 +154,10 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete, FavoriteModelViewMi
             serializer.is_valid(raise_exception=True)
 
             extractor = self.get_object()
-            extractor.task = Task.objects.create(crfextractor=extractor, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
+            new_task = Task.objects.create(crfextractor=extractor, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
             extractor.save()
+
+            extractor.tasks.add(new_task)
 
             indices = [index["name"] for index in serializer.validated_data["indices"]]
             mlp_fields = serializer.validated_data["mlp_fields"]

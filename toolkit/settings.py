@@ -275,7 +275,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 ELASTIC_CLUSTER_VERSION = env.int("TEXTA_ELASTIC_VERSION", default=7)
 
-DESCRIPTION_CHAR_LIMIT = 100
+# Some existing descriptions are the size of a model, this should be a higher
+# number to allow for description that contain a fair number of meta information in it.
+DESCRIPTION_CHAR_LIMIT = 1000
 ES_TIMEOUT_MAX = 100
 ES_BULK_SIZE_MAX = 500
 

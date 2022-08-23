@@ -14,10 +14,10 @@ from ..settings import ERROR_LOGGER, INFO_LOGGER
 def import_dataset(dataset_import_id):
     # retrieve object & task
     import_object = DatasetImport.objects.get(pk=dataset_import_id)
+    task_object = import_object.tasks.last()
     logger = logging.getLogger(INFO_LOGGER)
     logger.info(f"Starting import with ID {import_object.pk} with description: {import_object.description}!")
 
-    task_object = import_object.task
     # create progress
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('importing dataset')

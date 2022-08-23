@@ -1,14 +1,14 @@
 from rest_framework import serializers
-from toolkit.core.task.choices import TASK_API_ERROR, TASK_API_STEP_KEYWORDS
 
+from toolkit.core.task.choices import TASK_API_ERROR, TASK_API_STEP_KEYWORDS
 from toolkit.core.task.models import Task
 
 
 class TaskSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Task
-        fields = ('id', 'status', 'progress', 'step', 'errors', 'time_started', 'last_update', 'time_completed', 'total', 'num_processed')
-        read_only_fields = ('id', 'status', 'step', 'errors', 'time_started', 'last_update', 'time_completed')
+        fields = ('id', 'status', 'progress', 'step', 'task_type', 'errors', 'time_started', 'last_update', 'time_completed', 'total', 'num_processed')
+        read_only_fields = ('id', 'status', 'step', 'task_type', 'errors', 'time_started', 'last_update', 'time_completed')
 
 
 class TaskAPISerializer(serializers.Serializer):
