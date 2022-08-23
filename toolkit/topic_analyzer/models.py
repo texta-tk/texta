@@ -17,6 +17,7 @@ from texta_elastic.document import ElasticDocument
 from toolkit.elastic.index.models import Index
 from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
+from toolkit.model_constants import CommonModelMixin
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, RELATIVE_MODELS_PATH
 from texta_tools.text_processor import StopWords
 from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
@@ -70,8 +71,7 @@ class Cluster(models.Model):
         return len(documents)
 
 
-class ClusteringResult(models.Model):
-    description = models.TextField()
+class ClusteringResult(CommonModelMixin):
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     clustering_algorithm = models.CharField(max_length=100, default=CLUSTERING_ALGORITHMS[0][0])
     fields = models.TextField(default="[]")
@@ -93,10 +93,6 @@ class ClusteringResult(models.Model):
     cluster_result = models.ManyToManyField(Cluster)
     indices = models.ManyToManyField(Index)
     vector_model = models.FileField(null=True, verbose_name='', default=None)
-
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
     significant_words_filter = models.CharField(max_length=100, default="[0-9]+")
 
@@ -126,9 +122,10 @@ class ClusteringResult(models.Model):
         with transaction.atomic():
             from toolkit.topic_analyzer.tasks import start_clustering_task, perform_data_clustering, save_clustering_results, finish_clustering_task
 
-            new_task = Task.objects.create(clusteringresult=self, status='created')
-            self.task = new_task
+            new_task = Task.objects.create(clusteringresult=self, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
             self.save()
+
+            self.tasks.add(new_task)
 
             # To avoid Celery race conditions in which the task is started in celery
             # BEFORE the actual record is saved into the database as it is not automatically

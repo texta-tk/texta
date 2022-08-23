@@ -24,7 +24,7 @@ from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing
 
 class EmbeddingFilter(FavoriteFilter):
     description = filters.CharFilter('description', lookup_expr='icontains')
-    task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+    task_status = filters.CharFilter('tasks__status', lookup_expr='icontains')
 
 
     class Meta:
@@ -42,7 +42,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, FavoriteModelViewMixin
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = EmbeddingFilter
-    ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'num_dimensions', 'min_freq', 'vocab_size', 'task__status')
+    ordering_fields = ('id', 'author__username', 'description', 'fields', 'tasks__time_started', 'tasks__time_completed', 'num_dimensions', 'min_freq', 'vocab_size', 'tasks__status')
 
 
     @action(detail=False, methods=["post"], serializer_class=ProjectResourceImportModelSerializer)

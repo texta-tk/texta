@@ -15,7 +15,7 @@ from toolkit.tools.show_progress import ShowProgress
 @task(name="apply_analyzers_on_indices", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
 def apply_analyzers_on_indices(self, worker_id: int):
     worker_object = ApplyESAnalyzerWorker.objects.get(pk=worker_id)
-    task_object = worker_object.task
+    task_object = worker_object.tasks.last()
     try:
         show_progress = ShowProgress(task_object, multiplier=1)
         show_progress.update_step('scrolling through the indices to apply lang')
@@ -58,7 +58,7 @@ def apply_analyzers_on_indices(self, worker_id: int):
         ed = ElasticDocument("_all")
         ed.bulk_update(actions=actions, chunk_size=scroll_size)
 
-        worker_object.task.complete()
+        task_object.complete()
 
         return worker_id
 

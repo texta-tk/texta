@@ -1,17 +1,16 @@
 import json
 import logging
-from typing import List, Optional, Union, Dict
+from typing import List, Optional, Union
 
 from celery.decorators import task
 from elasticsearch.helpers import streaming_bulk
-
-from toolkit.base_tasks import TransactionAwareTask
 from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
 from texta_elastic.searcher import ElasticSearcher
-from toolkit.core.task.models import Task
-from toolkit.regex_tagger.models import RegexTaggerGroup, RegexTagger, load_matcher
+
+from toolkit.base_tasks import TransactionAwareTask
 from toolkit.regex_tagger.choices import PRIORITY_CHOICES
+from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup, load_matcher
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER
 from toolkit.tools.show_progress import ShowProgress
 
@@ -74,7 +73,8 @@ def apply_regex_tagger(object_id: int, object_type: str, indices: List[str], fie
         else:
             tagger_object = RegexTagger.objects.get(pk=object_id)
 
-        progress = ShowProgress(tagger_object.task)
+        task_object = tagger_object.tasks.last()
+        progress = ShowProgress(task_object)
 
         ec = ElasticCore()
         [ec.add_texta_facts_mapping(index) for index in indices]
@@ -83,22 +83,20 @@ def apply_regex_tagger(object_id: int, object_type: str, indices: List[str], fie
             indices=indices,
             field_data=fields + ["texta_facts"],  # Get facts to add upon existing ones.
             query=query,
-            timeout = f"{es_timeout}m",
+            timeout=f"{es_timeout}m",
             output=ElasticSearcher.OUT_RAW,
             callback_progress=progress,
-            scroll_size = bulk_size
+            scroll_size=bulk_size
         )
 
-        actions = update_generator(generator=searcher, ec=ec, fields=fields, tagger_object = tagger_object, fact_name=fact_name, fact_value=fact_value, add_spans = add_spans)
+        actions = update_generator(generator=searcher, ec=ec, fields=fields, tagger_object=tagger_object, fact_name=fact_name, fact_value=fact_value, add_spans=add_spans)
         for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes):
             if not success:
                 logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
 
-        tagger_object.task.complete()
+        task_object.complete()
         return True
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
-        tagger_object.task.add_error(error_message)
-        tagger_object.task.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
+        raise e

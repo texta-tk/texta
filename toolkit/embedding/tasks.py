@@ -19,7 +19,7 @@ from toolkit.tools.show_progress import ShowProgress
 def train_embedding(embedding_id):
     # retrieve embedding & task objects
     embedding_object = Embedding.objects.get(pk=embedding_id)
-    task_object = embedding_object.task
+    task_object = embedding_object.tasks.last()
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('training')
     show_progress.update_view(0)

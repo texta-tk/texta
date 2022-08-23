@@ -16,7 +16,6 @@ from texta_elastic.searcher import ElasticSearcher
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.bert_tagger import choices
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
-from toolkit.core.task.models import Task
 from toolkit.elastic.tools.data_sample import DataSample
 from toolkit.helper_functions import get_indices_from_object
 from toolkit.settings import BERT_CACHE_DIR, BERT_FINETUNED_MODEL_DIRECTORY, BERT_PRETRAINED_MODEL_DIRECTORY, CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER
@@ -56,7 +55,7 @@ def train_bert_tagger(tagger_id, testing=False):
     # Handle previous tagger models that exist in case of retrains.
     model_path = pathlib.Path(tagger_object.model.path) if tagger_object.model else None
 
-    task_object = tagger_object.task
+    task_object = tagger_object.tasks.last()
     try:
         show_progress = ShowProgress(task_object, multiplier=1)
         # get fields & indices
@@ -125,7 +124,6 @@ def train_bert_tagger(tagger_id, testing=False):
             tagger.config.use_state_dict = False
             pos_label = ""
 
-
         # train tagger and get result statistics
         report = tagger.train(
             data_sample.data,
@@ -181,10 +179,7 @@ def train_bert_tagger(tagger_id, testing=False):
 
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
-        tagger_object.task.add_error(error_message)
-        tagger_object.task.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
         raise
 
 
@@ -258,7 +253,8 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
         tagger_object = BertTaggerObject.objects.get(pk=object_id)
         tagger = tagger_object.load_tagger()
 
-        progress = ShowProgress(tagger_object.task)
+        task_object = tagger_object.tasks.last()
+        progress = ShowProgress(task_object)
 
         ec = ElasticCore()
         [ec.add_texta_facts_mapping(index) for index in indices]
@@ -278,11 +274,9 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
             if not success:
                 logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
 
-        tagger_object.task.complete()
+        task_object.complete()
         return True
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
-        tagger_object.task.add_error(error_message)
-        tagger_object.task.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
+        raise e

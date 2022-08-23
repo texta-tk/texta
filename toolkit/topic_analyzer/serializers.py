@@ -3,11 +3,11 @@ import re
 
 from django.urls import reverse
 from rest_framework import serializers
+from texta_elastic.searcher import EMPTY_QUERY
 
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
-from texta_elastic.searcher import EMPTY_QUERY
-from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin
+from toolkit.serializer_constants import CommonModelSerializerMixin, FieldParseSerializer, IndicesSerializerMixin
 from toolkit.settings import REST_FRAMEWORK
 from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
@@ -51,9 +51,7 @@ class ClusterSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ClusteringSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin):
-    author = UserSerializer(read_only=True)
-    description = serializers.CharField()
+class ClusteringSerializer(FieldParseSerializer, serializers.ModelSerializer, CommonModelSerializerMixin, IndicesSerializerMixin):
     query = serializers.CharField(help_text='Query in JSON format', default=EMPTY_QUERY)
     num_cluster = serializers.IntegerField(min_value=1, max_value=1000, default=10, help_text='Number of document clusters to be formed.')
     clustering_algorithm = serializers.ChoiceField(choices=CLUSTERING_ALGORITHMS, default=CLUSTERING_ALGORITHMS[0][0], required=False)
@@ -70,7 +68,6 @@ class ClusteringSerializer(FieldParseSerializer, serializers.ModelSerializer, In
     significant_words_filter = serializers.CharField(help_text='Regex to filter out desired words.', default="[0-9]+")
 
     url = serializers.SerializerMethodField()
-    task = TaskSerializer(read_only=True)
 
 
     def get_url(self, obj):
@@ -100,6 +97,6 @@ class ClusteringSerializer(FieldParseSerializer, serializers.ModelSerializer, In
         fields = [
             "id", "url", "description", "author", "query", "indices", "num_cluster", "clustering_algorithm",
             "vectorizer", "num_dims", "use_lsi", "num_topics", "significant_words_filter", "display_fields",
-            "stop_words", "ignored_ids", "fields", "embedding", "document_limit", "task"
+            "stop_words", "ignored_ids", "fields", "embedding", "document_limit", "tasks"
         ]
         fields_to_parse = ("fields", "query", "display_fields", "ignored_ids", "stop_words")

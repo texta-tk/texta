@@ -1,15 +1,13 @@
 import json
 
 from rest_framework import serializers
+from texta_elastic.searcher import EMPTY_QUERY
 
 from toolkit.core.project.models import Project
-from toolkit.core.task.serializers import TaskSerializer
-from toolkit.core.user_profile.serializers import UserSerializer
-from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.evaluator import choices
 from toolkit.evaluator.models import Evaluator
-from toolkit.evaluator.validators import (validate_average_function, validate_fact, validate_fact_value, validate_fact_values_in_sync, validate_metric_restrictions, validate_entity_facts, validate_evaluation_type)
-from toolkit.serializer_constants import IndicesSerializerMixin, ProjectResourceUrlSerializer
+from toolkit.evaluator.validators import (validate_average_function, validate_entity_facts, validate_evaluation_type, validate_fact, validate_fact_value, validate_fact_values_in_sync, validate_metric_restrictions)
+from toolkit.serializer_constants import CommonModelSerializerMixin, IndicesSerializerMixin, ProjectResourceUrlSerializer
 
 
 class FilteredAverageSerializer(serializers.Serializer):
@@ -29,12 +27,10 @@ class IndividualResultsSerializer(serializers.Serializer):
 class MisclassifiedExamplesSerializer(serializers.Serializer):
     min_count = serializers.IntegerField(default=choices.DEFAULT_MIN_MISCLASSIFIED_COUNT, required=False, help_text=f"Minimum frequency of the misclassified values to return.")
     max_count = serializers.IntegerField(default=choices.DEFAULT_MAX_MISCLASSIFIED_COUNT, required=False, help_text=f"Maximum frequency of the misclassified values to return.")
-    top_n = serializers.IntegerField(default=choices.DEFAULT_N_MISCLASSIFIED_VALUES_TO_RETURN, required=False, help_text = f"Number of values to return per class.")
+    top_n = serializers.IntegerField(default=choices.DEFAULT_N_MISCLASSIFIED_VALUES_TO_RETURN, required=False, help_text=f"Number of values to return per class.")
 
 
-
-class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer, IndicesSerializerMixin):
-    author = UserSerializer(read_only=True)
+class EvaluatorSerializer(serializers.ModelSerializer, CommonModelSerializerMixin, ProjectResourceUrlSerializer, IndicesSerializerMixin):
     query = serializers.JSONField(required=False, help_text="Query in JSON format", default=json.dumps(EMPTY_QUERY))
 
     true_fact = serializers.CharField(required=True, help_text=f"Fact name used as true label for mulilabel evaluation.")
@@ -52,18 +48,17 @@ class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSeriali
                                                       help_text=f"Only used for multilabel/multiclass evaluation. If enabled, individual label scores are calculated and stored as well.")
 
     add_misclassified_examples = serializers.BooleanField(default=choices.DEFAULT_ADD_MISCLASSIFIED_EXAMPLES, required=False,
-                                                      help_text=f"Only used for entity evaluation. If enabled, misclassified and partially overlapping values are stored and can be analyzed later.")
+                                                          help_text=f"Only used for entity evaluation. If enabled, misclassified and partially overlapping values are stored and can be analyzed later.")
 
     evaluation_type = serializers.ChoiceField(choices=choices.EVALUATION_TYPE_CHOICES, default="multilabel", required=False,
-                                                      help_text=f"Specify the type of labelsets to evaluate.")
+                                              help_text=f"Specify the type of labelsets to evaluate.")
     token_based = serializers.BooleanField(default=choices.DEFAULT_TOKEN_BASED, required=False,
-                                                      help_text=f"If enabled, uses token-based entity evaluation, otherwise calculates the scores based on the spans of two value-sets.")
+                                           help_text=f"If enabled, uses token-based entity evaluation, otherwise calculates the scores based on the spans of two value-sets.")
 
     field = serializers.CharField(default="", required=False,
-                                                      help_text=f"Field related to true and predicted facts. NB! This has effect only for evaluation_type='entity' and is only required if the selected facts have multiple different doc paths.")
+                                  help_text=f"Field related to true and predicted facts. NB! This has effect only for evaluation_type='entity' and is only required if the selected facts have multiple different doc paths.")
 
     plot = serializers.SerializerMethodField()
-    task = TaskSerializer(read_only=True)
 
     url = serializers.SerializerMethodField()
 
@@ -121,6 +116,6 @@ class EvaluatorSerializer(serializers.ModelSerializer, ProjectResourceUrlSeriali
         model = Evaluator
         fields = ("url", "author", "id", "description", "indices", "query", "true_fact", "predicted_fact", "true_fact_value", "predicted_fact_value",
                   "average_function", "f1_score", "precision", "recall", "accuracy", "confusion_matrix", "n_true_classes", "n_predicted_classes", "n_total_classes",
-                  "evaluation_type", "scroll_size", "es_timeout", "scores_imprecise", "score_after_scroll", "document_count", "add_individual_results", "plot", "task", "add_misclassified_examples", "evaluation_type", "token_based", "field")
+                  "evaluation_type", "scroll_size", "es_timeout", "scores_imprecise", "score_after_scroll", "document_count", "add_individual_results", "plot", "tasks", "add_misclassified_examples", "evaluation_type", "token_based", "field")
 
-        read_only_fields = ("project", "f1_score", "precision", "recall", "accuracy", "confusion_matrix", "n_true_classes", "n_predicted_classes", "n_total_classes", "document_count", "evaluation_type", "scores_imprecise", "score_after_scroll", "task")
+        read_only_fields = ("project", "f1_score", "precision", "recall", "accuracy", "confusion_matrix", "n_true_classes", "n_predicted_classes", "n_total_classes", "document_count", "evaluation_type", "scores_imprecise", "score_after_scroll", "tasks")

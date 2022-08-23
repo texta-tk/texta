@@ -7,12 +7,12 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from texta_elastic.searcher import EMPTY_QUERY
 
-from toolkit.core.task.serializers import TaskSerializer
+from toolkit.core.task.models import Task
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choices
 from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import load_stop_words
-from toolkit.serializer_constants import (CommonModelMixinSerializer, ElasticScrollMixIn, FieldParseSerializer, IndicesSerializerMixin, ProjectFilteredPrimaryKeyRelatedField, ProjectResourceUrlSerializer)
+from toolkit.serializer_constants import (CommonModelSerializerMixin, ElasticScrollMixIn, FavoriteModelSerializerMixin, FieldParseSerializer, IndicesSerializerMixin, ProjectFilteredPrimaryKeyRelatedField, ProjectResourceUrlSerializer)
 from toolkit.settings import ERROR_LOGGER
 from toolkit.tagger import choices
 from toolkit.tagger.models import Tagger, TaggerGroup
@@ -124,9 +124,7 @@ class TaggerGroupTagDocumentSerializer(serializers.Serializer):
     feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 
-class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, CommonModelMixinSerializer):
-    author = UserSerializer(read_only=True)
-    description = serializers.CharField(help_text=f'Description for the Tagger. Will be used as tag.')
+class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, FavoriteModelSerializerMixin, CommonModelSerializerMixin):
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     vectorizer = serializers.ChoiceField(choices=choices.get_vectorizer_choices(), default=choices.DEFAULT_VECTORIZER, help_text='Vectorizer algorithm to create document vectors. NB! HashingVectorizer does not support feature name extraction!')
     analyzer = serializers.ChoiceField(choices=choices.get_analyzer_choices(), default=choices.DEFAULT_ANALYZER, help_text="Analyze text as words or characters.")
@@ -142,7 +140,6 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Indice
     stop_words = serializers.ListField(child=serializers.CharField(), default=[], required=False, help_text='Stop words to add. Default = [].', write_only=True)
     ignore_numbers = serializers.BooleanField(default=choices.DEFAULT_IGNORE_NUMBERS, required=False, help_text='If enabled, ignore all numbers as possible features.')
     detect_lang = serializers.BooleanField(default=False, help_text="Whether to detect the language for the stemmer from the document itself.")
-    task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False, default=json.dumps(EMPTY_QUERY))
     fact_name = serializers.CharField(default=None, required=False, help_text=f'Fact name used to filter tags (fact values). Default: None')
@@ -159,7 +156,7 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Indice
         model = Tagger
         fields = ('id', 'url', 'author', 'description', 'query', 'fact_name', 'indices', 'fields', 'detect_lang', 'embedding', 'vectorizer', 'analyzer', 'classifier', 'stop_words',
                   'maximum_sample_size', 'minimum_sample_size', 'is_favorited', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score', 'snowball_language', 'scoring_function',
-                  'num_features', 'num_examples', 'confusion_matrix', 'is_favorited', 'plot', 'task', 'tagger_groups', 'ignore_numbers', 'balance', 'balance_to_max_limit', 'pos_label', 'classes')
+                  'num_features', 'num_examples', 'confusion_matrix', 'is_favorited', 'plot', 'tasks', 'tagger_groups', 'ignore_numbers', 'balance', 'balance_to_max_limit', 'pos_label', 'classes')
         read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'num_examples', 'tagger_groups', 'confusion_matrix', 'classes')
         fields_to_parse = ('fields', 'classes',)
 
@@ -192,9 +189,7 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Indice
         return json.loads(value.tagger_groups)
 
 
-class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer, CommonModelMixinSerializer):
-    author = UserSerializer(read_only=True)
-    description = serializers.CharField(help_text=f'Description for the Tagger Group.')
+class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer, FavoriteModelSerializerMixin, CommonModelSerializerMixin):
     minimum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, help_text=f'Minimum number of documents required to train a model. Default: {choices.DEFAULT_MIN_SAMPLE_SIZE}')
     fact_name = serializers.CharField(default=choices.DEFAULT_TAGGER_GROUP_FACT_NAME, help_text=f'Fact name used to filter tags (fact values). Default: {choices.DEFAULT_TAGGER_GROUP_FACT_NAME}')
     tagger = TaggerSerializer(write_only=True, remove_fields=['description', 'query', 'fact_name', 'minimum_sample_size'])
@@ -204,7 +199,6 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     tagger_statistics = serializers.SerializerMethodField()
     tagger_params = serializers.SerializerMethodField()
     url = serializers.SerializerMethodField()
-    task = TaskSerializer(read_only=True)
 
 
     def to_representation(self, instance):
@@ -219,17 +213,17 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     class Meta:
         model = TaggerGroup
         fields = ('id', 'url', 'author', 'description', 'fact_name', 'num_tags', 'blacklisted_facts', 'minimum_sample_size',
-                  'tagger_status', 'tagger_params', 'tagger', 'tagger_statistics', 'is_favorited', 'task')
+                  'tagger_status', 'tagger_params', 'tagger', 'tagger_statistics', 'is_favorited', 'tasks')
 
 
-    def get_tagger_status(self, obj):
-        tagger_objects = obj.taggers
+    # TODO This can be optimised into a single query.
+    def get_tagger_status(self, obj: TaggerGroup):
         tagger_status = {
             'total': obj.num_tags,
-            'completed': len(tagger_objects.filter(task__status='completed')),
-            'training': len(tagger_objects.filter(task__status='running')),
-            'created': len(tagger_objects.filter(task__status='created')),
-            'failed': len(tagger_objects.filter(task__status='failed'))
+            'completed': obj.taggers.filter(tasks__task_type=Task.TYPE_TRAIN, tasks__status=Task.STATUS_COMPLETED).distinct().count(),
+            'training': obj.taggers.filter(tasks__task_type=Task.TYPE_TRAIN, tasks__status=Task.STATUS_RUNNING).distinct().count(),
+            'created': obj.taggers.filter(tasks__task_type=Task.TYPE_TRAIN, tasks__status=Task.STATUS_CREATED).distinct().count(),
+            'failed': obj.taggers.filter(tasks__task_type=Task.TYPE_TRAIN, tasks__status=Task.STATUS_FAILED).distinct().count(),
         }
         return tagger_status
 

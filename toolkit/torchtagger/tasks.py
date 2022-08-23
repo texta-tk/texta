@@ -15,7 +15,6 @@ from texta_embedding.embedding import W2VEmbedding
 from texta_torch_tagger.tagger import TorchTagger
 
 from toolkit.base_tasks import TransactionAwareTask
-from toolkit.core.task.models import Task
 from toolkit.elastic.tools.data_sample import DataSample
 from toolkit.helper_functions import get_indices_from_object
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, RELATIVE_MODELS_PATH
@@ -33,7 +32,7 @@ def train_torchtagger(tagger_id, testing=False):
         # Handle previous tagger models that exist in case of retrains.
         model_path = pathlib.Path(tagger_object.model.path) if tagger_object.model else None
 
-        task_object = tagger_object.task
+        task_object = tagger_object.tasks.last()
         model_type = TorchTaggerObject.MODEL_TYPE
         show_progress = ShowProgress(task_object, multiplier=1)
         # get fields & indices
@@ -76,7 +75,6 @@ def train_torchtagger(tagger_id, testing=False):
         tagger_path = os.path.join(RELATIVE_MODELS_PATH, model_type, f'{model_type}_{tagger_id}_{secrets.token_hex(10)}')
         tagger.save(tagger_path)
 
-
         # set tagger location
         tagger_object.model.name = tagger_path
         # save tagger plot
@@ -107,8 +105,7 @@ def train_torchtagger(tagger_id, testing=False):
 
 
     except Exception as e:
-        task_object.add_error(str(e))
-        task_object.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
         raise
 
 
@@ -130,7 +127,7 @@ def to_texta_facts(tagger_result: List[Dict[str, Union[str, int, bool]]], field:
         "fact": fact_name,
         "str_val": fact_value,
         "doc_path": field,
-        "spans": json.dumps([[0,0]]),
+        "spans": json.dumps([[0, 0]]),
         "sent_index": 0
     }
 
@@ -138,9 +135,8 @@ def to_texta_facts(tagger_result: List[Dict[str, Union[str, int, bool]]], field:
 
 
 def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], fact_name: str, fact_value: str, tagger_object: TorchTaggerObject, tagger: TorchTagger = None):
-
     for i, scroll_batch in enumerate(generator):
-        logging.getLogger(INFO_LOGGER).info(f"Appyling Torch Tagger with ID {tagger_object.id} to batch {i+1}...")
+        logging.getLogger(INFO_LOGGER).info(f"Appyling Torch Tagger with ID {tagger_object.id} to batch {i + 1}...")
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
             flat_hit = ec.flatten(hit)
@@ -150,7 +146,7 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
                 text = flat_hit.get(field, None)
                 if text and isinstance(text, str):
 
-                    result = tagger_object.apply_loaded_tagger(tagger, text, input_type = "text", feedback = False)
+                    result = tagger_object.apply_loaded_tagger(tagger, text, input_type="text", feedback=False)
 
                     # If tagger is binary and fact value is not specified by the user, use tagger description as fact value
                     if result["result"] in ["true", "false"]:
@@ -184,19 +180,20 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
         tagger_object = TorchTaggerObject.objects.get(pk=object_id)
         tagger = tagger_object.load_tagger()
 
-        progress = ShowProgress(tagger_object.task)
+        task_object = tagger_object.tasks.last()
+        progress = ShowProgress(task_object)
 
         ec = ElasticCore()
         [ec.add_texta_facts_mapping(index) for index in indices]
 
         searcher = ElasticSearcher(
-            indices = indices,
-            field_data = fields + ["texta_facts"],  # Get facts to add upon existing ones.
-            query = query,
-            output = ElasticSearcher.OUT_RAW,
-            timeout = f"{es_timeout}m",
+            indices=indices,
+            field_data=fields + ["texta_facts"],  # Get facts to add upon existing ones.
+            query=query,
+            output=ElasticSearcher.OUT_RAW,
+            timeout=f"{es_timeout}m",
             callback_progress=progress,
-            scroll_size = bulk_size
+            scroll_size=bulk_size
         )
 
         actions = update_generator(generator=searcher, ec=ec, fields=fields, fact_name=fact_name, fact_value=fact_value, tagger_object=tagger_object, tagger=tagger)
@@ -204,11 +201,9 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
             if not success:
                 logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
 
-        tagger_object.task.complete()
+        task_object.complete()
         return True
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
-        tagger_object.task.add_error(error_message)
-        tagger_object.task.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
+        raise e

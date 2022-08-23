@@ -2,19 +2,18 @@ import json
 import re
 from collections import OrderedDict
 from json import JSONDecodeError
-from typing import List
 
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 from texta_elastic.searcher import EMPTY_QUERY
 
 from toolkit.choice_constants import DEFAULT_BULK_SIZE, DEFAULT_ES_TIMEOUT, DEFAULT_MAX_CHUNK_BYTES
 from toolkit.core.project.models import Project
+from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.elastic.validators import check_for_existence
 # Helptext constants to ensure consistent values inside Toolkit.
-from toolkit.settings import ES_BULK_SIZE_MAX, ES_TIMEOUT_MAX
+from toolkit.settings import DESCRIPTION_CHAR_LIMIT, ES_BULK_SIZE_MAX, ES_TIMEOUT_MAX
 
 
 BULK_SIZE_HELPTEXT = "How many documents should be sent into Elasticsearch in a single batch for update."
@@ -113,12 +112,23 @@ class FeedbackSerializer(serializers.Serializer):
 
 # You have to use metaclass because DRF serializers won't accept fields of classes
 # that don't subclass serializers.Serializer.
-class CommonModelMixinSerializer(metaclass=serializers.SerializerMetaclass):
+class FavoriteModelSerializerMixin(metaclass=serializers.SerializerMetaclass):
     is_favorited = serializers.SerializerMethodField(read_only=True)
 
 
     def get_is_favorited(self, instance):
         return instance.favorited_users.filter(username=instance.author.username).exists()
+
+
+class TasksMixinSerializer(metaclass=serializers.SerializerMetaclass):
+    tasks = TaskSerializer(many=True, read_only=True)
+
+
+# You have to use metaclass because DRF serializers won't accept fields of classes
+# that don't subclass serializers.Serializer.
+class CommonModelSerializerMixin(TasksMixinSerializer):
+    author = UserSerializer(read_only=True)
+    description = serializers.CharField(help_text=f'Description for the Tagger Group.', max_length=DESCRIPTION_CHAR_LIMIT)
 
 
 class ProjectFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):

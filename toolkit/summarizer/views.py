@@ -19,8 +19,8 @@ class SummarizerIndexViewSet(viewsets.ModelViewSet, BulkDelete):
     serializer_class = SummarizerIndexSerializer
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     ordering_fields = (
-    'id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'f1_score',
-    'precision', 'recall', 'task__status')
+    'id', 'author__username', 'description', 'fields', 'tasks__time_started', 'tasks__time_completed', 'f1_score',
+    'precision', 'recall', 'tasks__status')
     permission_classes = (
         ProjectAccessInApplicationsAllowed,
         permissions.IsAuthenticated,

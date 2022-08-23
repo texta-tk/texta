@@ -105,11 +105,12 @@ class TaggerGroupViewTests(APITransactionTestCase):
             self.addCleanup(remove_file, tagger.model.path)
             self.addCleanup(remove_file, tagger.plot.path)
             # Check if not errors
-            self.assertEqual(tagger.task.errors, '[]')
+            task_object = tagger.tasks.last()
+            self.assertEqual(task_object.errors, '[]')
             # Check if Task gets created via a signal
-            self.assertTrue(tagger.task is not None)
+            self.assertTrue(task_object is not None)
             # Check if Tagger gets trained and completed
-            self.assertEqual(tagger.task.status, Task.STATUS_COMPLETED)
+            self.assertEqual(task_object.status, Task.STATUS_COMPLETED)
             self.add_cleanup_files(tagger.id)
 
 
@@ -152,6 +153,18 @@ class TaggerGroupViewTests(APITransactionTestCase):
         self.run_tag_text(created_tagger_group.pk)
 
 
+    def _validate_tagger_status(self, pk: int):
+        tg = TaggerGroup.objects.get(pk=pk)
+        num_tags = tg.num_tags
+        url = reverse(f"{VERSION_NAMESPACE}:tagger_group-detail", kwargs={"project_pk": self.project.pk, "pk": pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["tagger_status"]["total"], num_tags)
+        self.assertEqual(response.data["tagger_status"]["completed"], num_tags)
+        self.assertEqual(response.data["tagger_status"]["failed"], 0)
+        self.assertEqual(response.data["tagger_status"]["training"], 0)
+
+
     def run_create_tagger_group_training_and_task_signal(self):
         """Tests the endpoint for a new Tagger Group, and if a new Task gets created via the signal"""
         payload = {
@@ -177,6 +190,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
         created_tagger_group = TaggerGroup.objects.get(id=response.data['id'])
         self.test_tagger_group_id = created_tagger_group.pk
         self.__cleanup_tagger_groups(created_tagger_group)
+        self._validate_tagger_status(self.test_tagger_group_id)
 
 
     def run_create_balanced_tagger_group_training_and_task_signal(self):
@@ -282,8 +296,9 @@ class TaggerGroupViewTests(APITransactionTestCase):
     def run_apply_tagger_group_to_index(self):
         """Tests applying tagger group to index using apply_to_index endpoint."""
         # Make sure reindexer task has finished
-        while self.reindexer_object.task.status != Task.STATUS_COMPLETED:
-            print_output('test_apply_tagger_group_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
+        task_object = self.reindexer_object.tasks.last()
+        while task_object.status != Task.STATUS_COMPLETED:
+            print_output('test_apply_tagger_group_to_index: waiting for reindexer task to finish, current status:', task_object.status)
             sleep(2)
 
         url = f'{self.url}{self.test_imported_tagger_group_id}/apply_to_index/'
@@ -303,8 +318,9 @@ class TaggerGroupViewTests(APITransactionTestCase):
         tagger_group_object = TaggerGroup.objects.get(pk=self.test_imported_tagger_group_id)
 
         # Wait til the task has finished
-        while tagger_group_object.task.status != Task.STATUS_COMPLETED:
-            print_output('test_apply_tagger_group_to_index: waiting for applying tagger task to finish, current status:', tagger_group_object.task.status)
+        task_object = tagger_group_object.tasks.last()
+        while task_object.status != Task.STATUS_COMPLETED:
+            print_output('test_apply_tagger_group_to_index: waiting for applying tagger task to finish, current status:', task_object.status)
             sleep(2)
 
         results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution(self.new_fact_name)
@@ -324,8 +340,9 @@ class TaggerGroupViewTests(APITransactionTestCase):
     def run_apply_tagger_group_to_index_with_tag_limit(self):
         """Tests applying tagger group with tag limit to index using apply_to_index endpoint."""
         # Make sure reindexer task has finished
-        while self.reindexer_object.task.status != Task.STATUS_COMPLETED:
-            print_output('test_apply_tagger_group_to_index_tag_limit: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
+        task_object = self.reindexer_object.tasks.last()
+        while task_object.status != Task.STATUS_COMPLETED:
+            print_output('test_apply_tagger_group_to_index_tag_limit: waiting for reindexer task to finish, current status:', task_object.status)
             sleep(2)
 
         url = f'{self.url}{self.test_imported_tagger_group_id}/apply_to_index/'
@@ -346,8 +363,9 @@ class TaggerGroupViewTests(APITransactionTestCase):
         tagger_group_object = TaggerGroup.objects.get(pk=self.test_imported_tagger_group_id)
 
         # Wait til the task has finished
-        while tagger_group_object.task.status != Task.STATUS_COMPLETED:
-            print_output('test_apply_tagger_group_to_index_tag_limit: waiting for applying tagger task to finish, current status:', tagger_group_object.task.status)
+        task_object = tagger_group_object.tasks.last()
+        while task_object.status != Task.STATUS_COMPLETED:
+            print_output('test_apply_tagger_group_to_index_tag_limit: waiting for applying tagger task to finish, current status:', task_object.status)
             sleep(2)
 
         # Scroll over the index to check if the correct amount of tags were added

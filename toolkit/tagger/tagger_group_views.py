@@ -136,7 +136,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         path = re.sub(r'tagger_groups/\d+/models_list/*$', 'taggers/', request.path)
         tagger_url_prefix = request.build_absolute_uri(path)
         tagger_objects = TaggerGroup.objects.get(id=pk).taggers.all()
-        response = [{'tag': tagger.description, 'id': tagger.id, 'url': f'{tagger_url_prefix}{tagger.id}/', 'status': tagger.task.status} for tagger in tagger_objects]
+        response = [{'tag': tagger.description, 'id': tagger.id, 'url': f'{tagger_url_prefix}{tagger.id}/', 'status': tagger.tasks.last().status} for tagger in tagger_objects]
 
         return Response(response, status=status.HTTP_200_OK)
 
@@ -174,8 +174,9 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # start retraining tasks
         for tagger in instance.taggers.all():
             # update task status so statistics are correct during retraining
-            tagger.status = Task.STATUS_CREATED
-            tagger.save()
+            task_object = Task.objects.create(tagger=tagger, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
+            tagger.tasks.add(task_object)
+            task_object.save()
             chain.apply_async(args=(tagger.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
         return Response({'success': 'retraining tasks created', 'tagger_group_id': instance.id}, status=status.HTTP_200_OK)
@@ -194,7 +195,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
             raise SerializerNotValid(detail=serializer.errors)
         hybrid_tagger_object = self.get_object()
         # check if any of the models ready
-        if not hybrid_tagger_object.taggers.filter(task__status=Task.STATUS_COMPLETED):
+        if hybrid_tagger_object.taggers.filter(tasks__status=Task.STATUS_COMPLETED).exists() is False:
             raise NonExistantModelError()
         # error if redis not available
         if not get_redis_status()['alive']:
@@ -230,7 +231,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
             raise SerializerNotValid(detail=serializer.errors)
         hybrid_tagger_object = self.get_object()
         # check if any of the models ready
-        if not hybrid_tagger_object.taggers.filter(task__status=Task.STATUS_COMPLETED):
+        if hybrid_tagger_object.taggers.filter(tasks__status=Task.STATUS_COMPLETED).exists() is False:
             raise NonExistantModelError()
         # error if redis not available
         if not get_redis_status()['alive']:
@@ -276,7 +277,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         hybrid_tagger_object = self.get_object()
 
         # check if any of the models ready
-        if not hybrid_tagger_object.taggers.filter(task__status=Task.STATUS_COMPLETED):
+        if hybrid_tagger_object.taggers.filter(tasks__status=Task.STATUS_COMPLETED).exists() is False:
             raise NonExistantModelError()
 
         # retrieve tagger fields from the first object
@@ -325,13 +326,12 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
             serializer.is_valid(raise_exception=True)
 
             tagger_group_object = self.get_object()
-            tagger_group_object.task = Task.objects.create(taggergroup=tagger_group_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
-            tagger_group_object.save()
+            task_object = Task.objects.create(taggergroup=tagger_group_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
+            tagger_group_object.tasks.add(task_object)
 
             if not get_redis_status()['alive']:
                 raise RedisNotAvailable('Redis not available. Check if Redis is running.')
 
-            project = Project.objects.get(pk=project_pk)
             indices = [index["name"] for index in serializer.validated_data["indices"]]
             # indices = project.get_available_or_all_project_indices(indices)
 

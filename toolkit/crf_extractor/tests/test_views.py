@@ -112,13 +112,14 @@ class CRFExtractorViewTests(APITransactionTestCase):
             # add to be tested
             self.test_crf_ids.append(created.pk)
             # Check if not errors
-            self.assertEqual(created.task.errors, '[]')
+            task_object = created.tasks.last()
+            self.assertEqual(task_object.errors, '[]')
             # Remove tagger files after test is done
             self.add_cleanup_files(created.id)
             # Check if Task gets created via a signal
-            self.assertTrue(created.task is not None)
+            self.assertTrue(task_object is not None)
             # Check if gets trained and completed
-            self.assertEqual(created.task.status, Task.STATUS_COMPLETED)
+            self.assertEqual(task_object.status, Task.STATUS_COMPLETED)
 
 
     def run_list_features(self, tagger_id=None):
@@ -193,8 +194,9 @@ class CRFExtractorViewTests(APITransactionTestCase):
         tagger_object = CRFExtractor.objects.get(pk=test_tagger_id)
 
         # Wait til the task has finished
-        while tagger_object.task.status != Task.STATUS_COMPLETED:
-            print_output('test_apply_crf_to_index: waiting for applying tagger task to finish, current status:', tagger_object.task.status)
+        task_object = tagger_object.tasks.last()
+        while task_object.status != Task.STATUS_COMPLETED:
+            print_output('test_apply_crf_to_index: waiting for applying tagger task to finish, current status:', task_object.status)
             sleep(2)
 
         results_old = ElasticAggregator(indices=[self.test_index_name]).get_fact_values_distribution("GPE")
@@ -225,8 +227,9 @@ class CRFExtractorViewTests(APITransactionTestCase):
         tagger_object = CRFExtractor.objects.get(pk=test_tagger_id)
 
         # Wait til the task has finished
-        while tagger_object.task.status != Task.STATUS_COMPLETED:
-            print_output('test_apply_crf_to_index_with_specified_label_suffix: waiting for applying tagger task to finish, current status:', tagger_object.task.status)
+        task_object = tagger_object.tasks.last()
+        while task_object.status != Task.STATUS_COMPLETED:
+            print_output('test_apply_crf_to_index_with_specified_label_suffix: waiting for applying tagger task to finish, current status:', task_object.status)
             sleep(2)
 
         results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution(f"GPE_{label_suffix}")

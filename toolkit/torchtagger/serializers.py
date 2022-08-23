@@ -1,17 +1,10 @@
 import json
-from rest_framework import serializers
 
-from toolkit.core.task.serializers import TaskSerializer
-from toolkit.core.user_profile.serializers import UserSerializer
+from rest_framework import serializers
 from texta_elastic.searcher import EMPTY_QUERY
+
 from toolkit.embedding.models import Embedding
-from toolkit.serializer_constants import (
-    CommonModelMixinSerializer, FieldParseSerializer,
-    IndicesSerializerMixin,
-    ProjectResourceUrlSerializer,
-    ProjectFilteredPrimaryKeyRelatedField,
-    ElasticScrollMixIn
-)
+from toolkit.serializer_constants import (CommonModelSerializerMixin, ElasticScrollMixIn, FavoriteModelSerializerMixin, FieldParseSerializer, IndicesSerializerMixin, ProjectFilteredPrimaryKeyRelatedField, ProjectResourceUrlSerializer)
 from toolkit.torchtagger import choices
 from toolkit.torchtagger.models import TorchTagger
 from toolkit.validator_constants import validate_pos_label
@@ -33,8 +26,7 @@ class TagRandomDocSerializer(IndicesSerializerMixin):
     pass
 
 
-class TorchTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, CommonModelMixinSerializer):
-    author = UserSerializer(read_only=True)
+class TorchTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, CommonModelSerializerMixin, IndicesSerializerMixin, ProjectResourceUrlSerializer, FavoriteModelSerializerMixin):
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     query = serializers.JSONField(help_text='Query in JSON format', required=False, default=json.dumps(EMPTY_QUERY))
     fact_name = serializers.CharField(default=None, required=False, help_text=f'Fact name used to filter tags (fact values). Default: None')
@@ -50,7 +42,6 @@ class TorchTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, I
     balance_to_max_limit = serializers.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT, required=False,
                                                     help_text=f'If enabled, the number of samples for each class is set to `maximum_sample_size`. Otherwise, it is set to max class size. NB! Only applicable for multiclass taggers with balance == True. Default = {choices.DEFAULT_BALANCE_TO_MAX_LIMIT}')
 
-    task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
     url = serializers.SerializerMethodField()
 
@@ -65,7 +56,7 @@ class TorchTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, I
         model = TorchTagger
         fields = (
             'url', 'author', 'id', 'description', 'query', 'fields', 'embedding', 'f1_score', 'precision', 'recall', 'accuracy',
-            'model_architecture', 'maximum_sample_size', 'minimum_sample_size', 'is_favorited', 'num_epochs', 'plot', 'task', 'fact_name', 'indices', 'confusion_matrix', 'num_examples', 'balance', 'use_sentence_shuffle', 'balance_to_max_limit', 'pos_label', 'classes'
+            'model_architecture', 'maximum_sample_size', 'minimum_sample_size', 'is_favorited', 'num_epochs', 'plot', 'tasks', 'fact_name', 'indices', 'confusion_matrix', 'num_examples', 'balance', 'use_sentence_shuffle', 'balance_to_max_limit', 'pos_label', 'classes'
         )
         read_only_fields = ('project', 'fields', 'f1_score', 'precision', 'recall', 'accuracy', 'plot', 'task', 'confusion_matrix', 'num_examples', 'classes')
         fields_to_parse = ['fields', 'classes']

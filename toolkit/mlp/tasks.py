@@ -73,7 +73,7 @@ def apply_mlp_on_documents(documents: List[dict], analyzers: List[str], field_da
     except Exception as e:
         # In case MLP fails, add error to document
         worker: MLPWorker = MLPWorker.objects.get(pk=mlp_id)
-        worker.task.handle_failed_task(e)
+        worker.tasks.last().handle_failed_task(e)
         return documents
 
 
@@ -107,7 +107,7 @@ def apply_mlp_on_es_docs(self, source_and_meta_docs: List[str], mlp_id: int):
     """
     mlp_object = get_mlp_object(mlp_id)
 
-    task_object = mlp_object.task
+    task_object = mlp_object.tasks.last()
 
     # Get the necessary fields.
     field_data: List[str] = json.loads(mlp_object.fields)
@@ -138,10 +138,11 @@ def start_mlp_worker(self, mlp_id: int):
     """
     mlp_object = MLPWorker.objects.get(pk=mlp_id)
 
+    task_object = mlp_object.tasks.last()
     try:
         logging.getLogger(INFO_LOGGER).info(f"Applying mlp on the index for MLP Task ID: {mlp_id}")
         # init progress
-        show_progress = ShowProgress(mlp_object.task, multiplier=1)
+        show_progress = ShowProgress(task_object, multiplier=1)
         show_progress.update_step('Scrolling document IDs')
         show_progress.update_view(0)
         # Get the necessary fields.
@@ -168,8 +169,8 @@ def start_mlp_worker(self, mlp_id: int):
         show_progress.update_step(f'Applying MLP to {len(doc_chunks)} documents')
         show_progress.update_view(0)
 
-        mlp_object.task.set_total(searcher.count())
-        mlp_object.task.update_status(Task.STATUS_RUNNING)
+        task_object.set_total(searcher.count())
+        task_object.update_status(Task.STATUS_RUNNING)
 
         # pass document id-s to the next task
         chain = group(apply_mlp_on_es_docs.s([doc["_id"] for doc in meta_chunk], mlp_id) for meta_chunk in doc_chunks) | end_mlp_task.si(mlp_id)
@@ -177,7 +178,7 @@ def start_mlp_worker(self, mlp_id: int):
         return True
 
     except Exception as e:
-        mlp_object.task.handle_failed_task(e)
+        task_object.handle_failed_task(e)
         raise
 
 
@@ -185,14 +186,14 @@ def start_mlp_worker(self, mlp_id: int):
 def end_mlp_task(self, mlp_id):
     logging.getLogger(INFO_LOGGER).info(f"Finished applying mlp on the index for model ID: {mlp_id}")
     mlp_object = MLPWorker.objects.get(pk=mlp_id)
-    mlp_object.task.complete()
+    mlp_object.tasks.last().complete()
     return True
 
 
 @task(name="apply_lang_on_indices", base=TransactionAwareTask, queue=CELERY_MLP_TASK_QUEUE, bind=True)
 def apply_lang_on_indices(self, apply_worker_id: int):
     worker_object = ApplyLangWorker.objects.get(pk=apply_worker_id)
-    task_object = worker_object.task
+    task_object = worker_object.tasks.last()
     try:
         load_mlp()
         show_progress = ShowProgress(task_object, multiplier=1)
@@ -222,7 +223,7 @@ def apply_lang_on_indices(self, apply_worker_id: int):
         ed = ElasticDocument("_all")
         elastic_response = ed.bulk_update(actions=actions)
 
-        worker_object.task.complete()
+        worker_object.tasks.last().complete()
 
         return apply_worker_id
 

@@ -1,13 +1,13 @@
 import json
 
 from rest_framework import serializers
+from texta_elastic.core import ElasticCore
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.choices import LABEL_DISTRIBUTION
 from toolkit.elastic.index_splitter.models import IndexSplitter
-from texta_elastic.core import ElasticCore
 from toolkit.elastic.validators import (
     check_for_banned_beginning_chars,
     check_for_colons,
@@ -15,14 +15,12 @@ from toolkit.elastic.validators import (
     check_for_upper_case,
     check_for_wildcards
 )
-from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer
+from toolkit.serializer_constants import CommonModelSerializerMixin, FieldParseSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer
 
 
-class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
-    author = UserSerializer(read_only=True)
+class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, CommonModelSerializerMixin, IndicesSerializerMixin, ProjectResourceUrlSerializer):
     url = serializers.SerializerMethodField()
     scroll_size = serializers.IntegerField(min_value=0, max_value=10000, required=False)
-    description = serializers.CharField(help_text='Description of the task.', required=True, allow_blank=False)
     query = serializers.JSONField(help_text='Query used to filter the indices. Defaults to an empty query.', required=False)
     train_index = serializers.CharField(help_text='Name of the train index.', allow_blank=False, required=True,
                                         validators=[
@@ -45,7 +43,6 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
         help_text=f'Empty fields chooses all posted indices fields.',
         required=False
     )
-    task = TaskSerializer(read_only=True)
     test_size = serializers.IntegerField(
         help_text='Size of the test set. Represents a percentage with "random" or "original" distribution and a quantity with "equal" or "custom" distribution.',
         required=False,
@@ -61,7 +58,7 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
 
     class Meta:
         model = IndexSplitter
-        fields = ('id', 'url', 'author', 'description', 'indices', 'scroll_size', 'fields', 'query', 'train_index', 'test_index', "test_size", 'fact', 'str_val', 'distribution', 'custom_distribution', 'task')
+        fields = ('id', 'url', 'author', 'description', 'indices', 'scroll_size', 'fields', 'query', 'train_index', 'test_index', "test_size", 'fact', 'str_val', 'distribution', 'custom_distribution', 'tasks')
         fields_to_parse = ('fields', 'custom_distribution')
 
 
@@ -123,8 +120,8 @@ class IndexSplitterSerializer(FieldParseSerializer, serializers.HyperlinkedModel
                     data["fields"].append("texta_facts")
         return data
 
+
     def _get_project_fields(self):
         project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
         project_fields = ElasticCore().get_fields(indices=project_obj.get_indices())
         return project_fields
-

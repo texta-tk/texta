@@ -4,12 +4,10 @@ from decimal import *
 from django.urls import reverse
 from rest_framework import serializers
 
-from toolkit.core.task.serializers import TaskSerializer
-from toolkit.serializer_constants import FieldParseSerializer, IndicesSerializerMixin
+from toolkit.serializer_constants import CommonModelSerializerMixin, FieldParseSerializer, IndicesSerializerMixin
 from toolkit.settings import REST_FRAMEWORK
 from .models import Summarizer
 from .values import DefaultSummarizerValues
-from ..core.user_profile.serializers import UserSerializer
 
 
 class SummarizerSummarizeSerializer(serializers.Serializer):
@@ -21,10 +19,7 @@ class SummarizerSummarizeSerializer(serializers.Serializer):
     ratio = serializers.DecimalField(max_digits=3, decimal_places=1, default=0.2, min_value=Decimal('0.1'), max_value=99.9, help_text="Min value 0.1, Max value 99.9 anything above 1.0 will be calculated as sentence count.")
 
 
-class SummarizerIndexSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin):
-    author = UserSerializer(read_only=True)
-    description = serializers.CharField()
-    task = TaskSerializer(read_only=True, required=False)
+class SummarizerIndexSerializer(FieldParseSerializer, serializers.ModelSerializer, CommonModelSerializerMixin, IndicesSerializerMixin):
     url = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
     algorithm = serializers.MultipleChoiceField(
@@ -37,7 +32,7 @@ class SummarizerIndexSerializer(FieldParseSerializer, serializers.ModelSerialize
 
     class Meta:
         model = Summarizer
-        fields = ("id", "url", "author", "indices", "description", "task", "query", "fields", "algorithm", "ratio")
+        fields = ("id", "url", "author", "indices", "description", "tasks", "query", "fields", "algorithm", "ratio")
         fields_to_parse = ['fields']
 
 

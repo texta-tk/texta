@@ -422,8 +422,9 @@ class TorchTaggerViewTests(APITransactionTestCase):
     def run_apply_binary_tagger_to_index(self):
         """Tests applying binary torch tagger to index using apply_to_index endpoint."""
         # Make sure reindexer task has finished
-        while self.reindexer_object.task.status != Task.STATUS_COMPLETED:
-            print_output('test_apply_binary_torch_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
+        task_object = self.reindexer_object.tasks.last()
+        while task_object.status != Task.STATUS_COMPLETED:
+            print_output('test_apply_binary_torch_tagger_to_index: waiting for reindexer task to finish, current status:', task_object.status)
             sleep(2)
 
         url = f'{self.url}{self.test_tagger_id}/apply_to_index/'
@@ -441,8 +442,9 @@ class TorchTaggerViewTests(APITransactionTestCase):
         tagger_object = TorchTagger.objects.get(pk=self.test_tagger_id)
 
         # Wait til the task has finished
-        while tagger_object.task.status != Task.STATUS_COMPLETED:
-            print_output('test_apply_binary_torch_tagger_to_index: waiting for applying tagger task to finish, current status:', tagger_object.task.status)
+        task_object = tagger_object.tasks.last()
+        while task_object.status != Task.STATUS_COMPLETED:
+            print_output('test_apply_binary_torch_tagger_to_index: waiting for applying tagger task to finish, current status:', task_object.status)
             sleep(2)
 
         results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution(self.new_fact_name)

@@ -10,10 +10,9 @@ from texta_elastic.searcher import ElasticSearcher
 from toolkit.annotator.choices import MAX_VALUE
 from toolkit.annotator.models import Annotator, AnnotatorGroup, BinaryAnnotatorConfiguration, Category, Comment, EntityAnnotatorConfiguration, Label, Labelset, MultilabelAnnotatorConfiguration, Record
 from toolkit.core.project.models import Project
-from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.models import Index
-from toolkit.serializer_constants import FieldParseSerializer, ToolkitTaskSerializer
+from toolkit.serializer_constants import CommonModelSerializerMixin, FieldParseSerializer, ToolkitTaskSerializer
 
 
 ANNOTATION_MAPPING = {
@@ -60,7 +59,8 @@ class LabelsetSerializer(serializers.ModelSerializer):
 
     indices = serializers.ListSerializer(child=serializers.CharField(), default="[]", required=False, help_text="List of indices.")
     fact_names = serializers.ListSerializer(child=serializers.CharField(), default="[]", required=False, help_text="List of fact_names.")
-    value_limit = serializers.IntegerField(default=500, max_value=MAX_VALUE, required=False, help_text=f"Limit the number of values added. To include all values, the number should be greater than or equal with the number of unique fact values corresponding to the selected fact(s). NB! Including all values is not possible if the number of unique values is > {MAX_VALUE}.")
+    value_limit = serializers.IntegerField(default=500, max_value=MAX_VALUE, required=False,
+                                           help_text=f"Limit the number of values added. To include all values, the number should be greater than or equal with the number of unique fact values corresponding to the selected fact(s). NB! Including all values is not possible if the number of unique values is > {MAX_VALUE}.")
     category = serializers.CharField(help_text="Category name.")
     values = serializers.ListSerializer(child=serializers.CharField(), help_text="Values to be added.")
 
@@ -177,6 +177,7 @@ class MultilabelAnnotatorConfigurationSerializer(serializers.ModelSerializer):
         data["category"] = str(instance.labelset.category)
         return data
 
+
     class Meta:
         model = MultilabelAnnotatorConfiguration
         fields = "__all__"
@@ -194,7 +195,7 @@ class EntityAnnotatorConfigurationSerializer(serializers.ModelSerializer):
         fields = ("fact_name",)
 
 
-class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serializers.ModelSerializer):
+class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, CommonModelSerializerMixin, serializers.ModelSerializer):
     binary_configuration = BinaryAnnotatorConfigurationSerializer(required=False)
     multilabel_configuration = MultilabelAnnotatorConfigurationSerializer(required=False)
     entity_configuration = EntityAnnotatorConfigurationSerializer(required=False)
@@ -204,7 +205,6 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
     add_facts_mapping = serializers.BooleanField(
         help_text='Add texta facts mapping. NB! If texta_facts is present in annotator fields, the mapping is always created.',
         required=False, default=True)
-    task = TaskSerializer(read_only=True)
 
 
     def update(self, instance: Annotator, validated_data: dict):
@@ -337,7 +337,7 @@ class AnnotatorSerializer(FieldParseSerializer, ToolkitTaskSerializer, serialize
             'author',
             'description',
             'indices',
-            'task',
+            'tasks',
             'target_field',
             'fields',
             'add_facts_mapping',
@@ -372,7 +372,6 @@ class AnnotatorProjectSerializer(AnnotatorSerializer):
 
 
 class AnnotatorGroupSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = AnnotatorGroup
         fields = (
@@ -382,11 +381,13 @@ class AnnotatorGroupSerializer(serializers.ModelSerializer):
         )
         fields_to_parse = ("fields",)
 
+
     def to_representation(self, instance: AnnotatorGroup):
         result = super(AnnotatorGroupSerializer, self).to_representation(instance)
         result["parent"] = AnnotatorSerializer(instance=instance.parent, context={'request': self.context['request']}).data
         result["children"] = AnnotatorSerializer(instance=instance.children, many=True, context={'request': self.context['request']}).data
         return result
+
 
     def create(self, validated_data):
         request = self.context.get('request')

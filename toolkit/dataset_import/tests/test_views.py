@@ -49,12 +49,12 @@ class DatasetImportViewTests(APITransactionTestCase):
                 self.assertTrue(index.count() == 1)
                 self.assertTrue(index.last().added_by == self.user.username)
 
-
                 import_dataset = DatasetImport.objects.get(pk=import_id)
                 self.created_indices.append(import_dataset.index)
                 self.addCleanup(remove_file, import_dataset.file.name)
                 # Check if Import is completed
-                self.assertEqual(import_dataset.task.status, Task.STATUS_COMPLETED)
+                task_object = import_dataset.tasks.last()
+                self.assertEqual(task_object.status, Task.STATUS_COMPLETED)
                 self.assertTrue(import_dataset.num_documents > 0)
                 self.assertTrue(import_dataset.num_documents_success > 0)
                 self.assertTrue(import_dataset.num_documents_success <= import_dataset.num_documents)
@@ -62,7 +62,7 @@ class DatasetImportViewTests(APITransactionTestCase):
                 self.assertTrue(import_dataset.index in import_dataset.project.get_indices())
                 # test delete
                 response = self.client.delete(import_url)
-                self.assertTrue(response.status_code == 204)
+                self.assertTrue(response.status_code == status.HTTP_204_NO_CONTENT)
 
 
     def test_elasticsearch_index_name_validation(self):

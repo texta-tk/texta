@@ -1,14 +1,12 @@
 import json
-import logging
 
 from celery.decorators import task
+from texta_elastic.document import ElasticDocument
+from texta_elastic.searcher import ElasticSearcher
 from texta_tools.text_processor import TextProcessor
 
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
-from toolkit.core.task.models import Task
-from texta_elastic.document import ElasticDocument
-from texta_elastic.searcher import ElasticSearcher
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE, ERROR_LOGGER
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.topic_analyzer.clustering import ClusterContent, Clustering
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
@@ -30,7 +28,7 @@ def tag_cluster(self, cluster_pk: int, clustering_object_pk: int, fact: dict):
 @task(name="start_clustering_task", base=BaseTask)
 def start_clustering_task(clustering_id: int):
     clustering_obj = ClusteringResult.objects.get(pk=clustering_id)
-    task_object = clustering_obj.task
+    task_object = clustering_obj.tasks.last()
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('starting clustering')
     show_progress.update_view(0)
@@ -42,6 +40,7 @@ def start_clustering_task(clustering_id: int):
 def perform_data_clustering(clustering_id):
     clustering_model = ClusteringResult.objects.get(id=clustering_id)
 
+    task_object = clustering_model.tasks.last()
     try:
 
         num_clusters = clustering_model.num_cluster
@@ -60,7 +59,7 @@ def perform_data_clustering(clustering_id):
         significant_words_filter = clustering_model.significant_words_filter
 
         # Removing stopwords, ignored ids while fetching the documents.
-        show_progress = ShowProgress(clustering_model.task, multiplier=1)
+        show_progress = ShowProgress(task_object, multiplier=1)
         show_progress.update_step("scrolling data")
         show_progress.update_view(0)
 
@@ -120,17 +119,15 @@ def perform_data_clustering(clustering_id):
         return clustering_info
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        clustering_model.task.add_error(str(e))
-        clustering_model.task.update_status(status=Task.STATUS_FAILED)
-        clustering_model.save()
+        task_object.handle_failed_task(e)
         raise e
 
 
 @task(name="save_clustering_results", base=BaseTask)
 def save_clustering_results(clustering_result: dict):
     clustering_obj = ClusteringResult.objects.get(pk=clustering_result["pk"])
-    clustering_obj.task.update_status("saving_results")
+    task_object = clustering_obj.tasks.last()
+    task_object.update_status("saving_results")
 
     clustering_results = clustering_result["results"]
     fields = clustering_result["fields"]
@@ -176,5 +173,5 @@ def save_clustering_results(clustering_result: dict):
 @task(name="finish_clustering_task", base=BaseTask)
 def finish_clustering_task(clustering_id: int):
     clustering_model = ClusteringResult.objects.get(id=clustering_id)
-    clustering_model.task.complete()
+    clustering_model.tasks.last().complete()
     return True
