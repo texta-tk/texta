@@ -1,3 +1,17 @@
+## 3.4.0 (2022-08-23)
+
+### Features (2 changes)
+
+- [feat: Reformat task objects to allow multiple task records + normalization of common fields.](texta/texta-rest@d2bf6d6f516503482d3655be9192bb3c1524a902) by @mkollo
+ ([merge request](texta/texta-rest!158))
+- [feat: Automatically add index author to procedures that generate a new index.](texta/texta-rest@e9bcdcdeb109b9ba9c7cc03da55061e8ab7a3126) by @mkollo
+ ([merge request](texta/texta-rest!157))
+
+### Updates (1 change)
+
+- [update: Added missing functionality to remove favourited models.](texta/texta-rest@e95a2f6db7317cd022f39dd052520306cd74094a) by @mkollo
+ ([merge request](texta/texta-rest!155))
+
 ## 3.3.3 (2022-08-09)
 
 ### Features (1 change)
