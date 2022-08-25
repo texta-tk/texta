@@ -1,3 +1,24 @@
+## 3.5.1 (2022-08-25)
+
+### Features (2 changes)
+
+- [feat: Reformat task objects to allow multiple task records + normalization of common fields.](texta/texta-rest@d2bf6d6f516503482d3655be9192bb3c1524a902) by @mkollo
+ ([merge request](texta/texta-rest!158))
+- [feat: Automatically add index author to procedures that generate a new index.](texta/texta-rest@e9bcdcdeb109b9ba9c7cc03da55061e8ab7a3126) by @mkollo
+ ([merge request](texta/texta-rest!157))
+
+### Bug fixes (1 change)
+
+- [bug: Fixed issue of indexes not being deleted when deleting a long list of them.](texta/texta-rest@1d1dbc54bbcc9ac2c9aa3aec3071d8e1c61ce742) by @mkollo
+ ([merge request](texta/texta-rest!159))
+
+### Updates (2 changes)
+
+- [update: Added uuid field to User Profile.](texta/texta-rest@3a515f29f73cd82b44675b2f4fab5a6ddd34cf12) by @mkollo
+ ([merge request](texta/texta-rest!160))
+- [update: Added missing functionality to remove favourited models.](texta/texta-rest@e95a2f6db7317cd022f39dd052520306cd74094a) by @mkollo
+ ([merge request](texta/texta-rest!155))
+
 ## 3.5.0 (2022-08-25)
 
 ### Features (2 changes)
