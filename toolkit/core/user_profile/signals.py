@@ -6,9 +6,11 @@ from toolkit.core.user_profile.models import UserProfile
 
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):
-    '''When User object is created, create a UserProfile'''
+    """When User object is created, create a UserProfile"""
     if created:
-        UserProfile.objects.create(user=instance)
+        user_profile = UserProfile.objects.create(user=instance)
+        user_profile.uuid = UserProfile.create_uuid()
+        user_profile.save()
 
 
 @receiver(post_save, sender=User)
@@ -16,4 +18,6 @@ def save_profile(sender, instance, **kwargs):
     try:
         instance.profile.save()
     except AttributeError:
-        UserProfile.objects.create(user=instance)
+        user_profile = UserProfile.objects.create(user=instance)
+        user_profile.uuid = UserProfile.create_uuid()
+        user_profile.save()
