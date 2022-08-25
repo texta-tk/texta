@@ -9,7 +9,7 @@ from toolkit.constants import MAX_DESC_LEN
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
-    uuid = models.UUIDField(default=unique_id.uuid4, editable=False, unique=True)
+    uuid = models.UUIDField(null=True, editable=False, unique=True)
 
     first_name = models.TextField(null=True, default=None)
     last_name = models.TextField(null=True, default=None)
