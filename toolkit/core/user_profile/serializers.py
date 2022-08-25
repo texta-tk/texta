@@ -7,6 +7,7 @@ from .models import UserProfile
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    uuid = serializers.CharField(read_only=True)
     scopes = serializers.SerializerMethodField()
 
 
@@ -19,8 +20,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ('first_name', 'last_name', 'is_uaa_account', 'scopes', 'application',)
-        read_only_fields = ('application', 'is_uaa_account', 'scopes')
+        fields = ('uuid', 'first_name', 'last_name', 'is_uaa_account', 'scopes', 'application',)
+        read_only_fields = ('uuid', 'application', 'is_uaa_account', 'scopes',)
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):

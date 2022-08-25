@@ -28,8 +28,11 @@ class UserProfileSignalsAndViewsTests(APITestCase):
 
 
     def run_profile_object(self):
-        """Test whether or not UserProfile object was created"""
-        self.assertTrue(UserProfile.objects.filter(user=self.user.pk).exists())
+        """Test whether UserProfile object was created"""
+        user_profile = UserProfile.objects.filter(user=self.user.pk)
+        self.assertTrue(user_profile.exists())
+        user_profile = user_profile.last()
+        self.assertTrue(getattr(user_profile, "uuid", False))  # Check that UUID is automatically filled in when user is created.
 
 
     def run_profile_login(self):
@@ -89,6 +92,26 @@ class UserProfileSignalsAndViewsTests(APITestCase):
         self.client.login(username="user", password="pw")
         response = self.client.delete(self.admin_url)
         self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)
+
+
+    def test_detail_view_contents(self):
+        self.client.login(username="admin", password="1234")
+        response = self.client.get(self.admin_url)
+        data = response.data
+        print_output("test_detail_view_contents:response.data", data)
+        self.assertTrue(response.status_code, status.HTTP_200_OK)
+
+        fields_to_check_in_user = ["profile", "display_name"]
+        for field in fields_to_check_in_user:
+            self.assertTrue(field in data)
+            self.assertTrue(data[field])
+
+        fields_to_check_in_user_profile = ["uuid"]
+        user_profile = data["profile"]
+
+        for field in fields_to_check_in_user_profile:
+            self.assertTrue(field in user_profile)
+            self.assertTrue(user_profile[field])
 
 
     def test_that_making_a_normal_user_a_superusers_adds_the_is_staff_flag(self):
