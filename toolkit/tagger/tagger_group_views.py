@@ -4,6 +4,7 @@ import os
 import re
 
 import rest_framework.filters as drf_filters
+from celery import chain
 from django.db import transaction
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
@@ -20,11 +21,11 @@ from toolkit.core.task.models import Task
 from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, SerializerNotValid
 from toolkit.filter_constants import FavoriteFilter
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
-from toolkit.serializer_constants import ProjectResourceImportModelSerializer
+from toolkit.serializer_constants import EmptySerializer, ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER
 from toolkit.tagger.models import TaggerGroup
 from toolkit.tagger.serializers import (ApplyTaggerGroupSerializer, TagRandomDocSerializer, TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer)
-from toolkit.tagger.tasks import apply_tagger_group, apply_tagger_to_index, create_tagger_objects, get_mlp, get_tag_candidates, save_tagger_results, start_tagger_task, train_tagger_task
+from toolkit.tagger.tasks import apply_tagger_group, apply_tagger_to_index, end_tagger_group, get_mlp, get_tag_candidates, save_tagger_results, start_tagger_task, train_tagger_task
 from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing, TagLogicViews
 
@@ -72,11 +73,14 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         serializer = TaggerGroupSerializer(data=request_data, context={'request': request, 'view': self})
         serializer.is_valid(raise_exception=True)
 
-        fact_name = serializer.validated_data['fact_name']
         active_project = Project.objects.get(id=self.kwargs['project_pk'])
+        fact_name = serializer.validated_data['fact_name']
         blacklisted_facts = serializer.validated_data["blacklisted_facts"]
-
+        # retrieve tagger options from hybrid tagger serializer
         serialized_indices = [index["name"] for index in serializer.validated_data["tagger"]["indices"]]
+        validated_tagger_data = serializer.validated_data.pop('tagger')
+        embedding_model_object = validated_tagger_data.pop('embedding', None)
+
         indices = Project.objects.get(pk=kwargs["project_pk"]).get_available_or_all_project_indices(serialized_indices)
         if not indices:
             raise ValidationError("No indices are available to you!")
@@ -89,28 +93,25 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         if not tags:
             return Response({'error': f'found no tags for fact name: {fact_name}'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # create queries for taggers
+        # Create Elasticsearch queries for taggers
         tag_queries = self.create_queries(fact_name, tags)
 
-        # retrive tagger options from hybrid tagger serializer
-        validated_tagger_data = serializer.validated_data.pop('tagger')
-        embedding_model_object = validated_tagger_data.pop('embedding', None)
         if embedding_model_object:
             validated_tagger_data["embedding"] = embedding_model_object.pk
 
         validated_tagger_data.update('')
 
         # create tagger group object
-        tagger_group = serializer.save(
+        tagger_group: TaggerGroup = serializer.save(
             author=self.request.user,
             project=Project.objects.get(id=self.kwargs['project_pk']),
             blacklisted_facts=json.dumps(blacklisted_facts, ensure_ascii=False),
             num_tags=len(tags)
         )
 
-        # create taggers objects inside tagger group object
-        # use async to make things faster
-        create_tagger_objects.apply_async(args=(tagger_group.pk, validated_tagger_data, tags, tag_queries), queue=CELERY_LONG_TERM_TASK_QUEUE)
+        # Start the training process of the individual taggers that compose a Tagger Group.
+        tagger_ids = tagger_group.prepare_tagger_objects(tags, validated_tagger_data, tag_queries)
+        tagger_group.train(tagger_ids)
 
         # retrieve headers and create response
         headers = self.get_success_headers(serializer.data)
@@ -163,21 +164,13 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         return Response({"id": tagger_id, "message": "Successfully imported TaggerGroup models and associated files."}, status=status.HTTP_201_CREATED)
 
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], serializer_class=EmptySerializer)
     def models_retrain(self, request, pk=None, project_pk=None):
         """
         API endpoint for retraining tagger model.
         """
-        instance = self.get_object()
-        chain = start_tagger_task.s() | train_tagger_task.s() | save_tagger_results.s()
-
-        # start retraining tasks
-        for tagger in instance.taggers.all():
-            # update task status so statistics are correct during retraining
-            task_object = Task.objects.create(tagger=tagger, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
-            tagger.tasks.add(task_object)
-            task_object.save()
-            chain.apply_async(args=(tagger.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
+        instance: TaggerGroup = self.get_object()
+        instance.retrain()
 
         return Response({'success': 'retraining tasks created', 'tagger_group_id': instance.id}, status=status.HTTP_200_OK)
 

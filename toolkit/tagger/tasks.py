@@ -3,7 +3,7 @@ import logging
 import os
 import pathlib
 import secrets
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from celery import group
 from celery.decorators import task
@@ -18,83 +18,13 @@ from texta_tagger.tagger import Tagger as TextTagger
 
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.core.task.models import Task
-from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.data_sample import DataSample
-from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import add_finite_url_to_feedback, get_indices_from_object, load_stop_words
 from toolkit.mlp.tasks import apply_mlp_on_list
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, MEDIA_URL
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.tools.plots import create_tagger_plot
 from toolkit.tools.show_progress import ShowProgress
-
-
-def create_tagger_batch(tagger_group_id, taggers_to_create):
-    """Creates Tagger objects from list of tagger data and saves into tagger group object."""
-    # retrieve Tagger Group object
-    tagger_group_object = TaggerGroup.objects.get(pk=tagger_group_id)
-    # iterate through batch
-    logging.getLogger(INFO_LOGGER).info(f"Creating {len(taggers_to_create)} taggers for TaggerGroup ID: {tagger_group_id}!")
-    for tagger_data in taggers_to_create:
-        indices = [index["name"] for index in tagger_data["indices"]]
-        indices = tagger_group_object.project.get_available_or_all_project_indices(indices)
-        tagger_data.pop("indices")
-
-        embedding_id = tagger_data.get("embedding", None)
-        if embedding_id:
-            tagger_data["embedding"] = Embedding.objects.get(pk=embedding_id)
-
-        tagger_group_info = [
-            {
-                "description": tagger_group_object.description,
-                "id": tagger_group_id,
-                "fact_name": tagger_group_object.fact_name
-            }
-        ]
-
-        tagger_data["tagger_groups"] = json.dumps(tagger_group_info)
-
-        created_tagger = Tagger.objects.create(
-            **tagger_data,
-            author=tagger_group_object.author,
-            project=tagger_group_object.project
-        )
-
-        for index in Index.objects.filter(name__in=indices, is_open=True):
-            created_tagger.indices.add(index)
-
-        # add and save
-        tagger_group_object.taggers.add(created_tagger)
-        tagger_group_object.save()
-        # train
-        created_tagger.train()
-
-
-@task(name="create_tagger_objects", base=BaseTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
-def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries, batch_size=100):
-    """Task for creating Tagger objects inside Tagger Group to prevent database timeouts."""
-    # create tagger objects
-    logging.getLogger(INFO_LOGGER).info(f"Starting task 'create_tagger_objects' for TaggerGroup with ID: {tagger_group_id}!")
-
-    taggers_to_create = []
-    for i, tag in enumerate(tags):
-        tagger_data = tagger_serializer.copy()
-        tagger_data.update({"query": json.dumps(tag_queries[i])})
-        tagger_data.update({"description": tag})
-        tagger_data.update({"fields": json.dumps(tagger_data["fields"])}),
-        tagger_data.update({"stop_words": json.dumps(tagger_data["stop_words"])})
-        taggers_to_create.append(tagger_data)
-        # if batch size reached, save result
-        if len(taggers_to_create) >= batch_size:
-            create_tagger_batch(tagger_group_id, taggers_to_create)
-            taggers_to_create = []
-    # if any taggers remaining
-    if taggers_to_create:
-        # create tagger objects of remaining items
-        create_tagger_batch(tagger_group_id, taggers_to_create)
-
-    logging.getLogger(INFO_LOGGER).info(f"Completed task 'create_tagger_objects' for TaggerGroup with ID: {tagger_group_id}!")
-    return True
 
 
 @task(name="start_tagger_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
@@ -114,6 +44,7 @@ def train_tagger_task(tagger_id: int):
     info_logger.info(f"[Tagger] Starting task 'train_tagger' for tagger with ID: {tagger_id}!")
     tagger_object = Tagger.objects.get(id=tagger_id)
     task_object = tagger_object.tasks.last()
+
     try:
         # create progress object
         show_progress = ShowProgress(task_object, multiplier=1)
@@ -198,10 +129,9 @@ def train_tagger_task(tagger_id: int):
             "classes": tagger.report.classes
         }
 
+
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        task_object.add_error(str(e))
-        task_object.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
         raise e
 
 
@@ -239,9 +169,9 @@ def save_tagger_results(result_data: dict):
         if model_path and model_path.exists():
             model_path.unlink(missing_ok=True)
 
+    # Here the exception is handled instead of reraised to avoid causing trouble when training Tagger Groups as they use Celery chords.
     except Exception as e:
         task_object.handle_failed_task(e)
-        raise e
 
 
 def get_mlp(tagger_group_id: int, text: str, lemmatize: bool = False, use_ner: bool = True):
@@ -478,3 +408,14 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
     except Exception as e:
         task_object = tagger_object.tasks.last()
         task_object.handle_failed_task(e)
+
+
+@task(name="end_tagger_group", base=TransactionAwareTask, queue=CELERY_SHORT_TERM_TASK_QUEUE)
+def end_tagger_group(previous_result, tagger_group_id: int):
+    logger = logging.getLogger(INFO_LOGGER)
+
+    tg = TaggerGroup.objects.get(pk=tagger_group_id)
+    task_object = tg.tasks.last()
+    task_object.complete()
+
+    logger.info(f"[Tagger Group] Finished training for PK {tagger_group_id}!")
