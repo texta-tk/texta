@@ -8,6 +8,7 @@ import tempfile
 import zipfile
 from typing import Dict, List, Union
 
+from celery import chain, group
 from django.contrib.auth.models import User
 from django.core import serializers
 from django.db import models, transaction
@@ -285,6 +286,89 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
     minimum_sample_size = models.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE)
 
     taggers = models.ManyToManyField(Tagger, default=None)
+
+
+    def prepare_tagger_objects(self, tags: List[str], tagger_serializer: dict, tag_queries: List[dict]) -> List[int]:
+        """
+        Task for creating Tagger objects inside Tagger Group to prevent database timeouts.
+        :param tagger_serializer: Dictionary representation of to-be-trained Taggers common fields.
+        :param tags: Which tags to train on.
+        :param tag_queries: List of Elasticsearch queries for every tag.
+        """
+        # create tagger objects
+        logger = logging.getLogger(INFO_LOGGER)
+        logger.info(f"[Tagger Group] Starting task 'create_tagger_objects' for TaggerGroup with ID: {self.pk}!")
+        tagger_ids = []
+
+        taggers_to_create = []
+        for i, tag in enumerate(tags):
+            tagger_data = tagger_serializer.copy()
+            tagger_data.update({"query": json.dumps(tag_queries[i], ensure_ascii=False)})
+            tagger_data.update({"description": tag})
+            tagger_data.update({"fields": json.dumps(tagger_data["fields"])}),
+            tagger_data.update({"stop_words": json.dumps(tagger_data["stop_words"], ensure_ascii=False)})
+            taggers_to_create.append(tagger_data)
+
+            indices = [index["name"] for index in tagger_data["indices"]]
+            indices = self.project.get_available_or_all_project_indices(indices)
+            tagger_data.pop("indices")
+
+            embedding_id = tagger_data.get("embedding", None)
+            if embedding_id:
+                tagger_data["embedding"] = Embedding.objects.get(pk=embedding_id)
+
+            tagger_group_info = [
+                {
+                    "description": self.description,
+                    "id": self.pk,
+                    "fact_name": self.fact_name
+                }
+            ]
+
+            tagger_data["tagger_groups"] = json.dumps(tagger_group_info)
+
+            created_tagger = Tagger.objects.create(
+                **tagger_data,
+                author=self.author,
+                project=self.project,
+            )
+
+            task_object = Task.objects.create(task_type=Task.TYPE_TRAIN, status=Task.STATUS_RUNNING)
+            created_tagger.tasks.add(task_object)
+
+            for index in Index.objects.filter(name__in=indices, is_open=True):
+                created_tagger.indices.add(index)
+
+            # add and save
+            self.taggers.add(created_tagger)
+            self.save()
+
+            tagger_ids.append(created_tagger.pk)
+
+        return tagger_ids
+
+
+    def train(self, tagger_ids: List[str], task_type=Task.TYPE_TRAIN):
+        from toolkit.tagger.tasks import start_tagger_task, train_tagger_task, save_tagger_results, end_tagger_group
+
+        task_object = Task.objects.create(taggergroup=self, task_type=task_type, status=Task.STATUS_RUNNING)
+        self.tasks.add(task_object)
+
+        tasks = []
+        for tagger_pk in tagger_ids:
+            task_chain = start_tagger_task.s(tagger_pk) | train_tagger_task.s() | save_tagger_results.s()
+            tasks.append(task_chain)
+
+        # Create the chord.
+        task = chain(group(tasks), end_tagger_group.s(tagger_group_id=self.pk))
+
+        # Put it into a transaction to ensure the task objects are created and accessible.
+        transaction.on_commit(lambda: task.apply_async(queue=CELERY_LONG_TERM_TASK_QUEUE))
+
+
+    def retrain(self):
+        tagger_ids = [tagger.pk for tagger in self.taggers.all()]
+        self.train(tagger_ids=tagger_ids)
 
 
     def export_resources(self) -> HttpResponse:
