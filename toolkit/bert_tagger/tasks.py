@@ -177,7 +177,6 @@ def train_bert_tagger(tagger_id, testing=False):
 
         return True
 
-
     except Exception as e:
         task_object.handle_failed_task(e)
         raise

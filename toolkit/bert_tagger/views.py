@@ -24,7 +24,7 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.exceptions import DownloadingModelsNotAllowedError, InvalidModelIdentifierError, NonExistantModelError, ProjectValidationFailed
-from toolkit.helper_functions import add_finite_url_to_feedback, download_bert_requirements, get_downloaded_bert_models
+from toolkit.helper_functions import add_finite_url_to_feedback, download_bert_requirements, get_core_setting, get_downloaded_bert_models
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing, FeedbackModelView
@@ -260,7 +260,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Fa
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
 
-            tagger_object = self.get_object()
+            tagger_object: BertTaggerObject = self.get_object()
             new_task = Task.objects.create(berttagger=tagger_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
             tagger_object.save()
 
@@ -283,7 +283,8 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Fa
                 fact_value = ""
 
             args = (pk, indices, fields, fact_name, fact_value, query, bulk_size, max_chunk_bytes, es_timeout)
-            transaction.on_commit(lambda: apply_tagger_to_index.apply_async(args=args, queue=settings.CELERY_LONG_TERM_TASK_QUEUE))
+            queue = get_core_setting("TEXTA_GPU_QUEUE") if tagger_object.use_gpu else settings.CELERY_LONG_TERM_TASK_QUEUE
+            transaction.on_commit(lambda: apply_tagger_to_index.apply_async(args=args, queue=queue))
 
             message = "Started process of applying BERT Tagger with id: {}".format(tagger_object.id)
             return Response({"message": message}, status=status.HTTP_201_CREATED)

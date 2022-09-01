@@ -7,6 +7,7 @@ import tempfile
 import zipfile
 from typing import Dict, List, Union
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import serializers
 from django.db import models, transaction
@@ -21,8 +22,9 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.feedback import Feedback
+from toolkit.helper_functions import get_core_setting
 from toolkit.model_constants import CommonModelMixin, FavoriteModelMixin
-from toolkit.settings import (BASE_DIR, BERT_CACHE_DIR, BERT_FINETUNED_MODEL_DIRECTORY, BERT_PRETRAINED_MODEL_DIRECTORY, CELERY_LONG_TERM_TASK_QUEUE)
+from toolkit.settings import (BASE_DIR, BERT_CACHE_DIR, BERT_FINETUNED_MODEL_DIRECTORY, BERT_PRETRAINED_MODEL_DIRECTORY)
 
 
 class BertTagger(FavoriteModelMixin, CommonModelMixin):
@@ -183,7 +185,8 @@ class BertTagger(FavoriteModelMixin, CommonModelMixin):
         self.save()
         self.tasks.add(new_task)
         from toolkit.bert_tagger.tasks import train_bert_tagger
-        train_bert_tagger.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
+        queue = get_core_setting("TEXTA_GPU_QUEUE") if self.use_gpu else settings.CELERY_LONG_TERM_TASK_QUEUE
+        train_bert_tagger.apply_async(args=(self.pk,), queue=queue,)
 
 
     def get_resource_paths(self):
