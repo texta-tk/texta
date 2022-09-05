@@ -175,11 +175,6 @@ def set_core_setting(setting_name: str, setting_value: str):
 
 
 @login_required
-def protected_serve(request, path, document_root=None, show_indexes=False):
-    return serve(request, path, document_root, show_indexes)
-
-
-@login_required
 def protected_file_serve(request, project_id, application, file_name, document_root=None):
     from toolkit.core.project.models import Project
     from django.shortcuts import get_object_or_404
