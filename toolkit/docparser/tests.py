@@ -7,9 +7,9 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+from texta_elastic.core import ElasticCore
 
 from toolkit.core.project.models import Project
-from texta_elastic.core import ElasticCore
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.test_settings import VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
@@ -87,7 +87,7 @@ class TestDocparserAPIView(APITestCase):
         self.unauth_project.users.remove(self.user)
         response = self.client.post(url, data=payload)
         print_output("test_being_rejected_with_wrong_project_id:response.data", response.data)
-        self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)
+        self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN or response.status_code == status.HTTP_401_UNAUTHORIZED)
 
 
     def test_indices_being_added_into_the_project(self):
@@ -103,7 +103,7 @@ class TestDocparserAPIView(APITestCase):
         url = reverse("protected_serve", kwargs={"project_id": self.project.pk, "application": "docparser", "file_name": file_name})
         response = self.client.get(url)
         print_output("test_that_serving_media_works_for_authenticated_users", True)
-        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
     def test_that_serving_media_doesnt_work_for_unauthenticated_users(self):
@@ -112,7 +112,7 @@ class TestDocparserAPIView(APITestCase):
         url = reverse("protected_serve", kwargs={"project_id": self.project.pk, "application": "docparser", "file_name": file_name})
         response = self.client.get(url)
         print_output("test_that_serving_media_doesnt_work_for_unauthenticated_users", True)
-        self.assertTrue(response.status_code == status.HTTP_302_FOUND)
+        self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN or response.status_code == status.HTTP_401_UNAUTHORIZED)
 
 
     def test_media_access_for_unauthorized_projects(self):
@@ -121,7 +121,7 @@ class TestDocparserAPIView(APITestCase):
         url = reverse("protected_serve", kwargs={"project_id": self.project.pk, "application": "docparser", "file_name": file_name})
         response = self.client.get(url)
         print_output("test_media_access_for_unauthorized_projects", True)
-        self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)
+        self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN or response.status_code == status.HTTP_401_UNAUTHORIZED)
 
 
     def test_that_saved_file_size_isnt_zero(self):

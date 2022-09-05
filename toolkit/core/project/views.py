@@ -1,16 +1,19 @@
 import json
 import pathlib
+from wsgiref.util import FileWrapper
 
 import elasticsearch
 import elasticsearch_dsl
 import rest_framework.filters as drf_filters
 from django.contrib.auth.models import User
 from django.db.models import Q
+from django.http import StreamingHttpResponse
 from django.urls import reverse
+from django.utils._os import safe_join
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -23,22 +26,8 @@ from texta_elastic.searcher import ElasticSearcher
 from texta_elastic.spam_detector import SpamDetector
 
 from toolkit.core.project.models import Project
-from toolkit.core.project.serializers import (
-    CountIndicesSerializer,
-    ExportSearcherResultsSerializer,
-    HandleIndicesSerializer,
-    HandleProjectAdministratorsSerializer,
-    HandleUsersSerializer,
-    ProjectDocumentSerializer,
-    ProjectGetFactsSerializer,
-    ProjectGetSpamSerializer,
-    ProjectFactAggregatorSerializer,
-    ProjectSearchByQuerySerializer,
-    ProjectSerializer,
-    ProjectSimplifiedSearchSerializer,
-    ProjectSuggestFactNamesSerializer,
-    ProjectSuggestFactValuesSerializer
-)
+from toolkit.core.project.serializers import (CountIndicesSerializer, ExportSearcherResultsSerializer, HandleIndicesSerializer, HandleProjectAdministratorsSerializer, HandleUsersSerializer, ProjectDocumentSerializer, ProjectFactAggregatorSerializer, ProjectGetFactsSerializer,
+                                              ProjectGetSpamSerializer, ProjectSearchByQuerySerializer, ProjectSerializer, ProjectSimplifiedSearchSerializer, ProjectSuggestFactNamesSerializer, ProjectSuggestFactValuesSerializer)
 from toolkit.elastic.decorators import elastic_view
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import IndexSerializer
@@ -55,6 +44,38 @@ from toolkit.permissions.project_permissions import (
 from toolkit.settings import RELATIVE_PROJECT_DATA_PATH, SEARCHER_FOLDER_KEY
 from toolkit.tools.autocomplete import Autocomplete
 from toolkit.view_constants import FeedbackIndexView
+
+
+class ProtectedServeApi(APIView):
+    permission_classes = (IsAuthenticated,)
+
+
+    def get(self, request, path, document_root=None, show_indexes=False):
+        path = safe_join(document_root, path)
+        path_exists = pathlib.Path(path).exists()
+        if path_exists is False:
+            raise PermissionDenied("File does not exist!")
+
+        return StreamingHttpResponse(FileWrapper(open(path, "rb")))
+
+
+class ProtectedFileServe(APIView):
+    permission_classes = (IsAuthenticated,)
+
+
+    def get(self, request, project_id: int, application: str, file_name: str, document_root=None):
+        path = safe_join(RELATIVE_PROJECT_DATA_PATH, str(project_id), application, file_name)
+
+        # Safety checks.
+        is_authorized = Project.objects.filter(pk=project_id, users__in=[request.user]).exists()
+        path_exists = pathlib.Path(path).exists()
+        if is_authorized is False:
+            raise PermissionDenied("Given user is not added in the project!")
+        if path_exists is False:
+            raise PermissionDenied("File does not exist!")
+
+        # Return nicely if it passes all the checks.
+        return StreamingHttpResponse(FileWrapper(open(path, "rb")))
 
 
 class ExportSearchView(APIView):
