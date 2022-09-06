@@ -1,13 +1,13 @@
 import json
 import logging
 import os
-import pathlib
 from shutil import rmtree
 
 import rest_framework.filters as drf_filters
 from django.conf import settings
 from django.db import transaction
 from django.http import HttpResponse
+from django.utils._os import safe_join
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
@@ -246,7 +246,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Fa
 
         from texta_bert_tagger.tagger import BertTagger
         file_name = BertTagger.normalize_name(model_name)
-        path = pathlib.Path(settings.BERT_PRETRAINED_MODEL_DIRECTORY) / file_name
+        path = safe_join(settings.BERT_PRETRAINED_MODEL_DIRECTORY, file_name)  # Use safe_join to prevent path traversal attacks.
         rmtree(path)  # Since Pathlib can't deal with directories.
         return Response({"detail": f"Deleted model {model_name} from the filesystem!"}, status=status.HTTP_200_OK)
 
