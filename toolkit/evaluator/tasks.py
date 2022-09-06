@@ -244,6 +244,7 @@ def evaluate_tags_task(object_id: int, indices: List[str], query: dict, es_timeo
         evaluator_object.recall = scores["recall"]
         evaluator_object.f1_score = scores["f1_score"]
         evaluator_object.accuracy = scores["accuracy"]
+        evaluator_object.classes = json.dumps(classes, ensure_ascii=False)
         evaluator_object.confusion_matrix = json.dumps(scores["confusion_matrix"])
 
         evaluator_object.individual_results = json.dumps(remove_not_found(bin_scores), ensure_ascii=False)

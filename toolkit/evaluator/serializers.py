@@ -1,4 +1,5 @@
 import json
+import logging
 
 from rest_framework import serializers
 from texta_elastic.searcher import EMPTY_QUERY
@@ -11,6 +12,7 @@ from toolkit.evaluator.validators import (
     validate_fact_values_in_sync, validate_metric_restrictions, validate_fact, validate_fact_value,
 )
 from toolkit.serializer_constants import CommonModelSerializerMixin, IndicesSerializerMixin, ProjectResourceUrlSerializer, FavoriteModelSerializerMixin
+from toolkit.settings import ERROR_LOGGER
 
 
 class FilteredAverageSerializer(serializers.Serializer):
@@ -72,6 +74,8 @@ class EvaluatorSerializer(serializers.ModelSerializer, FavoriteModelSerializerMi
     true_fact_value = serializers.CharField(required=False, default="", help_text=f"Fact value used as true label for binary evaluation.")
     predicted_fact_value = serializers.CharField(required=False, default="", help_text=f"Fact value used as predicted label for binary evaluation.")
 
+    classes = serializers.SerializerMethodField(read_only=True)
+
     average_function = serializers.ChoiceField(
         choices=choices.AVG_CHOICES,
         default=choices.DEFAULT_AVG_FUNCTION,
@@ -121,6 +125,15 @@ class EvaluatorSerializer(serializers.ModelSerializer, FavoriteModelSerializerMi
 
     url = serializers.SerializerMethodField()
 
+
+    def get_classes(self, item):
+        try:
+            return json.loads(item.classes)
+        except Exception as e:
+            logging.getLogger(ERROR_LOGGER).exception(item)
+            return []
+
+
     def validate_indices(self, value):
         """ Check if indices exist in the relevant project. """
         project_obj = Project.objects.get(id=self.context["view"].kwargs["project_pk"])
@@ -128,6 +141,7 @@ class EvaluatorSerializer(serializers.ModelSerializer, FavoriteModelSerializerMi
             if index.get("name") not in project_obj.get_indices():
                 raise serializers.ValidationError(f'Index "{index.get("name")}" is not contained in your project indices "{project_obj.get_indices()}"')
         return value
+
 
     def validate(self, data):
         """ Check if all inserted facts and fact values are present in the indices."""
@@ -168,11 +182,12 @@ class EvaluatorSerializer(serializers.ModelSerializer, FavoriteModelSerializerMi
 
         return data
 
+
     class Meta:
         model = Evaluator
         fields = (
             "url", "author", "id", "description", "indices", "query", "true_fact", "predicted_fact", "true_fact_value", "predicted_fact_value",
-            "average_function", "f1_score", "is_favorited", "precision", "recall", "accuracy", "confusion_matrix", "n_true_classes", "n_predicted_classes", "n_total_classes",
+            "average_function", "f1_score", "is_favorited", "classes", "precision", "recall", "accuracy", "confusion_matrix", "n_true_classes", "n_predicted_classes", "n_total_classes",
             "evaluation_type", "scroll_size", "es_timeout", "scores_imprecise", "score_after_scroll", "document_count", "add_individual_results", "plot", "tasks",
             "add_misclassified_examples", "evaluation_type", "token_based", "field"
         )
