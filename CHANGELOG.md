@@ -1,3 +1,14 @@
+## 3.7.0 (2022-09-07)
+
+### Updates (3 changes)
+
+- [update: Storing classes inside the evaluator model.](texta/texta-rest@5813e650b3c3c03e66682bfcab81872c14d6faa7) by @mkollo
+ ([merge request](texta/texta-rest!165))
+- [update: README TTK v3](texta/texta-rest@f84d0cb98b544b3a93386c3272c4c4aeec3f1000) by @wael
+
+- [update: Added ability to favorite tasks to Evaluators.](texta/texta-rest@199739240e08fdeb9ec8ba4f017e1ecb1c3040ea) by @mkollo
+ ([merge request](texta/texta-rest!163))
+
 ## 3.6.0 (2022-09-06)
 
 ### Updates (1 change)
