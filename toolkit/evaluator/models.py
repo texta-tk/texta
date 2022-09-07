@@ -18,10 +18,10 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.evaluator import choices
-from toolkit.model_constants import CommonModelMixin
+from toolkit.model_constants import CommonModelMixin, FavoriteModelMixin
 
 
-class Evaluator(CommonModelMixin):
+class Evaluator(CommonModelMixin, FavoriteModelMixin):
     MODEL_TYPE = "evaluator"
     MODEL_JSON_NAME = "model.json"
 
@@ -55,6 +55,8 @@ class Evaluator(CommonModelMixin):
     scores_imprecise = models.BooleanField(default=None, null=True)
     score_after_scroll = models.BooleanField(default=None, null=True)
 
+    classes = models.TextField(default=json.dumps([]))
+
     evaluation_type = models.CharField(max_length=MAX_DESC_LEN, default=None, null=True)
 
     token_based = models.BooleanField(default=choices.DEFAULT_TOKEN_BASED, null=True)
@@ -73,9 +75,10 @@ class Evaluator(CommonModelMixin):
     def to_json(self) -> dict:
         serialized = serializers.serialize("json", [self])
         json_obj = json.loads(serialized)[0]["fields"]
-        json_obj.pop("project")
-        json_obj.pop("author")
-        json_obj.pop("tasks")
+        json_obj.pop("project", None)
+        json_obj.pop("author", None)
+        json_obj.pop("tasks", [])
+        json_obj.pop("favorited_users", None)
         return json_obj
 
 
@@ -86,7 +89,8 @@ class Evaluator(CommonModelMixin):
                 json_string = archive.read(Evaluator.MODEL_JSON_NAME).decode()
                 evaluator_json = json.loads(json_string)
 
-                indices = evaluator_json.pop("indices")
+                indices = evaluator_json.pop("indices", [])
+                evaluator_json.pop("favorited_users", None)
 
                 evaluator_model = Evaluator(**evaluator_json)
 
