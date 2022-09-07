@@ -1,3 +1,10 @@
+## 3.6.0 (2022-09-06)
+
+### Updates (1 change)
+
+- [update: Added ability to favorite tasks to Evaluators.](texta/texta-rest@199739240e08fdeb9ec8ba4f017e1ecb1c3040ea) by @mkollo
+ ([merge request](texta/texta-rest!163))
+
 ## 3.5.3 (2022-09-05)
 
 ### Features (2 changes)
