@@ -47,7 +47,7 @@ def apply_persistent_bert_tagger(tagger_input: Union[str, Dict], tagger_id: int,
         raise
 
 
-@task(name="train_bert_tagger", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
+@task(name="train_bert_tagger", base=TransactionAwareTask)
 def train_bert_tagger(tagger_id, testing=False):
     # retrieve neurotagger & task objects
     tagger_object = BertTaggerObject.objects.get(pk=tagger_id)
