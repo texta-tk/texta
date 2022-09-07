@@ -55,6 +55,8 @@ class Evaluator(CommonModelMixin, FavoriteModelMixin):
     scores_imprecise = models.BooleanField(default=None, null=True)
     score_after_scroll = models.BooleanField(default=None, null=True)
 
+    classes = models.TextField(default=json.dumps([]))
+
     evaluation_type = models.CharField(max_length=MAX_DESC_LEN, default=None, null=True)
 
     token_based = models.BooleanField(default=choices.DEFAULT_TOKEN_BASED, null=True)
