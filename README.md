@@ -10,7 +10,7 @@ https://git.texta.ee/texta/texta-rest/wikis/home
 
 ## Notes
 
-Works with Python 3.6
+Works with Python 3.8
 
 ### Creating environment:
 
@@ -78,6 +78,7 @@ Toolkit is installed:
 * TEXTA_CORS_ALLOW_CREDENTIALS - Whether to allow cookies to be included in cross-site HTTP requests (Default: True)
 * TEXTA_CORS_ALLOW_ALL_ORIGINS - Whether to allow requests from all Origins (Default: false)
 
+* TEXTA_CELERY_USED_QUEUES - Comma separated list of Celery queues you are using for TEXTA Toolkit. No need to touch when running a standard configuration.
 * TEXTA_ELASTIC_VERSION - Must equal to the integer of the main Elasticsearch cluster version (Default: 6).
 * TEXTA_DEPLOY_KEY - Used to separate different Toolkit instances for cases where Elasticsearch or the database are
   shared amongst multiple instances. Best to give this a simple number (Default: 1).
@@ -85,16 +86,6 @@ Toolkit is installed:
 * TEXTA_USE_CSRF - Whether to disable CSRF for integration tests (Default: false).
 * TEXTA_CELERY_ALWAYS_EAGER - Whether to use Celerys async features or not, useful for testing purposes locally. (
   Default: False)
-
-
-* TEXTA_SHORT_TASK_WORKERS - Number of processes available for short term tasks (Default: 2).
-* TEXTA_LONG_TASK_WORKERS - Number of processes available for long term tasks (Default: 4).
-* TEXTA_MLP_TASK_WORKERS - Number of processes available for MLP based tasks (Default: 2).
-* TEXTA_SHORT_MAX_TASKS - Number of tasks per worker for short term tasks (Default: 10).
-* TEXTA_LONG_MAX_TASKS - Number of tasks per worker for long term tasks (Default: 10).
-* TEXTA_MLP_MAX_TASKS - Number of tasks per worker for MLP based tasks (Default: 10).
-* TEXTA_BEAT_LOG_LEVEL - Which log level should beat output within the Docker image (Default: WARNING).
-* TEXTA_CELERY_LOG_LEVEL - Which log level should Celery workers output within the Docker image (Default: WARNING).
 
 
 * TEXTA_DATA_DIR - Path to the directory in which TEXTA Toolkit saves the models it generates, and the binary model
@@ -131,17 +122,16 @@ Toolkit is installed:
   , ["court decisions", "court decisions"], ["tweets", "tweets"], ["forum posts", "forum posts"]
   , ["formal documents", "formal documents"], ["other", "other"]])
 
-    * TOOLKIT_PROJECT_DATA_PATH - Path of the directory in which project specific data is kept (Default: data/projects).
+* TOOLKIT_PROJECT_DATA_PATH - Path of the directory in which project specific data is kept (Default: data/projects).
 
 ## External services
-
+* TEXTA_ES_PREFIX - String used to limit Elasticsearch index access. Only indices matched will be the ones matching "
+  {TEXTA_ES_PREFIX}*".
 * TEXTA_ES_URL - URL of the Elasticsearch instance including the protocol, host and port (ex. http://localhost:9200).
 * TEXTA_REDIS_URL - URL of the Redis instance including the protocol, host and port (ex. redis://localhost:6379).
 
 ## Django specifics
 
-* TEXTA_ES_PREFIX - String used to limit Elasticsearch index access. Only indices matched will be the ones matching "
-  {TEXTA_ES_PREFIX}*".
 * TEXTA_CORS_ORIGIN_WHITELIST - Comma separated string of urls (**NO WHITESPACE**) for the CORS whitelist. Needs to
   include the protocol (ex. http://* or http://*,http://localhost:4200).
 * TEXTA_ALLOWED_HOSTS - Comma separated string (**NO WHITESPACE**) representing the host/domain names that this Django
@@ -160,6 +150,18 @@ Toolkit is installed:
   with SQLite.
 * DJANGO_DATABASE_PORT - The port to use when connecting to the database. An empty string means the default port. Not
   used with SQLite.
+
+## Docker specific configurations:
+* TEXTA_SHORT_TASK_WORKERS - Number of processes available for short term tasks (Default: 2).
+* TEXTA_LONG_TASK_WORKERS - Number of processes available for long term tasks (Default: 4).
+* TEXTA_MLP_TASK_WORKERS - Number of processes available for MLP based tasks (Default: 2).
+* TEXTA_SHORT_MAX_TASKS - Number of tasks per worker for short term tasks (Default: 10).
+* TEXTA_LONG_MAX_TASKS - Number of tasks per worker for long term tasks (Default: 10).
+* TEXTA_MLP_MAX_TASKS - Number of tasks per worker for MLP based tasks (Default: 10).
+* TEXTA_BEAT_LOG_LEVEL - Which log level should beat output within the Docker image (Default: WARNING).
+* TEXTA_CELERY_LOG_LEVEL - Which log level should Celery workers output within the Docker image (Default: WARNING).
+
+
 
 ## Extra Elasticsearch connection configurations
 

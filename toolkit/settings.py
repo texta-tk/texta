@@ -8,9 +8,9 @@ import environ
 from corsheaders.defaults import default_headers
 from kombu import Exchange, Queue
 
-from .helper_functions import download_bert_requirements, download_mlp_requirements, download_nltk_resources, parse_bool_env, parse_list_env_headers, parse_tuple_env_headers, prepare_mandatory_directories
+from .helper_functions import download_bert_requirements, download_mlp_requirements, download_nltk_resources, parse_bool_env, parse_list_env_headers, parse_tuple_env_headers, \
+    prepare_mandatory_directories
 from .logging_settings import setup_logging
-
 
 # Ignore Python Warning base class
 warnings.simplefilter(action="ignore", category=Warning)
@@ -18,6 +18,7 @@ warnings.simplefilter(action="ignore", category=Warning)
 env_file_path = os.getenv("TEXTA_ENV_FILE", None)
 if env_file_path:
     import termcolor
+
     termcolor.cprint(f"Loading env file: {env_file_path}!", color="green")
     environ.Env.read_env(env_file=env_file_path)
 
@@ -316,6 +317,16 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERYD_PREFETCH_MULTIPLIER = env.int("TEXTA_CELERY_PREFETCH_MULTIPLIER", default=1)
 CELERY_ALWAYS_EAGER = env.bool("TEXTA_CELERY_ALWAYS_EAGER", default=False)
+
+CELERY_USED_QUEUES = env.list("TEXTA_CELERY_USED_QUEUES", default=[CELERY_LONG_TERM_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE])
+
+# Although Celery by default creates queues it's fed automatically, defining the queues manually in here is important
+# for Celery operations like the purging of tasks. Lacking these, certain commands will default to the queue of CELERY_DEFAULT_QUEUE.
+# TODO Figure out a way to instruct the deploying user on whether a non-registered queue exists in Redis, informing them to it to the env variable.
+CELERY_QUEUES = (
+    Queue(queue, exchange=queue, routing_key=queue)
+    for queue in CELERY_USED_QUEUES
+)
 
 # By default use the queue for short term tasks, unless specified to use the long term one.
 CELERY_DEFAULT_QUEUE = CELERY_SHORT_TERM_TASK_QUEUE
