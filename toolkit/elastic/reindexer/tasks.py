@@ -58,7 +58,7 @@ def apply_custom_processing(elastic_search: ElasticSearcher, flatten_doc=False):
         yield new_doc
 
 
-def apply_field_changes_generator(generator, index: str, field_data: List[dict], logger, total: int = 0, random_size: Optional[int] = None, task_object=None):
+def apply_field_changes_generator(generator, index: str, field_data: List[dict], logger, total: int = None, random_size: Optional[int] = None, task_object=None):
     all_field_names = [field["path"] for field in field_data]
     counter = 0
 
@@ -87,7 +87,7 @@ def apply_field_changes_generator(generator, index: str, field_data: List[dict],
 
         # Log out the progress every tenth of the way.
         tenth = round((total / 10))
-        if counter % tenth == 0:
+        if tenth > 0 and counter % tenth == 0:
             task_object.update_progress(tenth, step="uploading documents")
             logger.info(f"[Reindexer] Parsed {counter} documents out of {total}!")
 
