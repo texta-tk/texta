@@ -1,13 +1,9 @@
 from typing import List
-import json
 
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
+from texta_elastic.core import ElasticCore
 
 from toolkit.core.project.models import Project
-from toolkit.core.task.serializers import TaskSerializer
-from toolkit.core.user_profile.serializers import UserSerializer
-from texta_elastic.core import ElasticCore
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.validators import (
     check_for_banned_beginning_chars,
@@ -43,7 +39,6 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
         help_text='Picks a subset of documents of chosen size at random. Disabled by default.',
         required=False,
         min_value=1,
-        max_value=10000
     )
 
 
