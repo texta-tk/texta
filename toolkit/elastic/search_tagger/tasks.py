@@ -116,7 +116,7 @@ def update_search_fields_generator(
                 "_id": raw_doc["_id"],
                 "_type": raw_doc.get("_type", "_doc"),
                 "_op_type": "update",
-                "_source": {"doc": {"texta_facts": existing_facts}}
+                "doc": {"texta_facts": existing_facts}
             }
 
 
