@@ -4,7 +4,6 @@ import os
 import re
 
 import rest_framework.filters as drf_filters
-from celery import chain
 from django.db import transaction
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
@@ -25,14 +24,13 @@ from toolkit.serializer_constants import EmptySerializer, ProjectResourceImportM
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER
 from toolkit.tagger.models import TaggerGroup
 from toolkit.tagger.serializers import (ApplyTaggerGroupSerializer, TagRandomDocSerializer, TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer)
-from toolkit.tagger.tasks import apply_tagger_group, apply_tagger_to_index, end_tagger_group, get_mlp, get_tag_candidates, save_tagger_results, start_tagger_task, train_tagger_task
+from toolkit.tagger.tasks import apply_tagger_group, apply_tagger_to_index, get_mlp, get_tag_candidates, start_tagger_group
 from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing, TagLogicViews
 
 
 class TaggerGroupFilter(FavoriteFilter):
     description = filters.CharFilter('description', lookup_expr='icontains')
-
 
     class Meta:
         model = TaggerGroup
@@ -59,10 +57,8 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
     filterset_class = TaggerGroupFilter
     ordering_fields = ('id', 'author__username', 'description', 'fact_name', 'minimum_sample_size', 'num_tags')
 
-
     def get_queryset(self):
         return TaggerGroup.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
-
 
     def create(self, request, *args, **kwargs):
         # add dummy value to tagger so serializer is happy
@@ -110,13 +106,11 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         )
 
         # Start the training process of the individual taggers that compose a Tagger Group.
-        tagger_ids = tagger_group.prepare_tagger_objects(tags, validated_tagger_data, tag_queries)
-        tagger_group.train(tagger_ids)
+        start_tagger_group.apply_async(args=[tagger_group.pk, tags, validated_tagger_data, tag_queries], queue=CELERY_LONG_TERM_TASK_QUEUE)
 
         # retrieve headers and create response
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -127,7 +121,6 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         self.perform_destroy(instance)
 
         return Response({"success": "Taggergroup instance deleted, related tagger instances deleted and related models and plots removed"}, status=status.HTTP_204_NO_CONTENT)
-
 
     @action(detail=True, methods=['get'])
     def models_list(self, request, pk=None, project_pk=None):
@@ -141,7 +134,6 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
         return Response(response, status=status.HTTP_200_OK)
 
-
     @action(detail=True, methods=['get'])
     def export_model(self, request, pk=None, project_pk=None):
         """Returns list of tags for input text."""
@@ -153,7 +145,6 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(zip_name)
         return response
 
-
     @action(detail=False, methods=["post"], serializer_class=ProjectResourceImportModelSerializer)
     def import_model(self, request, pk=None, project_pk=None):
         serializer = ProjectResourceImportModelSerializer(data=request.data)
@@ -162,7 +153,6 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         uploaded_file = serializer.validated_data['file']
         tagger_id = TaggerGroup.import_resources(uploaded_file, request, project_pk)
         return Response({"id": tagger_id, "message": "Successfully imported TaggerGroup models and associated files."}, status=status.HTTP_201_CREATED)
-
 
     @action(detail=True, methods=['post'], serializer_class=EmptySerializer)
     def models_retrain(self, request, pk=None, project_pk=None):
@@ -173,7 +163,6 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         instance.retrain()
 
         return Response({'success': 'retraining tasks created', 'tagger_group_id': instance.id}, status=status.HTTP_200_OK)
-
 
     @action(detail=True, methods=['post'], serializer_class=TaggerGroupTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
@@ -209,7 +198,6 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # get tags
         tags += apply_tagger_group(tagger_group_id, text, tag_candidates, request, input_type='text', feedback=feedback)
         return Response(tags, status=status.HTTP_200_OK)
-
 
     @action(detail=True, methods=['post'], serializer_class=TaggerGroupTagDocumentSerializer)
     def tag_doc(self, request, pk=None, project_pk=None):
@@ -259,7 +247,6 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         tags += apply_tagger_group(tagger_group_id, input_document, tag_candidates, request, input_type='doc', lemmatize=lemmatize, feedback=feedback)
         return Response(tags, status=status.HTTP_200_OK)
 
-
     @action(detail=True, methods=['post'])
     def tag_random_doc(self, request, pk=None, project_pk=None):
         """
@@ -307,7 +294,6 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # return document with tags
         response = {"document": random_doc, "tags": tags}
         return Response(response, status=status.HTTP_200_OK)
-
 
     @action(detail=True, methods=['post'], serializer_class=ApplyTaggerGroupSerializer)
     def apply_to_index(self, request, pk=None, project_pk=None):

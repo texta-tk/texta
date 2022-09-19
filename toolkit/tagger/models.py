@@ -72,7 +72,6 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
     balance = models.BooleanField(default=choices.DEFAULT_BALANCE)
     balance_to_max_limit = models.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT)
 
-
     def get_available_or_all_indices(self, indices: List[str] = None) -> List[str]:
         """
         Used in views where the user can select the indices they wish to use.
@@ -90,22 +89,17 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         indices = list(set(indices))  # Leave only unique names just in case.
         return indices
 
-
     def get_indices(self):
         return [index.name for index in self.indices.filter(is_open=True)]
-
 
     def set_confusion_matrix(self, x):
         self.confusion_matrix = json.dumps(x)
 
-
     def get_confusion_matrix(self):
         return json.loads(self.confusion_matrix)
 
-
     def __str__(self):
         return '{0} - {1}'.format(self.pk, self.description)
-
 
     def generate_name(self, name="tagger"):
         """
@@ -121,7 +115,6 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         relative_path = pathlib.Path(RELATIVE_MODELS_PATH) / "tagger" / model_file_name
         return str(full_path), str(relative_path)
 
-
     def to_json(self) -> dict:
         serialized = serializers.serialize('json', [self])
         json_obj = json.loads(serialized)[0]["fields"]
@@ -129,7 +122,6 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         del json_obj["author"]
         del json_obj["tasks"]
         return json_obj
-
 
     def export_resources(self) -> HttpResponse:
         with tempfile.SpooledTemporaryFile(encoding="utf8") as tmp:
@@ -145,7 +137,6 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
 
             tmp.seek(0)
             return tmp.read()
-
 
     @staticmethod
     def import_resources(zip_file, request, pk) -> int:
@@ -182,14 +173,12 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
                 new_model.save()
                 return new_model.id
 
-
     def get_resource_paths(self):
         """
         Return the full paths of every resource used by this model that lives
         on the filesystem.
         """
         return {"model": self.model.path, "plot": self.plot.path}
-
 
     def train(self):
         self.save()  # Save it before-hand to ensure that there is an object stored to save the task into.
@@ -199,7 +188,6 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         logging.getLogger(INFO_LOGGER).info(f"Celery: Starting task for training of tagger: {self.to_json()}")
         chain = start_tagger_task.s() | train_tagger_task.s() | save_tagger_results.s()
         transaction.on_commit(lambda: chain.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE))
-
 
     def load_tagger(self, lemmatize: bool = False, use_logger: bool = True):
         """Loading tagger model from disc."""
@@ -227,7 +215,6 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         if not tagger_loaded:
             return None
         return tagger
-
 
     def apply_loaded_tagger(self, tagger: TextTagger, content: Union[str, Dict[str, str]], input_type: str = "text", feedback: bool = False):
         """Applying loaded tagger."""
@@ -287,68 +274,9 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
 
     taggers = models.ManyToManyField(Tagger, default=None)
 
-
-    def prepare_tagger_objects(self, tags: List[str], tagger_serializer: dict, tag_queries: List[dict]) -> List[int]:
-        """
-        Task for creating Tagger objects inside Tagger Group to prevent database timeouts.
-        :param tagger_serializer: Dictionary representation of to-be-trained Taggers common fields.
-        :param tags: Which tags to train on.
-        :param tag_queries: List of Elasticsearch queries for every tag.
-        """
-        # create tagger objects
-        logger = logging.getLogger(INFO_LOGGER)
-        logger.info(f"[Tagger Group] Starting task 'create_tagger_objects' for TaggerGroup with ID: {self.pk}!")
-        tagger_ids = []
-
-        taggers_to_create = []
-        for i, tag in enumerate(tags):
-            tagger_data = tagger_serializer.copy()
-            tagger_data.update({"query": json.dumps(tag_queries[i], ensure_ascii=False)})
-            tagger_data.update({"description": tag})
-            tagger_data.update({"fields": json.dumps(tagger_data["fields"])}),
-            tagger_data.update({"stop_words": json.dumps(tagger_data["stop_words"], ensure_ascii=False)})
-            taggers_to_create.append(tagger_data)
-
-            indices = [index["name"] for index in tagger_data["indices"]]
-            indices = self.project.get_available_or_all_project_indices(indices)
-            tagger_data.pop("indices")
-
-            embedding_id = tagger_data.get("embedding", None)
-            if embedding_id:
-                tagger_data["embedding"] = Embedding.objects.get(pk=embedding_id)
-
-            tagger_group_info = [
-                {
-                    "description": self.description,
-                    "id": self.pk,
-                    "fact_name": self.fact_name
-                }
-            ]
-
-            tagger_data["tagger_groups"] = json.dumps(tagger_group_info)
-
-            created_tagger = Tagger.objects.create(
-                **tagger_data,
-                author=self.author,
-                project=self.project,
-            )
-
-            task_object = Task.objects.create(task_type=Task.TYPE_TRAIN, status=Task.STATUS_RUNNING)
-            created_tagger.tasks.add(task_object)
-
-            for index in Index.objects.filter(name__in=indices, is_open=True):
-                created_tagger.indices.add(index)
-
-            # add and save
-            self.taggers.add(created_tagger)
-            self.save()
-
-            tagger_ids.append(created_tagger.pk)
-
-        return tagger_ids
-
-
-    def train(self, tagger_ids: List[str], task_type=Task.TYPE_TRAIN):
+    # Only used for retrains and other possible cases where you want to group up multiple taggers
+    # to be trained, TaggerGroup training process itself is started through the view through a special task.
+    def train(self, tagger_ids: List[int], task_type=Task.TYPE_TRAIN):
         from toolkit.tagger.tasks import start_tagger_task, train_tagger_task, save_tagger_results, end_tagger_group
 
         task_object = Task.objects.create(taggergroup=self, task_type=task_type, status=Task.STATUS_RUNNING)
@@ -365,11 +293,9 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
         # Put it into a transaction to ensure the task objects are created and accessible.
         transaction.on_commit(lambda: task.apply_async(queue=CELERY_LONG_TERM_TASK_QUEUE))
 
-
     def retrain(self):
         tagger_ids = [tagger.pk for tagger in self.taggers.all()]
         self.train(tagger_ids=tagger_ids)
-
 
     def export_resources(self) -> HttpResponse:
         with tempfile.SpooledTemporaryFile(encoding="utf8") as tmp:
@@ -386,7 +312,6 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
 
             tmp.seek(0)
             return tmp.read()
-
 
     @staticmethod
     def import_resources(zip_file, request, pk) -> int:
@@ -439,7 +364,6 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
                 new_model.save()
                 return new_model.id
 
-
     def to_json(self) -> dict:
         serialized = serializers.serialize('json', [self])
         json_obj = json.loads(serialized)[0]["fields"]
@@ -449,10 +373,8 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
         del json_obj["tasks"]
         return json_obj
 
-
     def __str__(self):
         return self.fact_name
-
 
     def get_resource_paths(self):
         container = []
@@ -460,7 +382,6 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
         for tagger in taggers:
             container.append(tagger.get_resource_paths())
         return container
-
 
     def get_indices(self):
         # Retrieve project indices for checking if the Tagger Group index still exists
@@ -471,7 +392,8 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
         tg_indices_in_project = list(set(tg_indices).intersection(set(project_indices)))
         # If no indices used for training are present in the current project, return all project indices
         if not tg_indices_in_project:
-            logging.getLogger(INFO_LOGGER).info(f"[Tagger Group] Indices used for training ({tg_indices}) are not present in the current project. Using all the indices present in the project ({project_indices}).")
+            logging.getLogger(INFO_LOGGER).info(
+                f"[Tagger Group] Indices used for training ({tg_indices}) are not present in the current project. Using all the indices present in the project ({project_indices}).")
             return project_indices
         return tg_indices_in_project
 
