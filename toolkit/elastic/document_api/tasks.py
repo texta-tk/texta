@@ -69,7 +69,7 @@ def query_delete_actions_generator(searcher, target_facts: List[dict]):
                 "_index": document["_index"],
                 "_type": document.get("_type", "_doc"),
                 "_id": document["_id"],
-                "_source": {"doc": document["_source"]}
+                "doc": document["_source"]
             }
 
 
