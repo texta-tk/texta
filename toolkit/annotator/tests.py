@@ -361,3 +361,129 @@ class EntityAnnotatorTests(APITestCase):
             print_output("facts", facts)
             print_output("mode_object", model_object.entity_configuration.fact_name)
             self.assertTrue(model_object.entity_configuration.fact_name in [fact["fact"] for fact in facts])
+
+
+@override_settings(CELERY_ALWAYS_EAGER=True)
+class MultilabelAnnotatorTests(APITestCase):
+
+    def setUp(self):
+        # Owner of the project
+        self.test_index_name = reindex_test_dataset()
+        self.index, is_created = Index.objects.get_or_create(name=self.test_index_name)
+        self.user = create_test_user('annotator', 'my@email.com', 'pw')
+        self.project = project_creation("multilabelTestProject", self.test_index_name, self.user)
+        self.project.indices.add(self.index)
+        self.project.users.add(self.user)
+
+        self.client.login(username='annotator', password='pw')
+        self.ec = ElasticCore()
+
+        self.list_view_url = reverse("v2:annotator-list", kwargs={"project_pk": self.project.pk})
+        self.labelset_url = reverse("v2:labelset-list", kwargs={"project_pk": self.project.pk})
+        self.get_facts_url = reverse("v2:get_facts", kwargs={"project_pk": self.project.pk})
+        self.facts = self._get_facts()
+        self.labelset = self._create_labelset()
+        self.annotator = self._create_annotator()
+        self.pull_document_url = reverse("v2:annotator-pull-document", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
+
+    def test_all(self):
+        self.run_multilabel_annotation()
+        self.run_empty_multilabel_annotation()
+
+    def _create_annotator(self):
+        payload = {
+            "description": "Random test annotation.",
+            "indices": [{"name": self.test_index_name}],
+            "query": json.dumps(TEST_QUERY),
+            "fields": [TEST_FIELD],
+            "annotating_users": ["annotator"],
+            "annotation_type": "multilabel",
+            "multilabel_configuration": {
+                "labelset": self.labelset["id"]
+            }
+        }
+        response = self.client.post(self.list_view_url, data=payload, format="json")
+        print_output("_create_annotator:response.status", response.status_code)
+        self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+        return response.data
+
+    def _get_facts(self):
+        payload = {}
+        response = self.client.post(self.get_facts_url, data=payload, format="json")
+        print_output("_get_facts:response.status", response.status_code)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        return response.data
+
+    def _create_labelset(self):
+        payload = {
+            "category": "new",
+            "value_limit": 500,
+            "indices": [self.test_index_name],
+            "fact_names": [self.facts[0]["name"]],
+            "values": ["true"]
+        }
+        response = self.client.post(self.labelset_url, data=payload, format="json")
+        print_output("_create_labelset:response.status", response.status_code)
+        self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+        return response.data
+
+    def _pull_random_document(self):
+        url = reverse("v2:annotator-pull-document", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
+        response = self.client.post(url, format="json")
+        return response.data
+
+    def run_multilabel_annotation(self):
+        annotation_url = reverse("v2:annotator-annotate-multilabel", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
+        print_output("run_multilabel_annotation:annotation_url", annotation_url)
+        random_document = self._pull_random_document()
+
+        # Get model object before annotation.
+        model_object_before = Annotator.objects.get(pk=self.annotator["id"])
+        annotations_before = model_object_before.annotated
+        print_output("run_multilabel_annotation:annotations_before", annotations_before)
+
+        annotation_payload = {
+            "document_id": random_document["_id"],
+            "index": random_document["_index"],
+            "labels": self.labelset["values"]
+        }
+
+        print_output(f"run_multilabel_annotation:annotation_payload", annotation_payload['document_id'])
+        annotation_response = self.client.post(annotation_url, data=annotation_payload, format="json")
+        # Test for response success.
+        print_output("run_multilabel_annotation:response.status", annotation_response.status_code)
+        self.assertTrue(annotation_response.status_code == status.HTTP_200_OK)
+
+        # Test that progress is updated properly.
+        model_object_after = Annotator.objects.get(pk=self.annotator["id"])
+        annotations_after = model_object_after.annotated
+        print_output("run_multilabel_annotation:annotations_after", annotations_after)
+        self.assertTrue(annotations_after == annotations_before + 1)
+
+    def run_empty_multilabel_annotation(self):
+        annotation_url = reverse("v2:annotator-annotate-multilabel", kwargs={"project_pk": self.project.pk, "pk": self.annotator["id"]})
+        print_output("run_multilabel_annotation:annotation_url", annotation_url)
+        random_document = self._pull_random_document()
+
+        # Get model object before annotation.
+        model_object_before = Annotator.objects.get(pk=self.annotator["id"])
+        annotations_before = model_object_before.annotated
+        print_output("run_empty_multilabel_annotation:annotations_before", annotations_before)
+
+        annotation_payload = {
+            "document_id": random_document["_id"],
+            "index": random_document["_index"],
+            "labels": []
+        }
+
+        print_output(f"run_empty_multilabel_annotation:annotation_payload", annotation_payload['document_id'])
+        annotation_response = self.client.post(annotation_url, data=annotation_payload, format="json")
+        # Test for response success.
+        print_output("run_empty_multilabel_annotation:response.status", annotation_response.status_code)
+        self.assertTrue(annotation_response.status_code == status.HTTP_200_OK)
+
+        # Test that progress is updated properly.
+        model_object_after = Annotator.objects.get(pk=self.annotator["id"])
+        annotations_after = model_object_after.annotated
+        print_output("run_empty_multilabel_annotation:annotations_after", annotations_after)
+        self.assertTrue(annotations_after == annotations_before + 1)
