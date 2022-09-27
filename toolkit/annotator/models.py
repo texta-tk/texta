@@ -204,11 +204,17 @@ class Annotator(TaskModel):
         :return:
         """
         ed = ESDocObject(document_id=document_id, index=index)
-        for label in labels:
-            fact = ed.add_fact(fact_value=label, fact_name=self.multilabel_configuration.labelset.category.value, doc_path=self.target_field, author=user.username)
+        if labels:
+            for label in labels:
+                fact = ed.add_fact(fact_value=label, fact_name=self.multilabel_configuration.labelset.category.value, doc_path=self.target_field, author=user.username)
+                ed.add_annotated(self, user)
+                self.generate_record(document_id, index=index, user_pk=user.pk, fact=fact, do_annotate=True,
+                                     fact_id=fact["id"])
+        else:
             ed.add_annotated(self, user)
-            self.generate_record(document_id, index=index, user_pk=user.pk, fact=fact, do_annotate=True,
-                                 fact_id=fact["id"])
+            self.generate_record(document_id, index=index, user_pk=user.pk, fact=None, do_annotate=True,
+                                 fact_id=None)
+
         ed.update()
 
 
