@@ -1,3 +1,9 @@
+## 3.7.4 (2022-09-27)
+
+### Updates (1 change)
+
+- [update: VERSION 3.7.4](texta/texta-rest@14058a454a99e7a1ee8f330ec6e4f7a4a9ff4cca) by @wael
+
 ## 3.7.3 (2022-09-27)
 
 ### Bug fixes (1 change)
