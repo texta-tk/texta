@@ -6,14 +6,16 @@ import pathlib
 import secrets
 import tempfile
 import zipfile
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Optional
 
 from celery import chain, group
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import serializers
 from django.db import models, transaction
 from django.dispatch import receiver
 from django.http import HttpResponse
+from minio import Minio
 from texta_elastic.searcher import EMPTY_QUERY
 from texta_embedding.embedding import W2VEmbedding
 from texta_tagger.tagger import Tagger as TextTagger
@@ -66,6 +68,7 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
     model = models.FileField(null=True, verbose_name='', default=None)
     model_size = models.FloatField(default=None, null=True)
     plot = models.FileField(upload_to="data/media", null=True, verbose_name="")
+    upload_tagger = models.BooleanField(default=False)
 
     tagger_groups = models.TextField(default="[]", null=True, blank=True)
 
@@ -91,6 +94,68 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
 
     def get_indices(self):
         return [index.name for index in self.indices.filter(is_open=True)]
+
+    # TODO Initiate MODEL with its Tagger metadata.
+    # TODO These can throw random S3 errors, handle them, can be things like AccessDenied etc.
+    # TODO Handle retrains etc creating new models with new names into the bucket.
+    # TODO Add check for predictions etc wherther the model has been downloaded or not.
+    # TODO Create an extra action for importing from the S3 directly.
+    def download_from_s3(self):
+        pass
+
+    # TODO Should the model upload create a new task or update the latest one?
+    def upload_into_s3(self, filepath: str, data: Optional[bytes] = None):
+        client = Tagger.get_minio_client()
+        filepath = pathlib.Path(filepath)
+        minio_path = self.generate_S3_file_name(filepath.name)
+        metadata = self.to_json()  # Adding this breaks things for some reason.
+        if filepath and data is None:
+            response = client.fput_object(bucket_name=settings.S3_BUCKET_NAME, object_name=minio_path, file_path=str(filepath))
+        else:
+            data = io.BytesIO(data)
+            minio_path = self.generate_S3_file_name("model.zip")
+            size = data.getbuffer().nbytes
+            response = client.put_object(bucket_name=settings.S3_BUCKET_NAME, object_name=minio_path, data=data, length=size)
+        return response
+
+    def check_if_in_s3(self):
+        pass
+
+    @staticmethod
+    def get_minio_client():
+        return Minio(endpoint=settings.S3_URI, access_key=settings.S3_ACCESS_KEY, secret_key=settings.S3_SECRET_KEY, secure=settings.S3_USE_SECURE)
+
+    @staticmethod
+    def check_for_s3_access(s3_for_instance: bool) -> bool:
+        info_logger = logging.getLogger(settings.INFO_LOGGER)
+
+        if settings.USE_S3 is False:
+            info_logger.info("[Tagger] Saving into S3 is disabled system wide!")
+            return False
+
+        # When user doesn't want the item to be uploaded.
+        if s3_for_instance is False:
+            info_logger.info("[Tagger] Saving into S3 is disabled tagger instance side!")
+            return False
+
+        try:
+            client = Tagger.get_minio_client()
+            list(client.list_objects(settings.S3_BUCKET_NAME))
+            return True
+        except Exception as e:
+            logging.getLogger(settings.ERROR_LOGGER).exception(e)
+            return False
+
+    def generate_S3_file_name(self, file_name: str):
+        """
+        Generates the full path to the file you wish to access.
+        :param file_name: Stem/name of the file in question, includes the filename and extension.
+        :return: Full path to be uploaded into the S3 instance.
+        """
+        path = pathlib.Path(f"{self.project.pk}") / str(self.pk) / file_name
+        return str(path)
+
+    ### S3 HELPERS ###
 
     def set_confusion_matrix(self, x):
         self.confusion_matrix = json.dumps(x)
@@ -139,7 +204,7 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
             return tmp.read()
 
     @staticmethod
-    def import_resources(zip_file, request, pk) -> int:
+    def import_resources(zip_file, user_pk: int, project_pk: int) -> int:
         with transaction.atomic():
             with zipfile.ZipFile(zip_file, 'r') as archive:
                 json_string = archive.read(Tagger.MODEL_JSON_NAME).decode()
@@ -150,8 +215,8 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
                 new_model = Tagger(**model_json)
 
                 task_object = Task.objects.create(tagger=new_model, status=Task.STATUS_COMPLETED)
-                new_model.author = User.objects.get(id=request.user.id)
-                new_model.project = Project.objects.get(id=pk)
+                new_model.author = User.objects.get(id=user_pk)
+                new_model.project = Project.objects.get(id=project_pk)
                 new_model.save()  # Save the intermediate results.
 
                 new_model.tasks.add(task_object)
@@ -184,9 +249,12 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         self.save()  # Save it before-hand to ensure that there is an object stored to save the task into.
         task_object = Task.objects.create(tagger=self, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
         self.tasks.add(task_object)
-        from toolkit.tagger.tasks import start_tagger_task, train_tagger_task, save_tagger_results
+        from toolkit.tagger.tasks import start_tagger_task, train_tagger_task, save_tagger_results, upload_tagger_files
         logging.getLogger(INFO_LOGGER).info(f"Celery: Starting task for training of tagger: {self.to_json()}")
         chain = start_tagger_task.s() | train_tagger_task.s() | save_tagger_results.s()
+        if Tagger.check_for_s3_access(self.upload_tagger):
+            chain |= upload_tagger_files.s(self.pk)
+
         transaction.on_commit(lambda: chain.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE))
 
     def load_tagger(self, lemmatize: bool = False, use_logger: bool = True):

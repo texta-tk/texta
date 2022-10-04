@@ -22,10 +22,11 @@ from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, Seriali
 from toolkit.filter_constants import FavoriteFilter
 from toolkit.helper_functions import add_finite_url_to_feedback, load_stop_words
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
-from toolkit.serializer_constants import ProjectResourceImportModelSerializer
+from toolkit.serializer_constants import ProjectResourceImportModelSerializer, EmptySerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE
 from toolkit.tagger.models import Tagger
-from toolkit.tagger.serializers import (ApplyTaggerSerializer, StopWordSerializer, TagRandomDocSerializer, TaggerListFeaturesSerializer, TaggerMultiTagSerializer, TaggerSerializer, TaggerTagDocumentSerializer, TaggerTagTextSerializer)
+from toolkit.tagger.serializers import (ApplyTaggerSerializer, StopWordSerializer, TagRandomDocSerializer, TaggerListFeaturesSerializer, TaggerMultiTagSerializer, TaggerSerializer,
+                                        TaggerTagDocumentSerializer, TaggerTagTextSerializer)
 from toolkit.tagger.tasks import apply_tagger, apply_tagger_to_index
 from toolkit.tagger.validators import validate_input_document
 from toolkit.tools.lemmatizer import CeleryLemmatizer
@@ -41,13 +42,11 @@ class TaggerFilter(FavoriteFilter):
     task_status = filters.CharFilter('tasks__status', lookup_expr='icontains')
     is_favorited = filters.BooleanFilter(field_name="favorited_users", method="get_is_favorited")
 
-
     def get_is_favorited(self, queryset, name, value):
         if value is True:
             return queryset.filter(favorited_users__username=self.request.user.username)
         else:
             return queryset.filter(~Q(favorited_users__username=self.request.user.username))
-
 
     class Meta:
         model = Tagger
@@ -65,10 +64,8 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
     filterset_class = TaggerFilter
     ordering_fields = ('id', 'author__username', 'description', 'fields', 'tasks__time_started', 'tasks__time_completed', 'f1_score', 'precision', 'recall', 'tasks__status')
 
-
     def get_queryset(self):
         return Tagger.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
-
 
     def perform_create(self, serializer):
         project = Project.objects.get(id=self.kwargs['project_pk'])
@@ -89,12 +86,10 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
 
         tagger.train()
 
-
     def destroy(self, request, *args, **kwargs):
         instance: Tagger = self.get_object()
         instance.delete()
         return Response({"success": "Tagger instance deleted, model and plot removed"}, status=status.HTTP_204_NO_CONTENT)
-
 
     @action(detail=True, methods=['get', 'post'], serializer_class=TaggerListFeaturesSerializer)
     def list_features(self, request, pk=None, project_pk=None):
@@ -137,7 +132,6 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
         }
         return Response(feature_info, status=status.HTTP_200_OK)
 
-
     @action(detail=True, methods=['get', 'post'], serializer_class=StopWordSerializer)
     def stop_words(self, request, pk=None, project_pk=None):
         """Adds stop word to Tagger model. Input should be a list of strings, e.g. ['word1', 'word2', 'word3']."""
@@ -174,14 +168,12 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
 
             return Response({"stop_words": new_stop_words, "ignore_numbers": ignore_numbers}, status=status.HTTP_200_OK)
 
-
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], serializer_class=EmptySerializer)
     def retrain_tagger(self, request, pk=None, project_pk=None):
         """Starts retraining task for the Tagger model."""
         instance = self.get_object()
         instance.train()
         return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
-
 
     @action(detail=True, methods=['get'])
     def export_model(self, request, pk=None, project_pk=None):
@@ -194,16 +186,14 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
         response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(zip_name)
         return response
 
-
     @action(detail=False, methods=["post"], serializer_class=ProjectResourceImportModelSerializer)
     def import_model(self, request, pk=None, project_pk=None):
         serializer = ProjectResourceImportModelSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         uploaded_file = serializer.validated_data['file']
-        tagger_id = Tagger.import_resources(uploaded_file, request, project_pk)
+        tagger_id = Tagger.import_resources(uploaded_file, request.user.pk, project_pk)
         return Response({"id": tagger_id, "message": "Successfully imported model and associated files."}, status=status.HTTP_201_CREATED)
-
 
     @action(detail=True, methods=['post'], serializer_class=TaggerTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
@@ -228,7 +218,6 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
         # if feedback was enabled, add url
         tagger_response = add_finite_url_to_feedback(tagger_response, request)
         return Response(tagger_response, status=status.HTTP_200_OK)
-
 
     @action(detail=True, methods=['post'], serializer_class=TaggerTagDocumentSerializer)
     def tag_doc(self, request, pk=None, project_pk=None):
@@ -261,7 +250,6 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
         # if feedback was enabled, add url
         tagger_response = add_finite_url_to_feedback(tagger_response, request)
         return Response(tagger_response, status=status.HTTP_200_OK)
-
 
     @action(detail=True, methods=['post'])
     def tag_random_doc(self, request, pk=None, project_pk=None):
@@ -297,7 +285,6 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
         tagger_response = apply_tagger(tagger_object.id, random_doc_filtered, input_type='doc')
         response = {"document": random_doc, "prediction": tagger_response}
         return Response(response, status=status.HTTP_200_OK)
-
 
     @action(detail=False, methods=['post'], serializer_class=TaggerMultiTagSerializer)
     def multitag_text(self, request, pk=None, project_pk=None):
@@ -342,7 +329,6 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
         # sort & return tags
         sorted_tags = sorted(group_results, key=lambda k: k['probability'], reverse=True)
         return Response(sorted_tags, status=status.HTTP_200_OK)
-
 
     @action(detail=True, methods=['post'], serializer_class=ApplyTaggerSerializer)
     def apply_to_index(self, request, pk=None, project_pk=None):

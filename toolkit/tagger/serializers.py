@@ -147,6 +147,8 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Indice
     url = serializers.SerializerMethodField()
     tagger_groups = serializers.SerializerMethodField(read_only=True)
 
+    upload_tagger = serializers.BooleanField(default=False, help_text="Whether to upload the tagger and its trained files into the S3 instance.")
+
     balance = serializers.BooleanField(default=choices.DEFAULT_BALANCE, required=False, help_text=f'Balance sample sizes of different classes. Only applicable for multiclass taggers. Default = {choices.DEFAULT_BALANCE}')
     balance_to_max_limit = serializers.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT, required=False,
                                                     help_text=f'If enabled, the number of samples for each class is set to `maximum_sample_size`. Otherwise, it is set to max class size. NB! Only applicable for multiclass taggers with balance == True. Default = {choices.DEFAULT_BALANCE_TO_MAX_LIMIT}')
@@ -155,7 +157,7 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Indice
     class Meta:
         model = Tagger
         fields = ('id', 'url', 'author', 'description', 'query', 'fact_name', 'indices', 'fields', 'detect_lang', 'embedding', 'vectorizer', 'analyzer', 'classifier', 'stop_words',
-                  'maximum_sample_size', 'minimum_sample_size', 'is_favorited', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score', 'snowball_language', 'scoring_function',
+                  'maximum_sample_size', 'minimum_sample_size', 'is_favorited', 'upload_tagger', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score', 'snowball_language', 'scoring_function',
                   'num_features', 'num_examples', 'confusion_matrix', 'is_favorited', 'plot', 'tasks', 'tagger_groups', 'ignore_numbers', 'balance', 'balance_to_max_limit', 'pos_label', 'classes')
         read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'num_examples', 'tagger_groups', 'confusion_matrix', 'classes')
         fields_to_parse = ('fields', 'classes',)

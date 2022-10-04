@@ -2,24 +2,12 @@ version: '3'
 
 services:
 
-  texta-uaa:
-    image: docker.texta.ee/texta/texta-uaa:latest
-    container_name: texta-uaa
-    ports:
-      - 8080
-    environment:
-      TEXTA_UAA_REDIRECT_URI: http://texta-rest/api/v2/uaa/callback
-      TEXTA_UAA_USER: test
-      TEXTA_UAA_EMAIL: test@test.com
-      TEXTA_UAA_PWD: test
-      TEXTA_UAA_URL: http://localhost:8080
-
   texta-elasticsearch:
     container_name: texta-elasticsearch
     restart: on-failure
     image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.0
     ports:
-      - 9200
+      - 9200:9200
     environment:
       - bootstrap.memory_lock=true
       - discovery.type=single-node
@@ -34,7 +22,7 @@ services:
     container_name: texta-redis
     image: redis
     ports:
-      - 6379
+      - 6379:6379
     restart: always
 
   texta-mariadb:
@@ -42,7 +30,7 @@ services:
     image: mariadb:10.3.28
     restart: on-failure
     ports:
-      - 3306
+      - 3306:3306
     environment:
       MYSQL_ROOT_USER: docker
       MYSQL_ROOT_PASSWORD: docker
@@ -55,7 +43,7 @@ services:
       - mariadb-data:/var/lib/mysql
 
   texta-rest:
-    image: docker.texta.ee/texta/texta-rest:latest
+    image: texta-rest:latest
     container_name: texta-rest
     build:
       context: .
@@ -70,29 +58,20 @@ services:
       - texta-mariadb
       - texta-elasticsearch
 
-  # texta-rest-gpu:
-  #   container_name: texta-rest-gpu
-  #   image: docker.texta.ee/texta/texta-rest:latest-gpu
-  #   build:
-  #     context: .
-  #     dockerfile: ./docker/gpu.Dockerfile
-  #   ports:
-  #     - 80:80
-  #   env_file:
-  #     - ./docker/conf/env
-  #   volumes:
-  #     - toolkit-data:/var/texta-rest/data
-  #   depends_on:
-  #     - texta-postgres
-  #     - texta-elasticsearch
-  #   deploy:
-  #     resources:
-  #       reservations:
-  #         devices:
-  #           - capabilities:
-  #             - gpu
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: 12341234
+    command: server --console-address ":9001" /data
 
 volumes:
+  minio-data:
   elastic-data:
   toolkit-data:
   mariadb-data:

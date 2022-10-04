@@ -301,7 +301,15 @@ ES_CONNECTION_PARAMETERS = {
     "sniff_on_connection_fail": env.bool("TEXTA_ES_SNIFF_ON_FAIL", default=True)
 }
 
-# CELERY
+### S3 CONFIGURATION ###
+USE_S3 = env.bool("TEXTA_USE_S3", default=False)
+S3_USE_SECURE = env.bool("TEXTA_S3_USE_SECURE", default=False)
+S3_URI = env.str("TEXTA_S3_URL", default="")
+S3_BUCKET_NAME = env.str("TEXTA_S3_BUCKET_NAME", default="")
+S3_ACCESS_KEY = env.str("TEXTA_S3_ACCESS_KEY", default="")
+S3_SECRET_KEY = env.str("TEXTA_S3_SECRET_KEY", default="")
+
+### CELERY ###
 
 # Amount of documents processed in a single task.
 # Consider that processed text might be the size of a simple comment

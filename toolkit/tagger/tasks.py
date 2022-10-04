@@ -221,6 +221,29 @@ def train_tagger_task(tagger_id: int):
         raise e
 
 
+@task(name="download_tagger_model", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
+def download_tagger_model(tagger_id: int):
+    pass
+
+
+@task(name="upload_tagger_files", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
+def upload_tagger_files(previous_results, tagger_id: int):
+    tagger = Tagger.objects.get(pk=tagger_id)
+    task_object = tagger.tasks.last()
+    info_logger = logging.getLogger(INFO_LOGGER)
+    try:
+
+        data = tagger.export_resources()
+        tagger.upload_into_s3(tagger.model.path, data)
+
+        # info_logger.info(f"[Tagger] Uploading model of tagger ID '{tagger_id}' into S3!")
+        # tagger.upload_into_s3(tagger.model.path)
+        # info_logger.info(f"[Tagger] Uploading plot image of tagger ID '{tagger_id}' into S3!")
+        # tagger.upload_into_s3(tagger.plot.path)
+    except Exception as e:
+        task_object.handle_failed_task(e)
+
+
 @task(name="save_tagger_results", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def save_tagger_results(result_data: dict):
     try:
