@@ -25,9 +25,10 @@ from toolkit.permissions.project_permissions import ProjectAccessInApplicationsA
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer, EmptySerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE
 from toolkit.tagger.models import Tagger
-from toolkit.tagger.serializers import (ApplyTaggerSerializer, StopWordSerializer, TagRandomDocSerializer, TaggerListFeaturesSerializer, TaggerMultiTagSerializer, TaggerSerializer,
-                                        TaggerTagDocumentSerializer, TaggerTagTextSerializer)
-from toolkit.tagger.tasks import apply_tagger, apply_tagger_to_index
+from toolkit.tagger.serializers import (ApplyTaggerSerializer, StopWordSerializer, TagRandomDocSerializer, TaggerListFeaturesSerializer,
+                                        TaggerMultiTagSerializer, TaggerSerializer,
+                                        TaggerTagDocumentSerializer, TaggerTagTextSerializer, S3UploadSerializer, S3DownloadSerializer)
+from toolkit.tagger.tasks import apply_tagger, apply_tagger_to_index, upload_tagger_files, download_tagger_model
 from toolkit.tagger.validators import validate_input_document
 from toolkit.tools.lemmatizer import CeleryLemmatizer
 from toolkit.view_constants import (
