@@ -330,6 +330,29 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
         sorted_tags = sorted(group_results, key=lambda k: k['probability'], reverse=True)
         return Response(sorted_tags, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['post'], serializer_class=S3UploadSerializer)
+    def upload_into_s3(self, request, pk=None, project_pk=None):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        minio_path = serializer.validated_data["minio_path"]
+        tagger = self.get_object()
+        task = Task.objects.create(tagger=tagger, status=Task.STATUS_QUEUED, task_type=Task.TYPE_UPLOAD)
+        tagger.tasks.add(task)
+        transaction.on_commit(lambda: upload_tagger_files.apply_async(args=(tagger.pk, minio_path), queue=CELERY_LONG_TERM_TASK_QUEUE))
+        return Response({"message": "Started task for uploading model into S3!"})
+
+    @action(detail=False, methods=['post'], serializer_class=S3DownloadSerializer)
+    def download_from_s3(self, request, pk=None, project_pk=None):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        minio_path = serializer.validated_data["minio_path"]
+        version_id = serializer.validated_data["version_id"]
+
+        transaction.on_commit(lambda: download_tagger_model.apply_async(args=(minio_path, request.user.pk, project_pk, version_id), queue=CELERY_LONG_TERM_TASK_QUEUE))
+
+        return Response({"message": "Started task for downloading model from S3!"})
+
+
     @action(detail=True, methods=['post'], serializer_class=ApplyTaggerSerializer)
     def apply_to_index(self, request, pk=None, project_pk=None):
         """Apply tagger to an Elasticsearch index."""

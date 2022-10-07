@@ -222,24 +222,30 @@ def train_tagger_task(tagger_id: int):
 
 
 @task(name="download_tagger_model", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
-def download_tagger_model(tagger_id: int):
-    pass
+def download_tagger_model(minio_path: str, user_pk: int, project_pk: int, version_id: str):
+    info_logger = logging.getLogger(INFO_LOGGER)
+    info_logger.info(f"[Tagger] Starting to download model from Minio with path {minio_path}!")
+    Tagger.download_from_s3(minio_path, user_pk=user_pk, project_pk=project_pk, version_id=version_id)
+    info_logger.info(f"[Tagger] Finished to download model from Minio with path {minio_path}!")
 
 
 @task(name="upload_tagger_files", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
-def upload_tagger_files(previous_results, tagger_id: int):
+def upload_tagger_files(tagger_id: int, minio_path: str):
     tagger = Tagger.objects.get(pk=tagger_id)
-    task_object = tagger.tasks.last()
+    task_object: Task = tagger.tasks.last()
     info_logger = logging.getLogger(INFO_LOGGER)
+
+    task_object.update_status(Task.STATUS_RUNNING)
+    task_object.step = "uploading into S3"
+    task_object.save()
+
     try:
-
+        info_logger.info(f"[Tagger] Starting to upload tagger with ID {tagger_id} into S3!")
+        kwargs = {"filepath": minio_path} if minio_path else {}
         data = tagger.export_resources()
-        tagger.upload_into_s3(tagger.model.path, data)
+        tagger.upload_into_s3(data=data, **kwargs)
+        info_logger.info(f"[Tagger] Finished upload of tagger with ID {tagger_id} into S3!")
 
-        # info_logger.info(f"[Tagger] Uploading model of tagger ID '{tagger_id}' into S3!")
-        # tagger.upload_into_s3(tagger.model.path)
-        # info_logger.info(f"[Tagger] Uploading plot image of tagger ID '{tagger_id}' into S3!")
-        # tagger.upload_into_s3(tagger.plot.path)
     except Exception as e:
         task_object.handle_failed_task(e)
 

@@ -18,7 +18,8 @@ from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.settings import RELATIVE_MODELS_PATH
 from toolkit.tagger.models import Tagger
-from toolkit.test_settings import (TEST_FIELD, TEST_FIELD_CHOICE, TEST_KEEP_PLOT_FILES, TEST_MATCH_TEXT, TEST_QUERY, TEST_TAGGER_BINARY, TEST_VERSION_PREFIX, VERSION_NAMESPACE)
+from toolkit.test_settings import (TEST_FIELD, TEST_FIELD_CHOICE, TEST_KEEP_PLOT_FILES, TEST_MATCH_TEXT, TEST_QUERY,
+                                   TEST_TAGGER_BINARY, TEST_VERSION_PREFIX, VERSION_NAMESPACE)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
@@ -66,7 +67,6 @@ class TaggerViewTests(APITransactionTestCase):
 
         self.test_imported_binary_tagger_id = self.import_test_model(TEST_TAGGER_BINARY)
 
-
     def import_test_model(self, file_path: str):
         """Import models for testing."""
         print_output("Importing model from file:", file_path)
@@ -75,7 +75,6 @@ class TaggerViewTests(APITransactionTestCase):
         resp = self.client.post(import_url, data={'file': open(file_path, "rb")}).json()
         print_output("Importing test model:", resp)
         return resp["id"]
-
 
     def __train_embedding_for_tagger(self) -> int:
         url = reverse(f"{VERSION_NAMESPACE}:embedding-list", kwargs={"project_pk": self.project.pk})
@@ -90,7 +89,6 @@ class TaggerViewTests(APITransactionTestCase):
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
         print_output("__train_embedding_for_tagger:response.data", response.data)
         return response.data["id"]
-
 
     def test_training_tagger_with_embedding(self):
         url = reverse(f"{VERSION_NAMESPACE}:tagger-list", kwargs={"project_pk": self.project.pk})
@@ -114,7 +112,6 @@ class TaggerViewTests(APITransactionTestCase):
         self.run_tag_text([response.data["id"]])
         self.add_cleanup_files(response.data["id"])
 
-
     def test_run(self):
         self.run_create_tagger_training_and_task_signal()
         self.run_create_tagger_with_incorrect_fields()
@@ -137,7 +134,6 @@ class TaggerViewTests(APITransactionTestCase):
         self.create_tagger_then_delete_tagger_and_created_model()
         self.run_check_for_add_model_as_favorite_and_test_filtering_by_it()
 
-
     def add_cleanup_files(self, tagger_id):
         tagger_object = Tagger.objects.get(pk=tagger_id)
         self.addCleanup(remove_file, tagger_object.model.path)
@@ -146,14 +142,12 @@ class TaggerViewTests(APITransactionTestCase):
         if tagger_object.embedding:
             self.addCleanup(remove_file, tagger_object.embedding.embedding_model.path)
 
-
     def tearDown(self) -> None:
         Tagger.objects.all().delete()
         ec = ElasticCore()
         res = ec.delete_index(self.test_index_copy)
         ec.delete_index(index=self.test_index_name, ignore=[400, 404])
         print_output(f"Delete apply_taggers test index {self.test_index_copy}", res)
-
 
     def run_create_tagger_training_and_task_signal(self):
         """Tests the endpoint for a new Tagger, and if a new Task gets created via the signal"""
@@ -193,7 +187,6 @@ class TaggerViewTests(APITransactionTestCase):
                 self.assertTrue(isinstance(response.data["classes"], list))
                 self.assertTrue(len(response.data["classes"]) == 2)
 
-
     def run_create_tagger_with_incorrect_fields(self):
         """Tests the endpoint for a new Tagger with incorrect field data (should give error)"""
         payload = {
@@ -212,7 +205,6 @@ class TaggerViewTests(APITransactionTestCase):
         # Check if Tagger gets rejected
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertTrue(response.exception)
-
 
     def create_tagger_then_delete_tagger_and_created_model(self):
         """ creates a tagger and removes it with DELETE in instance view """
@@ -242,7 +234,6 @@ class TaggerViewTests(APITransactionTestCase):
         self.assertEqual(os.path.isfile(model_location), False)
         self.assertEqual(os.path.isfile(plot_location), False)
 
-
     def create_tagger_with_empty_fields(self):
         """ tests to_repr serializer constant. Should fail because empty fields obj is filtered out in view"""
         payload = {
@@ -258,7 +249,6 @@ class TaggerViewTests(APITransactionTestCase):
         create_response = self.client.post(self.list_url, payload, format='json')
         print_output("empty_fields_response", create_response.data)
         self.assertEqual(create_response.status_code, status.HTTP_400_BAD_REQUEST)
-
 
     def run_put_on_tagger_instances(self, test_tagger_ids):
         """ Tests put response success for Tagger fields """
@@ -278,7 +268,6 @@ class TaggerViewTests(APITransactionTestCase):
             print_output("put_response", put_response.data)
             self.assertEqual(put_response.status_code, status.HTTP_200_OK)
 
-
     def run_tag_text(self, test_tagger_ids: List[int]):
         """Tests the endpoint for the tag_text action"""
         payloads = [
@@ -297,7 +286,6 @@ class TaggerViewTests(APITransactionTestCase):
                 self.assertTrue('result' in response.data)
                 self.assertTrue('probability' in response.data)
 
-
     def run_tag_text_result_check(self, test_tagger_ids: List[int]):
         """Tests the endpoint to check if the tagger result corresponds to the input text."""
         payload_pos = {"text": "This is some test text for the Tagger Test loll"}
@@ -313,7 +301,6 @@ class TaggerViewTests(APITransactionTestCase):
 
                 self.assertEqual(response.status_code, status.HTTP_200_OK)
                 self.assertEqual(response.data['result'], label)
-
 
     def run_tag_text_with_lemmatization(self):
         """Tests the endpoint for the tag_text action"""
@@ -331,7 +318,6 @@ class TaggerViewTests(APITransactionTestCase):
             self.assertTrue('result' in response.data)
             self.assertTrue('probability' in response.data)
 
-
     def run_tag_doc(self):
         """Tests the endpoint for the tag_doc action"""
         payload = {"doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"})}
@@ -344,7 +330,6 @@ class TaggerViewTests(APITransactionTestCase):
             self.assertTrue(response.data)
             self.assertTrue('result' in response.data)
             self.assertTrue('probability' in response.data)
-
 
     def run_tag_doc_with_lemmatization(self):
         """Tests the endpoint for the tag_doc action"""
@@ -362,7 +347,6 @@ class TaggerViewTests(APITransactionTestCase):
             self.assertTrue('result' in response.data)
             self.assertTrue('probability' in response.data)
 
-
     def run_tag_random_doc(self):
         """Tests the endpoint for the tag_random_doc action"""
         for test_tagger_id in self.test_tagger_ids:
@@ -376,7 +360,6 @@ class TaggerViewTests(APITransactionTestCase):
             # Check if response is list
             self.assertTrue(isinstance(response.data, dict))
             self.assertTrue('prediction' in response.data)
-
 
     def run_list_features(self):
         """Tests the endpoint for the list_features action"""
@@ -406,7 +389,6 @@ class TaggerViewTests(APITransactionTestCase):
                 self.assertTrue(response.data['total_features'] >= response.data['showing_features'])
                 self.assertTrue(len(response.data['features']) > 0)
 
-
     def run_stop_word_list(self):
         """Tests the endpoint for the stop_word_list action"""
         for test_tagger_id in self.test_tagger_ids:
@@ -417,7 +399,6 @@ class TaggerViewTests(APITransactionTestCase):
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
             self.assertTrue('stop_words' in response.data)
-
 
     def run_stop_word_add_and_replace(self):
         """Tests the endpoint for the stop_word_add action"""
@@ -456,14 +437,12 @@ class TaggerViewTests(APITransactionTestCase):
             self.assertTrue('stopsõna4' in response.data['stop_words'])
             self.assertFalse('stopsõna' in response.data['stop_words'])
 
-
     def run_multitag_text(self):
         """Tests tagging with multiple models using multitag endpoint."""
         payload = {"text": "Some sad text for tagging", "taggers": self.test_tagger_ids}
         response = self.client.post(self.multitag_text_url, payload, format='json')
         print_output('test_multitag:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
 
     def run_apply_tagger_to_index(self):
         """Tests applying tagger to index using apply_to_index endpoint."""
@@ -502,7 +481,6 @@ class TaggerViewTests(APITransactionTestCase):
         self.assertTrue(results[self.new_fact_value] > 0)
         self.add_cleanup_files(test_tagger_id)
 
-
     def run_apply_tagger_to_index_invalid_input(self):
         """Tests applying tagger to index using apply_to_index endpoint with invalid input."""
 
@@ -520,7 +498,6 @@ class TaggerViewTests(APITransactionTestCase):
         response = self.client.post(url, payload, format='json')
         print_output('test_apply_tagger_to_index_invalid_input:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
 
     def run_model_retrain(self):
         """Tests the endpoint for the model_retrain action"""
@@ -564,7 +541,6 @@ class TaggerViewTests(APITransactionTestCase):
         self.assertTrue(TEST_MATCH_TEXT not in feature_dict)
         self.add_cleanup_files(test_tagger_id)
 
-
     def run_model_export_import(self):
         """Tests endpoint for model export and import"""
         test_tagger_id = self.test_tagger_ids[0]
@@ -597,7 +573,6 @@ class TaggerViewTests(APITransactionTestCase):
         self.run_tag_text([imported_tagger_id])
         self.add_cleanup_files(test_tagger_id)
         self.add_cleanup_files(imported_tagger_id)
-
 
     def run_tag_and_feedback_and_retrain(self):
         """Tests feeback extra action."""
@@ -667,14 +642,12 @@ class TaggerViewTests(APITransactionTestCase):
         self.assertTrue('success' in response.data)
         self.add_cleanup_files(tagger_id)
 
-
     def test_tagger_with_only_description_input(self):
         payload = {"description": "TestTagger"}
         response = self.client.post(self.list_url, data=payload, format="json")
         print_output("test_tagger_with_only_description_input:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
         self.assertTrue(response.data["fields"][0] == "This field is required.")
-
 
     # Since this functionality is implemented by subclasses, the other apps should be covered by this test alone.
     def run_check_for_add_model_as_favorite_and_test_filtering_by_it(self):
@@ -699,7 +672,6 @@ class TaggerViewTests(APITransactionTestCase):
         # Check that removing the user works.
         response = self.client.post(url, data={}, format="json")
         self.assertFalse(Tagger.objects.get(pk=tagger_id).favorited_users.filter(pk=self.user.pk).exists())
-
 
     def test_that_ordering_and_filtering_by_new_task_format_works(self):
         payload = {
@@ -726,7 +698,9 @@ class TaggerViewTests(APITransactionTestCase):
         self.assertEqual(filtered_list_response.data["count"], 0)
 
         # Retrain the first tagger to have its latest task be later than the tagger that was trained second.
-        retrain_url = reverse(f"{VERSION_NAMESPACE}:tagger-retrain-tagger", kwargs={"project_pk": self.project.pk, "pk": to_be_retrained_tagger_id})
+        retrain_url = reverse(f"{VERSION_NAMESPACE}:tagger-retrain-tagger", kwargs={
+            "project_pk": self.project.pk, "pk": to_be_retrained_tagger_id
+        })
         retrain_response = self.client.post(retrain_url, data={}, format="json")
         self.assertEqual(retrain_response.status_code, status.HTTP_200_OK)
 
@@ -734,3 +708,12 @@ class TaggerViewTests(APITransactionTestCase):
         ordered_list = self.client.get(self.list_url, data={"ordering": "-tasks__time_completed"})
         taggers = ordered_list.data["results"]
         self.assertEqual(taggers[0]["id"], to_be_retrained_tagger_id)
+
+    def run_check_for_downloading_model_from_s3_that_doesnt_exist(self):
+        raise NotImplemented()
+
+    def run_check_for_downloading_model_from_s3_with_wrong_faulty_access_configuration(self):
+        raise NotImplemented()
+
+    def run_check_for_doing_s3_operation_while_its_disabled_in_settings(self):
+        pass

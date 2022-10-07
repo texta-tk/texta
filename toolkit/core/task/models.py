@@ -23,6 +23,8 @@ class Task(models.Model):
     TYPE_TRAIN = 'train'
     TYPE_APPLY = 'apply'
     TYPE_IMPORT = 'import'
+    TYPE_UPLOAD = 'upload'
+    TYPE_DOWNLOAD = 'download'
 
     task_type = models.CharField(max_length=MAX_DESC_LEN, default=TYPE_TRAIN)
     status = models.CharField(max_length=MAX_DESC_LEN)
@@ -35,13 +37,11 @@ class Task(models.Model):
     time_completed = models.DateTimeField(null=True, blank=True, default=None)
     authtoken_hash = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
-
     @property
     def progress(self):
         progress = self.num_processed / self.total if self.total != 0 else 0
         progress = progress * 100
         return round(progress, 2)
-
 
     @avoid_db_timeout
     def update_status(self, status, set_time_completed=False):
@@ -49,7 +49,6 @@ class Task(models.Model):
         if set_time_completed:
             self.time_completed = now()
         self.save()
-
 
     @avoid_db_timeout
     def add_error(self, error):
@@ -70,13 +69,11 @@ class Task(models.Model):
         self.errors = json.dumps(unique_errors, ensure_ascii=False)
         self.save()
 
-
     @avoid_db_timeout
     def handle_failed_task(self, e: Exception):
         logging.getLogger(ERROR_LOGGER).exception(e)
         self.add_error(str(e))
         self.update_status(Task.STATUS_FAILED)
-
 
     @avoid_db_timeout
     def complete(self):
@@ -86,19 +83,16 @@ class Task(models.Model):
         self.num_processed = self.total
         self.save()
 
-
     @avoid_db_timeout
     def set_total(self, total: int):
         self.total = total
         self.save()
-
 
     @avoid_db_timeout
     def update_progress(self, progress: int, step: str):
         self.num_processed = F("num_processed") + progress
         self.step = step
         self.save(update_fields=["num_processed"])
-
 
     @avoid_db_timeout
     def update_progress_iter(self, progress_amount: int):

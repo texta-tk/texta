@@ -1,6 +1,7 @@
 import json
 import logging
 
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Avg, Sum
 from rest_framework import serializers
@@ -33,7 +34,6 @@ class ApplyTaggersSerializer(FieldParseSerializer, IndicesSerializerMixin, Elast
         child=serializers.IntegerField(),
         default=[]
     )
-
 
     def validate_taggers(self, taggers):
         invalid_ids = []
@@ -147,21 +147,23 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Indice
     url = serializers.SerializerMethodField()
     tagger_groups = serializers.SerializerMethodField(read_only=True)
 
-    upload_tagger = serializers.BooleanField(default=False, help_text="Whether to upload the tagger and its trained files into the S3 instance.")
-
     balance = serializers.BooleanField(default=choices.DEFAULT_BALANCE, required=False, help_text=f'Balance sample sizes of different classes. Only applicable for multiclass taggers. Default = {choices.DEFAULT_BALANCE}')
     balance_to_max_limit = serializers.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT, required=False,
                                                     help_text=f'If enabled, the number of samples for each class is set to `maximum_sample_size`. Otherwise, it is set to max class size. NB! Only applicable for multiclass taggers with balance == True. Default = {choices.DEFAULT_BALANCE_TO_MAX_LIMIT}')
 
-
     class Meta:
         model = Tagger
-        fields = ('id', 'url', 'author', 'description', 'query', 'fact_name', 'indices', 'fields', 'detect_lang', 'embedding', 'vectorizer', 'analyzer', 'classifier', 'stop_words',
-                  'maximum_sample_size', 'minimum_sample_size', 'is_favorited', 'upload_tagger', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score', 'snowball_language', 'scoring_function',
-                  'num_features', 'num_examples', 'confusion_matrix', 'is_favorited', 'plot', 'tasks', 'tagger_groups', 'ignore_numbers', 'balance', 'balance_to_max_limit', 'pos_label', 'classes')
-        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'num_examples', 'tagger_groups', 'confusion_matrix', 'classes')
+        fields = (
+            'id', 'url', 'author', 'description', 'query', 'fact_name', 'indices', 'fields', 'detect_lang', 'embedding',
+            'vectorizer', 'analyzer', 'classifier', 'stop_words',
+            'maximum_sample_size', 'minimum_sample_size', 'is_favorited', 'score_threshold',
+            'negative_multiplier', 'precision', 'recall', 'f1_score', 'snowball_language', 'scoring_function',
+            'num_features', 'num_examples', 'confusion_matrix', 'is_favorited', 'plot', 'tasks', 'tagger_groups',
+            'ignore_numbers', 'balance', 'balance_to_max_limit', 'pos_label', 'classes')
+        read_only_fields = (
+            'precision', 'recall', 'f1_score', 'num_features', 'num_examples', 'tagger_groups', 'confusion_matrix',
+            'classes')
         fields_to_parse = ('fields', 'classes',)
-
 
     def validate(self, data):
         if data.get("detect_lang", None) is True and data.get("snowball_language", None):
@@ -171,7 +173,6 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Indice
         data = validate_pos_label(data)
 
         return data
-
 
     def __init__(self, *args, **kwargs):
         """
@@ -185,7 +186,6 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Indice
             # for multiple fields in a list
             for field_name in remove_fields:
                 self.fields.pop(field_name)
-
 
     def get_tagger_groups(self, value: Tagger):
         return json.loads(value.tagger_groups)
@@ -202,7 +202,6 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     tagger_params = serializers.SerializerMethodField()
     url = serializers.SerializerMethodField()
 
-
     def to_representation(self, instance):
         data = super(TaggerGroupSerializer, self).to_representation(instance)
         try:
@@ -211,12 +210,10 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
             logging.getLogger(ERROR_LOGGER).exception(e)
         return data
 
-
     class Meta:
         model = TaggerGroup
         fields = ('id', 'url', 'author', 'description', 'fact_name', 'num_tags', 'blacklisted_facts', 'minimum_sample_size',
                   'tagger_status', 'tagger_params', 'tagger', 'tagger_statistics', 'is_favorited', 'tasks')
-
 
     # TODO This can be optimised into a single query.
     def get_tagger_status(self, obj: TaggerGroup):
@@ -228,7 +225,6 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
             'failed': obj.taggers.filter(tasks__task_type=Task.TYPE_TRAIN, tasks__status=Task.STATUS_FAILED).distinct().count(),
         }
         return tagger_status
-
 
     def get_tagger_statistics(self, obj):
         tagger_objects = obj.taggers
@@ -246,13 +242,11 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
             }
             return tagger_stats
 
-
     def _embedding_details(self, instance: Tagger):
         if instance.embedding:
             return {"id": instance.embedding.pk, "description": instance.embedding.description}
         else:
             return None
-
 
     def get_tagger_params(self, obj):
         if obj.taggers.exists():
@@ -275,3 +269,40 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
                 'balance_to_max_limit': first_tagger.balance_to_max_limit
             }
             return params
+
+
+class S3Mixin(serializers.Serializer):
+
+    def validate_minio_path(self, value: str):
+        if settings.USE_S3 is False:
+            raise ValidationError("Usage of S3 is not enabled system-wide on this instance!")
+
+        self._validate_filename(value)
+        self._validate_file_existence_in_minio(value)
+        return value
+
+    def _validate_filename(self, value: str):
+        if value:
+            is_zip_file = value.endswith(".zip")
+            if is_zip_file is False:
+                raise ValidationError("Minio filename must be a zipfile and end with a .zip suffix!")
+
+    def _validate_file_existence_in_minio(self, minio_path: str):
+        client = Tagger.get_minio_client()
+        exists = False
+        for s3_object in client.list_objects(settings.S3_BUCKET_NAME, recursive=True):
+            if s3_object.object_name == minio_path:
+                exists = True
+                break
+
+        if exists is False:
+            raise ValidationError(f"Object with the path '{minio_path}' does not exist!")
+
+
+class S3UploadSerializer(S3Mixin):
+    minio_path = serializers.CharField(required=False, default="", help_text="Specify file path to upload to minio, by default sets its to {project.title}_{uuid4}.")
+
+
+class S3DownloadSerializer(S3Mixin):
+    minio_path = serializers.CharField(required=True, help_text="Which file from minio to download.")
+    version_id = serializers.CharField(required=False, default="", help_text="Which version of the file to download.")

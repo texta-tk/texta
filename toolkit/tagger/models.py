@@ -5,9 +5,11 @@ import os
 import pathlib
 import secrets
 import tempfile
+import uuid
 import zipfile
 from typing import Dict, List, Union, Optional
 
+import slugify
 from celery import chain, group
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -33,6 +35,8 @@ from toolkit.model_constants import CommonModelMixin, FavoriteModelMixin
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, RELATIVE_MODELS_PATH
 from toolkit.tagger import choices
 from toolkit.tools.lemmatizer import CeleryLemmatizer, ElasticAnalyzer
+
+S3_ZIP_NAME = "model.zip"
 
 
 class Tagger(FavoriteModelMixin, CommonModelMixin):
@@ -68,7 +72,6 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
     model = models.FileField(null=True, verbose_name='', default=None)
     model_size = models.FloatField(default=None, null=True)
     plot = models.FileField(upload_to="data/media", null=True, verbose_name="")
-    upload_tagger = models.BooleanField(default=False)
 
     tagger_groups = models.TextField(default="[]", null=True, blank=True)
 
@@ -100,22 +103,47 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
     # TODO Handle retrains etc creating new models with new names into the bucket.
     # TODO Add check for predictions etc wherther the model has been downloaded or not.
     # TODO Create an extra action for importing from the S3 directly.
-    def download_from_s3(self):
-        pass
 
-    # TODO Should the model upload create a new task or update the latest one?
-    def upload_into_s3(self, filepath: str, data: Optional[bytes] = None):
+    # TODO Fix issue in uploaded models having wrong indices.
+
+    @staticmethod
+    def download_from_s3(minio_location: str, user_pk: int, project_pk: int, version_id: str = ""):
         client = Tagger.get_minio_client()
-        filepath = pathlib.Path(filepath)
-        minio_path = self.generate_S3_file_name(filepath.name)
+        kwargs = {"version_id": version_id} if version_id else {}
+        response = client.get_object(settings.S3_BUCKET_NAME, minio_location, **kwargs)
+        data = io.BytesIO(response.data)
+        Tagger.import_resources(data, user_pk, project_pk)
+        response.close()
+
+    def upload_into_s3(self, filepath: Optional[str] = None, filename: str = S3_ZIP_NAME, data: Optional[bytes] = None):
+        client = Tagger.get_minio_client()
+
+        minio_path = self.generate_s3_location(file_path=filepath, file_name=filename)
         metadata = self.to_json()  # Adding this breaks things for some reason.
+        # Upload the model file directly.
+        response = self._upload_into_s3(client, data, filepath, minio_path)
+
+        return response
+
+    def _upload_into_s3(self, client: Minio, data: bytes, filepath: str, minio_path: str):
         if filepath and data is None:
-            response = client.fput_object(bucket_name=settings.S3_BUCKET_NAME, object_name=minio_path, file_path=str(filepath))
+            response = client.fput_object(
+                bucket_name=settings.S3_BUCKET_NAME,
+                object_name=minio_path,
+                file_path=str(filepath)
+            )
+
+        # Upload a passed collection of bytes.
         else:
             data = io.BytesIO(data)
-            minio_path = self.generate_S3_file_name("model.zip")
+            minio_path = self.generate_s3_location("model.zip")
             size = data.getbuffer().nbytes
-            response = client.put_object(bucket_name=settings.S3_BUCKET_NAME, object_name=minio_path, data=data, length=size)
+            response = client.put_object(
+                bucket_name=settings.S3_BUCKET_NAME,
+                object_name=minio_path,
+                data=data,
+                length=size
+            )
         return response
 
     def check_if_in_s3(self):
@@ -123,7 +151,12 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
 
     @staticmethod
     def get_minio_client():
-        return Minio(endpoint=settings.S3_URI, access_key=settings.S3_ACCESS_KEY, secret_key=settings.S3_SECRET_KEY, secure=settings.S3_USE_SECURE)
+        return Minio(
+            endpoint=settings.S3_URI,
+            access_key=settings.S3_ACCESS_KEY,
+            secret_key=settings.S3_SECRET_KEY,
+            secure=settings.S3_USE_SECURE
+        )
 
     @staticmethod
     def check_for_s3_access(s3_for_instance: bool) -> bool:
@@ -146,13 +179,18 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
             logging.getLogger(settings.ERROR_LOGGER).exception(e)
             return False
 
-    def generate_S3_file_name(self, file_name: str):
+    def generate_s3_location(self, file_name: str, file_path: Optional[str] = None):
         """
         Generates the full path to the file you wish to access.
+        :param file_path: Full filepath of the file without the filename.
         :param file_name: Stem/name of the file in question, includes the filename and extension.
         :return: Full path to be uploaded into the S3 instance.
         """
-        path = pathlib.Path(f"{self.project.pk}") / str(self.pk) / file_name
+        if file_path:
+            path = pathlib.Path(file_path) / file_name
+        else:
+            project_slug = slugify.slugify(self.project.title)
+            path = pathlib.Path(f"{project_slug}_{uuid.uuid4().hex}") / file_name
         return str(path)
 
     ### S3 HELPERS ###
@@ -221,10 +259,6 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
 
                 new_model.tasks.add(task_object)
 
-                for index in indices:
-                    index_model, is_created = Index.objects.get_or_create(name=index)
-                    new_model.indices.add(index_model)
-
                 full_tagger_path, relative_tagger_path = new_model.generate_name("tagger")
                 with open(full_tagger_path, "wb") as fp:
                     path = pathlib.Path(model_json["model"]).name
@@ -249,12 +283,9 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         self.save()  # Save it before-hand to ensure that there is an object stored to save the task into.
         task_object = Task.objects.create(tagger=self, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
         self.tasks.add(task_object)
-        from toolkit.tagger.tasks import start_tagger_task, train_tagger_task, save_tagger_results, upload_tagger_files
+        from toolkit.tagger.tasks import start_tagger_task, train_tagger_task, save_tagger_results
         logging.getLogger(INFO_LOGGER).info(f"Celery: Starting task for training of tagger: {self.to_json()}")
         chain = start_tagger_task.s() | train_tagger_task.s() | save_tagger_results.s()
-        if Tagger.check_for_s3_access(self.upload_tagger):
-            chain |= upload_tagger_files.s(self.pk)
-
         transaction.on_commit(lambda: chain.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE))
 
     def load_tagger(self, lemmatize: bool = False, use_logger: bool = True):
