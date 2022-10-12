@@ -6,6 +6,7 @@ from celery import group
 from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse
+from django.conf import settings
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
@@ -23,7 +24,6 @@ from toolkit.filter_constants import FavoriteFilter
 from toolkit.helper_functions import add_finite_url_to_feedback, load_stop_words
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer, EmptySerializer
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.serializers import (ApplyTaggerSerializer, StopWordSerializer, TagRandomDocSerializer, TaggerListFeaturesSerializer,
                                         TaggerMultiTagSerializer, TaggerSerializer,
@@ -321,7 +321,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
             text = CeleryLemmatizer().lemmatize(text)
         # tag text using celery group primitive
         group_task = group(apply_tagger.s(tagger.pk, text, input_type='text', lemmatize=False, feedback=feedback) for tagger in taggers)
-        group_results = [a for a in group_task.apply(queue=CELERY_SHORT_TERM_TASK_QUEUE).get() if a]
+        group_results = [a for a in group_task.apply(queue=settings.CELERY_SHORT_TERM_TASK_QUEUE).get() if a]
         # remove non-hits
         if hide_false is True:
             group_results = [a for a in group_results if a['result']]
@@ -339,7 +339,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
         tagger = self.get_object()
         task = Task.objects.create(tagger=tagger, status=Task.STATUS_QUEUED, task_type=Task.TYPE_UPLOAD)
         tagger.tasks.add(task)
-        transaction.on_commit(lambda: upload_tagger_files.apply_async(args=(tagger.pk, minio_path), queue=CELERY_LONG_TERM_TASK_QUEUE))
+        transaction.on_commit(lambda: upload_tagger_files.apply_async(args=(tagger.pk, minio_path), queue=settings.CELERY_LONG_TERM_TASK_QUEUE))
         return Response({"message": "Started task for uploading model into S3!"})
 
     @action(detail=False, methods=['post'], serializer_class=S3DownloadSerializer)
@@ -349,7 +349,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
         minio_path = serializer.validated_data["minio_path"]
         version_id = serializer.validated_data["version_id"]
 
-        transaction.on_commit(lambda: download_tagger_model.apply_async(args=(minio_path, request.user.pk, project_pk, version_id), queue=CELERY_LONG_TERM_TASK_QUEUE))
+        transaction.on_commit(lambda: download_tagger_model.apply_async(args=(minio_path, request.user.pk, project_pk, version_id), queue=settings.CELERY_LONG_TERM_TASK_QUEUE))
 
         return Response({"message": "Started task for downloading model from S3!"})
 
@@ -386,7 +386,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
             object_type = "tagger"
 
             args = (pk, indices, fields, fact_name, fact_value, query, bulk_size, max_chunk_bytes, es_timeout, object_type, object_args)
-            transaction.on_commit(lambda: apply_tagger_to_index.apply_async(args=args, queue=CELERY_LONG_TERM_TASK_QUEUE))
+            transaction.on_commit(lambda: apply_tagger_to_index.apply_async(args=args, queue=settings.CELERY_LONG_TERM_TASK_QUEUE))
 
             message = "Started process of applying Tagger with id: {}".format(tagger_object.id)
             return Response({"message": message}, status=status.HTTP_201_CREATED)

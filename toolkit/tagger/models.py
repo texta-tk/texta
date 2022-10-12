@@ -32,7 +32,6 @@ from toolkit.elastic.tools.feedback import Feedback
 from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import load_stop_words
 from toolkit.model_constants import CommonModelMixin, FavoriteModelMixin
-from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, RELATIVE_MODELS_PATH
 from toolkit.tagger import choices
 from toolkit.tools.lemmatizer import CeleryLemmatizer, ElasticAnalyzer
 
@@ -98,11 +97,8 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
     def get_indices(self):
         return [index.name for index in self.indices.filter(is_open=True)]
 
-    # TODO Initiate MODEL with its Tagger metadata.
     # TODO These can throw random S3 errors, handle them, can be things like AccessDenied etc.
     # TODO Handle retrains etc creating new models with new names into the bucket.
-    # TODO Add check for predictions etc wherther the model has been downloaded or not.
-    # TODO Create an extra action for importing from the S3 directly.
 
     # TODO Fix issue in uploaded models having wrong indices.
 
@@ -115,12 +111,13 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         Tagger.import_resources(data, user_pk, project_pk)
         response.close()
 
-    def upload_into_s3(self, filepath: Optional[str] = None, filename: str = S3_ZIP_NAME, data: Optional[bytes] = None):
+    def upload_into_s3(self, filename: str = S3_ZIP_NAME, data: Optional[bytes] = None, filepath: Optional[str] = None):
         client = Tagger.get_minio_client()
 
         minio_path = self.generate_s3_location(file_path=filepath, file_name=filename)
         metadata = self.to_json()  # Adding this breaks things for some reason.
         # Upload the model file directly.
+        # TODO Remove the path generation from the upload function.
         response = self._upload_into_s3(client, data, filepath, minio_path)
 
         return response
@@ -136,7 +133,7 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         # Upload a passed collection of bytes.
         else:
             data = io.BytesIO(data)
-            minio_path = self.generate_s3_location("model.zip")
+            minio_path = self.generate_s3_location("model.zip", file_path=minio_path)
             size = data.getbuffer().nbytes
             response = client.put_object(
                 bucket_name=settings.S3_BUCKET_NAME,
@@ -151,6 +148,7 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
 
     @staticmethod
     def get_minio_client():
+        from django.conf import settings
         return Minio(
             endpoint=settings.S3_URI,
             access_key=settings.S3_ACCESS_KEY,
@@ -187,7 +185,8 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         :return: Full path to be uploaded into the S3 instance.
         """
         if file_path:
-            path = pathlib.Path(file_path) / file_name
+            path = pathlib.Path(file_path)
+            path = path / file_name if path.name != file_name else path
         else:
             project_slug = slugify.slugify(self.project.title)
             path = pathlib.Path(f"{project_slug}_{uuid.uuid4().hex}") / file_name
@@ -214,8 +213,8 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         Returns: Full and relative file paths, full for saving the model object and relative for actual DB storage.
         """
         model_file_name = f'{name}_{str(self.pk)}_{secrets.token_hex(10)}'
-        full_path = pathlib.Path(BASE_DIR) / RELATIVE_MODELS_PATH / "tagger" / model_file_name
-        relative_path = pathlib.Path(RELATIVE_MODELS_PATH) / "tagger" / model_file_name
+        full_path = pathlib.Path(settings.BASE_DIR) / settings.RELATIVE_MODELS_PATH / "tagger" / model_file_name
+        relative_path = pathlib.Path(settings.RELATIVE_MODELS_PATH) / "tagger" / model_file_name
         return str(full_path), str(relative_path)
 
     def to_json(self) -> dict:
@@ -284,9 +283,9 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         task_object = Task.objects.create(tagger=self, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
         self.tasks.add(task_object)
         from toolkit.tagger.tasks import start_tagger_task, train_tagger_task, save_tagger_results
-        logging.getLogger(INFO_LOGGER).info(f"Celery: Starting task for training of tagger: {self.to_json()}")
+        logging.getLogger(settings.INFO_LOGGER).info(f"Celery: Starting task for training of tagger: {self.to_json()}")
         chain = start_tagger_task.s() | train_tagger_task.s() | save_tagger_results.s()
-        transaction.on_commit(lambda: chain.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE))
+        transaction.on_commit(lambda: chain.apply_async(args=(self.pk,), queue=settings.CELERY_LONG_TERM_TASK_QUEUE))
 
     def load_tagger(self, lemmatize: bool = False, use_logger: bool = True):
         """Loading tagger model from disc."""
@@ -336,7 +335,7 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         }
         # add feedback if asked
         if feedback:
-            logging.getLogger(INFO_LOGGER).info(f"Adding feedback for Tagger id: {self.pk}")
+            logging.getLogger(settings.INFO_LOGGER).info(f"Adding feedback for Tagger id: {self.pk}")
             project_pk = self.project.pk
             feedback_object = Feedback(project_pk, model_object=self)
             processed_text = tagger.text_processor.process(content)
@@ -390,7 +389,7 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
         task = chain(group(tasks), end_tagger_group.s(tagger_group_id=self.pk))
 
         # Put it into a transaction to ensure the task objects are created and accessible.
-        transaction.on_commit(lambda: task.apply_async(queue=CELERY_LONG_TERM_TASK_QUEUE))
+        transaction.on_commit(lambda: task.apply_async(queue=settings.CELERY_LONG_TERM_TASK_QUEUE))
 
     def retrain(self):
         tagger_ids = [tagger.pk for tagger in self.taggers.all()]
@@ -491,7 +490,7 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
         tg_indices_in_project = list(set(tg_indices).intersection(set(project_indices)))
         # If no indices used for training are present in the current project, return all project indices
         if not tg_indices_in_project:
-            logging.getLogger(INFO_LOGGER).info(
+            logging.getLogger(settings.INFO_LOGGER).info(
                 f"[Tagger Group] Indices used for training ({tg_indices}) are not present in the current project. Using all the indices present in the project ({project_indices}).")
             return project_indices
         return tg_indices_in_project

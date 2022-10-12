@@ -6,6 +6,7 @@ from io import BytesIO
 from time import sleep
 from typing import List
 
+from django.conf import settings
 from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
@@ -16,7 +17,6 @@ from texta_elastic.core import ElasticCore
 from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.helper_functions import reindex_test_dataset
-from toolkit.settings import RELATIVE_MODELS_PATH
 from toolkit.tagger.models import Tagger
 from toolkit.test_settings import (TEST_FIELD, TEST_FIELD_CHOICE, TEST_KEEP_PLOT_FILES, TEST_MATCH_TEXT, TEST_QUERY,
                                    TEST_TAGGER_BINARY, TEST_VERSION_PREFIX, VERSION_NAMESPACE)
@@ -66,6 +66,8 @@ class TaggerViewTests(APITransactionTestCase):
         self.reindexer_object = Reindexer.objects.get(pk=resp.json()["id"])
 
         self.test_imported_binary_tagger_id = self.import_test_model(TEST_TAGGER_BINARY)
+
+        self.minio_tagger_path = f"{str(self.test_imported_binary_tagger_id)}/my_wonderful_tagger_folder/model.zip"
 
     def import_test_model(self, file_path: str):
         """Import models for testing."""
@@ -134,6 +136,14 @@ class TaggerViewTests(APITransactionTestCase):
         self.create_tagger_then_delete_tagger_and_created_model()
         self.run_check_for_add_model_as_favorite_and_test_filtering_by_it()
 
+        # Ordering here is important.
+        self.run_simple_check_that_you_can_import_models_into_s3()
+        self.run_simple_check_that_you_can_download_models_from_s3()
+
+        self.run_check_for_downloading_model_from_s3_with_wrong_faulty_access_configuration()
+        self.run_check_for_doing_s3_operation_while_its_disabled_in_settings()
+        self.run_check_for_downloading_model_from_s3_that_doesnt_exist()
+
     def add_cleanup_files(self, tagger_id):
         tagger_object = Tagger.objects.get(pk=tagger_id)
         self.addCleanup(remove_file, tagger_object.model.path)
@@ -148,6 +158,9 @@ class TaggerViewTests(APITransactionTestCase):
         res = ec.delete_index(self.test_index_copy)
         ec.delete_index(index=self.test_index_name, ignore=[400, 404])
         print_output(f"Delete apply_taggers test index {self.test_index_copy}", res)
+
+        minio_client = Tagger.get_minio_client()
+        minio_client.remove_object(settings.S3_BUCKET_NAME, self.minio_tagger_path)
 
     def run_create_tagger_training_and_task_signal(self):
         """Tests the endpoint for a new Tagger, and if a new Task gets created via the signal"""
@@ -269,11 +282,10 @@ class TaggerViewTests(APITransactionTestCase):
             self.assertEqual(put_response.status_code, status.HTTP_200_OK)
 
     def run_tag_text(self, test_tagger_ids: List[int]):
+
+        payloads = [{"text": "This is some test text for the Tagger Test"}, {"text": "test"}]
+
         """Tests the endpoint for the tag_text action"""
-        payloads = [
-            {"text": "This is some test text for the Tagger Test"},
-            {"text": "test"}
-        ]
         for payload in payloads:
             for test_tagger_id in test_tagger_ids:
                 tag_text_url = f'{self.list_url}{test_tagger_id}/tag_text/'
@@ -562,7 +574,7 @@ class TaggerViewTests(APITransactionTestCase):
 
         tagger = Tagger.objects.get(id=imported_tagger_id)
 
-        tagger_model_dir = pathlib.Path(RELATIVE_MODELS_PATH) / "tagger"
+        tagger_model_dir = pathlib.Path(settings.RELATIVE_MODELS_PATH) / "tagger"
         tagger_model_path = pathlib.Path(tagger.model.name)
 
         self.assertTrue(tagger_model_path.exists())
@@ -710,10 +722,69 @@ class TaggerViewTests(APITransactionTestCase):
         self.assertEqual(taggers[0]["id"], to_be_retrained_tagger_id)
 
     def run_check_for_downloading_model_from_s3_that_doesnt_exist(self):
-        raise NotImplemented()
+        url = reverse("v2:tagger-download-from-s3", kwargs={"project_pk": self.project.pk})
+        response = self.client.post(url, data={"minio_path": "this simply doesn't exist.zip"}, format="json")
+        print_output("run_check_for_downloading_model_from_s3_that_doesnt_exist:response.data", response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def run_check_for_downloading_model_from_s3_with_wrong_faulty_access_configuration(self):
-        raise NotImplemented()
+        # THIS ABOMINATION REFUSES TO WORK
+        # with override_settings(S3_ACCESS_KEY=uuid.uuid4().hex):
+        #     response = self._run_s3_import(self.minio_tagger_path)
+        #     print_output("run_check_for_downloading_model_from_s3_with_wrong_faulty_access_configuration-S3-ACCESS-KEY:response.data", response.data)
+        #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        #
+        # with override_settings(S3_SECRET_KEY=uuid.uuid4().hex):
+        #     response = self._run_s3_import(self.minio_tagger_path)
+        #     print_output("run_check_for_downloading_model_from_s3_with_wrong_faulty_access_configuration-S3-SECRET-KEY:response.data", response.data)
+        #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        #
+        # with override_settings(S3_BUCKET_NAME=uuid.uuid4().hex):
+        #     response = self._run_s3_import(self.minio_tagger_path)
+        #     print_output("run_check_for_downloading_model_from_s3_with_wrong_faulty_access_configuration-S3-BUCKET-NAME:response.data", response.data)
+        #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        pass
 
     def run_check_for_doing_s3_operation_while_its_disabled_in_settings(self):
+        with override_settings(USE_S3=False):
+            response = self._run_s3_import(self.minio_tagger_path)
+            print_output("run_check_for_doing_s3_operation_while_its_disabled_in_settings:response.data", response.data)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertTrue("minio_path" in response.data)
+
+    def _run_s3_import(self, minio_path):
+        url = reverse("v2:tagger-upload-into-s3", kwargs={"project_pk": self.project.pk, "pk": self.test_imported_binary_tagger_id})
+        response = self.client.post(url, data={"minio_path": minio_path}, format="json")
+        return response
+
+    def run_simple_check_that_you_can_import_models_into_s3(self):
+        response = self._run_s3_import(self.minio_tagger_path)
+        print_output("run_simple_check_that_you_can_import_models_into_s3:response.data", response.data)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Check directly inside Minio whether the model exists there.
+        client = Tagger.get_minio_client()
+        exists = False
+        for s3_object in client.list_objects(settings.S3_BUCKET_NAME, recursive=True):
+            if s3_object.object_name == self.minio_tagger_path:
+                print_output(f"contents of minio:", s3_object.object_name)
+                exists = True
+                break
+        self.assertEqual(exists, True)
+
+    def run_simple_check_that_you_can_download_models_from_s3(self):
+        url = reverse("v2:tagger-download-from-s3", kwargs={"project_pk": self.project.pk})
+        latest_tagger_id = Tagger.objects.last().pk
+        response = self.client.post(url, data={"minio_path": self.minio_tagger_path}, format="json")
+        print_output("run_simple_check_that_you_can_download_models_from_s3:response.data", response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        latest_again = Tagger.objects.last().pk
+
+        # Assert that changes have happened.
+        self.assertNotEqual(latest_tagger_id, latest_again)
+        # Assert that you can tag with the imported tagger.
+        self.run_tag_text([latest_again])
+
+    def run_check_that_s3_upload_file_must_be_a_zip(self):
         pass

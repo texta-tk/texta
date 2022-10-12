@@ -14,7 +14,6 @@ from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choi
 from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import load_stop_words
 from toolkit.serializer_constants import (CommonModelSerializerMixin, ElasticScrollMixIn, FavoriteModelSerializerMixin, FieldParseSerializer, IndicesSerializerMixin, ProjectFilteredPrimaryKeyRelatedField, ProjectResourceUrlSerializer)
-from toolkit.settings import ERROR_LOGGER
 from toolkit.tagger import choices
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.validator_constants import validate_pos_label
@@ -207,7 +206,7 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
         try:
             data["blacklisted_facts"] = json.loads(instance.blacklisted_facts)
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).exception(e)
+            logging.getLogger(settings.ERROR_LOGGER).exception(e)
         return data
 
     class Meta:
@@ -301,6 +300,10 @@ class S3Mixin(serializers.Serializer):
 
 class S3UploadSerializer(S3Mixin):
     minio_path = serializers.CharField(required=False, default="", help_text="Specify file path to upload to minio, by default sets its to {project.title}_{uuid4}.")
+
+    # Overwrite it for uploads.
+    def _validate_file_existence_in_minio(self, minio_path: str):
+        pass
 
 
 class S3DownloadSerializer(S3Mixin):
