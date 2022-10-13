@@ -98,7 +98,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.test_imported_binary_cpu_tagger_id = self.import_test_model(TEST_BERT_TAGGER_BINARY_CPU)
         self.ec = ElasticCore()
 
-
     def import_test_model(self, file_path: str):
         """Import fine-tuned models for testing."""
         print_output("Importing model from file:", file_path)
@@ -107,7 +106,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         resp = self.client.post(import_url, data={'file': open(file_path, "rb")}).json()
         print_output("Importing test model:", resp)
         return resp["id"]
-
 
     def test(self):
         self.run_train_multiclass_bert_tagger_using_fact_name()
@@ -138,12 +136,10 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.add_cleanup_files(self.test_tagger_id)
         self.add_cleanup_folders()
 
-
     def tearDown(self) -> None:
         res = self.ec.delete_index(self.test_index_copy)
         self.ec.delete_index(index=self.test_index_name, ignore=[400, 404])
         print_output(f"Delete apply_bert_taggers test index {self.test_index_copy}", res)
-
 
     def add_cleanup_files(self, tagger_id: int):
         tagger_object = BertTaggerObject.objects.get(pk=tagger_id)
@@ -151,12 +147,10 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         if not TEST_KEEP_PLOT_FILES:
             self.addCleanup(remove_file, tagger_object.plot.path)
 
-
     def add_cleanup_folders(self):
         if not self.test_model_existed:
             test_model_dir = os.path.join(BERT_PRETRAINED_MODEL_DIRECTORY, BertTagger.normalize_name(TEST_BERT_MODEL))
             self.addCleanup(remove_folder, test_model_dir)
-
 
     def run_train_multiclass_bert_tagger_using_fact_name(self):
         """Tests BertTagger training with multiple classes and if a new Task gets created via the signal."""
@@ -190,7 +184,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         self.add_cleanup_files(tagger_id)
 
-
     def run_train_binary_multiclass_bert_tagger_using_fact_name(self):
         """Tests BertTagger training with binary facts."""
         payload = {
@@ -223,7 +216,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertTrue(len(response.data["classes"]) == 2)
 
         self.add_cleanup_files(tagger_id)
-
 
     def run_train_binary_multiclass_bert_tagger_using_fact_name_invalid_payload(self):
         """Tests BertTagger training with binary facts."""
@@ -263,7 +255,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         print_output('test_run_train_binary_multiclass_bert_tagger_using_fact_name_invalid_pos_label:response.data', response.data)
         # Check if creating the BertTagger fails with status code 400
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
 
     def run_train_balanced_multiclass_bert_tagger_using_fact_name(self):
         """Tests balanced BertTagger training with multiple classes and if a new Task gets created via the signal."""
@@ -305,7 +296,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         self.add_cleanup_files(tagger_id)
 
-
     def run_train_bert_tagger_using_query(self):
         """Tests BertTagger training, and if a new Task gets created via the signal."""
         payload = {
@@ -341,7 +331,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.test_tagger_id = tagger_id
         self.add_cleanup_files(tagger_id)
 
-
     def run_train_bert_tagger_from_checkpoint_model_bin2bin(self):
         """Tests training BertTagger from a checkpoint."""
         payload = {
@@ -375,7 +364,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertTrue(len(response.data["classes"]) >= 2)
 
         self.add_cleanup_files(tagger_id)
-
 
     def run_train_bert_tagger_from_checkpoint_model_bin2mc(self):
         """Tests training BertTagger from a checkpoint."""
@@ -411,7 +399,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         self.add_cleanup_files(tagger_id)
 
-
     def run_bert_tag_with_imported_gpu_model(self):
         """Test applying imported model trained on GPU."""
         payload = {
@@ -427,7 +414,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertEqual("true", response.data["result"])
 
         self.add_cleanup_files(self.test_imported_binary_gpu_tagger_id)
-
 
     def run_bert_tag_with_imported_cpu_model(self):
         """Tests applying imported model trained on CPU."""
@@ -445,7 +431,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         self.add_cleanup_files(self.test_imported_binary_cpu_tagger_id)
 
-
     def run_bert_tag_text(self):
         """Tests tag prediction for texts."""
         payload = {
@@ -457,7 +442,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertTrue("probability" in response.data)
         self.assertTrue("result" in response.data)
         self.assertTrue("tagger_id" in response.data)
-
 
     def run_bert_tag_random_doc(self):
         """Tests the endpoint for the tag_random_doc action"""
@@ -494,7 +478,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertTrue("result" in response.data["prediction"])
         self.assertTrue("tagger_id" in response.data["prediction"])
 
-
     def run_bert_epoch_reports_get(self):
         """Tests endpoint for retrieving epoch reports via GET"""
         url = f'{self.url}{self.test_tagger_id}/epoch_reports/'
@@ -505,7 +488,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertTrue(isinstance(response.data, list))
         # Check if first report is not empty
         self.assertTrue(len(response.data[0]) > 0)
-
 
     def run_bert_epoch_reports_post(self):
         """Tests endpoint for retrieving epoch reports via GET"""
@@ -530,7 +512,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         # Check if first report does NOT contains recall
         self.assertTrue("recall" not in response.data[0])
 
-
     def run_bert_get_available_models(self):
         """Test endpoint for retrieving available BERT models."""
         url = f'{self.url}available_models/'
@@ -540,7 +521,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if the endpoint returns currently available models
         self.assertCountEqual(response.data, available_models)
-
 
     def run_bert_download_pretrained_model(self):
         """Test endpoint for downloading pretrained BERT model."""
@@ -565,7 +545,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         # The endpoint should throw and error
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
 
     def run_bert_model_export_import(self):
         """Tests endpoint for model export and import"""
@@ -606,7 +585,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         # remove exported tagger files
         self.add_cleanup_files(tagger_id)
 
-
     def run_apply_binary_tagger_to_index(self):
         """Tests applying binary BERT tagger to index using apply_to_index endpoint."""
         # Make sure reindexer task has finished
@@ -641,7 +619,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertTrue(results[self.new_fact_value] == expected_number_of_facts)
 
         self.add_cleanup_files(self.test_imported_binary_gpu_tagger_id)
-
 
     def run_apply_multiclass_tagger_to_index(self):
         """Tests applying multiclass BERT tagger to index using apply_to_index endpoint."""
@@ -680,7 +657,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         self.add_cleanup_files(self.test_imported_multiclass_gpu_tagger_id)
 
-
     def run_apply_tagger_to_index_invalid_input(self):
         """Tests applying multiclass BERT tagger to index using apply_to_index endpoint."""
 
@@ -699,7 +675,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         self.add_cleanup_files(self.test_tagger_id)
-
 
     def run_bert_tag_and_feedback_and_retrain(self):
         """Tests feeback extra action."""
@@ -779,7 +754,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         self.add_cleanup_files(self.test_tagger_id)
 
-
     def run_bert_tag_text_persistent(self):
         """Tests tag prediction for texts using persistent models."""
         payload = {
@@ -802,7 +776,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         print_output('test_bert_tagger_persistent speed:', (end_1, end_2))
         assert end_2 < end_1
 
-
     def run_test_that_user_cant_delete_pretrained_model(self):
         self.client.login(username='BertTaggerOwner', password='pw')
 
@@ -810,7 +783,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         resp = self.client.post(url, data={"model_name": "EMBEDDIA/finest-bert"})
         print_output("run_test_that_user_cant_delete_pretrained_model:response.data", data=resp.data)
         self.assertTrue(resp.status_code == status.HTTP_401_UNAUTHORIZED or resp.status_code == status.HTTP_403_FORBIDDEN)
-
 
     def run_test_that_admin_users_can_delete_pretrained_model(self):
         self.client.login(username="AdminBertUser", password='pw')
@@ -824,3 +796,14 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         print_output("run_test_that_admin_users_can_delete_pretrained_model:response.data", data=resp.data)
         self.assertTrue(resp.status_code == status.HTTP_200_OK)
         self.assertTrue(model_path.exists() is False)
+
+    # Related to an issue where deleting the author user would cause crashes.
+    def test_that_after_author_deletion_everything_still_works(self):
+        bt = BertTaggerObject.objects.last()
+        bt.author = self.admin_user
+        bt.save()
+
+        self.admin_user.delete()
+        response = self.client.get(self.url)
+        print_output("test_that_after_author_deletion_everything_still_works:response.data", response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

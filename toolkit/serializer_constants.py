@@ -15,7 +15,6 @@ from toolkit.elastic.validators import check_for_existence
 # Helptext constants to ensure consistent values inside Toolkit.
 from toolkit.settings import DESCRIPTION_CHAR_LIMIT, ES_BULK_SIZE_MAX, ES_TIMEOUT_MAX
 
-
 BULK_SIZE_HELPTEXT = "How many documents should be sent into Elasticsearch in a single batch for update."
 ES_TIMEOUT_HELPTEXT = "How many seconds should be allowed for the the update request to Elasticsearch."
 DESCRIPTION_HELPTEXT = "Description of the task to distinguish it from others."
@@ -32,13 +31,11 @@ class EmptySerializer(serializers.Serializer):
 class ProjectResourceUrlSerializer():
     '''For project serializers which need to construct the HyperLinked URL'''
 
-
     def get_url(self, obj):
         request = self.context['request']
         path = re.sub(r'\d+\/*$', '', request.path)
         resource_url = request.build_absolute_uri(f'{path}{obj.id}/')
         return resource_url
-
 
     def get_plot(self, obj):
         request = self.context['request']
@@ -62,7 +59,6 @@ class FieldsValidationSerializerMixin:
 
 class FieldValidationSerializerMixin:
 
-
     def validate_field(self, value):
         project_id = self.context['view'].kwargs['project_pk']
         project_obj = Project.objects.get(id=project_id)
@@ -77,7 +73,6 @@ class FieldParseSerializer(FieldsValidationSerializerMixin):
     For serializers that need to override to_representation and parse fields
     Serializers overriden with FieldParseSerializer will validate, if field input
     """
-
 
     def to_representation(self, instance):
         # self is the parent class obj in this case
@@ -115,9 +110,13 @@ class FeedbackSerializer(serializers.Serializer):
 class FavoriteModelSerializerMixin(metaclass=serializers.SerializerMetaclass):
     is_favorited = serializers.SerializerMethodField(read_only=True)
 
-
     def get_is_favorited(self, instance):
-        return instance.favorited_users.filter(username=instance.author.username).exists()
+        request = self.context["request"]
+        user = request.user
+        if user:
+            return instance.favorited_users.filter(username=user).exists()
+        else:
+            return False
 
 
 class TasksMixinSerializer(metaclass=serializers.SerializerMetaclass):
