@@ -1,4 +1,5 @@
-from typing import Optional
+import logging
+from typing import List, Optional
 
 import rest_framework.filters as drf_filters
 from django.db import transaction
@@ -14,9 +15,10 @@ from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import (
     IndexBulkDeleteSerializer, IndexSerializer, IndexUpdateSerializer
 )
+from toolkit.helper_functions import chunks
 from toolkit.permissions.project_permissions import IsSuperUser
 from toolkit.serializer_constants import EmptySerializer
-from toolkit.settings import TEXTA_TAGS_KEY
+from toolkit.settings import ERROR_LOGGER, TEXTA_TAGS_KEY
 
 
 class IndicesFilter(filters.FilterSet):
@@ -159,7 +161,7 @@ class IndexViewSet(mixins.CreateModelMixin,
         # Using get_or_create to avoid unique name constraints on creation.
         if es.check_if_indices_exist([index]):
             # Even if the index already exists, create the index object just in case
-            index, is_created = Index.objects.get_or_create(name=index)
+            index, is_created = Index.objects.get_or_create(name=index, defaults={"added_by": request.user.username})
 
             if is_created:
                 utc_time = es.get_index_creation_date(index)
@@ -179,7 +181,7 @@ class IndexViewSet(mixins.CreateModelMixin,
             if not is_open:
                 es.close_index(index)
 
-            index, is_created = Index.objects.get_or_create(name=index)
+            index, is_created = Index.objects.get_or_create(name=index, defaults={"added_by": request.user.username})
             if is_created:
                 utc_time = es.get_index_creation_date(index)
                 index.is_open = is_open
@@ -222,24 +224,41 @@ class IndexViewSet(mixins.CreateModelMixin,
         with transaction.atomic():
             index_name = Index.objects.get(pk=pk).name
             es = ElasticCore()
-            es.delete_index(index_name)
+            response = es.delete_index(index_name)
+
             Index.objects.filter(pk=pk).delete()
             return Response({"message": f"Deleted index {index_name} from Elasticsearch!"})
+
+
+    def _handle_bulk_deletion(self, index_names: List[str]):
+        if index_names:
+            ec = ElasticCore()
+            failed_indices = []
+
+            # Have to chunk the index names as there's a limit on how big of a request Elasticsearch will accept by size.
+            index_chunks = chunks(index_names, 5)
+            for indices in index_chunks:
+                response = ec.delete_index(",".join(indices))
+                is_acknowledged = response.get('acknowledged', False)
+                if is_acknowledged is False:
+                    logging.getLogger(ERROR_LOGGER).error(response)
+                    failed_indices = set(list(failed_indices + indices))
+
+            for index in failed_indices:
+                ec.delete_index(index)
 
 
     @action(detail=False, methods=['post'], serializer_class=IndexBulkDeleteSerializer)
     def bulk_delete(self, request, project_pk=None):
         serializer: IndexBulkDeleteSerializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # Initialize Elastic requirements.
-        ec = ElasticCore()
         # Get the index names.
         ids = serializer.validated_data["ids"]
         objects = Index.objects.filter(pk__in=ids)
         index_names = [item.name for item in objects]
-        # Ensure deletion on both Elastic and DB.
-        if index_names:
-            ec.delete_index(",".join(index_names))
+
+        self._handle_bulk_deletion(index_names)
+
         deleted = objects.delete()
         info = {"num_deleted": deleted[0], "deleted_types": deleted[1]}
         return Response(info, status=status.HTTP_200_OK)

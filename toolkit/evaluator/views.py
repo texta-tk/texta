@@ -1,47 +1,40 @@
 import json
 import os
-import logging
+from collections import OrderedDict
 
 import rest_framework.filters as drf_filters
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
-from django.db import transaction
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.core.task.models import Task
 from toolkit.core.project.models import Project
-
+from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-
-from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, DownloadingModelsNotAllowedError, InvalidModelIdentifierError
-
+from toolkit.evaluator import choices
+from toolkit.evaluator.helpers.binary_and_multilabel_evaluator import filter_and_average_results, filter_results
+from toolkit.evaluator.models import Evaluator as EvaluatorObject
+from toolkit.evaluator.serializers import EvaluatorSerializer, FilteredAverageSerializer, IndividualResultsSerializer, MisclassifiedExamplesSerializer
+from toolkit.evaluator.tasks import evaluate_entity_tags_task, evaluate_tags_task
+from toolkit.filter_constants import FavoriteFilter
+from toolkit.helper_functions import get_indices_from_object
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
-from toolkit.evaluator import choices
-from toolkit.evaluator.models import Evaluator as EvaluatorObject
-from toolkit.evaluator.serializers import EvaluatorSerializer, IndividualResultsSerializer, FilteredAverageSerializer, MisclassifiedExamplesSerializer
-from toolkit.evaluator.tasks import evaluate_tags_task, evaluate_entity_tags_task
-from toolkit.evaluator.helpers.binary_and_multilabel_evaluator import filter_results, filter_and_average_results
-from toolkit.helper_functions import get_indices_from_object
+from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing
 
-from toolkit.view_constants import BulkDelete
 
-from collections import OrderedDict
-
-class EvaluatorFilter(filters.FilterSet):
+class EvaluatorFilter(FavoriteFilter):
     description = filters.CharFilter("description", lookup_expr="icontains")
-    task_status = filters.CharFilter("task__status", lookup_expr="icontains")
-
+    task_status = filters.CharFilter("tasks__status", lookup_expr="icontains")
 
     class Meta:
         model = EvaluatorObject
         fields = []
 
 
-class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
+class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete, FavoriteModelViewMixing):
     serializer_class = EvaluatorSerializer
     permission_classes = (
         permissions.IsAuthenticated,
@@ -50,12 +43,10 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = EvaluatorFilter
-    ordering_fields = ("id", "author__username", "description",  "task__time_started", "task__time_completed", "f1_score", "precision", "recall", "task__status")
-
+    ordering_fields = ("id", "author__username", "description", "tasks__time_started", "tasks__time_completed", "f1_score", "precision", "recall", "tasks__status")
 
     def get_queryset(self):
         return EvaluatorObject.objects.filter(project=self.kwargs["project_pk"]).order_by("-id")
-
 
     def perform_create(self, serializer, **kwargs):
         project = Project.objects.get(id=self.kwargs["project_pk"])
@@ -84,20 +75,18 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
             query = serializer.validated_data["query"]
 
         new_task = Task.objects.create(evaluator=evaluator, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
-        evaluator.task = new_task
         evaluator.save()
+        evaluator.tasks.add(new_task)
 
         if evaluation_type == choices.ENTITY_EVALUATION:
             evaluate_entity_tags_task.apply_async(args=(evaluator.pk, indices, query, es_timeout, scroll_size), queue=CELERY_LONG_TERM_TASK_QUEUE)
         else:
             evaluate_tags_task.apply_async(args=(evaluator.pk, indices, query, es_timeout, scroll_size), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
-
     def destroy(self, request, *args, **kwargs):
-        evaluator_object: Evaluator = self.get_object()
+        evaluator_object: EvaluatorObject = self.get_object()
         evaluator_object.delete()
         return Response({"success": "Evaluator instance deleted, plot file removed"}, status=status.HTTP_204_NO_CONTENT)
-
 
     @action(detail=True, methods=["post"])
     def reevaluate(self, request, pk=None, project_pk=None):
@@ -116,8 +105,7 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
 
         return Response({"success": "Re-evaluation task created"}, status=status.HTTP_200_OK)
 
-
-    @action(detail=True, methods=["get", "post"], serializer_class = FilteredAverageSerializer)
+    @action(detail=True, methods=["get", "post"], serializer_class=FilteredAverageSerializer)
     def filtered_average(self, request, pk=None, project_pk=None):
         """Return average scores of (optionally filtered) individual results."""
         evaluator_object: EvaluatorObject = self.get_object()
@@ -146,7 +134,6 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
             avg_scores = {}
 
         return Response(avg_scores, status=status.HTTP_200_OK)
-
 
     @action(detail=True, methods=["get", "post"], serializer_class=MisclassifiedExamplesSerializer)
     def misclassified_examples(self, request, pk=None, project_pk=None):
@@ -181,8 +168,7 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
 
         return Response(misclassified_examples, status=status.HTTP_200_OK)
 
-
-    @action(detail=True, methods=["post", "get"], serializer_class = IndividualResultsSerializer)
+    @action(detail=True, methods=["post", "get"], serializer_class=IndividualResultsSerializer)
     def individual_results(self, request, pk=None, project_pk=None):
         """Retrieve individual scores for multilabel tags."""
         evaluator_object: EvaluatorObject = self.get_object()
@@ -205,7 +191,6 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
             order_desc = serializer.validated_data["order_desc"]
             metric_restrictions = serializer.validated_data["metric_restrictions"]
 
-
             if not metric_restrictions:
                 metric_restrictions = {}
 
@@ -224,7 +209,6 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
 
         return Response(results, status=status.HTTP_200_OK)
 
-
     @action(detail=True, methods=["get"])
     def export_model(self, request, pk=None, project_pk=None):
         zip_name = f"evaluator_model_{pk}.zip"
@@ -234,7 +218,6 @@ class EvaluatorViewSet(viewsets.ModelViewSet, BulkDelete):
         response = HttpResponse(data)
         response["Content-Disposition"] = "attachment; filename=" + os.path.basename(zip_name)
         return response
-
 
     @action(detail=False, methods=["post"], serializer_class=ProjectResourceImportModelSerializer)
     def import_model(self, request, pk=None, project_pk=None):

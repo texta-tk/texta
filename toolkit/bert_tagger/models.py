@@ -21,16 +21,15 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.feedback import Feedback
+from toolkit.helper_functions import get_core_setting
+from toolkit.model_constants import CommonModelMixin, FavoriteModelMixin
 from toolkit.settings import (BASE_DIR, BERT_CACHE_DIR, BERT_FINETUNED_MODEL_DIRECTORY, BERT_PRETRAINED_MODEL_DIRECTORY, CELERY_LONG_TERM_TASK_QUEUE)
 
 
-class BertTagger(models.Model):
+class BertTagger(FavoriteModelMixin, CommonModelMixin):
     MODEL_TYPE = 'bert_tagger'
     MODEL_JSON_NAME = "model.json"
 
-    description = models.CharField(max_length=MAX_DESC_LEN)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     fields = models.TextField(default=json.dumps([]))
     indices = models.ManyToManyField(Index, default=None)
 
@@ -75,8 +74,6 @@ class BertTagger(models.Model):
     model = models.FileField(null=True, verbose_name='', default=None, max_length=MAX_DESC_LEN)
     plot = models.FileField(upload_to='data/media', null=True, verbose_name='')
 
-    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
-
 
     def get_available_or_all_indices(self, indices: List[str] = None) -> List[str]:
         """
@@ -105,7 +102,7 @@ class BertTagger(models.Model):
         json_obj = json.loads(serialized)[0]["fields"]
         json_obj.pop("project")
         json_obj.pop("author")
-        json_obj.pop("task")
+        json_obj.pop("tasks")
         return json_obj
 
 
@@ -117,14 +114,17 @@ class BertTagger(models.Model):
                 bert_tagger_json = json.loads(json_string)
 
                 indices = bert_tagger_json.pop("indices")
+                bert_tagger_json.pop("favorited_users", None)
 
                 bert_tagger_model = BertTagger(**bert_tagger_json)
 
-                bert_tagger_model.task = Task.objects.create(berttagger=bert_tagger_model, status=Task.STATUS_COMPLETED)
                 bert_tagger_model.author = User.objects.get(id=request.user.id)
                 bert_tagger_model.project = Project.objects.get(id=pk)
 
                 bert_tagger_model.save()
+
+                new_task = Task.objects.create(berttagger=bert_tagger_model, status=Task.STATUS_COMPLETED)
+                bert_tagger_model.tasks.add(new_task)
 
                 for index in indices:
                     index_model, is_created = Index.objects.get_or_create(name=index)
@@ -180,11 +180,14 @@ class BertTagger(models.Model):
 
 
     def train(self):
-        new_task = Task.objects.create(berttagger=self, status='created')
-        self.task = new_task
+        new_task = Task.objects.create(berttagger=self, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
         self.save()
+        self.tasks.add(new_task)
         from toolkit.bert_tagger.tasks import train_bert_tagger
-        train_bert_tagger.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
+
+
+        queue = CELERY_LONG_TERM_TASK_QUEUE if self.use_gpu is False else get_core_setting("TEXTA_LONG_TERM_GPU_TASK_QUEUE")
+        train_bert_tagger.apply_async(args=(self.pk,), queue=queue)
 
 
     def get_resource_paths(self):

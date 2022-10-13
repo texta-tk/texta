@@ -7,10 +7,8 @@ from texta_elastic.searcher import EMPTY_QUERY
 
 from toolkit.bert_tagger import choices
 from toolkit.bert_tagger.models import BertTagger
-from toolkit.core.task.serializers import TaskSerializer
-from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.helper_functions import get_downloaded_bert_models
-from toolkit.serializer_constants import (ElasticScrollMixIn, FieldParseSerializer, IndicesSerializerMixin, ProjectFilteredPrimaryKeyRelatedField, ProjectResourceUrlSerializer)
+from toolkit.serializer_constants import (CommonModelSerializerMixin, ElasticScrollMixIn, FavoriteModelSerializerMixin, FieldParseSerializer, IndicesSerializerMixin, ProjectFilteredPrimaryKeyRelatedField, ProjectResourceUrlSerializer)
 from toolkit.settings import ALLOW_BERT_MODEL_DOWNLOADS, BERT_PRETRAINED_MODEL_DIRECTORY
 from toolkit.validator_constants import validate_pos_label
 
@@ -41,8 +39,7 @@ class TagRandomDocSerializer(IndicesSerializerMixin):
     fields = serializers.ListField(child=serializers.CharField(), default=[], required=False, allow_empty=True, help_text='Fields to apply the tagger. By default, the tagger is applied to the same fields it was trained on.')
 
 
-class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
-    author = UserSerializer(read_only=True)
+class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, CommonModelSerializerMixin, IndicesSerializerMixin, ProjectResourceUrlSerializer, FavoriteModelSerializerMixin):
     fields = serializers.ListField(child=serializers.CharField(), help_text='Fields used to build the model.')
     query = serializers.JSONField(required=False, help_text='Query in JSON format', default=json.dumps(EMPTY_QUERY))
     fact_name = serializers.CharField(default=None, required=False, help_text='Fact name used to filter tags (fact values). Default = None')
@@ -70,7 +67,6 @@ class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, In
     balance_to_max_limit = serializers.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT, required=False,
                                                     help_text=f'If enabled, the number of samples for each class is set to `maximum_sample_size`. Otherwise, it is set to max class size. NB! Only applicable for multiclass taggers with balance=True. Default = {choices.DEFAULT_BALANCE_TO_MAX_LIMIT}')
 
-    task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
     url = serializers.SerializerMethodField()
 
@@ -94,12 +90,12 @@ class BertTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, In
     class Meta:
         model = BertTagger
         fields = ('url', 'author', 'id', 'description', 'query', 'fields', 'use_gpu', 'f1_score', 'precision', 'recall', 'accuracy',
-                  'validation_loss', 'training_loss', 'maximum_sample_size', 'minimum_sample_size', 'num_epochs', 'plot', 'task', 'pos_label', 'fact_name',
-                  'indices', 'bert_model', 'learning_rate', 'eps', 'max_length', 'batch_size', 'adjusted_batch_size',
+                  'validation_loss', 'training_loss', 'maximum_sample_size', 'minimum_sample_size', 'num_epochs', 'plot', 'tasks', 'pos_label', 'fact_name',
+                  'indices', 'bert_model', 'learning_rate', 'eps', 'is_favorited', 'max_length', 'batch_size', 'adjusted_batch_size',
                   'split_ratio', 'negative_multiplier', 'checkpoint_model', 'num_examples', 'confusion_matrix', 'balance', 'use_sentence_shuffle', 'balance_to_max_limit', 'classes')
 
         read_only_fields = ('project', 'fields', 'f1_score', 'precision', 'recall', 'accuracy', 'validation_loss', 'training_loss', 'plot',
-                            'task', 'num_examples', 'adjusted_batch_size', 'confusion_matrix', 'classes')
+                            'tasks', 'num_examples', 'adjusted_batch_size', 'confusion_matrix', 'classes')
 
         fields_to_parse = ['fields', 'classes']
 

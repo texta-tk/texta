@@ -11,23 +11,19 @@ from django.core import serializers
 from django.db import models, transaction
 from django.dispatch import receiver
 from django.http import HttpResponse
+from texta_elastic.searcher import EMPTY_QUERY
 
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from texta_elastic.searcher import EMPTY_QUERY
-
 from toolkit.evaluator import choices
+from toolkit.model_constants import CommonModelMixin, FavoriteModelMixin
 
 
-class Evaluator(models.Model):
+class Evaluator(CommonModelMixin, FavoriteModelMixin):
     MODEL_TYPE = "evaluator"
     MODEL_JSON_NAME = "model.json"
-
-    description = models.CharField(max_length=MAX_DESC_LEN)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
 
     indices = models.ManyToManyField(Index, default=None)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
@@ -59,6 +55,8 @@ class Evaluator(models.Model):
     scores_imprecise = models.BooleanField(default=None, null=True)
     score_after_scroll = models.BooleanField(default=None, null=True)
 
+    classes = models.TextField(default=json.dumps([]))
+
     evaluation_type = models.CharField(max_length=MAX_DESC_LEN, default=None, null=True)
 
     token_based = models.BooleanField(default=choices.DEFAULT_TOKEN_BASED, null=True)
@@ -68,7 +66,6 @@ class Evaluator(models.Model):
     field = models.CharField(max_length=MAX_DESC_LEN, default="", null=True)
 
     plot = models.FileField(upload_to="data/media", null=True, verbose_name="")
-    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
 
     def get_indices(self):
@@ -78,9 +75,10 @@ class Evaluator(models.Model):
     def to_json(self) -> dict:
         serialized = serializers.serialize("json", [self])
         json_obj = json.loads(serialized)[0]["fields"]
-        json_obj.pop("project")
-        json_obj.pop("author")
-        json_obj.pop("task")
+        json_obj.pop("project", None)
+        json_obj.pop("author", None)
+        json_obj.pop("tasks", [])
+        json_obj.pop("favorited_users", None)
         return json_obj
 
 
@@ -91,21 +89,22 @@ class Evaluator(models.Model):
                 json_string = archive.read(Evaluator.MODEL_JSON_NAME).decode()
                 evaluator_json = json.loads(json_string)
 
-                indices = evaluator_json.pop("indices")
+                indices = evaluator_json.pop("indices", [])
+                evaluator_json.pop("favorited_users", None)
 
                 evaluator_model = Evaluator(**evaluator_json)
 
-                evaluator_model.task = Task.objects.create(evaluator=evaluator_model, status=Task.STATUS_COMPLETED, task_type=Task.TYPE_APPLY)
+                new_task = Task.objects.create(evaluator=evaluator_model, status=Task.STATUS_COMPLETED, task_type=Task.TYPE_APPLY)
                 evaluator_model.author = User.objects.get(id=request.user.id)
                 evaluator_model.project = Project.objects.get(id=pk)
 
-
                 evaluator_model.save()
+
+                evaluator_model.tasks.add(new_task)
 
                 for index in indices:
                     index_model, is_created = Index.objects.get_or_create(name=index)
                     evaluator_model.indices.add(index_model)
-
 
                 plot_name = pathlib.Path(evaluator_json["plot"])
                 path = plot_name.name

@@ -10,24 +10,23 @@ from django.core import serializers
 from django.db import models
 from django.dispatch import receiver
 from django.http import HttpResponse
+from texta_elastic.searcher import EMPTY_QUERY
 from texta_embedding.embedding import FastTextEmbedding, W2VEmbedding
+from texta_tools.text_processor import TextProcessor
 
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE
 from toolkit.elastic.index.models import Index
-from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.choices import FASTTEXT_EMBEDDING, W2V_EMBEDDING
+from toolkit.model_constants import CommonModelMixin, FavoriteModelMixin
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
 
 
-class Embedding(models.Model):
+class Embedding(FavoriteModelMixin, CommonModelMixin):
     MODEL_JSON_NAME = "model.json"
 
-    description = models.CharField(max_length=MAX_DESC_LEN)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     fields = models.TextField(default=json.dumps([]))
     indices = models.ManyToManyField(Index)
@@ -36,12 +35,12 @@ class Embedding(models.Model):
     min_freq = models.IntegerField(default=10)
     window_size = models.IntegerField(default=1)
     num_epochs = models.IntegerField(default=1)
+    stop_words = models.TextField(default=json.dumps([]))
     vocab_size = models.IntegerField(default=0)
     use_phraser = models.BooleanField(default=True)
     snowball_language = models.CharField(default=DEFAULT_SNOWBALL_LANGUAGE, null=True, max_length=MAX_DESC_LEN)
     embedding_type = models.TextField(default=W2V_EMBEDDING)
     embedding_model = models.FileField(null=True, verbose_name='', default=None)
-    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
 
     @staticmethod
@@ -95,10 +94,12 @@ class Embedding(models.Model):
 
         # Create a task object to fill the new model object with.
         # Pull the user and project into which it's imported from the web request.
-        new_model.task = Task.objects.create(embedding=new_model, status=Task.STATUS_COMPLETED)
+        new_task = Task.objects.create(embedding=new_model, task_type=Task.TYPE_TRAIN, status=Task.STATUS_COMPLETED)
         new_model.author = User.objects.get(id=user_id)
         new_model.project = Project.objects.get(id=project_id)
         new_model.save()  # Save the intermediate results.
+
+        new_model.tasks.add(new_task)
 
         for index_name in indices:
             index, is_created = Index.objects.get_or_create(name=index_name)
@@ -112,21 +113,33 @@ class Embedding(models.Model):
         """
         Returns embedding object based on embedding type.
         """
+        stop_words = json.loads(self.stop_words)
+        stopword_kwargs = {"custom_stop_words": stop_words} if stop_words else {}
+
         if self.embedding_type == FASTTEXT_EMBEDDING:
-            return FastTextEmbedding(min_freq=self.min_freq,
-                                     num_dimensions=self.num_dimensions,
-                                     window=self.window_size,
-                                     num_epochs=self.num_epochs)
+            return FastTextEmbedding(
+                min_freq=self.min_freq,
+                num_dimensions=self.num_dimensions,
+                window=self.window_size,
+                num_epochs=self.num_epochs,
+                text_processor=TextProcessor(sentences=True, remove_stop_words=True, words_as_list=True, **stopword_kwargs)
+            )
         elif self.embedding_type == W2V_EMBEDDING:
-            return W2VEmbedding(min_freq=self.min_freq,
-                                num_dimensions=self.num_dimensions,
-                                window=self.window_size,
-                                num_epochs=self.num_epochs)
+            return W2VEmbedding(
+                min_freq=self.min_freq,
+                num_dimensions=self.num_dimensions,
+                window=self.window_size,
+                num_epochs=self.num_epochs,
+                text_processor=TextProcessor(sentences=True, remove_stop_words=True, words_as_list=True, **stopword_kwargs)
+            )
         else:
-            return W2VEmbedding(min_freq=self.min_freq,
-                                num_dimensions=self.num_dimensions,
-                                window=self.window_size,
-                                num_epochs=self.num_epochs)
+            return W2VEmbedding(
+                min_freq=self.min_freq,
+                num_dimensions=self.num_dimensions,
+                window=self.window_size,
+                num_epochs=self.num_epochs,
+                text_processor=TextProcessor(sentences=True, remove_stop_words=True, words_as_list=True, **stopword_kwargs)
+            )
 
 
     def get_indices(self):
@@ -138,7 +151,7 @@ class Embedding(models.Model):
         json_obj = {"fields": json.loads(serialized)[0]["fields"], "embedding_extras": []}
         json_obj["fields"].pop("project")
         json_obj["fields"].pop("author", None)
-        json_obj["fields"].pop("task", None)
+        json_obj["fields"].pop("tasks", None)
         json_obj["embedding_extras"] = Embedding.get_extra_model_file_names(self.embedding_model.path)
         return json_obj
 
@@ -169,6 +182,8 @@ class Embedding(models.Model):
             json_string = archive.read(Embedding.MODEL_JSON_NAME).decode()
             original_json = json.loads(json_string)
             model_json = original_json["fields"]
+            model_json.pop("favorited_users", None)
+
             # Create the new embedding object and save it to the DB.
             new_model = Embedding.create_embedding_object(model_json, request.user.id, pk)
             new_model = Embedding.add_file_to_embedding_object(archive, new_model, model_json, "embedding", "embedding_model")
@@ -195,9 +210,9 @@ class Embedding(models.Model):
 
 
     def train(self):
-        new_task = Task.objects.create(embedding=self, status='created')
-        self.task = new_task
+        new_task = Task.objects.create(embedding=self, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
         self.save()
+        self.tasks.add(new_task)
         from toolkit.embedding.tasks import train_embedding
         train_embedding.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
 

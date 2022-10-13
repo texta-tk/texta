@@ -2,19 +2,16 @@ import json
 
 from django.urls import reverse
 from rest_framework import serializers
+from texta_elastic.searcher import EMPTY_QUERY
 
 from toolkit.core.task.serializers import TaskSerializer
-from texta_elastic.searcher import EMPTY_QUERY
-from toolkit.serializer_constants import BULK_SIZE_HELPTEXT, DESCRIPTION_HELPTEXT, ES_TIMEOUT_HELPTEXT, FIELDS_HELPTEXT, FieldsValidationSerializerMixin, IndicesSerializerMixin, QUERY_HELPTEXT
+from toolkit.serializer_constants import BULK_SIZE_HELPTEXT, CommonModelSerializerMixin, DESCRIPTION_HELPTEXT, ES_TIMEOUT_HELPTEXT, FIELDS_HELPTEXT, FieldsValidationSerializerMixin, IndicesSerializerMixin, QUERY_HELPTEXT
 from toolkit.settings import REST_FRAMEWORK
 from .models import SearchFieldsTagger, SearchQueryTagger
 from ...core.user_profile.serializers import UserSerializer
 
 
-class SearchQueryTaggerSerializer(serializers.ModelSerializer, FieldsValidationSerializerMixin, IndicesSerializerMixin):
-    author = UserSerializer(read_only=True)
-    description = serializers.CharField()
-    task = TaskSerializer(read_only=True, required=False)
+class SearchQueryTaggerSerializer(serializers.ModelSerializer, CommonModelSerializerMixin, FieldsValidationSerializerMixin, IndicesSerializerMixin):
     url = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text=QUERY_HELPTEXT, default=EMPTY_QUERY)
     fields = serializers.ListField(child=serializers.CharField(), help_text=FIELDS_HELPTEXT, required=True)
@@ -26,7 +23,7 @@ class SearchQueryTaggerSerializer(serializers.ModelSerializer, FieldsValidationS
 
     class Meta:
         model = SearchQueryTagger
-        fields = ("id", "url", "author", "indices", "description", "task", "query", "fields", "fact_name", "fact_value", "bulk_size", "es_timeout")
+        fields = ("id", "url", "author", "indices", "description", "tasks", "query", "fields", "fact_name", "fact_value", "bulk_size", "es_timeout")
 
 
     def get_url(self, obj):
@@ -47,10 +44,7 @@ class SearchQueryTaggerSerializer(serializers.ModelSerializer, FieldsValidationS
         return data
 
 
-class SearchFieldsTaggerSerializer(serializers.ModelSerializer, FieldsValidationSerializerMixin, IndicesSerializerMixin):
-    author = UserSerializer(read_only=True)
-    description = serializers.CharField(help_text=DESCRIPTION_HELPTEXT)
-    task = TaskSerializer(read_only=True, required=False)
+class SearchFieldsTaggerSerializer(serializers.ModelSerializer, CommonModelSerializerMixin, FieldsValidationSerializerMixin, IndicesSerializerMixin):
     url = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text=QUERY_HELPTEXT, default=EMPTY_QUERY)
     fields = serializers.ListField(child=serializers.CharField(), required=True, help_text=FIELDS_HELPTEXT)
@@ -65,7 +59,7 @@ class SearchFieldsTaggerSerializer(serializers.ModelSerializer, FieldsValidation
 
     class Meta:
         model = SearchFieldsTagger
-        fields = ("id", "url", "author", "indices", "description", "use_breakup", "breakup_character", "task", "query", "fields", "fact_name", "bulk_size", "es_timeout")
+        fields = ("id", "url", "author", "indices", "description", "use_breakup", "breakup_character", "tasks", "query", "fields", "fact_name", "bulk_size", "es_timeout")
 
 
     def get_url(self, obj):

@@ -1,18 +1,23 @@
+import logging
+
 from celery.decorators import task
 
 from toolkit.base_tasks import TransactionAwareTask
-from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.tools.show_progress import ShowProgress
 from .dataset import Dataset
 from .models import DatasetImport
+from ..settings import ERROR_LOGGER, INFO_LOGGER
 
 
 @task(name="import_dataset", base=TransactionAwareTask)
 def import_dataset(dataset_import_id):
     # retrieve object & task
     import_object = DatasetImport.objects.get(pk=dataset_import_id)
-    task_object = import_object.task
+    task_object = import_object.tasks.last()
+    logger = logging.getLogger(INFO_LOGGER)
+    logger.info(f"Starting import with ID {import_object.pk} with description: {import_object.description}!")
+
     # create progress
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('importing dataset')
@@ -20,10 +25,11 @@ def import_dataset(dataset_import_id):
     try:
         # retrieve file path from object
         file_path = import_object.file.path
-        ds = Dataset(file_path, import_object.index, show_progress=show_progress, separator=import_object.separator)
+        ds = Dataset(file_path, import_object.index, show_progress=show_progress, separator=import_object.separator, meta=import_object)
         errors = ds.import_dataset()
         # update errors
         if errors:
+            logging.getLogger(ERROR_LOGGER).exception(errors)
             show_progress.update_errors(errors)
 
         # update num_documents
@@ -32,8 +38,9 @@ def import_dataset(dataset_import_id):
         import_object.save()
 
         # add imported index to project indices
+        logger.info(f"Creating index records for the database for task ID: '{import_object.pk}' with description: '{import_object.description}'!")
         project_obj = import_object.project
-        index, is_created = Index.objects.get_or_create(name=import_object.index)
+        index, is_created = Index.objects.get_or_create(name=import_object.index, defaults={"added_by": import_object.author.username})
         project_obj.indices.add(index)
         project_obj.save()
         # declare the job done

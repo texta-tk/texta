@@ -1,17 +1,19 @@
 import json
+import uuid
 from time import sleep
 
 from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
+from texta_elastic.core import ElasticCore
+from texta_elastic.searcher import ElasticSearcher
 
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.reindexer.models import Reindexer
-from texta_elastic.core import ElasticCore
-from texta_elastic.searcher import ElasticSearcher
 from toolkit.helper_functions import reindex_test_dataset
+from toolkit.settings import TEXTA_TAGS_KEY
 from toolkit.test_settings import *
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
@@ -32,6 +34,11 @@ class ReindexerViewTests(APITransactionTestCase):
         self.admin.save()
         self.project = project_creation("ReindexerTestProject", self.test_index_name, self.user)
         self.project.users.add(self.user)
+
+        self.mlp_test_index = self._setup_mlp_test_requirements()
+        self.mlp_index = Index.objects.create(name=self.mlp_test_index)
+        self.project.indices.add(self.mlp_index)
+
         self.ec = ElasticCore()
         self.client.login(username=self.default_username, password=self.default_password)
 
@@ -40,6 +47,54 @@ class ReindexerViewTests(APITransactionTestCase):
 
     def tearDown(self) -> None:
         self.ec.delete_index(index=self.test_index_name, ignore=[400, 404])
+        self.ec.delete_index(index=self.mlp_test_index, ignore=[400, 404])
+
+
+    def _setup_mlp_test_requirements(self) -> str:
+        document = {
+            "comment_subject": "to lohutu",
+            "comment_content": "Mis ajast homode vastasus määrab IQ-d.\nSelline arutlus sinult viitab sinu rumalusele,kel pole aimugu IQ-st",
+            "_mlp_meta": {
+                "comment_content": {
+                    "spans": "text",
+                    "analyzers": ["lemmas", "ner", "pos_tags"],
+                    "tokenization": "text"
+                },
+                "comment_subject": {
+                    "spans": "text",
+                    "analyzers": ["lemmas", "pos_tags", "ner"],
+                    "tokenization": "text"
+                }
+            }
+        }
+        ec = ElasticCore()
+        test_index = f"texta_test_reindexer_mlp_{uuid.uuid4().hex}"
+        ec.create_index(test_index)
+        ec.es.index(index=test_index, body=document, refresh="wait_for")
+        return test_index
+
+
+    def test_reindexing_documents_with_mlp_keeps_meta_information(self):
+        field_name = "comment_content"
+        new_index = f"{self.mlp_test_index}_2"
+        payload = {
+            "description": "Test that MLP meta is kept for specific fields.",
+            "fields": [field_name],
+            "indices": [self.mlp_test_index],
+            "new_index": new_index,
+            "field_type": [{"path": field_name, "field_type": "text", "new_path_name": field_name}]
+        }
+        url = reverse(f"{VERSION_NAMESPACE}:reindexer-list", kwargs={"project_pk": self.project.pk})
+        response = self.client.post(url, data=payload, format="json")
+        print_output("test_reindexing_documents_with_mlp_keeps_meta_information:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+
+        result = self.ec.es.search(index=new_index)
+        hits = result["hits"]["hits"]
+        self.assertTrue(len(hits) == 1)  # Ensure that the index only has a single hit and setup was proper.
+        mlp_meta = hits[0]["_source"]["_mlp_meta"]
+        self.assertTrue(field_name in mlp_meta)  # Ensure that the field we reindexed was automatically included.
+        self.assertTrue(len(mlp_meta.keys()) == 1)  # Ensure that ONLY the fields we wanted are included.
 
 
     def test_run(self):
@@ -127,6 +182,9 @@ class ReindexerViewTests(APITransactionTestCase):
             url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/elastic/reindexer/'
             self.run_create_reindexer_task_signal(self.project, url, payload)
 
+        # Test that usernames are automatically added.
+        self.assertTrue(Index.objects.filter(name=TEST_INDEX_REINDEX, added_by=self.default_username).exists())
+
 
     def run_create_reindexer_task_signal(self, project, url, payload, overwrite=False):
         """ Tests the endpoint for a new Reindexer task, and if a new Task gets created via the signal
@@ -159,8 +217,9 @@ class ReindexerViewTests(APITransactionTestCase):
         else:
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             created_reindexer = Reindexer.objects.get(id=response.data['id'])
-            print_output("Re-index task status: ", created_reindexer.task.status)
-            self.assertEqual(created_reindexer.task.status, Task.STATUS_COMPLETED)
+            task_object = created_reindexer.tasks.last()
+            print_output("Re-index task status: ", task_object.status)
+            self.assertEqual(task_object.status, Task.STATUS_COMPLETED)
             # self.check_positive_doc_count()
             new_index = response.data['new_index']
             delete_response = self.ec.delete_index(new_index)
@@ -257,3 +316,28 @@ class ReindexerViewTests(APITransactionTestCase):
 
         # Manual clean up.
         es.core.delete_index(self.new_index_name)
+
+
+    def test_that_texta_facts_structure_is_nested(self):
+        payload = {
+            "description": "TestTextaFacts",
+            "new_index": self.new_index_name,
+            "fields": [TEST_FIELD, TEXTA_TAGS_KEY],
+            "indices": [self.test_index_name],
+            "add_facts_mapping": True
+        }
+
+        # Reindex the test index into a new one.
+        url = reverse("v2:reindexer-list", kwargs={"project_pk": self.project.pk})
+        reindex_response = self.client.post(url, data=payload, format='json')
+        print_output('test_that_texta_facts_structure_is_nested:response.data', reindex_response.data)
+
+        # Check that the fields have been changed.
+
+        mapping = self.ec.get_mapping(self.new_index_name)
+        print_output("reindexed_mapping.data", mapping)
+        facts_mapping = mapping[self.new_index_name]["mappings"]["properties"]["texta_facts"]
+        self.assertTrue(facts_mapping["type"] == "nested")
+
+        # Manual clean up.
+        self.ec.delete_index(self.new_index_name)

@@ -1,28 +1,21 @@
 import json
 from typing import List
 
-from django.contrib.auth.models import User
 from django.db import models
+from texta_elastic.searcher import EMPTY_QUERY
 
-from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from texta_elastic.searcher import EMPTY_QUERY
+from toolkit.model_constants import CommonModelMixin
 from toolkit.serializer_constants import BULK_SIZE_HELPTEXT, ES_TIMEOUT_HELPTEXT
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 
 
-class DeleteFactsByQueryTask(models.Model):
-    from toolkit.core.project.models import Project
-
-    description = models.CharField(max_length=MAX_DESC_LEN, default="")
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+class DeleteFactsByQueryTask(CommonModelMixin):
     scroll_size = models.IntegerField(default=500, help_text=BULK_SIZE_HELPTEXT)
     es_timeout = models.IntegerField(default=15, help_text=ES_TIMEOUT_HELPTEXT)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     indices = models.ManyToManyField(Index)
-    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
     facts = models.TextField()
 
 
@@ -50,9 +43,9 @@ class DeleteFactsByQueryTask(models.Model):
 
     def process(self):
         from .tasks import start_fact_delete_query_task, fact_delete_query_task
-        new_task = Task.objects.create(deletefactsbyquerytask=self, status=Task.STATUS_CREATED)
-        self.task = new_task
+        new_task = Task.objects.create(deletefactsbyquerytask=self, task_type=Task.TYPE_APPLY, status=Task.STATUS_CREATED)
         self.save()
+        self.tasks.add(new_task)
         chain = start_fact_delete_query_task.s() | fact_delete_query_task.s()
         chain.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
@@ -61,17 +54,11 @@ class DeleteFactsByQueryTask(models.Model):
         return [index.name for index in self.indices.filter(is_open=True)]
 
 
-class EditFactsByQueryTask(models.Model):
-    from toolkit.core.project.models import Project
-
-    description = models.CharField(max_length=MAX_DESC_LEN, default="")
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+class EditFactsByQueryTask(CommonModelMixin):
     scroll_size = models.IntegerField(default=500, help_text=BULK_SIZE_HELPTEXT)
     es_timeout = models.IntegerField(default=15, help_text=ES_TIMEOUT_HELPTEXT)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     indices = models.ManyToManyField(Index)
-    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
     target_facts = models.TextField(help_text="Which facts to select for editing.")
     fact = models.TextField(help_text="End result of the selected facts.")
 
@@ -100,9 +87,9 @@ class EditFactsByQueryTask(models.Model):
 
     def process(self):
         from .tasks import start_fact_edit_query_task, fact_edit_query_task
-        new_task = Task.objects.create(editfactsbyquerytask=self, status='created')
-        self.task = new_task
+        new_task = Task.objects.create(editfactsbyquerytask=self, task_type=Task.TYPE_APPLY, status=Task.STATUS_CREATED)
         self.save()
+        self.tasks.add(new_task)
         chain = start_fact_edit_query_task.s() | fact_edit_query_task.s()
         chain.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
 

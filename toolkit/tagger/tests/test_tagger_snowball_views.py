@@ -3,9 +3,9 @@ from typing import List
 from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
+from texta_elastic.core import ElasticCore
 
 from toolkit.core.task.models import Task
-from texta_elastic.core import ElasticCore
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.tagger.models import Tagger
 from toolkit.test_settings import (TEST_FIELD_UNLEMMATIZED_CHOICE, TEST_KEEP_PLOT_FILES, TEST_VERSION_PREFIX)
@@ -85,13 +85,14 @@ class TaggerViewTests(APITransactionTestCase):
                     # add tagger to be tested
                     self.test_tagger_ids.append(created_tagger.pk)
                     # Check if not errors
-                    self.assertEqual(created_tagger.task.errors, '[]')
+                    task_object = created_tagger.tasks.last()
+                    self.assertEqual(task_object.errors, '[]')
                     # Remove tagger files after test is done
                     self.add_cleanup_files(created_tagger.id)
                     # Check if Task gets created via a signal
-                    self.assertTrue(created_tagger.task is not None)
+                    self.assertTrue(task_object is not None)
                     # Check if Tagger gets trained and completed
-                    self.assertEqual(created_tagger.task.status, Task.STATUS_COMPLETED)
+                    self.assertEqual(task_object.status, Task.STATUS_COMPLETED)
 
 
     def run_snowball_list_features(self, test_tagger_ids: List[int]):

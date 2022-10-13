@@ -1,0 +1,22 @@
+---
+categories:
+  feature: Features
+  refactor: Refactored changes
+  bug: Bug fixes
+  update: Updates
+  performance: Performance improvements
+template: |
+  {% if categories %}
+  {% each categories %}
+  ### {{ title }} ({% if single_change %}1 change{% else %}{{ count }} changes{% end %})
+
+  {% each entries %}
+  - [{{ title }}]({{ commit.reference }}) by {{ author.reference }}
+  {% if merge_request %} ([merge request]({{ merge_request.reference }})){% end %}
+
+  {% end %}
+
+  {% end %}
+  {% else %}
+  No changes.
+  {% end %}

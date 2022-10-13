@@ -41,7 +41,7 @@ dependencies:
       - xlrd==1.2.0
       - dill
       - texta-anonymizer==1.*
-      - texta-mlp==1.16.*
+      - texta-mlp==1.17.*
       - texta-lexicon-matcher==1.*
       - texta-tools==2.*
       - texta-embedding==1.*

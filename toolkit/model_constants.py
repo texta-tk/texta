@@ -4,18 +4,27 @@ from typing import List
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from texta_elastic.searcher import EMPTY_QUERY
 
 from toolkit.core.project.models import Project
+from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
-from texta_elastic.searcher import EMPTY_QUERY
-from toolkit.serializer_constants import BULK_SIZE_HELPTEXT, ES_TIMEOUT_HELPTEXT, INDICES_HELPTEXT
+from toolkit.serializer_constants import BULK_SIZE_HELPTEXT, DESCRIPTION_HELPTEXT, ES_TIMEOUT_HELPTEXT, INDICES_HELPTEXT
 from toolkit.settings import DESCRIPTION_CHAR_LIMIT, ES_BULK_SIZE_MAX, ES_TIMEOUT_MAX
 
 
-class TaskModel(models.Model):
-    description = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT)
+class CommonModelMixin(models.Model):
+    description = models.CharField(max_length=DESCRIPTION_CHAR_LIMIT, help_text=DESCRIPTION_HELPTEXT)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    tasks = models.ManyToManyField(Task)
+
+
+    class Meta:
+        abstract = True
+
+
+class TaskModel(CommonModelMixin):
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     indices = models.ManyToManyField(Index, default=[], help_text=INDICES_HELPTEXT)
     fields = models.TextField(default=json.dumps([]))
@@ -52,3 +61,11 @@ class TaskModel(models.Model):
 
     def __str__(self):
         return '{0} - {1}'.format(self.pk, self.description)
+
+
+class FavoriteModelMixin(models.Model):
+    favorited_users = models.ManyToManyField(User, related_name="%(app_label)s_%(class)s_favorited_user")
+
+
+    class Meta:
+        abstract = True

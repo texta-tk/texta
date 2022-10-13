@@ -1,29 +1,19 @@
 import json
+
 from rest_framework import serializers
-from texta_crf_extractor.feature_extraction import DEFAULT_LAYERS, DEFAULT_EXTRACTORS
-from toolkit.core.user_profile.serializers import UserSerializer
-from toolkit.core.task.serializers import TaskSerializer
+from texta_crf_extractor.feature_extraction import DEFAULT_EXTRACTORS, DEFAULT_LAYERS
 from texta_elastic.searcher import EMPTY_QUERY
-from toolkit.serializer_constants import (
-    FieldParseSerializer,
-    IndicesSerializerMixin,
-    ElasticScrollMixIn,
-    ProjectResourceUrlSerializer,
-    ProjectFilteredPrimaryKeyRelatedField,
-    QUERY_HELPTEXT,
-    DESCRIPTION_HELPTEXT
-)
+
 from toolkit.embedding.models import Embedding
+from toolkit.serializer_constants import (CommonModelSerializerMixin, ElasticScrollMixIn, FavoriteModelSerializerMixin, FieldParseSerializer, IndicesSerializerMixin, ProjectFilteredPrimaryKeyRelatedField, ProjectResourceUrlSerializer, QUERY_HELPTEXT)
+from .choices import FEATURE_EXTRACTOR_CHOICES, FEATURE_FIELDS_CHOICES
 from .models import CRFExtractor
-from .choices import FEATURE_FIELDS_CHOICES, FEATURE_EXTRACTOR_CHOICES
 
 
-class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
-    description = serializers.CharField(help_text=DESCRIPTION_HELPTEXT)
-    author = UserSerializer(read_only=True)
+class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, CommonModelSerializerMixin, FavoriteModelSerializerMixin, IndicesSerializerMixin, ProjectResourceUrlSerializer):
     query = serializers.JSONField(
         help_text=QUERY_HELPTEXT,
-        default=json.dumps(EMPTY_QUERY),
+        default=json.dumps(EMPTY_QUERY, ensure_ascii=False),
         required=False
     )
 
@@ -55,11 +45,11 @@ class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, 
     window_size = serializers.IntegerField(
         default=2,
         help_text="Number of words before and after the observed word analyzed.",
-        )
+    )
     suffix_len = serializers.JSONField(
-        default=json.dumps((2,2)),
+        default=json.dumps((2, 2)),
         help_text="Number of characters (min, max) used for word suffixes as features."
-        )
+    )
     feature_fields = serializers.MultipleChoiceField(
         choices=FEATURE_FIELDS_CHOICES,
         default=DEFAULT_LAYERS,
@@ -88,7 +78,6 @@ class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, 
         default=None,
         help_text="Embedding to use for finding similar words for the observed word and it's context."
     )
-    task = TaskSerializer(read_only=True)
     url = serializers.SerializerMethodField()
 
 
@@ -98,9 +87,9 @@ class CRFExtractorSerializer(FieldParseSerializer, serializers.ModelSerializer, 
             'id', 'url', 'author', 'description', 'query', 'indices', 'mlp_field',
             'window_size', 'test_size', 'num_iter', 'best_c1', 'best_c2', 'bias', 'suffix_len',
             'labels', 'feature_fields', 'context_feature_fields', 'feature_extractors', 'context_feature_extractors',
-            'embedding', 'task', 'precision', 'recall', 'f1_score', 'c_values'
+            'embedding', 'tasks', 'precision', 'recall', 'f1_score', 'c_values', 'is_favorited',
         )
-        read_only_fields = ('precision', 'task', 'recall', 'f1_score', 'best_c1', 'best_c2')
+        read_only_fields = ('precision', 'tasks', 'recall', 'f1_score', 'best_c1', 'best_c2')
         fields_to_parse = ('labels', 'suffix_len', 'c_values')
 
 

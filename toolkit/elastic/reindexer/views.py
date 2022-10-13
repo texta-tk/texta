@@ -5,7 +5,6 @@ from django_filters import rest_framework as filters
 from rest_framework import mixins, permissions, viewsets
 
 from toolkit.core.project.models import Project
-from toolkit.elastic.index.models import Index
 from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.elastic.reindexer.serializers import ReindexerCreateSerializer
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
@@ -50,14 +49,15 @@ class ReindexerViewSet(mixins.CreateModelMixin,
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = ReindexerFilter
     ordering_fields = ('id', 'author__username', 'description', 'fields', 'new_index', 'indices', 'random_size',
-                       'task__time_started', 'task__time_completed',
-                       'task__status')
+                       'tasks__time_started', 'tasks__time_completed',
+                       'tasks__status')
 
 
     def get_queryset(self):
         return Reindexer.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
 
 
+    # Since reindexer task is triggered by a model signal, serializer.save() will also start the task.
     def perform_create(self, serializer):
         project_obj = Project.objects.get(id=self.kwargs['project_pk'])
         serializer.save(
@@ -66,15 +66,3 @@ class ReindexerViewSet(mixins.CreateModelMixin,
             field_type=json.dumps(serializer.validated_data.get('field_type', [])),
             fields=json.dumps(serializer.validated_data.get('fields', [])),
             indices=json.dumps(serializer.validated_data['indices']))
-        self.update_project_indices(serializer, project_obj)
-
-
-    def update_project_indices(self, serializer, project_obj):
-        ''' add new_index included in the request to the relevant project object '''
-        index_to_add = serializer.validated_data['new_index']
-        from texta_elastic.core import ElasticCore
-        ec = ElasticCore()
-        ec.create_index(index_to_add)
-        index, is_open = Index.objects.get_or_create(name=index_to_add)
-        project_obj.indices.add(index)
-        project_obj.save()

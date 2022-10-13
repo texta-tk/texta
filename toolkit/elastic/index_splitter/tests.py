@@ -9,6 +9,7 @@ from texta_elastic.core import ElasticCore
 from texta_elastic.searcher import ElasticSearcher
 
 from toolkit.core.task.models import Task
+from toolkit.elastic.index.models import Index
 from toolkit.elastic.index_splitter.models import IndexSplitter
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.test_settings import (INDEX_SPLITTING_TEST_INDEX, INDEX_SPLITTING_TRAIN_INDEX, TEST_INDEX_OBJECT_FIELD, TEST_QUERY, TEST_VERSION_PREFIX)
@@ -56,10 +57,11 @@ class IndexSplitterViewTests(APITransactionTestCase):
         # Check if IndexSplitter object gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         # Check if Task gets created
-        self.assertTrue(splitter_obj.task is not None)
-        print_output("status of IndexSplitter's Task object", splitter_obj.task.status)
+        task_object = splitter_obj.tasks.last()
+        self.assertTrue(task_object is not None)
+        print_output("status of IndexSplitter's Task object", task_object.status)
         # Check if Task gets completed
-        self.assertEqual(splitter_obj.task.status, Task.STATUS_COMPLETED)
+        self.assertEqual(task_object.status, Task.STATUS_COMPLETED)
 
         sleep(5)
 
@@ -68,6 +70,10 @@ class IndexSplitterViewTests(APITransactionTestCase):
         train_count = ElasticSearcher(indices=INDEX_SPLITTING_TRAIN_INDEX).count()
 
         print_output('original_count, test_count, train_count', [original_count, test_count, train_count])
+
+        # Test that usernames are added automatically into the newly created index.
+        self.assertTrue(Index.objects.filter(name=INDEX_SPLITTING_TEST_INDEX, added_by=self.user.username).exists())
+        self.assertTrue(Index.objects.filter(name=INDEX_SPLITTING_TRAIN_INDEX, added_by=self.user.username).exists())
 
 
     def test_create_random_split(self):

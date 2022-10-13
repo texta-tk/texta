@@ -455,8 +455,9 @@ class BinaryAndMultilabelEvaluatorObjectViewTests(APITransactionTestCase):
 
             evaluator_id = response.data["id"]
             evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
-            while evaluator_object.task.status != Task.STATUS_COMPLETED:
-                print_output(f"evaluator:run_test_binary_evaluation:avg:{avg_function}: waiting for evaluation task to finish, current status:", evaluator_object.task.status)
+            task_object = evaluator_object.tasks.last()
+            while task_object.status != Task.STATUS_COMPLETED:
+                print_output(f"evaluator:run_test_binary_evaluation:avg:{avg_function}: waiting for evaluation task to finish, current status:", task_object.status)
                 sleep(1)
 
             evaluator_json = evaluator_object.to_json()
@@ -508,8 +509,9 @@ class BinaryAndMultilabelEvaluatorObjectViewTests(APITransactionTestCase):
         evaluator_id = response.data["id"]
         evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
 
-        while evaluator_object.task.status != Task.STATUS_COMPLETED:
-            print_output(f"evaluator:run_test_evaluation_with_query:avg:{payload['average_function']}: waiting for evaluation task to finish, current status:", evaluator_object.task.status)
+        task_object = evaluator_object.tasks.last()
+        while task_object.status != Task.STATUS_COMPLETED:
+            print_output(f"evaluator:run_test_evaluation_with_query:avg:{payload['average_function']}: waiting for evaluation task to finish, current status:", task_object.status)
             sleep(1)
 
         # Check if the document count is in sync with the query
@@ -547,8 +549,9 @@ class BinaryAndMultilabelEvaluatorObjectViewTests(APITransactionTestCase):
 
             evaluator_id = response.data["id"]
             evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
-            while evaluator_object.task.status != Task.STATUS_COMPLETED:
-                print_output(f"evaluator:run_test_multilabel_evaluation:avg:{avg_function}: waiting for evaluation task to finish, current status:", evaluator_object.task.status)
+            task_object = evaluator_object.tasks.last()
+            while task_object.status != Task.STATUS_COMPLETED:
+                print_output(f"evaluator:run_test_multilabel_evaluation:avg:{avg_function}: waiting for evaluation task to finish, current status:", task_object.status)
                 sleep(1)
 
             evaluator_json = evaluator_object.to_json()
@@ -613,8 +616,9 @@ class BinaryAndMultilabelEvaluatorObjectViewTests(APITransactionTestCase):
 
             evaluator_id = response.data["id"]
             evaluator_object = EvaluatorObject.objects.get(pk=evaluator_id)
-            while evaluator_object.task.status != Task.STATUS_COMPLETED:
-                print_output(f"evaluator:run_test_multilabel_evaluation_with_scoring_after_each_scroll:avg:{avg_function}: waiting for evaluation task to finish, current status:", evaluator_object.task.status)
+            task_objects = evaluator_object.tasks.last()
+            while task_objects.status != Task.STATUS_COMPLETED:
+                print_output(f"evaluator:run_test_multilabel_evaluation_with_scoring_after_each_scroll:avg:{avg_function}: waiting for evaluation task to finish, current status:", task_objects.status)
                 sleep(1)
 
             evaluator_json = evaluator_object.to_json()

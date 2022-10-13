@@ -8,15 +8,18 @@ import environ
 from corsheaders.defaults import default_headers
 from kombu import Exchange, Queue
 
-from .helper_functions import download_bert_requirements, download_mlp_requirements, download_nltk_resources, parse_bool_env, parse_list_env_headers, parse_tuple_env_headers, prepare_mandatory_directories
+from .helper_functions import download_bert_requirements, download_mlp_requirements, download_nltk_resources, parse_bool_env, parse_list_env_headers, parse_tuple_env_headers, \
+    prepare_mandatory_directories
 from .logging_settings import setup_logging
-
 
 # Ignore Python Warning base class
 warnings.simplefilter(action="ignore", category=Warning)
 
 env_file_path = os.getenv("TEXTA_ENV_FILE", None)
 if env_file_path:
+    import termcolor
+
+    termcolor.cprint(f"Loading env file: {env_file_path}!", color="green")
     environ.Env.read_env(env_file=env_file_path)
 
 env = environ.Env()
@@ -25,7 +28,14 @@ env = environ.Env()
 # Helps differentiate them when creating static index names.
 DEPLOY_KEY = env.int("TEXTA_DEPLOY_KEY", default=1)
 
+# Used as the folder name in project folders for search exports.
 SEARCHER_FOLDER_KEY = "searcher"
+
+# Names of Celery queues.
+CELERY_LONG_TERM_TASK_QUEUE = "long_term_tasks"
+CELERY_SHORT_TERM_TASK_QUEUE = "short_term_tasks"
+CELERY_MLP_TASK_QUEUE = "mlp_queue"
+CELERY_LONG_TERM_GPU_TASK_QUEUE = "long_term_gpu_tasks"
 
 ### CORE SETTINGS ###
 # NOTE: THESE ARE INITIAL VARIABLES IMPORTED FROM THE ENVIRONMENT
@@ -33,14 +43,15 @@ SEARCHER_FOLDER_KEY = "searcher"
 # INSTEAD USE get_setting_val() function, e.g.:
 # from toolkit.helper_functions import get_core_setting
 # ES_URL = get_core_setting("ES_URL")
-
 CORE_SETTINGS = {
     "TEXTA_ES_URL": env("TEXTA_ES_URL", default="http://localhost:9200"),
     "TEXTA_ES_PREFIX": env("TEXTA_ES_PREFIX", default=""),
     "TEXTA_ES_USERNAME": env("TEXTA_ES_USER", default=""),
     "TEXTA_ES_PASSWORD": env("TEXTA_ES_PASSWORD", default=""),
     "TEXTA_EVALUATOR_MEMORY_BUFFER_GB": env("TEXTA_EVALUATOR_MEMORY_BUFFER_GB", default=""),
-    "TEXTA_ES_MAX_DOCS_PER_INDEX": env.int("TEXTA_ES_MAX_DOCS_PER_INDEX", default=100000)
+    "TEXTA_ES_MAX_DOCS_PER_INDEX": env.int("TEXTA_ES_MAX_DOCS_PER_INDEX", default=100000),
+    # Default is set to long term task-queue to be backwards compatible.
+    "TEXTA_LONG_TERM_GPU_TASK_QUEUE": env("TEXTA_LONG_TERM_GPU_TASK_QUEUE", default=CELERY_LONG_TERM_TASK_QUEUE)
 }
 ### END OF CORE SETTINGS ###
 
@@ -122,8 +133,8 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 CSRF_HEADER_NAME = "HTTP_X_XSRF_TOKEN"
 CSRF_COOKIE_NAME = "XSRF-TOKEN"
 # For accessing a live backend server locally.
-CORS_ORIGIN_WHITELIST = ["http://localhost:4200", 'https://law-test-8795b.web.app']
-CSRF_TRUSTED_ORIGINS = ["localhost"]
+CORS_ORIGIN_WHITELIST = env.list("TEXTA_CORS_ORIGIN_WHITELIST", default=["http://localhost:4200", 'https://law-test-8795b.web.app'])
+CSRF_TRUSTED_ORIGINS = env.list("TEXTA_CSRF_TRUSTED_ORIGINS", default=["localhost"])
 CORS_ALLOW_HEADERS = list(default_headers) + ["x-xsrf-token"]
 CORS_ALLOW_CREDENTIALS = env.bool("TEXTA_CORS_ALLOW_CREDENTIALS", default=True)
 CORS_ALLOW_ALL_ORIGINS = env.bool("TEXTA_CORS_ALLOW_ALL_ORIGINS", default=False)
@@ -271,10 +282,12 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 ELASTIC_CLUSTER_VERSION = env.int("TEXTA_ELASTIC_VERSION", default=7)
 
-DESCRIPTION_CHAR_LIMIT = 100
+# Some existing descriptions are the size of a model, this should be a higher
+# number to allow for description that contain a fair number of meta information in it.
+# Changing these values will require a new migration to be created and applied.
+DESCRIPTION_CHAR_LIMIT = 1000
 ES_TIMEOUT_MAX = 100
 ES_BULK_SIZE_MAX = 500
-
 
 # OTHER ELASTICSEARCH OPTIONS
 ES_CONNECTION_PARAMETERS = {
@@ -295,33 +308,35 @@ ES_CONNECTION_PARAMETERS = {
 # or a whole article.
 MLP_BATCH_SIZE = env.int("TEXTA_MLP_BATCH_SIZE", default=25)
 
+# By default, the DB with number 0 is used in Redis. Other applications or instances of TTK should avoid using the same DB number.
 BROKER_URL = env('TEXTA_REDIS_URL', default='redis://localhost:6379')
 CELERY_RESULT_BACKEND = BROKER_URL
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
-CELERYD_PREFETCH_MULTIPLIER = 1
+CELERYD_PREFETCH_MULTIPLIER = env.int("TEXTA_CELERY_PREFETCH_MULTIPLIER", default=1)
 CELERY_ALWAYS_EAGER = env.bool("TEXTA_CELERY_ALWAYS_EAGER", default=False)
-CELERY_LONG_TERM_TASK_QUEUE = "long_term_tasks"
-CELERY_SHORT_TERM_TASK_QUEUE = "short_term_tasks"
-CELERY_MLP_TASK_QUEUE = "mlp_queue"
 
+CELERY_USED_QUEUES = env.list("TEXTA_CELERY_USED_QUEUES", default=[CELERY_LONG_TERM_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE])
+
+# Although Celery by default creates queues it's fed automatically, defining the queues manually in here is important
+# for Celery operations like the purging of tasks. Lacking these, certain commands will default to the queue of CELERY_DEFAULT_QUEUE.
+# TODO Figure out a way to instruct the deploying user on whether a non-registered queue exists in Redis, informing them to it to the env variable.
 CELERY_QUEUES = (
-    Queue(CELERY_LONG_TERM_TASK_QUEUE, exchange=CELERY_LONG_TERM_TASK_QUEUE, routing_key=CELERY_LONG_TERM_TASK_QUEUE),
-    Queue(CELERY_SHORT_TERM_TASK_QUEUE, exchange=CELERY_SHORT_TERM_TASK_QUEUE, routing_key=CELERY_SHORT_TERM_TASK_QUEUE),
-    Queue(CELERY_MLP_TASK_QUEUE, exchange=CELERY_MLP_TASK_QUEUE, routing_key=CELERY_MLP_TASK_QUEUE),
+    Queue(queue, exchange=queue, routing_key=queue)
+    for queue in CELERY_USED_QUEUES
 )
 
 # By default use the queue for short term tasks, unless specified to use the long term one.
-CELERY_DEFAULT_QUEUE = 'short_term_tasks'
-CELERY_DEFAULT_EXCHANGE = 'short_term_tasks'
-CELERY_DEFAULT_ROUTING_KEY = 'short_term_tasks'
+CELERY_DEFAULT_QUEUE = CELERY_SHORT_TERM_TASK_QUEUE
+CELERY_DEFAULT_EXCHANGE = CELERY_SHORT_TERM_TASK_QUEUE
+CELERY_DEFAULT_ROUTING_KEY = CELERY_SHORT_TERM_TASK_QUEUE
 
 CELERYBEAT_SCHEDULE = {
     'sync_indices_in_elasticsearch': {
         'task': 'sync_indices_in_elasticsearch',
-        'schedule': timedelta(minutes=1),
+        'schedule': timedelta(minutes=env.int("TEXTA_INDEX_SYNC_INTERVAL_IN_MINUTES", default=1)),
         'options': {"queue": CELERY_DEFAULT_QUEUE}
     }
 }
@@ -337,6 +352,11 @@ EXTERNAL_DATA_DIR = env("TEXTA_EXTERNAL_DATA_DIR", default=os.path.join(DATA_DIR
 CACHE_DIR_DEFAULT = os.path.join(EXTERNAL_DATA_DIR, ".cache")
 CACHE_DIR = env("TEXTA_CACHE_DIR", default=CACHE_DIR_DEFAULT)
 BERT_CACHE_DIR = os.path.join(CACHE_DIR, "bert")
+
+# For whatever mythical reason, the transformer library does not respect the cache_dir parameter,
+# hence we set it through an env variable in a roundabout way...
+os.environ["TRANSFORMERS_CACHE"] = BERT_CACHE_DIR
+
 # tk trained models dir
 MODELS_DIR_DEFAULT = os.path.join(DATA_DIR, "models")
 RELATIVE_MODELS_PATH = env("TEXTA_RELATIVE_MODELS_DIR", default=MODELS_DIR_DEFAULT)

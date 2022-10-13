@@ -4,16 +4,16 @@ from collections import OrderedDict
 from json import JSONDecodeError
 
 from rest_framework import serializers
+from texta_elastic.searcher import EMPTY_QUERY
 
+from toolkit.choice_constants import DEFAULT_BULK_SIZE, DEFAULT_ES_TIMEOUT, DEFAULT_MAX_CHUNK_BYTES
 from toolkit.core.project.models import Project
+from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.serializers import IndexSerializer
-from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.validators import check_for_existence
-from toolkit.choice_constants import DEFAULT_ES_TIMEOUT, DEFAULT_BULK_SIZE, DEFAULT_MAX_CHUNK_BYTES
-
 # Helptext constants to ensure consistent values inside Toolkit.
-from toolkit.settings import ES_BULK_SIZE_MAX, ES_TIMEOUT_MAX
+from toolkit.settings import DESCRIPTION_CHAR_LIMIT, ES_BULK_SIZE_MAX, ES_TIMEOUT_MAX
 
 
 BULK_SIZE_HELPTEXT = "How many documents should be sent into Elasticsearch in a single batch for update."
@@ -110,6 +110,27 @@ class FeedbackSerializer(serializers.Serializer):
     correct_result = serializers.CharField()
 
 
+# You have to use metaclass because DRF serializers won't accept fields of classes
+# that don't subclass serializers.Serializer.
+class FavoriteModelSerializerMixin(metaclass=serializers.SerializerMetaclass):
+    is_favorited = serializers.SerializerMethodField(read_only=True)
+
+
+    def get_is_favorited(self, instance):
+        return instance.favorited_users.filter(username=instance.author.username).exists()
+
+
+class TasksMixinSerializer(metaclass=serializers.SerializerMetaclass):
+    tasks = TaskSerializer(many=True, read_only=True)
+
+
+# You have to use metaclass because DRF serializers won't accept fields of classes
+# that don't subclass serializers.Serializer.
+class CommonModelSerializerMixin(TasksMixinSerializer):
+    author = UserSerializer(read_only=True)
+    description = serializers.CharField(help_text=f'Description for the Tagger Group.', max_length=DESCRIPTION_CHAR_LIMIT)
+
+
 class ProjectFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
     def get_queryset(self):
         request = self.context.get("request", None)
@@ -159,6 +180,7 @@ class ElasticScrollMixIn(serializers.Serializer):
         default=DEFAULT_MAX_CHUNK_BYTES,
         help_text=f"Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors. Default:{DEFAULT_MAX_CHUNK_BYTES}."
     )
+
 
 class ToolkitTaskSerializer(IndicesSerializerMixin, FieldsValidationSerializerMixin):
     description = serializers.CharField(max_length=100, help_text=DESCRIPTION_HELPTEXT)

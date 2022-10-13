@@ -19,12 +19,14 @@ def start_fact_delete_query_task(self, worker_id: int):
     Scrolls the document ID-s and passes them to MLP worker.
     """
     worker_object = DeleteFactsByQueryTask.objects.get(pk=worker_id)
+    info_logger = logging.getLogger(INFO_LOGGER)
+    task_object = worker_object.tasks.last()
 
     try:
-        logging.getLogger(INFO_LOGGER).info(f"Celery: Starting task for deleting facts by query for project with ID: {worker_object.pk}")
+        info_logger.info(f"Celery: Starting task for deleting facts by query for project with ID: {worker_object.pk}")
 
         # init progress
-        show_progress = ShowProgress(worker_object.task, multiplier=1)
+        show_progress = ShowProgress(task_object, multiplier=1)
         show_progress.update_step('Scrolling document IDs')
         show_progress.update_view(0)
 
@@ -42,11 +44,11 @@ def start_fact_delete_query_task(self, worker_id: int):
 
         show_progress.update_step(f'Deleting facts from {count} documents')
         show_progress.update_view(0)
-        worker_object.task.set_total(count)
+        task_object.set_total(count)
         return True
 
     except Exception as e:
-        worker_object.task.handle_failed_task(e)
+        task_object.handle_failed_task(e)
         raise e
 
 
@@ -67,16 +69,17 @@ def query_delete_actions_generator(searcher, target_facts: List[dict]):
                 "_index": document["_index"],
                 "_type": document.get("_type", "_doc"),
                 "_id": document["_id"],
-                "_source": {"doc": document["_source"]}
+                "doc": document["_source"]
             }
 
 
 @task(name="fact_delete_query_task", base=QuietTransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
 def fact_delete_query_task(self, worker_id: int):
     worker_object = DeleteFactsByQueryTask.objects.get(pk=worker_id)
+    task_object = worker_object.tasks.last()
 
     try:
-        show_progress = ShowProgress(worker_object.task, multiplier=1)
+        show_progress = ShowProgress(task_object, multiplier=1)
         show_progress.update_step('Scrolling through the indices to delete the facts.')
 
         # Get the necessary fields.
@@ -98,13 +101,13 @@ def fact_delete_query_task(self, worker_id: int):
         actions = query_delete_actions_generator(searcher, target_facts)
         ed.bulk_update(actions)
 
-        worker_object.task.complete()
+        task_object.complete()
         worker_object.save()
 
         return worker_id
 
     except Exception as e:
-        worker_object.task.handle_failed_task(e)
+        task_object.handle_failed_task(e)
         raise e
 
 
@@ -114,11 +117,14 @@ def start_fact_edit_query_task(self, worker_id: int):
     Scrolls the document ID-s and passes them to MLP worker.
     """
     worker_object = EditFactsByQueryTask.objects.get(pk=worker_id)
+    info_logger = logging.getLogger(INFO_LOGGER)
+    task_object = worker_object.tasks.last()
+
     try:
-        logging.getLogger(INFO_LOGGER).info(f"Celery: Starting task for editing facts by query for project with ID: {worker_object.pk}")
+        info_logger.info(f"Celery: Starting task for editing facts by query for project with ID: {worker_object.pk}")
 
         # init progress
-        show_progress = ShowProgress(worker_object.task, multiplier=1)
+        show_progress = ShowProgress(task_object, multiplier=1)
         show_progress.update_step('Scrolling document IDs')
         show_progress.update_view(0)
 
@@ -136,11 +142,11 @@ def start_fact_edit_query_task(self, worker_id: int):
         show_progress.update_step(f'Editing facts from {count} documents')
         show_progress.update_view(0)
 
-        worker_object.task.set_total(count)
+        task_object.set_total(count)
         return True
 
     except Exception as e:
-        worker_object.task.handle_failed_task(e)
+        task_object.handle_failed_task(e)
         raise e
 
 
@@ -172,8 +178,10 @@ def query_edit_actions_generator(searcher: ElasticSearcher, target_facts: List[d
 @task(name="fact_edit_query_task", base=QuietTransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE, bind=True)
 def fact_edit_query_task(self, worker_id: int):
     worker_object = EditFactsByQueryTask.objects.get(pk=worker_id)
+    task_object = worker_object.tasks.last()
+
     try:
-        show_progress = ShowProgress(worker_object.task, multiplier=1)
+        show_progress = ShowProgress(task_object, multiplier=1)
         show_progress.update_step('Scrolling through the indices to delete the facts.')
 
         # Get the necessary fields.
@@ -196,10 +204,10 @@ def fact_edit_query_task(self, worker_id: int):
         actions = query_edit_actions_generator(searcher, target_facts, resulting_fact=fact)
         ed.bulk_update(actions, chunk_size=scroll_size)
 
-        worker_object.task.complete()
+        task_object.complete()
 
         return worker_id
 
     except Exception as e:
-        worker_object.task.handle_failed_task(e)
+        task_object.handle_failed_task(e)
         raise e

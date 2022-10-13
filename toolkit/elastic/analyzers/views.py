@@ -43,7 +43,7 @@ class ApplyEsAnalyzerOnIndices(viewsets.ModelViewSet, BulkDelete):
     serializer_class = ApplyESAnalyzerWorkerSerializer
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
-    ordering_fields = ('id', 'author__username', 'description', 'detect_lang', 'fields', 'task__time_started', 'task__time_completed', 'task__status')
+    ordering_fields = ('id', 'author__username', 'description', 'detect_lang', 'fields', 'tasks__time_started', 'tasks__time_completed', 'tasks__status')
 
     permission_classes = (
         ProjectAccessInApplicationsAllowed,

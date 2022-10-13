@@ -8,14 +8,13 @@ from celery.decorators import task
 from django.contrib.auth.models import User
 from elasticsearch.helpers import streaming_bulk
 from texta_elastic.core import ElasticCore
-from texta_elastic.document import ElasticDocument, ESDocObject
+from texta_elastic.document import ESDocObject, ElasticDocument
 from texta_elastic.mapping_tools import get_selected_fields, update_field_types, update_mapping
 from texta_elastic.searcher import ElasticSearcher
 
 from toolkit.annotator.models import Annotator, AnnotatorGroup
 from toolkit.base_tasks import BaseTask
 from toolkit.core.project.models import Project
-from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.settings import ERROR_LOGGER, INFO_LOGGER
 from toolkit.tools.show_progress import ShowProgress
@@ -113,6 +112,7 @@ def __add_meta_to_original_index(indices: List[str], index_fields: List[str], sh
         if not success:
             logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
 
+
 @task(name="add_entity_task", base=BaseTask, bind=True)
 def add_entity_task(self, pk: int, document_id: str, texta_facts: List[dict], index: str, user_pk: int):
     annotator_obj = Annotator.objects.get(pk=pk)
@@ -152,7 +152,7 @@ def annotator_task(self, annotator_task_id):
     indices = annotator_obj.get_indices()
     users = [user.pk for user in annotator_obj.annotator_users.all()]
 
-    task_object = annotator_obj.task
+    task_object = annotator_obj.tasks.last()
     annotator_fields = json.loads(annotator_obj.fields)
     all_fields = annotator_fields
     all_fields.append("texta_meta.document_uuid")
@@ -174,11 +174,11 @@ def annotator_task(self, annotator_task_id):
         annotating_user = User.objects.get(pk=user)
         new_annotators.append(annotating_user.pk)
         for index in indices:
-            new_indices.append(f"{index}_{user}_{annotator_obj.task_id}")
+            new_indices.append(f"{index}_{user}_{annotator_obj.pk}")
 
     query = annotator_obj.query
 
-    logging.getLogger(INFO_LOGGER).info(f"Starting task annotator with Task ID {annotator_obj.task_id}.")
+    logging.getLogger(INFO_LOGGER).info(f"Starting task annotator with Task ID {annotator_obj.pk}.")
 
     try:
         ec = ElasticCore()
@@ -201,7 +201,7 @@ def annotator_task(self, annotator_task_id):
 
         for new_annotator in new_annotators:
             new_annotator_obj = Annotator.objects.create(
-                annotator_uid=f"{annotator_obj.description}_{new_annotator}_{annotator_obj.task_id}",
+                annotator_uid=f"{annotator_obj.description}_{new_annotator}_{annotator_obj.pk}",
                 description=f"{annotator_obj.description}",
                 author=annotator_obj.author,
                 project=annotator_obj.project,
@@ -219,7 +219,7 @@ def annotator_task(self, annotator_task_id):
                 logging.getLogger(INFO_LOGGER).info(f"Index object {indices}")
 
                 for index in indices:
-                    if new_index == f"{index}_{new_annotator}_{annotator_obj.task_id}":
+                    if new_index == f"{index}_{new_annotator}_{annotator_obj.pk}":
 
                         elastic_search = ElasticSearcher(indices=indices, field_data=all_fields, callback_progress=show_progress, query=query, scroll_size=scroll_size)
                         elastic_doc = ElasticDocument(new_index)
@@ -233,7 +233,7 @@ def annotator_task(self, annotator_task_id):
                         # create new_index
                         create_index_res = ElasticCore().create_index(new_index, updated_schema)
 
-                        index_model, is_created = Index.objects.get_or_create(name=new_index)
+                        index_model, is_created = Index.objects.get_or_create(name=new_index, defaults={"added_by": annotator_obj.author.username})
                         project_obj.indices.add(index_model)
                         index_user = index_model.name.rsplit('_', 2)[1]
                         if str(index_user) == str(new_annotator):
@@ -260,10 +260,8 @@ def annotator_task(self, annotator_task_id):
         task_object.complete()
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        task_object.add_error(str(e))
-        task_object.update_status(Task.STATUS_FAILED)
+        task_object.handle_failed_task(e)
         raise e
 
-    logging.getLogger(INFO_LOGGER).info(f"Annotator with Task ID {annotator_obj.task_id} successfully completed.")
+    logging.getLogger(INFO_LOGGER).info(f"Annotator with Task ID {annotator_obj.pk} successfully completed.")
     return True

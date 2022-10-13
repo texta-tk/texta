@@ -1,15 +1,14 @@
 import json
 from typing import Union
+
 from django.urls import reverse
 from rest_framework import serializers
+from texta_elastic.searcher import EMPTY_QUERY
 from texta_mlp.mlp import SUPPORTED_ANALYZERS
 
 from toolkit.core.project.models import Project
-from toolkit.core.task.serializers import TaskSerializer
-from toolkit.core.user_profile.serializers import UserSerializer
-from texta_elastic.searcher import EMPTY_QUERY
 from toolkit.mlp.models import ApplyLangWorker, MLPWorker
-from toolkit.serializer_constants import FieldsValidationSerializerMixin, IndicesSerializerMixin
+from toolkit.serializer_constants import CommonModelSerializerMixin, FieldsValidationSerializerMixin, IndicesSerializerMixin
 from toolkit.settings import REST_FRAMEWORK
 
 
@@ -30,10 +29,7 @@ class MLPDocsSerializer(serializers.Serializer):
     )
 
 
-class MLPWorkerSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldsValidationSerializerMixin):
-    author = UserSerializer(read_only=True)
-    description = serializers.CharField()
-    task = TaskSerializer(read_only=True, required=False)
+class MLPWorkerSerializer(serializers.ModelSerializer, IndicesSerializerMixin, CommonModelSerializerMixin, FieldsValidationSerializerMixin):
     url = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False, default=json.dumps(EMPTY_QUERY))
     fields = serializers.ListField(child=serializers.CharField(), required=True, allow_empty=False, help_text="Which fields to apply the MLP on.")
@@ -47,7 +43,7 @@ class MLPWorkerSerializer(serializers.ModelSerializer, IndicesSerializerMixin, F
 
     class Meta:
         model = MLPWorker
-        fields = ("id", "url", "author", "indices", "description", "task", "query", "fields", "analyzers", "es_scroll_size", "es_timeout")
+        fields = ("id", "url", "author", "indices", "description", "tasks", "query", "fields", "analyzers", "es_scroll_size", "es_timeout")
 
 
     def get_url(self, obj):
@@ -73,10 +69,7 @@ class LangDetectSerializer(serializers.Serializer):
     text = serializers.CharField()
 
 
-class ApplyLangOnIndicesSerializer(serializers.ModelSerializer, IndicesSerializerMixin, FieldsValidationSerializerMixin):
-    description = serializers.CharField()
-    author = UserSerializer(read_only=True)
-    task = TaskSerializer(read_only=True, required=False)
+class ApplyLangOnIndicesSerializer(serializers.ModelSerializer, CommonModelSerializerMixin, IndicesSerializerMixin, FieldsValidationSerializerMixin):
     url = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False, default=json.dumps(EMPTY_QUERY))
     field = serializers.CharField(required=True, allow_blank=False)
@@ -117,7 +110,7 @@ class ApplyLangOnIndicesSerializer(serializers.ModelSerializer, IndicesSerialize
 
     class Meta:
         model = ApplyLangWorker
-        fields = ("id", "url", "author", "indices", "description", "task", "query", "field")
+        fields = ("id", "url", "author", "indices", "description", "tasks", "query", "field")
 
 
     def get_url(self, obj):

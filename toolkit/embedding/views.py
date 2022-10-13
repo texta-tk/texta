@@ -16,14 +16,15 @@ from toolkit.elastic.index.models import Index
 from toolkit.embedding.models import Embedding
 from toolkit.embedding.serializers import EmbeddingPredictSimilarWordsSerializer, EmbeddingSerializer
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, SerializerNotValid
+from toolkit.filter_constants import FavoriteFilter
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import GeneralTextSerializer, ProjectResourceImportModelSerializer
-from toolkit.view_constants import BulkDelete
+from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing
 
 
-class EmbeddingFilter(filters.FilterSet):
+class EmbeddingFilter(FavoriteFilter):
     description = filters.CharFilter('description', lookup_expr='icontains')
-    task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+    task_status = filters.CharFilter('tasks__status', lookup_expr='icontains')
 
 
     class Meta:
@@ -31,7 +32,7 @@ class EmbeddingFilter(filters.FilterSet):
         fields = []
 
 
-class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
+class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, FavoriteModelViewMixing):
     queryset = Embedding.objects.all()
     serializer_class = EmbeddingSerializer
     permission_classes = (
@@ -41,7 +42,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = EmbeddingFilter
-    ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'num_dimensions', 'min_freq', 'vocab_size', 'task__status')
+    ordering_fields = ('id', 'author__username', 'description', 'fields', 'tasks__time_started', 'tasks__time_completed', 'num_dimensions', 'min_freq', 'vocab_size', 'tasks__status')
 
 
     @action(detail=False, methods=["post"], serializer_class=ProjectResourceImportModelSerializer)
@@ -81,7 +82,8 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
             embedding: Embedding = serializer.save(
                 author=self.request.user,
                 project=Project.objects.get(id=self.kwargs['project_pk']),
-                fields=json.dumps(serializer.validated_data['fields'])
+                fields=json.dumps(serializer.validated_data['fields']),
+                stop_words=json.dumps(serializer.validated_data["stop_words"], ensure_ascii=False)
             )
 
             for index in Index.objects.filter(name__in=indices, is_open=True):

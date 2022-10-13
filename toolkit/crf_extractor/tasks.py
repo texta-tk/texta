@@ -30,7 +30,7 @@ def start_crf_task(crf_id: int):
     Starts the training process for Extractor.
     """
     extractor = CRFExtractorObject.objects.get(pk=crf_id)
-    task_object = extractor.task
+    task_object = extractor.tasks.last()
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('starting tagging')
     show_progress.update_view(0)
@@ -46,7 +46,7 @@ def train_crf_task(crf_id: int):
         # get task object
         logging.getLogger(INFO_LOGGER).info(f"Starting task 'train_crf' for CRFExtractor with ID: {crf_id}!")
         crf_object = CRFExtractorObject.objects.get(id=crf_id)
-        task_object = crf_object.task
+        task_object = crf_object.tasks.last()
         # create progress object
         show_progress = ShowProgress(task_object, multiplier=1)
         show_progress.update_step('scrolling documents')
@@ -116,7 +116,7 @@ def save_crf_results(result_data: dict):
 
         model_path = pathlib.Path(crf_object.model.path) if crf_object.model else None
 
-        task_object = crf_object.task
+        task_object = crf_object.tasks.last()
         show_progress = ShowProgress(task_object, multiplier=1)
         # update status to saving
         show_progress.update_step('saving')
@@ -187,7 +187,7 @@ def update_generator(
                 "_id": raw_doc["_id"],
                 "_type": raw_doc.get("_type", "_doc"),
                 "_op_type": "update",
-                "_source": {"doc": {"texta_facts": existing_facts}}
+                "doc": {"texta_facts": existing_facts}
             }
 
 
@@ -210,7 +210,9 @@ def apply_crf_extractor_to_index(
         crf_object = CRFExtractorObject.objects.get(pk=object_id)
         extractor = crf_object.load_extractor()
         # progress
-        progress = ShowProgress(crf_object.task)
+        task_object = crf_object.tasks.last()
+
+        progress = ShowProgress(task_object)
         # add fact field if missing
         ec = ElasticCore()
         [ec.add_texta_facts_mapping(index) for index in indices]
@@ -240,9 +242,9 @@ def apply_crf_extractor_to_index(
         except Exception as e:
             logging.getLogger(ERROR_LOGGER).exception(e)
         # all done
-        crf_object.task.complete()
+        task_object.complete()
         return True
 
     except Exception as e:
-        crf_object.task.handle_failed_task(e)
+        task_object.handle_failed_task(e)
         raise e

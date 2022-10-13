@@ -7,11 +7,11 @@ from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
+from texta_elastic.aggregator import ElasticAggregator
+from texta_elastic.core import ElasticCore
 
 from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
-from texta_elastic.aggregator import ElasticAggregator
-from texta_elastic.core import ElasticCore
 from toolkit.helper_functions import reindex_test_dataset
 from toolkit.regex_tagger.models import RegexTagger
 from toolkit.test_settings import (TEST_FIELD, TEST_INTEGER_FIELD, TEST_QUERY, TEST_VERSION_PREFIX, VERSION_NAMESPACE)
@@ -351,12 +351,22 @@ class RegexTaggerViewTests(APITransactionTestCase):
         self.assertTrue("counter_lexicon" in response.data)
 
 
+    # There was a bug where when a RT was applied to an index, it would create a task inside it
+    # which would throw an exception when duplicating since it included the task inside it.
+    def _check_that_rt_that_has_been_applied_to_index_can_be_duplicated(self, rt_id: int):
+        url = reverse("v2:regex_tagger-duplicate", kwargs={"project_pk": self.project.pk, "pk": rt_id})
+        response = self.client.post(url, data={}, format="json")
+        print_output("_check_that_rt_that_has_been_applied_to_index_can_be_duplicated:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+
     def run_test_apply_tagger_to_index(self):
         """Tests applying tagger to index using apply_to_index endpoint."""
 
         # Make sure reindexer task has finished
-        while self.reindexer_object.task.status != Task.STATUS_COMPLETED:
-            print_output('[Regex Tagger] test_apply_tagger_to_index: waiting for reindexer task to finish, current status:', self.reindexer_object.task.status)
+        task_object = self.reindexer_object.tasks.last()
+        while task_object.status != Task.STATUS_COMPLETED:
+            print_output('[Regex Tagger] test_apply_tagger_to_index: waiting for reindexer task to finish, current status:', task_object.status)
             sleep(2)
 
         tagger_payload = {
@@ -383,9 +393,10 @@ class RegexTaggerViewTests(APITransactionTestCase):
         tagger_object = RegexTagger.objects.get(pk=self.tagger_id)
 
         # Wait til the task has finished
-        while tagger_object.task.status != Task.STATUS_COMPLETED:
+        task_object = tagger_object.tasks.last()
+        while task_object.status != Task.STATUS_COMPLETED:
             print_output("tagger object:", tagger_object.to_json())
-            print_output('[Regex Tagger] test_apply_tagger_to_index: waiting for applying tagger task to finish, current status:', tagger_object.task.status)
+            print_output('[Regex Tagger] test_apply_tagger_to_index: waiting for applying tagger task to finish, current status:', task_object.status)
             sleep(2)
 
         results = ElasticAggregator(indices=[self.test_index_copy]).get_fact_values_distribution("LOLL")
@@ -401,3 +412,5 @@ class RegexTaggerViewTests(APITransactionTestCase):
         self.assertTrue(fact_value_2 in results)
         self.assertTrue(results[fact_value_1] == n_fact_value_1)
         self.assertTrue(results[fact_value_2] == n_fact_value_2)
+
+        self._check_that_rt_that_has_been_applied_to_index_can_be_duplicated(created_id)

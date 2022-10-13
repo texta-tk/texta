@@ -8,25 +8,23 @@ from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
-from toolkit.core.project.models import Project
-from toolkit.core.task.models import Task
 from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
 from texta_elastic.searcher import ElasticSearcher
+
+from toolkit.core.project.models import Project
+from toolkit.core.task.models import Task
+from toolkit.filter_constants import FavoriteFilter
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup
-from toolkit.regex_tagger.serializers import (
-    ApplyRegexTaggerGroupSerializer, RegexGroupTaggerTagTextSerializer, RegexMultitagTextSerializer, RegexTaggerGroupMultitagDocsSerializer, RegexTaggerGroupMultitagTextSerializer,
-    RegexTaggerGroupSerializer, RegexTaggerGroupTagDocumentSerializer, RegexTaggerSerializer,
-    RegexTaggerTagDocsSerializer, RegexTaggerTagTextsSerializer, TagRandomDocSerializer, ApplyRegexTaggerSerializer
-)
+from toolkit.regex_tagger.serializers import (ApplyRegexTaggerGroupSerializer, ApplyRegexTaggerSerializer, RegexGroupTaggerTagTextSerializer, RegexMultitagTextSerializer, RegexTaggerGroupMultitagDocsSerializer, RegexTaggerGroupMultitagTextSerializer, RegexTaggerGroupSerializer,
+                                              RegexTaggerGroupTagDocumentSerializer, RegexTaggerSerializer, RegexTaggerTagDocsSerializer, RegexTaggerTagTextsSerializer, TagRandomDocSerializer)
 from toolkit.serializer_constants import GeneralTextSerializer, ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
-from toolkit.view_constants import BulkDelete
+from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing
 
 
-class RegexTaggerFilter(filters.FilterSet):
+class RegexTaggerFilter(FavoriteFilter):
     description = filters.CharFilter('description', lookup_expr='icontains')
 
 
@@ -35,7 +33,7 @@ class RegexTaggerFilter(filters.FilterSet):
         fields = []
 
 
-class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
+class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FavoriteModelViewMixing):
     serializer_class = RegexTaggerSerializer
     permission_classes = (
         ProjectAccessInApplicationsAllowed,
@@ -270,6 +268,7 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         results["matches"] = final_matches
         return Response(results, status=status.HTTP_200_OK)
 
+
     @action(detail=True, methods=['post'], serializer_class=ApplyRegexTaggerSerializer)
     def apply_to_index(self, request, pk=None, project_pk=None):
         from toolkit.regex_tagger.tasks import apply_regex_tagger
@@ -281,12 +280,13 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
             serializer.is_valid(raise_exception=True)
 
             tagger_object: RegexTagger = self.get_object()
-            tagger_object.task = Task.objects.create(regextagger=tagger_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
+            new_task = Task.objects.create(regextagger=tagger_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
             tagger_object.save()
 
-            project = Project.objects.get(pk=project_pk)
+            tagger_object.tasks.add(new_task)
+
             indices = [index["name"] for index in serializer.validated_data["indices"]]
-            #indices = project.get_available_or_all_project_indices(indices)
+            # indices = project.get_available_or_all_project_indices(indices)
 
             fields = serializer.validated_data["fields"]
             query = serializer.validated_data["query"]
@@ -306,7 +306,7 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
             return Response({"message": message}, status=status.HTTP_201_CREATED)
 
 
-class RegexTaggerGroupFilter(filters.FilterSet):
+class RegexTaggerGroupFilter(FavoriteFilter):
     description = filters.CharFilter('description', lookup_expr='icontains')
 
 
@@ -315,7 +315,7 @@ class RegexTaggerGroupFilter(filters.FilterSet):
         fields = []
 
 
-class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
+class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete, FavoriteModelViewMixing):
     serializer_class = RegexTaggerGroupSerializer
     permission_classes = (
         ProjectAccessInApplicationsAllowed,
@@ -433,8 +433,10 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
             serializer.is_valid(raise_exception=True)
 
             tagger_object: RegexTaggerGroup = self.get_object()
-            tagger_object.task = Task.objects.create(regextaggergroup=tagger_object, status=Task.STATUS_CREATED)
+            new_task = Task.objects.create(regextaggergroup=tagger_object, task_type=Task.TYPE_APPLY, status=Task.STATUS_CREATED)
             tagger_object.save()
+
+            tagger_object.tasks.add(new_task)
 
             project = Project.objects.get(pk=project_pk)
             indices = [index["name"] for index in serializer.validated_data["indices"]]

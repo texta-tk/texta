@@ -17,7 +17,7 @@ from toolkit.core.task.models import Task
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.mlp.tasks import apply_mlp_on_list
-from toolkit.view_constants import BulkDelete
+from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing
 from toolkit.exceptions import NonExistantModelError, SerializerNotValid
 from .tasks import apply_crf_extractor, apply_crf_extractor_to_index
 from .models import CRFExtractor
@@ -26,11 +26,12 @@ from .serializers import (
     CRFExtractorTagTextSerializer,
     ApplyCRFExtractorSerializer
 )
+from ..filter_constants import FavoriteFilter
 
 
-class CRFExtractorFilter(filters.FilterSet):
+class CRFExtractorFilter(FavoriteFilter):
     description = filters.CharFilter('description', lookup_expr='icontains')
-    task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+    task_status = filters.CharFilter('tasks__status', lookup_expr='icontains')
 
 
     class Meta:
@@ -38,7 +39,7 @@ class CRFExtractorFilter(filters.FilterSet):
         fields = []
 
 
-class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
+class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete, FavoriteModelViewMixing):
     serializer_class = CRFExtractorSerializer
     permission_classes = (
         ProjectAccessInApplicationsAllowed,
@@ -47,7 +48,7 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = CRFExtractorFilter
-    ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'f1_score', 'precision', 'recall', 'task__status')
+    ordering_fields = ('id', 'author__username', 'description', 'fields', 'tasks__time_started', 'tasks__time_completed', 'f1_score', 'precision', 'recall', 'tasks__status')
 
 
     def get_queryset(self):
@@ -153,8 +154,10 @@ class CRFExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             serializer.is_valid(raise_exception=True)
 
             extractor = self.get_object()
-            extractor.task = Task.objects.create(crfextractor=extractor, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
+            new_task = Task.objects.create(crfextractor=extractor, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
             extractor.save()
+
+            extractor.tasks.add(new_task)
 
             indices = [index["name"] for index in serializer.validated_data["indices"]]
             mlp_fields = serializer.validated_data["mlp_fields"]

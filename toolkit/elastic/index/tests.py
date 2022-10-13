@@ -19,7 +19,7 @@ class IndexViewsTest(APITestCase):
         self.client.login(username="user", password="pw")
         self.ec = ElasticCore()
         self.ids = []
-        self.index_names = ["test_for_index_endpoint_1", "test_for_index_endpoint_2"]
+        self.index_names = [f"test_for_index_endpoint_with_ridiculously_large_name_{i}" for i in range(30)]
 
         for index_name in self.index_names:
             index, is_created = Index.objects.get_or_create(name=index_name)

@@ -18,11 +18,11 @@ from toolkit.rakun_keyword_extractor.models import RakunExtractor
 from toolkit.rakun_keyword_extractor.serializers import RakunExtractorIndexSerializer, RakunExtractorTextSerializer, StopWordSerializer
 from toolkit.rakun_keyword_extractor.tasks import apply_rakun_extractor_to_index
 from toolkit.serializer_constants import GeneralTextSerializer
-from toolkit.view_constants import BulkDelete
+from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing
 from .serializers import RakunExtractorRandomDocSerializer, RakunExtractorSerializer
 
 
-class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
+class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete, FavoriteModelViewMixing):
     serializer_class = RakunExtractorSerializer
     permission_classes = (
         ProjectAccessInApplicationsAllowed,
@@ -65,10 +65,11 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
             serializer.is_valid(raise_exception=True)
 
             rakun_object: RakunExtractor = self.get_object()
-            rakun_object.task = Task.objects.create(rakunextractor=rakun_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
-            rakun_object.save()
+            task_object = Task.objects.create(rakunextractor=rakun_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
 
-            project = Project.objects.get(pk=project_pk)
+            rakun_object.save()
+            rakun_object.tasks.add(task_object)
+
             indices = [index["name"] for index in serializer.validated_data["indices"]]
 
             fields = serializer.validated_data["fields"]
@@ -133,7 +134,7 @@ class RakunExtractorViewSet(viewsets.ModelViewSet, BulkDelete):
         rakun_object.pk = None
         rakun_object.description = f"{rakun_object.description}_copy"
         rakun_object.author = self.request.user
-        rakun_object.task = None
+
         rakun_object.save()
 
         response = {

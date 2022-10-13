@@ -1,12 +1,10 @@
 import json
 
 from rest_framework import serializers
-
-from toolkit.core.task.serializers import TaskSerializer
-from toolkit.core.user_profile.serializers import UserSerializer
-from toolkit.elastic.document_api.models import DeleteFactsByQueryTask, EditFactsByQueryTask
 from texta_elastic.searcher import EMPTY_QUERY
-from toolkit.serializer_constants import DESCRIPTION_HELPTEXT, IndicesSerializerMixin, ProjectResourceUrlSerializer, QUERY_HELPTEXT
+
+from toolkit.elastic.document_api.models import DeleteFactsByQueryTask, EditFactsByQueryTask
+from toolkit.serializer_constants import CommonModelSerializerMixin, IndicesSerializerMixin, ProjectResourceUrlSerializer, QUERY_HELPTEXT
 
 
 class ElasticDocumentSerializer(serializers.Serializer):
@@ -44,10 +42,7 @@ class UpdateFactsSerializer(serializers.Serializer):
     resulting_fact = FactSerializer(required=True)
 
 
-class DeleteFactsByQuerySerializer(serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
-    author = UserSerializer(read_only=True)
-    description = serializers.CharField(help_text=DESCRIPTION_HELPTEXT)
-    task = TaskSerializer(read_only=True)
+class DeleteFactsByQuerySerializer(serializers.ModelSerializer, IndicesSerializerMixin, CommonModelSerializerMixin, ProjectResourceUrlSerializer):
     query = serializers.JSONField(help_text=QUERY_HELPTEXT, required=False, default=json.dumps(EMPTY_QUERY))
     url = serializers.SerializerMethodField()
     facts = serializers.ListField(child=serializers.DictField(), help_text=f'List of facts to remove from documents')
@@ -72,13 +67,10 @@ class DeleteFactsByQuerySerializer(serializers.ModelSerializer, IndicesSerialize
 
     class Meta:
         model = DeleteFactsByQueryTask
-        fields = ('id', 'url', 'author', 'description', 'query', 'facts', 'indices', 'task')
+        fields = ('id', 'url', 'author', 'description', 'query', 'facts', 'indices', 'tasks')
 
 
-class EditFactsByQuerySerializer(serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer):
-    author = UserSerializer(read_only=True)
-    description = serializers.CharField(help_text=DESCRIPTION_HELPTEXT)
-    task = TaskSerializer(read_only=True)
+class EditFactsByQuerySerializer(serializers.ModelSerializer, IndicesSerializerMixin, CommonModelSerializerMixin, ProjectResourceUrlSerializer):
     query = serializers.JSONField(help_text=QUERY_HELPTEXT, required=False, default=json.dumps(EMPTY_QUERY))
     url = serializers.SerializerMethodField()
     target_facts = serializers.ListField(child=serializers.DictField(), help_text=f'List of facts to edit from documents')
@@ -110,4 +102,4 @@ class EditFactsByQuerySerializer(serializers.ModelSerializer, IndicesSerializerM
 
     class Meta:
         model = EditFactsByQueryTask
-        fields = ('id', 'url', 'author', 'description', 'query', 'target_facts', 'fact', 'indices', 'task')
+        fields = ('id', 'url', 'author', 'description', 'query', 'target_facts', 'fact', 'indices', 'tasks')

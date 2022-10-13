@@ -6,11 +6,10 @@ from rest_framework.exceptions import ValidationError
 
 from .models import ApplyESAnalyzerWorker
 from ..choices import DEFAULT_ELASTIC_TOKENIZER, DEFAULT_SNOWBALL_LANGUAGE, ELASTIC_TOKENIZERS, get_snowball_choices
-from ...core.task.serializers import TaskSerializer
-from ...serializer_constants import ToolkitTaskSerializer
+from ...serializer_constants import TasksMixinSerializer, ToolkitTaskSerializer
 
 
-class ApplyESAnalyzerWorkerSerializer(serializers.ModelSerializer, ToolkitTaskSerializer):
+class ApplyESAnalyzerWorkerSerializer(serializers.ModelSerializer, ToolkitTaskSerializer, TasksMixinSerializer):
     url = serializers.SerializerMethodField()
 
     analyzers = serializers.MultipleChoiceField(allow_blank=False, choices=(("stemmer", "stemmer"), ("tokenizer", "tokenizer")))
@@ -21,7 +20,6 @@ class ApplyESAnalyzerWorkerSerializer(serializers.ModelSerializer, ToolkitTaskSe
     detect_lang = serializers.BooleanField(default=False, help_text="Whether to automatically detect the language from the fields for stemming purposes.")
     bulk_size = serializers.IntegerField(min_value=0, max_value=500, default=100, help_text="How many items should be processed at once for Elasticsearch")
     es_timeout = serializers.IntegerField(min_value=1, max_value=100, default=30, help_text="How long should the timeout for scroll be in minutes.")
-    task = TaskSerializer(read_only=True, required=False)
 
 
     def validate(self, attrs):
@@ -58,7 +56,7 @@ class ApplyESAnalyzerWorkerSerializer(serializers.ModelSerializer, ToolkitTaskSe
 
     class Meta:
         model = ApplyESAnalyzerWorker
-        fields = ("id", "url", "author", "strip_html", "indices", "analyzers", "stemmer_lang", "fields", "tokenizer", "es_timeout", "bulk_size", "detect_lang", "description", "task", "query",)
+        fields = ("id", "url", "author", "strip_html", "indices", "analyzers", "stemmer_lang", "fields", "tokenizer", "es_timeout", "bulk_size", "detect_lang", "description", "tasks", "query",)
 
 
 class SnowballSerializer(serializers.Serializer):

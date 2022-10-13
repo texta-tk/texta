@@ -3,14 +3,16 @@ import json
 from typing import List
 
 import elasticsearch
-import texta_elastic
 import rest_framework.filters as drf_filters
+import texta_elastic
 from django_filters import rest_framework as filters
 from elasticsearch_dsl import Q, Search
 from rest_framework import permissions, status, viewsets
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework.response import Response
+from texta_elastic.document import ElasticDocument
+from texta_elastic.searcher import ElasticSearcher
 from texta_tools.text_splitter import TextSplitter
 
 from toolkit.core.project.models import Project
@@ -18,8 +20,6 @@ from toolkit.elastic.document_api.models import DeleteFactsByQueryTask, EditFact
 from toolkit.elastic.document_api.serializers import DeleteFactsByQuerySerializer, EditFactsByQuerySerializer, FactsSerializer, InsertDocumentsSerializer, UpdateFactsSerializer, UpdateSplitDocumentSerializer
 from toolkit.elastic.document_importer.serializers import InsertDocumentsSerializer, UpdateSplitDocumentSerializer
 from toolkit.elastic.index.models import Index
-from texta_elastic.document import ElasticDocument
-from texta_elastic.searcher import ElasticSearcher
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed, ProjectEditAccessAllowed
 from toolkit.serializer_constants import EmptySerializer
 from toolkit.settings import DEPLOY_KEY, TEXTA_TAGS_KEY
@@ -117,7 +117,7 @@ class DocumentImportView(GenericAPIView):
         split_actions = self._split_text(correct_actions + missing_actions, split_fields)
 
         if has_new_index:
-            index, is_created = Index.objects.get_or_create(name=index_name, is_open=True)
+            index, is_created = Index.objects.get_or_create(name=index_name, is_open=True, defaults={"added_by": request.user.username})
             project.indices.add(index)
 
         # Send the documents to Elasticsearch.
@@ -257,7 +257,7 @@ class DeleteFactsByQueryViewset(viewsets.ModelViewSet, BulkDelete):
     serializer_class = DeleteFactsByQuerySerializer
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     ordering_fields = (
-        'id', 'author__username', 'description', 'task__time_started', 'task__time_completed', 'task__status')
+        'id', 'author__username', 'description', 'tasks__time_started', 'tasks__time_completed', 'tasks__status')
     permission_classes = (
         ProjectAccessInApplicationsAllowed,
         permissions.IsAuthenticated,
@@ -292,7 +292,7 @@ class EditFactsByQueryViewset(viewsets.ModelViewSet, BulkDelete):
     serializer_class = EditFactsByQuerySerializer
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     ordering_fields = (
-        'id', 'author__username', 'description', 'task__time_started', 'task__time_completed', 'task__status')
+        'id', 'author__username', 'description', 'tasks__time_started', 'tasks__time_completed', 'tasks__status')
     permission_classes = (
         ProjectAccessInApplicationsAllowed,
         permissions.IsAuthenticated,

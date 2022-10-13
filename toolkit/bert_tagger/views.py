@@ -1,12 +1,13 @@
 import json
 import logging
 import os
-import pathlib
 from shutil import rmtree
 
 import rest_framework.filters as drf_filters
+from django.conf import settings
 from django.db import transaction
 from django.http import HttpResponse
+from django.utils._os import safe_join
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
@@ -26,14 +27,14 @@ from toolkit.exceptions import DownloadingModelsNotAllowedError, InvalidModelIde
 from toolkit.helper_functions import add_finite_url_to_feedback, download_bert_requirements, get_downloaded_bert_models
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
-from toolkit.settings import ALLOW_BERT_MODEL_DOWNLOADS, BERT_CACHE_DIR, BERT_PRETRAINED_MODEL_DIRECTORY, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER
-from toolkit.view_constants import BulkDelete, FeedbackModelView
+from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing, FeedbackModelView
 from .tasks import apply_persistent_bert_tagger
+from ..filter_constants import FavoriteFilter
 
 
-class BertTaggerFilter(filters.FilterSet):
+class BertTaggerFilter(FavoriteFilter):
     description = filters.CharFilter('description', lookup_expr='icontains')
-    task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+    task_status = filters.CharFilter('tasks__status', lookup_expr='icontains')
 
 
     class Meta:
@@ -41,7 +42,7 @@ class BertTaggerFilter(filters.FilterSet):
         fields = []
 
 
-class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
+class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, FavoriteModelViewMixing):
     serializer_class = BertTaggerSerializer
     permission_classes = (
         permissions.IsAuthenticated,
@@ -50,7 +51,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = BertTaggerFilter
-    ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'f1_score', 'precision', 'recall', 'task__status')
+    ordering_fields = ('id', 'author__username', 'description', 'fields', 'tasks__time_started', 'tasks__time_completed', 'f1_score', 'precision', 'recall', 'tasks__status')
 
 
     def perform_create(self, serializer, **kwargs):
@@ -206,8 +207,14 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         serializer.is_valid(raise_exception=True)
 
         bert_model = serializer.validated_data['bert_model']
-        if ALLOW_BERT_MODEL_DOWNLOADS:
-            errors, failed_models = download_bert_requirements(BERT_PRETRAINED_MODEL_DIRECTORY, [bert_model], cache_directory=BERT_CACHE_DIR, logger=logging.getLogger(INFO_LOGGER))
+        if settings.ALLOW_BERT_MODEL_DOWNLOADS:
+            errors, failed_models = download_bert_requirements(
+                settings.BERT_PRETRAINED_MODEL_DIRECTORY,
+                [bert_model],
+                cache_directory=settings.BERT_CACHE_DIR,
+                logger=logging.getLogger(settings.INFO_LOGGER)
+            )
+
             if failed_models:
                 error_msgs = []
                 for i, model in enumerate(failed_models):
@@ -223,9 +230,10 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
     @action(detail=False, methods=['get'])
     def available_models(self, request, pk=None, project_pk=None):
         """Retrieve downloaded BERT models."""
-        available_models = get_downloaded_bert_models(BERT_PRETRAINED_MODEL_DIRECTORY)
+        available_models = get_downloaded_bert_models(settings.BERT_PRETRAINED_MODEL_DIRECTORY)
 
         return Response(available_models, status=status.HTTP_200_OK)
+
 
     # This is made into a POST request instead of DELETE, so it would be nice to use through the Browsable API.
     @action(detail=False, methods=['post'], serializer_class=DeleteBERTModelSerializer, permission_classes=(IsAdminUser,))
@@ -238,7 +246,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
         from texta_bert_tagger.tagger import BertTagger
         file_name = BertTagger.normalize_name(model_name)
-        path = pathlib.Path(BERT_PRETRAINED_MODEL_DIRECTORY) / file_name
+        path = safe_join(settings.BERT_PRETRAINED_MODEL_DIRECTORY, file_name)  # Use safe_join to prevent path traversal attacks.
         rmtree(path)  # Since Pathlib can't deal with directories.
         return Response({"detail": f"Deleted model {model_name} from the filesystem!"}, status=status.HTTP_200_OK)
 
@@ -253,8 +261,10 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             serializer.is_valid(raise_exception=True)
 
             tagger_object = self.get_object()
-            tagger_object.task = Task.objects.create(berttagger=tagger_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
+            new_task = Task.objects.create(berttagger=tagger_object, status=Task.STATUS_CREATED, task_type=Task.TYPE_APPLY)
             tagger_object.save()
+
+            tagger_object.tasks.add(new_task)
 
             project = Project.objects.get(pk=project_pk)
             indices = [index["name"] for index in serializer.validated_data["indices"]]
@@ -273,7 +283,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
                 fact_value = ""
 
             args = (pk, indices, fields, fact_name, fact_value, query, bulk_size, max_chunk_bytes, es_timeout)
-            transaction.on_commit(lambda: apply_tagger_to_index.apply_async(args=args, queue=CELERY_LONG_TERM_TASK_QUEUE))
+            transaction.on_commit(lambda: apply_tagger_to_index.apply_async(args=args, queue=settings.CELERY_LONG_TERM_TASK_QUEUE))
 
             message = "Started process of applying BERT Tagger with id: {}".format(tagger_object.id)
             return Response({"message": message}, status=status.HTTP_201_CREATED)

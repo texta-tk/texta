@@ -3,14 +3,14 @@ from django.urls import include, path
 from django.views.generic.base import RedirectView
 from django.views.static import serve
 
-from toolkit.helper_functions import protected_file_serve, protected_serve
+from toolkit.core.project.views import ProtectedFileServe, ProtectedServeApi
 from toolkit.settings import MEDIA_DIR, MEDIA_URL
 
 
 urlpatterns = [
     # protected media
-    url(r'^%s(?P<path>.*)$' % MEDIA_URL, protected_serve, {'document_root': MEDIA_DIR}),
-    path('data/projects/<int:project_id>/<str:application>/<str:file_name>', protected_file_serve, {'document_root': "data/projects/"}, name="protected_serve"),
+    url(r'^%s(?P<path>.*)$' % MEDIA_URL, ProtectedServeApi.as_view(), {'document_root': MEDIA_DIR}),
+    path('data/projects/<int:project_id>/<str:application>/<str:file_name>', ProtectedFileServe.as_view(), {'document_root': "data/projects/"}, name="protected_serve"),
 
     # static
     url(r'^static/(?P<path>.*)$', serve, {'document_root': 'static'}),

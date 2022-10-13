@@ -1,5 +1,6 @@
 from multiselectfield import MultiSelectField
 
+
 # https://github.com/goinnn/django-multiselectfield/issues/74
 class PatchedMultiSelectField(MultiSelectField):
 
