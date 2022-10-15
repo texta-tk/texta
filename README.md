@@ -1,4 +1,8 @@
-# TEXTA Toolkit 3
+<p align="center">
+  <a href="https://texta.ee"><img src="https://texta.ee/assets/texta_logo.svg" alt="FastAPI"></a>
+</p>
+
+<h1 style="text-align: center;">TEXTA Toolkit 3</h1>
 
 ## Documentation
 
@@ -7,6 +11,11 @@ https://docs.texta.ee
 ## Wiki
 
 https://git.texta.ee/texta/texta-rest/wikis/home
+
+## Requirements
+
+* Anaconda or Miniconda (Recommended)
+* Docker & Docker-Compose (Only required for Docker deployment)
 
 ## Notes
 
@@ -202,3 +211,8 @@ https://elasticsearch-py.readthedocs.io/en/6.3.1/connection.html#elasticsearch.U
   secret***
 * TEXTA_UAA_CLIENT_SECRET - Password for authenticating the TEXTA Toolkit application with UAA. ***Must be kept
   secret***
+
+## Used By
+<a href="https://stacc.ee/" target="_blank" title="The leading machines learning and data science company in Estonia."><img src="https://texta.ee/assets/landing-page/testimonial/stacc_logo.svg"></a>
+<a href="https://www.ohtuleht.ee/" target="_blank" title="Estonian news."><img src="https://texta.ee/assets/landing-page/testimonial/Ohtuleht.svg"></a>
+<a href="https://www.nlib.ee/" target="_blank" title="National Library of Estonia."><img src="https://texta.ee/assets/landing-page/testimonial/RARA.svg"></a>
