@@ -10,6 +10,7 @@ from celery.decorators import task
 from celery.result import allow_join_result
 from django.conf import settings
 from elasticsearch.helpers import streaming_bulk
+from minio.error import MinioException
 from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
 from texta_elastic.query import Query
@@ -36,7 +37,7 @@ def prepare_tagger_objects(tg: TaggerGroup, tags: List[str], tagger_serializer: 
     :param tag_queries: List of Elasticsearch queries for every tag.
     """
     # create tagger objects
-    logger = logging.getLogger(settings.settings.INFO_LOGGER)
+    logger = logging.getLogger(settings.INFO_LOGGER)
     logger.info(f"[Tagger Group] Starting task 'create_tagger_objects' for TaggerGroup with ID: {tg.pk}!")
     tagger_ids = []
 
@@ -225,8 +226,18 @@ def train_tagger_task(tagger_id: int):
 def download_tagger_model(minio_path: str, user_pk: int, project_pk: int, version_id: str):
     info_logger = logging.getLogger(settings.INFO_LOGGER)
     info_logger.info(f"[Tagger] Starting to download model from Minio with path {minio_path}!")
-    Tagger.download_from_s3(minio_path, user_pk=user_pk, project_pk=project_pk, version_id=version_id)
+    tagger_pk = Tagger.download_from_s3(minio_path, user_pk=user_pk, project_pk=project_pk, version_id=version_id)
     info_logger.info(f"[Tagger] Finished to download model from Minio with path {minio_path}!")
+    return tagger_pk
+
+
+@task(name="download_into_tagger_group", base=TransactionAwareTask, queue=settings.CELERY_LONG_TERM_TASK_QUEUE)
+def download_into_tagger_group(tagger_group_pk: int, minio_path: str, version_id: str):
+    info_logger = logging.getLogger(settings.INFO_LOGGER)
+    info_logger.info(f"[Tagger Group] Starting to download model from Minio with path {minio_path}!")
+    tg = TaggerGroup.objects.get(pk=tagger_group_pk)
+    tg.add_from_s3(minio_path, tg.author.pk, version_id)
+    info_logger.info(f"[Tagger Group] Finished to download model from Minio with path {minio_path}!")
 
 
 @task(name="upload_tagger_files", base=TransactionAwareTask, queue=settings.CELERY_LONG_TERM_TASK_QUEUE)
@@ -246,9 +257,14 @@ def upload_tagger_files(tagger_id: int, minio_path: str):
         tagger.upload_into_s3(data=data, **kwargs)
         info_logger.info(f"[Tagger] Finished upload of tagger with ID {tagger_id} into S3!")
 
+    except MinioException as e:
+        task_object.handle_failed_task(f"Could not connect to S3, are you using the right credentials?")
+        raise e
+
     except Exception as e:
         task_object.handle_failed_task(e)
         raise e
+
 
 @task(name="save_tagger_results", base=TransactionAwareTask, queue=settings.CELERY_LONG_TERM_TASK_QUEUE)
 def save_tagger_results(result_data: dict):

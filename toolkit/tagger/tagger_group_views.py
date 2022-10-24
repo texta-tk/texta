@@ -20,11 +20,13 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, SerializerNotValid
 from toolkit.filter_constants import FavoriteFilter
+from toolkit.helper_functions import minio_connection
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import EmptySerializer, ProjectResourceImportModelSerializer
 from toolkit.tagger.models import TaggerGroup
-from toolkit.tagger.serializers import (ApplyTaggerGroupSerializer, TagRandomDocSerializer, TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer)
-from toolkit.tagger.tasks import apply_tagger_group, apply_tagger_to_index, get_mlp, get_tag_candidates, start_tagger_group
+from toolkit.tagger.serializers import (ApplyTaggerGroupSerializer, TagRandomDocSerializer, TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer,
+                                        S3DownloadSerializer)
+from toolkit.tagger.tasks import apply_tagger_group, apply_tagger_to_index, get_mlp, get_tag_candidates, start_tagger_group, download_into_tagger_group
 from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing, TagLogicViews
 
@@ -347,3 +349,17 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
             message = "Started process of applying Tagger with id: {}".format(tagger_group_object.id)
             return Response({"message": message}, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], serializer_class=S3DownloadSerializer)
+    @minio_connection
+    def add_from_s3(self, request, pk=None, project_pk=None):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        item = self.get_object()
+        minio_path = serializer.validated_data["minio_path"]
+        version_id = serializer.validated_data["version_id"]
+
+        transaction.on_commit(lambda: download_into_tagger_group.apply_async(args=(item.pk, minio_path, version_id), queue=settings.CELERY_LONG_TERM_TASK_QUEUE))
+
+        message = "Started to download tagger and add it into the Tagger Group!"
+        return Response({"message": message}, status=status.HTTP_200_OK)

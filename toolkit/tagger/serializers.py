@@ -13,7 +13,8 @@ from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choices
 from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import load_stop_words
-from toolkit.serializer_constants import (CommonModelSerializerMixin, ElasticScrollMixIn, FavoriteModelSerializerMixin, FieldParseSerializer, IndicesSerializerMixin, ProjectFilteredPrimaryKeyRelatedField, ProjectResourceUrlSerializer)
+from toolkit.serializer_constants import (CommonModelSerializerMixin, ElasticScrollMixIn, FavoriteModelSerializerMixin, FieldParseSerializer, IndicesSerializerMixin,
+                                          ProjectFilteredPrimaryKeyRelatedField, ProjectResourceUrlSerializer)
 from toolkit.tagger import choices
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.validator_constants import validate_pos_label
@@ -49,7 +50,8 @@ class ApplyTaggersSerializer(FieldParseSerializer, IndicesSerializerMixin, Elast
 class ApplyTaggerSerializer(FieldParseSerializer, IndicesSerializerMixin, ElasticScrollMixIn):
     description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
     new_fact_name = serializers.CharField(required=True, help_text="Used as fact name when applying the tagger.")
-    new_fact_value = serializers.CharField(required=False, default="", help_text="NB! Only applicable for binary taggers! Used as fact value when applying the tagger. Defaults to tagger description (binary) / tagger result (multiclass).")
+    new_fact_value = serializers.CharField(required=False, default="",
+                                           help_text="NB! Only applicable for binary taggers! Used as fact value when applying the tagger. Defaults to tagger description (binary) / tagger result (multiclass).")
     fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
     query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)
     lemmatize = serializers.BooleanField(default=False, help_text='Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
@@ -60,16 +62,20 @@ class ApplyTaggerGroupSerializer(FieldParseSerializer, IndicesSerializerMixin, E
     new_fact_name = serializers.CharField(required=True, help_text="Used as fact name when applying the tagger.")
     fields = serializers.ListField(required=True, child=serializers.CharField(), help_text=f"Fields used for the predictions.")
     query = serializers.JSONField(help_text=f"Filter the documents which to scroll and apply to. Default = all documents.", default=EMPTY_QUERY)
-    lemmatize = serializers.BooleanField(default=choices.DEFAULT_LEMMATIZE, help_text=f"Use MLP lemmatizer if available. Use only if training data was lemmatized. Default:{choices.DEFAULT_LEMMATIZE}.")
+    lemmatize = serializers.BooleanField(default=choices.DEFAULT_LEMMATIZE,
+                                         help_text=f"Use MLP lemmatizer if available. Use only if training data was lemmatized. Default:{choices.DEFAULT_LEMMATIZE}.")
     use_ner = serializers.BooleanField(default=choices.DEFAULT_USE_NER, help_text=f"Use MLP Named Entity Recognition to detect tag candidates. Default:{choices.DEFAULT_USE_NER}.")
-    n_similar_docs = serializers.IntegerField(default=choices.DEFAULT_NUM_DOCUMENTS, help_text=f"Number of documents used in unsupervised prefiltering. Default:{choices.DEFAULT_NUM_DOCUMENTS}.")
-    n_candidate_tags = serializers.IntegerField(default=choices.DEFAULT_NUM_CANDIDATES, help_text=f"Number of tag candidates retrieved from unsupervised prefiltering. Default:{choices.DEFAULT_NUM_CANDIDATES}.")
+    n_similar_docs = serializers.IntegerField(default=choices.DEFAULT_NUM_DOCUMENTS,
+                                              help_text=f"Number of documents used in unsupervised prefiltering. Default:{choices.DEFAULT_NUM_DOCUMENTS}.")
+    n_candidate_tags = serializers.IntegerField(default=choices.DEFAULT_NUM_CANDIDATES,
+                                                help_text=f"Number of tag candidates retrieved from unsupervised prefiltering. Default:{choices.DEFAULT_NUM_CANDIDATES}.")
     max_tags = serializers.IntegerField(default=choices.DEFAULT_MAX_TAGS, help_text=f"Maximum number of tags per one document. Default:{choices.DEFAULT_MAX_TAGS}.")
 
 
 class StopWordSerializer(serializers.Serializer):
     stop_words = serializers.ListField(child=serializers.CharField(required=False), required=True, help_text=f"List of stop words to add.")
-    overwrite_existing = serializers.BooleanField(required=False, default=choices.DEFAULT_OVERWRITE_EXISTING_STOPWORDS, help_text=f"If enabled, overwrites all existing stop words, otherwise appends to the existing ones. Default: {choices.DEFAULT_OVERWRITE_EXISTING_STOPWORDS}.")
+    overwrite_existing = serializers.BooleanField(required=False, default=choices.DEFAULT_OVERWRITE_EXISTING_STOPWORDS,
+                                                  help_text=f"If enabled, overwrites all existing stop words, otherwise appends to the existing ones. Default: {choices.DEFAULT_OVERWRITE_EXISTING_STOPWORDS}.")
     ignore_numbers = serializers.BooleanField(required=False, default=choices.DEFAULT_IGNORE_NUMBERS, help_text='If enabled, ignore all numbers as possible features.')
 
 
@@ -80,20 +86,23 @@ class TagRandomDocSerializer(IndicesSerializerMixin):
 class TaggerTagTextSerializer(serializers.Serializer):
     text = serializers.CharField()
     lemmatize = serializers.BooleanField(default=False, help_text='Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
-    feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
+    feedback_enabled = serializers.BooleanField(default=False,
+                                                help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 
 class TaggerTagDocumentSerializer(serializers.Serializer):
     doc = serializers.JSONField()
     lemmatize = serializers.BooleanField(default=False, help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
-    feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
+    feedback_enabled = serializers.BooleanField(default=False,
+                                                help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 
 class TaggerMultiTagSerializer(serializers.Serializer):
     text = serializers.CharField(help_text='Text to be tagged.')
     hide_false = serializers.BooleanField(default=False, help_text='Hide negative tagging results in response.')
     lemmatize = serializers.BooleanField(default=False, help_text='Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
-    feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
+    feedback_enabled = serializers.BooleanField(default=False,
+                                                help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
     taggers = serializers.ListField(
         help_text='List of Tagger IDs to be used.',
         child=serializers.IntegerField(),
@@ -109,44 +118,59 @@ class TaggerGroupTagTextSerializer(serializers.Serializer):
     text = serializers.CharField(help_text=f'Raw text input.')
     lemmatize = serializers.BooleanField(default=False, help_text=f'Use MLP lemmatizer to lemmatize input text. Use only if training data was lemmatized. Default: False')
     use_ner = serializers.BooleanField(default=False, help_text=f'Use MLP Named Entity Recognition to detect tag candidates. Default: False')
-    n_similar_docs = serializers.IntegerField(default=choices.DEFAULT_NUM_DOCUMENTS, help_text=f'Number of documents used in unsupervised prefiltering. Default: {choices.DEFAULT_NUM_DOCUMENTS}')
-    n_candidate_tags = serializers.IntegerField(default=choices.DEFAULT_NUM_CANDIDATES, help_text=f'Number of tag candidates retrieved from unsupervised prefiltering. Default: {choices.DEFAULT_NUM_CANDIDATES}')
-    feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
+    n_similar_docs = serializers.IntegerField(default=choices.DEFAULT_NUM_DOCUMENTS,
+                                              help_text=f'Number of documents used in unsupervised prefiltering. Default: {choices.DEFAULT_NUM_DOCUMENTS}')
+    n_candidate_tags = serializers.IntegerField(default=choices.DEFAULT_NUM_CANDIDATES,
+                                                help_text=f'Number of tag candidates retrieved from unsupervised prefiltering. Default: {choices.DEFAULT_NUM_CANDIDATES}')
+    feedback_enabled = serializers.BooleanField(default=False,
+                                                help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 
 class TaggerGroupTagDocumentSerializer(serializers.Serializer):
     doc = serializers.JSONField(help_text=f'Document in JSON format.')
     lemmatize = serializers.BooleanField(default=False, help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
     use_ner = serializers.BooleanField(default=False, help_text=f'Use MLP Named Entity Recognition to detect tag candidates. Default: False')
-    n_similar_docs = serializers.IntegerField(default=choices.DEFAULT_NUM_DOCUMENTS, help_text=f'Number of documents used in unsupervised prefiltering. Default: {choices.DEFAULT_NUM_DOCUMENTS}')
-    n_candidate_tags = serializers.IntegerField(default=choices.DEFAULT_NUM_CANDIDATES, help_text=f'Number of tag candidates retrieved from unsupervised prefiltering. Default: {choices.DEFAULT_NUM_CANDIDATES}')
-    feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
+    n_similar_docs = serializers.IntegerField(default=choices.DEFAULT_NUM_DOCUMENTS,
+                                              help_text=f'Number of documents used in unsupervised prefiltering. Default: {choices.DEFAULT_NUM_DOCUMENTS}')
+    n_candidate_tags = serializers.IntegerField(default=choices.DEFAULT_NUM_CANDIDATES,
+                                                help_text=f'Number of tag candidates retrieved from unsupervised prefiltering. Default: {choices.DEFAULT_NUM_CANDIDATES}')
+    feedback_enabled = serializers.BooleanField(default=False,
+                                                help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 
-class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, FavoriteModelSerializerMixin, CommonModelSerializerMixin):
+class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, IndicesSerializerMixin, ProjectResourceUrlSerializer, FavoriteModelSerializerMixin,
+                       CommonModelSerializerMixin):
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
-    vectorizer = serializers.ChoiceField(choices=choices.get_vectorizer_choices(), default=choices.DEFAULT_VECTORIZER, help_text='Vectorizer algorithm to create document vectors. NB! HashingVectorizer does not support feature name extraction!')
+    vectorizer = serializers.ChoiceField(choices=choices.get_vectorizer_choices(), default=choices.DEFAULT_VECTORIZER,
+                                         help_text='Vectorizer algorithm to create document vectors. NB! HashingVectorizer does not support feature name extraction!')
     analyzer = serializers.ChoiceField(choices=choices.get_analyzer_choices(), default=choices.DEFAULT_ANALYZER, help_text="Analyze text as words or characters.")
     classifier = serializers.ChoiceField(choices=choices.get_classifier_choices(), default=choices.DEFAULT_CLASSIFIER, help_text='Classification algorithm used in the model.')
     embedding = ProjectFilteredPrimaryKeyRelatedField(queryset=Embedding.objects, many=False, read_only=False, allow_null=True, default=None, help_text='Embedding to use')
-    negative_multiplier = serializers.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER, help_text=f'Multiplies the size of positive samples to determine negative example set size. Default: {choices.DEFAULT_NEGATIVE_MULTIPLIER}')
-    maximum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, help_text=f'Maximum number of documents used to build a model. Default: {choices.DEFAULT_MAX_SAMPLE_SIZE}')
-    minimum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, help_text=f'Minimum number of documents required to train a model. Default: {choices.DEFAULT_MIN_SAMPLE_SIZE}')
+    negative_multiplier = serializers.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER,
+                                                 help_text=f'Multiplies the size of positive samples to determine negative example set size. Default: {choices.DEFAULT_NEGATIVE_MULTIPLIER}')
+    maximum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE,
+                                                   help_text=f'Maximum number of documents used to build a model. Default: {choices.DEFAULT_MAX_SAMPLE_SIZE}')
+    minimum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE,
+                                                   help_text=f'Minimum number of documents required to train a model. Default: {choices.DEFAULT_MIN_SAMPLE_SIZE}')
     score_threshold = serializers.FloatField(default=choices.DEFAULT_SCORE_THRESHOLD,
                                              help_text=f'Elasticsearch score threshold for filtering out irrelevant examples. All examples below first document\'s score * score threshold are ignored. Float between 0 and 1. Default: {choices.DEFAULT_SCORE_THRESHOLD}')
-    snowball_language = serializers.ChoiceField(choices=get_snowball_choices(), default=DEFAULT_SNOWBALL_LANGUAGE, help_text=f'Uses Snowball stemmer with specified language to normalize the texts. Default: {DEFAULT_SNOWBALL_LANGUAGE}')
-    scoring_function = serializers.ChoiceField(choices=choices.DEFAULT_SCORING_OPTIONS, default=choices.DEFAULT_SCORING_FUNCTION, required=False, help_text=f'Scoring function used while evaluating the results on dev set. Default: {choices.DEFAULT_SCORING_FUNCTION}')
+    snowball_language = serializers.ChoiceField(choices=get_snowball_choices(), default=DEFAULT_SNOWBALL_LANGUAGE,
+                                                help_text=f'Uses Snowball stemmer with specified language to normalize the texts. Default: {DEFAULT_SNOWBALL_LANGUAGE}')
+    scoring_function = serializers.ChoiceField(choices=choices.DEFAULT_SCORING_OPTIONS, default=choices.DEFAULT_SCORING_FUNCTION, required=False,
+                                               help_text=f'Scoring function used while evaluating the results on dev set. Default: {choices.DEFAULT_SCORING_FUNCTION}')
     stop_words = serializers.ListField(child=serializers.CharField(), default=[], required=False, help_text='Stop words to add. Default = [].', write_only=True)
     ignore_numbers = serializers.BooleanField(default=choices.DEFAULT_IGNORE_NUMBERS, required=False, help_text='If enabled, ignore all numbers as possible features.')
     detect_lang = serializers.BooleanField(default=False, help_text="Whether to detect the language for the stemmer from the document itself.")
     plot = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False, default=json.dumps(EMPTY_QUERY))
     fact_name = serializers.CharField(default=None, required=False, help_text=f'Fact name used to filter tags (fact values). Default: None')
-    pos_label = serializers.CharField(default="", required=False, allow_blank=True, help_text=f'Fact value used as positive label while evaluating the results. This is needed only, if the selected fact has exactly two possible values. Default = ""')
+    pos_label = serializers.CharField(default="", required=False, allow_blank=True,
+                                      help_text=f'Fact value used as positive label while evaluating the results. This is needed only, if the selected fact has exactly two possible values. Default = ""')
     url = serializers.SerializerMethodField()
     tagger_groups = serializers.SerializerMethodField(read_only=True)
 
-    balance = serializers.BooleanField(default=choices.DEFAULT_BALANCE, required=False, help_text=f'Balance sample sizes of different classes. Only applicable for multiclass taggers. Default = {choices.DEFAULT_BALANCE}')
+    balance = serializers.BooleanField(default=choices.DEFAULT_BALANCE, required=False,
+                                       help_text=f'Balance sample sizes of different classes. Only applicable for multiclass taggers. Default = {choices.DEFAULT_BALANCE}')
     balance_to_max_limit = serializers.BooleanField(default=choices.DEFAULT_BALANCE_TO_MAX_LIMIT, required=False,
                                                     help_text=f'If enabled, the number of samples for each class is set to `maximum_sample_size`. Otherwise, it is set to max class size. NB! Only applicable for multiclass taggers with balance == True. Default = {choices.DEFAULT_BALANCE_TO_MAX_LIMIT}')
 
@@ -191,8 +215,10 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Indice
 
 
 class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer, FavoriteModelSerializerMixin, CommonModelSerializerMixin):
-    minimum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, help_text=f'Minimum number of documents required to train a model. Default: {choices.DEFAULT_MIN_SAMPLE_SIZE}')
-    fact_name = serializers.CharField(default=choices.DEFAULT_TAGGER_GROUP_FACT_NAME, help_text=f'Fact name used to filter tags (fact values). Default: {choices.DEFAULT_TAGGER_GROUP_FACT_NAME}')
+    minimum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE,
+                                                   help_text=f'Minimum number of documents required to train a model. Default: {choices.DEFAULT_MIN_SAMPLE_SIZE}')
+    fact_name = serializers.CharField(default=choices.DEFAULT_TAGGER_GROUP_FACT_NAME,
+                                      help_text=f'Fact name used to filter tags (fact values). Default: {choices.DEFAULT_TAGGER_GROUP_FACT_NAME}')
     tagger = TaggerSerializer(write_only=True, remove_fields=['description', 'query', 'fact_name', 'minimum_sample_size'])
     num_tags = serializers.IntegerField(read_only=True)
     blacklisted_facts = serializers.ListField(child=serializers.CharField(), default=[], help_text="Which fact values to ignore when creating the taggers.")
@@ -307,5 +333,5 @@ class S3UploadSerializer(S3Mixin):
 
 
 class S3DownloadSerializer(S3Mixin):
-    minio_path = serializers.CharField(required=True, help_text="Which file from minio to download.")
+    minio_path = serializers.CharField(required=True, help_text="Full path with filename (excluding bucket name) from minio to download.")
     version_id = serializers.CharField(required=False, default="", help_text="Which version of the file to download.")

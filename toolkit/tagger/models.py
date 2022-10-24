@@ -18,6 +18,7 @@ from django.db import models, transaction
 from django.dispatch import receiver
 from django.http import HttpResponse
 from minio import Minio
+from rest_framework.generics import get_object_or_404
 from texta_elastic.searcher import EMPTY_QUERY
 from texta_embedding.embedding import W2VEmbedding
 from texta_tagger.tagger import Tagger as TextTagger
@@ -85,10 +86,12 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         """
         if indices:
             indices = self.indices.filter(name__in=indices, is_open=True)
-            if not indices:
-                indices = self.project.indices.all()
         else:
             indices = self.indices.all()
+
+        # Fall back to project indices when everything else fails.
+        if not indices:
+            indices = self.project.indices.all()
 
         indices = [index.name for index in indices]
         indices = list(set(indices))  # Leave only unique names just in case.
@@ -97,19 +100,15 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
     def get_indices(self):
         return [index.name for index in self.indices.filter(is_open=True)]
 
-    # TODO These can throw random S3 errors, handle them, can be things like AccessDenied etc.
-    # TODO Handle retrains etc creating new models with new names into the bucket.
-
-    # TODO Fix issue in uploaded models having wrong indices.
-
     @staticmethod
-    def download_from_s3(minio_location: str, user_pk: int, project_pk: int, version_id: str = ""):
+    def download_from_s3(minio_location: str, user_pk: int, project_pk: int, version_id: str = "") -> int:
         client = Tagger.get_minio_client()
         kwargs = {"version_id": version_id} if version_id else {}
         response = client.get_object(settings.S3_BUCKET_NAME, minio_location, **kwargs)
         data = io.BytesIO(response.data)
-        Tagger.import_resources(data, user_pk, project_pk)
+        tagger_pk = Tagger.import_resources(data, user_pk, project_pk)
         response.close()
+        return tagger_pk
 
     def upload_into_s3(self, filename: str = S3_ZIP_NAME, data: Optional[bytes] = None, filepath: Optional[str] = None):
         client = Tagger.get_minio_client()
@@ -223,6 +222,7 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         del json_obj["project"]
         del json_obj["author"]
         del json_obj["tasks"]
+        del json_obj["indices"]
         return json_obj
 
     def export_resources(self) -> HttpResponse:
@@ -246,7 +246,7 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
             with zipfile.ZipFile(zip_file, 'r') as archive:
                 json_string = archive.read(Tagger.MODEL_JSON_NAME).decode()
                 model_json = json.loads(json_string)
-                indices = model_json.pop("indices")
+                indices = model_json.pop("indices", None)
                 model_json.pop("favorited_users", None)
 
                 new_model = Tagger(**model_json)
@@ -473,6 +473,19 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
 
     def __str__(self):
         return self.fact_name
+
+    def add_from_s3(self, minio_location: str, user_pk: int, version_id: str = "") -> int:
+        client = Tagger.get_minio_client()
+        kwargs = {"version_id": version_id} if version_id else {}
+        response = client.get_object(settings.S3_BUCKET_NAME, minio_location, **kwargs)
+        data = io.BytesIO(response.data)
+        tagger_pk = Tagger.import_resources(data, user_pk, self.project.pk)
+        response.close()
+
+        tagger = get_object_or_404(Tagger.objects.all(), pk=tagger_pk)
+        self.taggers.add(tagger)
+
+        return tagger_pk
 
     def get_resource_paths(self):
         container = []

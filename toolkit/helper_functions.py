@@ -1,19 +1,23 @@
 import hashlib
 import json
+import logging
 import os
 import pathlib
 import re
 import uuid
-from functools import partial
+from functools import partial, wraps
 from typing import List, Optional
 
 import elasticsearch_dsl
 import psutil
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import connections
 from django.views.static import serve
-from rest_framework import serializers
+from minio.error import S3Error, ServerError
+from rest_framework import serializers, status
+from rest_framework.exceptions import APIException
 
 
 def is_float(element) -> bool:
@@ -40,12 +44,10 @@ def avoid_db_timeout(func):
     to modify it afterwards, as the connection has already expired at that point.
     """
 
-
     def inner_wrapper(*args, **kwargs):
         for conn in connections.all():
             conn.close_if_unusable_or_obsolete()
         func(*args, **kwargs)
-
 
     return inner_wrapper
 
@@ -198,7 +200,8 @@ def download_bert_requirements(model_directory: str, supported_models: List[str]
     """ Download pretrained BERT models & tokenizers.
     """
     from texta_bert_tagger.tagger import BertTagger
-    errors, failed_models = BertTagger.download_pretrained_models(bert_models=supported_models, save_dir=model_directory, cache_dir=cache_directory, logger=logger, num_labels=num_labels)
+    errors, failed_models = BertTagger.download_pretrained_models(bert_models=supported_models, save_dir=model_directory, cache_dir=cache_directory, logger=logger,
+                                                                  num_labels=num_labels)
     return (errors, failed_models)
 
 
@@ -317,7 +320,6 @@ def reindex_test_dataset(query: dict = None, from_index: Optional[str] = None, h
     from_scan = from_scan.index(from_index).using(ec.es)
     from_scan = from_scan.scan()
 
-
     def doc_actions(generator):
         for document in generator:
             yield {
@@ -326,7 +328,6 @@ def reindex_test_dataset(query: dict = None, from_index: Optional[str] = None, h
                 "_source": document.to_dict(),
                 "retry_on_conflict": 3
             }
-
 
     actions = doc_actions(from_scan)
     from elasticsearch.helpers import bulk
@@ -346,3 +347,26 @@ def prepare_mandatory_directories(*directories):
         path = pathlib.Path(directory_path)
         if not path.exists():
             path.mkdir(parents=True, exist_ok=True)
+
+
+def minio_connection(func):
+    """
+    Decorator for wrapping Elasticsearch functions that are used in views,
+    to return a properly formatted error message during connection issues
+    instead of the typical HTTP 500 one.
+    """
+
+    # Have to use wraps here, otherwise you can't use it with DRF action decorators.
+    @wraps(func)
+    def func_wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+
+        except S3Error as e:
+            logging.getLogger(settings.ERROR_LOGGER).exception(e.message)
+            raise APIException("There was an error from S3!", code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except ServerError as e:
+            logging.getLogger(settings.ERROR_LOGGER).exception(f"Fault in connecting to S3: {settings.S3_URI}")
+            raise APIException("There was an error from S3 response!", code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return func_wrapper

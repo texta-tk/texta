@@ -3,13 +3,14 @@ import os
 
 import rest_framework.filters as drf_filters
 from celery import group
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse
-from django.conf import settings
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from texta_elastic.core import ElasticCore
 from texta_elastic.searcher import ElasticSearcher
@@ -21,7 +22,7 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, SerializerNotValid
 from toolkit.filter_constants import FavoriteFilter
-from toolkit.helper_functions import add_finite_url_to_feedback, load_stop_words
+from toolkit.helper_functions import add_finite_url_to_feedback, load_stop_words, minio_connection
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer, EmptySerializer
 from toolkit.tagger.models import Tagger
@@ -252,7 +253,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
         tagger_response = add_finite_url_to_feedback(tagger_response, request)
         return Response(tagger_response, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], serializer_class=EmptySerializer)
     def tag_random_doc(self, request, pk=None, project_pk=None):
         """Returns prediction for a random document in Elasticsearch."""
         # get tagger object
@@ -273,6 +274,10 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
 
         # retrieve tagger fields
         tagger_fields = json.loads(tagger_object.fields)
+
+        if not indices:
+            raise ValidationError("No indexes have been added to the Tagger and Project!")
+
         if not ElasticCore().check_if_indices_exist(indices):
             return Response({'error': f'One or more index from {list(indices)} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -332,6 +337,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
         return Response(sorted_tags, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'], serializer_class=S3UploadSerializer)
+    @minio_connection
     def upload_into_s3(self, request, pk=None, project_pk=None):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -343,6 +349,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
         return Response({"message": "Started task for uploading model into S3!"})
 
     @action(detail=False, methods=['post'], serializer_class=S3DownloadSerializer)
+    @minio_connection
     def download_from_s3(self, request, pk=None, project_pk=None):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -352,7 +359,6 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Favori
         transaction.on_commit(lambda: download_tagger_model.apply_async(args=(minio_path, request.user.pk, project_pk, version_id), queue=settings.CELERY_LONG_TERM_TASK_QUEUE))
 
         return Response({"message": "Started task for downloading model from S3!"})
-
 
     @action(detail=True, methods=['post'], serializer_class=ApplyTaggerSerializer)
     def apply_to_index(self, request, pk=None, project_pk=None):
