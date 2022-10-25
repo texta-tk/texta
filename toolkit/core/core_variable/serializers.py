@@ -65,7 +65,4 @@ class CoreVariableSerializer(serializers.HyperlinkedModelSerializer):
         if not service_alive:
             raise serializers.ValidationError(f"Entered URL ({value}) for service cannot be reached. Please check the URL.")
 
-        if value and is_secret_core_setting(name):
-            data["value"] = encrypt(value)
-
         return data
