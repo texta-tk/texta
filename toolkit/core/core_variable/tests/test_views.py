@@ -1,6 +1,6 @@
-from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.test import APITestCase
 
 from toolkit.core.core_variable.models import CoreVariable
 from toolkit.helper_functions import set_core_setting, get_core_setting
@@ -9,7 +9,7 @@ from toolkit.test_settings import TEST_VERSION_PREFIX
 from toolkit.tools.utils_for_tests import create_test_user, print_output
 
 
-class TestCoreVariableViews(TestCase):
+class TestCoreVariableViews(APITestCase):
 
     @classmethod
     def setUpTestData(cls):
@@ -112,4 +112,16 @@ class TestCoreVariableViews(TestCase):
         url = reverse("v2:corevariable-detail", kwargs={"pk": cv.pk})
         response = self.client.get(url)
         print_output("test_that_detail_view_is_encrypted:response.data", response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue("==" in response.data["value"])
+
+    def test_that_changing_a_setting_inside_view_encrypts_it(self):
+        self._set_encrypted_field()
+        cv = CoreVariable.objects.get(name=self.encrypted_field)
+        url = reverse("v2:corevariable-detail", kwargs={"pk": cv.pk})
+        new_password = "bourgeoisie"
+        response = self.client.put(url, data={"name": self.encrypted_field, "value": new_password}, format="json")
+        print_output("test_that_changing_a_setting_inside_view_encrypts_it:response.data", response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        value = get_core_setting(self.encrypted_field)
+        self.assertEqual(value, new_password)

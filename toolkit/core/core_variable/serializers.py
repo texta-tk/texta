@@ -35,6 +35,12 @@ class CoreVariableSerializer(serializers.HyperlinkedModelSerializer):
             return encrypt(env_value)
         return env_value
 
+    def update(self, instance, validated_data):
+        setting_name = validated_data["name"]
+        if is_secret_core_setting(setting_name):
+            validated_data["value"] = encrypt(validated_data["value"])
+        return super(CoreVariableSerializer, self).update(instance, validated_data)
+
     def validate(self, data):
         """Validate value by checking the URL availability."""
         name = data["name"]
