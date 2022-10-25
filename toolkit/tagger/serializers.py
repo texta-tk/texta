@@ -12,7 +12,7 @@ from toolkit.core.task.models import Task
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choices
 from toolkit.embedding.models import Embedding
-from toolkit.helper_functions import load_stop_words
+from toolkit.helper_functions import load_stop_words, get_core_setting
 from toolkit.serializer_constants import (CommonModelSerializerMixin, ElasticScrollMixIn, FavoriteModelSerializerMixin, FieldParseSerializer, IndicesSerializerMixin,
                                           ProjectFilteredPrimaryKeyRelatedField, ProjectResourceUrlSerializer)
 from toolkit.tagger import choices
@@ -299,7 +299,8 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
 class S3Mixin(serializers.Serializer):
 
     def validate_minio_path(self, value: str):
-        if settings.USE_S3 is False:
+        use_s3 = get_core_setting("TEXTA_USE_S3")
+        if use_s3 is False:
             raise ValidationError("Usage of S3 is not enabled system-wide on this instance!")
 
         self._validate_filename(value)
@@ -315,7 +316,8 @@ class S3Mixin(serializers.Serializer):
     def _validate_file_existence_in_minio(self, minio_path: str):
         client = Tagger.get_minio_client()
         exists = False
-        for s3_object in client.list_objects(settings.S3_BUCKET_NAME, recursive=True):
+        bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
+        for s3_object in client.list_objects(bucket_name, recursive=True):
             if s3_object.object_name == minio_path:
                 exists = True
                 break

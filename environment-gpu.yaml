@@ -63,3 +63,4 @@ dependencies:
       - pelecanus
       - openpyxl
       - scipy==1.5.*
+      - cryptography

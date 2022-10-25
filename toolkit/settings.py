@@ -9,7 +9,7 @@ from corsheaders.defaults import default_headers
 from kombu import Exchange, Queue
 
 from .helper_functions import download_bert_requirements, download_mlp_requirements, download_nltk_resources, parse_bool_env, parse_list_env_headers, parse_tuple_env_headers, \
-    prepare_mandatory_directories
+    prepare_mandatory_directories, validate_aes_file
 from .logging_settings import setup_logging
 
 # Ignore Python Warning base class
@@ -43,6 +43,9 @@ CELERY_LONG_TERM_GPU_TASK_QUEUE = "long_term_gpu_tasks"
 # INSTEAD USE get_setting_val() function, e.g.:
 # from toolkit.helper_functions import get_core_setting
 # ES_URL = get_core_setting("ES_URL")
+
+PROTECTED_CORE_KEYS = ("SECRET", "KEY", "PASSWORD")
+
 CORE_SETTINGS = {
     "TEXTA_ES_URL": env("TEXTA_ES_URL", default="http://localhost:9200"),
     "TEXTA_ES_PREFIX": env("TEXTA_ES_PREFIX", default=""),
@@ -51,9 +54,21 @@ CORE_SETTINGS = {
     "TEXTA_EVALUATOR_MEMORY_BUFFER_GB": env("TEXTA_EVALUATOR_MEMORY_BUFFER_GB", default=""),
     "TEXTA_ES_MAX_DOCS_PER_INDEX": env.int("TEXTA_ES_MAX_DOCS_PER_INDEX", default=100000),
     # Default is set to long term task-queue to be backwards compatible.
-    "TEXTA_LONG_TERM_GPU_TASK_QUEUE": env("TEXTA_LONG_TERM_GPU_TASK_QUEUE", default=CELERY_LONG_TERM_TASK_QUEUE)
+    "TEXTA_LONG_TERM_GPU_TASK_QUEUE": env("TEXTA_LONG_TERM_GPU_TASK_QUEUE", default=CELERY_LONG_TERM_TASK_QUEUE),
+
+    ### S3 CONFIGURATION ###
+    "TEXTA_USE_S3": env.bool("TEXTA_USE_S3", default=False),
+    "TEXTA_S3_USE_SECURE": env.bool("TEXTA_S3_USE_SECURE", default=False),
+    "TEXTA_S3_HOST": env.str("TEXTA_S3_HOST", default=""),
+    "TEXTA_S3_BUCKET_NAME": env.str("TEXTA_S3_BUCKET_NAME", default=""),
+    "TEXTA_S3_ACCESS_KEY": env.str("TEXTA_S3_ACCESS_KEY", default=""),
+    "TEXTA_S3_SECRET_KEY": env.str("TEXTA_S3_SECRET_KEY", default=""),
 }
 ### END OF CORE SETTINGS ###
+
+AES_KEY_ENV = "TEXTA_AES_KEY_FILE_PATH"
+AES_KEYFILE_PATH = env.str(AES_KEY_ENV, default="secret.key")
+validate_aes_file(AES_KEYFILE_PATH, AES_KEY_ENV)
 
 EVALUATOR_MEMORY_BUFFER_RATIO = 0.5
 
@@ -300,14 +315,6 @@ ES_CONNECTION_PARAMETERS = {
     "sniff_on_start": env.bool("TEXTA_ES_SNIFF_ON_START", default=True),
     "sniff_on_connection_fail": env.bool("TEXTA_ES_SNIFF_ON_FAIL", default=True)
 }
-
-### S3 CONFIGURATION ###
-USE_S3 = env.bool("TEXTA_USE_S3", default=False)
-S3_USE_SECURE = env.bool("TEXTA_S3_USE_SECURE", default=False)
-S3_URI = env.str("TEXTA_S3_HOST", default="")
-S3_BUCKET_NAME = env.str("TEXTA_S3_BUCKET_NAME", default="")
-S3_ACCESS_KEY = env.str("TEXTA_S3_ACCESS_KEY", default="")
-S3_SECRET_KEY = env.str("TEXTA_S3_SECRET_KEY", default="")
 
 ### CELERY ###
 

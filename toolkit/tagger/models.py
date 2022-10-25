@@ -31,7 +31,7 @@ from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choi
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.feedback import Feedback
 from toolkit.embedding.models import Embedding
-from toolkit.helper_functions import load_stop_words
+from toolkit.helper_functions import load_stop_words, get_core_setting
 from toolkit.model_constants import CommonModelMixin, FavoriteModelMixin
 from toolkit.tagger import choices
 from toolkit.tools.lemmatizer import CeleryLemmatizer, ElasticAnalyzer
@@ -104,7 +104,8 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
     def download_from_s3(minio_location: str, user_pk: int, project_pk: int, version_id: str = "") -> int:
         client = Tagger.get_minio_client()
         kwargs = {"version_id": version_id} if version_id else {}
-        response = client.get_object(settings.S3_BUCKET_NAME, minio_location, **kwargs)
+        bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
+        response = client.get_object(bucket_name, minio_location, **kwargs)
         data = io.BytesIO(response.data)
         tagger_pk = Tagger.import_resources(data, user_pk, project_pk)
         response.close()
@@ -122,9 +123,10 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         return response
 
     def _upload_into_s3(self, client: Minio, data: bytes, filepath: str, minio_path: str):
+        bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
         if filepath and data is None:
             response = client.fput_object(
-                bucket_name=settings.S3_BUCKET_NAME,
+                bucket_name=bucket_name,
                 object_name=minio_path,
                 file_path=str(filepath)
             )
@@ -135,7 +137,7 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
             minio_path = self.generate_s3_location("model.zip", file_path=minio_path)
             size = data.getbuffer().nbytes
             response = client.put_object(
-                bucket_name=settings.S3_BUCKET_NAME,
+                bucket_name=bucket_name,
                 object_name=minio_path,
                 data=data,
                 length=size
@@ -147,19 +149,18 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
 
     @staticmethod
     def get_minio_client():
-        from django.conf import settings
         return Minio(
-            endpoint=settings.S3_URI,
-            access_key=settings.S3_ACCESS_KEY,
-            secret_key=settings.S3_SECRET_KEY,
-            secure=settings.S3_USE_SECURE
+            endpoint=get_core_setting("TEXTA_S3_HOST"),
+            access_key=get_core_setting("TEXTA_S3_ACCESS_KEY"),
+            secret_key=get_core_setting("TEXTA_S3_SECRET_KEY"),
+            secure=get_core_setting("TEXTA_S3_USE_SECURE")
         )
 
     @staticmethod
     def check_for_s3_access(s3_for_instance: bool) -> bool:
         info_logger = logging.getLogger(settings.INFO_LOGGER)
 
-        if settings.USE_S3 is False:
+        if get_core_setting("TEXTA_USE_S3") is False:
             info_logger.info("[Tagger] Saving into S3 is disabled system wide!")
             return False
 
@@ -170,7 +171,8 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
 
         try:
             client = Tagger.get_minio_client()
-            list(client.list_objects(settings.S3_BUCKET_NAME))
+            bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
+            list(client.list_objects(bucket_name))
             return True
         except Exception as e:
             logging.getLogger(settings.ERROR_LOGGER).exception(e)

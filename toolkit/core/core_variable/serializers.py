@@ -6,6 +6,7 @@ from rest_framework.validators import UniqueValidator
 from .models import CoreVariable
 from ..choices import CORE_VARIABLE_CHOICES
 from ..health.utils import get_elastic_status
+from ...helper_functions import is_secret_core_setting, encrypt
 from ...settings import CORE_SETTINGS
 
 
@@ -22,17 +23,17 @@ class CoreVariableSerializer(serializers.HyperlinkedModelSerializer):
 
     env_value = serializers.SerializerMethodField()
 
-
     class Meta:
         model = CoreVariable
         fields = ("url", "name", "value", "env_value")
 
-
     def get_env_value(self, obj):
         """Retrieves value for the variable from env."""
         variable_name = obj.name
-        return CORE_SETTINGS.get(variable_name, "")
-
+        env_value = CORE_SETTINGS.get(variable_name, "")
+        if env_value and is_secret_core_setting(variable_name):
+            return encrypt(env_value)
+        return env_value
 
     def validate(self, data):
         """Validate value by checking the URL availability."""
@@ -63,4 +64,8 @@ class CoreVariableSerializer(serializers.HyperlinkedModelSerializer):
         # if not alive, raise Error
         if not service_alive:
             raise serializers.ValidationError(f"Entered URL ({value}) for service cannot be reached. Please check the URL.")
+
+        if value and is_secret_core_setting(name):
+            data["value"] = encrypt(value)
+
         return data
