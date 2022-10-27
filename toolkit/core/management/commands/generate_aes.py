@@ -8,4 +8,5 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         key = Fernet.generate_key()
-        self.stdout.write(self.style.SUCCESS(key.decode("utf8")))
+        message = key.decode("utf8").strip()
+        print(message)

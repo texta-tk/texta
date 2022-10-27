@@ -441,7 +441,7 @@ def validate_aes_file(aes_keyfile_path: str, aes_key_env: str):
 
     # Check whether file exists at all.
     if pathlib.Path(aes_keyfile_path).exists() is False:
-        message = f"[x] File containing the encryption key at {aes_keyfile_path} (set by env variable '{aes_key_env}' does not exist! Please run 'python manage.py generate_aes > {aes_keyfile_path}'!"
+        message = f"[x] File containing the encryption key at {aes_keyfile_path} (set by env variable '{aes_key_env}' does not exist! Please run 'python manage.py generate_aes for a key and save it to {aes_keyfile_path}'!"
         termcolor.cprint(text=message, color="red")
     # If it exists, check that it is readable.
     else:

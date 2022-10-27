@@ -436,7 +436,6 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
                 new_model.tasks.add(task_object)
 
                 for tagger in model_json["taggers"]:
-                    indices = tagger.pop("indices")
                     tagger.pop("favorited_users", None)
 
                     tagger_model = Tagger(**tagger)
@@ -447,10 +446,6 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
                     tagger_model.save()
 
                     tagger_model.tasks.add(task_object)
-
-                    for index_name in indices:
-                        index, is_created = Index.objects.get_or_create(name=index_name)
-                        tagger_model.indices.add(index)
 
                     full_tagger_path, relative_tagger_path = tagger_model.generate_name("tagger")
                     with open(full_tagger_path, "wb") as fp:

@@ -51,7 +51,8 @@ TestBack:
   # Tests back-end locally
   before_script:
     - source activate texta-rest
-    - python manage.py generate_aes > secret.key
+    # Cant use the manage.py command because the startup checks populate the stdout.
+    - python -c 'from cryptography.fernet import Fernet;print(Fernet.generate_key().decode("utf8").strip())'
     - python import_test_data.py -es $TEXTA_ES_URL
     - python migrate.py
   stage: test-back
