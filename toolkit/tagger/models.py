@@ -252,7 +252,7 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
             with zipfile.ZipFile(zip_file, 'r') as archive:
                 json_string = archive.read(Tagger.MODEL_JSON_NAME).decode()
                 model_json = json.loads(json_string)
-                indices = model_json.pop("indices", None)
+                model_json.pop("indices", None)
                 model_json.pop("favorited_users", None)
 
                 new_model = Tagger(**model_json)
