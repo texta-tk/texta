@@ -57,7 +57,7 @@ CORE_SETTINGS = {
     "TEXTA_LONG_TERM_GPU_TASK_QUEUE": env("TEXTA_LONG_TERM_GPU_TASK_QUEUE", default=CELERY_LONG_TERM_TASK_QUEUE),
 
     ### S3 CONFIGURATION ###
-    "TEXTA_USE_S3": env.bool("TEXTA_USE_S3", default=False),
+    "TEXTA_S3_ENABLED": env.bool("TEXTA_S3_ENABLED", default=False),
     "TEXTA_S3_USE_SECURE": env.bool("TEXTA_S3_USE_SECURE", default=False),
     "TEXTA_S3_HOST": env.str("TEXTA_S3_HOST", default=""),
     "TEXTA_S3_BUCKET_NAME": env.str("TEXTA_S3_BUCKET_NAME", default=""),

@@ -299,7 +299,7 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
 class S3Mixin(serializers.Serializer):
 
     def validate_minio_path(self, value: str):
-        use_s3 = get_core_setting("TEXTA_USE_S3")
+        use_s3 = get_core_setting("TEXTA_S3_ENABLED")
         if use_s3 is False:
             raise ValidationError("Usage of S3 is not enabled system-wide on this instance!")
 

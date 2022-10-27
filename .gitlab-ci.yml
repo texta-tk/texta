@@ -24,13 +24,12 @@ variables:
   TEXTA_EXTERNAL_DATA_DIR: /cache
 
   # S3 components
-  MINIO_ROOT_USER: "admin"
-  MINIO_ROOT_PASSWORD: "12341234"
-  TEXTA_USE_S3: "true"
-  TEXTA_S3_HOST: "minio:9000"
+  TEXTA_S3_ENABLED: "true"
+  TEXTA_S3_HOST: $S3_HOST_URI
   TEXTA_S3_BUCKET_NAME: "texta-models-test"
-  TEXTA_S3_ACCESS_KEY: "admin"
-  TEXTA_S3_SECRET_KEY: "12341234"
+  TEXTA_S3_ACCESS_KEY: $S3_ACCESS_KEY
+  TEXTA_S3_SECRET_KEY: $S3_SECRET_KEY
+
 
 services:
   - name: redis:5
@@ -39,10 +38,6 @@ services:
   - name: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
     alias: texta-elastic
     command: [ "bin/elasticsearch", "-Ediscovery.type=single-node" ]
-  - name: minio/minio
-    alias: minio
-    command: ['server', '/minio']
-
 
 stages:
   - test-back
@@ -57,7 +52,6 @@ TestBack:
   before_script:
     - source activate texta-rest
     - python manage.py generate_aes > secret.key
-    - python manage.py generate_s3_bucket texta-models-test
     - python import_test_data.py -es $TEXTA_ES_URL
     - python migrate.py
   stage: test-back

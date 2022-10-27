@@ -153,7 +153,6 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         access_key = get_core_setting("TEXTA_S3_ACCESS_KEY")
         secret_key = get_core_setting("TEXTA_S3_SECRET_KEY")
         use_secure = get_core_setting("TEXTA_S3_USE_SECURE")
-        logging.getLogger(settings.INFO_LOGGER).info(f"Connecting to {s3_host} to user {access_key}!")
         return Minio(
             endpoint=s3_host,
             access_key=access_key,
@@ -165,7 +164,7 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
     def check_for_s3_access(s3_for_instance: bool) -> bool:
         info_logger = logging.getLogger(settings.INFO_LOGGER)
 
-        if get_core_setting("TEXTA_USE_S3") is False:
+        if get_core_setting("TEXTA_S3_ENABLED") is False:
             info_logger.info("[Tagger] Saving into S3 is disabled system wide!")
             return False
 
