@@ -13,9 +13,9 @@ class Command(BaseCommand):
         wrapper = Tagger.get_minio_client()
         try:
             response = wrapper.make_bucket(options["bucket_name"])
-            self.stdout.write(self.style.SUCCESS(response))
+            self.stdout.write(self.style.SUCCESS("Successfully added bucket into MINIO"))
         except minio.error.S3Error as e:
             if e.code == "BucketAlreadyOwnedByYou":
-                pass
+                self.stdout.write(self.style.SUCCESS("Bucket already exists, skipping!"))
             else:
                 raise e

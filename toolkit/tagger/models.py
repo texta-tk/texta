@@ -149,11 +149,16 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
 
     @staticmethod
     def get_minio_client():
+        s3_host = get_core_setting("TEXTA_S3_HOST")
+        access_key = get_core_setting("TEXTA_S3_ACCESS_KEY")
+        secret_key = get_core_setting("TEXTA_S3_SECRET_KEY")
+        use_secure = get_core_setting("TEXTA_S3_USE_SECURE")
+        logging.getLogger(settings.INFO_LOGGER).info(f"Connecting to {s3_host} to user {access_key}!")
         return Minio(
-            endpoint=get_core_setting("TEXTA_S3_HOST"),
-            access_key=get_core_setting("TEXTA_S3_ACCESS_KEY"),
-            secret_key=get_core_setting("TEXTA_S3_SECRET_KEY"),
-            secure=get_core_setting("TEXTA_S3_USE_SECURE")
+            endpoint=s3_host,
+            access_key=access_key,
+            secret_key=secret_key,
+            secure=use_secure
         )
 
     @staticmethod

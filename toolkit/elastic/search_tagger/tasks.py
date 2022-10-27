@@ -151,8 +151,6 @@ def apply_search_query_tagger_on_index(object_id: int):
         ec = ElasticCore()
         [ec.add_texta_facts_mapping(index) for index in indices]
 
-        print(json.loads(search_query_tagger.query))
-
         searcher = ElasticSearcher(
             indices=indices,
             field_data=fields + ["texta_facts"],  # Get facts to add upon existing ones.

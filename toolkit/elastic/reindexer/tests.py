@@ -192,7 +192,7 @@ class ReindexerViewTests(APITransactionTestCase):
         try:
             self.ec.delete_index(TEST_INDEX_REINDEX)
         except:
-            print(f'{TEST_INDEX_REINDEX} was not deleted')
+            print_output(f'{TEST_INDEX_REINDEX} was not deleted', payload)
         response = self.client.post(url, payload, format='json')
         print_output('run_create_reindexer_task_signal:response.data', response.data)
         self.check_update_forbidden(url, payload)
