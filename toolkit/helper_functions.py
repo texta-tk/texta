@@ -429,7 +429,8 @@ def minio_connection(func):
             logging.getLogger(settings.ERROR_LOGGER).exception(e.message)
             raise APIException("There was an error from S3!", code=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except ServerError as e:
-            logging.getLogger(settings.ERROR_LOGGER).exception(f"Fault in connecting to S3: {settings.S3_URI}")
+            s3_host = get_core_setting("TEXTA_S3_HOST")
+            logging.getLogger(settings.ERROR_LOGGER).exception(f"Fault in connecting to S3: {s3_host}")
             raise APIException("There was an error from S3 response!", code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return func_wrapper

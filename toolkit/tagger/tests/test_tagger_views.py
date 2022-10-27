@@ -16,7 +16,7 @@ from texta_elastic.core import ElasticCore
 
 from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
-from toolkit.helper_functions import reindex_test_dataset
+from toolkit.helper_functions import reindex_test_dataset, get_core_setting
 from toolkit.tagger.models import Tagger
 from toolkit.test_settings import (TEST_FIELD, TEST_FIELD_CHOICE, TEST_KEEP_PLOT_FILES, TEST_MATCH_TEXT, TEST_QUERY,
                                    TEST_TAGGER_BINARY, TEST_VERSION_PREFIX, VERSION_NAMESPACE)
@@ -160,7 +160,8 @@ class TaggerViewTests(APITransactionTestCase):
         print_output(f"Delete apply_taggers test index {self.test_index_copy}", res)
 
         minio_client = Tagger.get_minio_client()
-        minio_client.remove_object(settings.S3_BUCKET_NAME, self.minio_tagger_path)
+        bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
+        minio_client.remove_object(bucket_name, self.minio_tagger_path)
 
     def run_create_tagger_training_and_task_signal(self):
         """Tests the endpoint for a new Tagger, and if a new Task gets created via the signal"""
@@ -766,7 +767,8 @@ class TaggerViewTests(APITransactionTestCase):
         # Check directly inside Minio whether the model exists there.
         client = Tagger.get_minio_client()
         exists = False
-        for s3_object in client.list_objects(settings.S3_BUCKET_NAME, recursive=True):
+        bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
+        for s3_object in client.list_objects(bucket_name, recursive=True):
             if s3_object.object_name == self.minio_tagger_path:
                 print_output(f"contents of minio:", s3_object.object_name)
                 exists = True

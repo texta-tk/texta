@@ -483,7 +483,8 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
     def add_from_s3(self, minio_location: str, user_pk: int, version_id: str = "") -> int:
         client = Tagger.get_minio_client()
         kwargs = {"version_id": version_id} if version_id else {}
-        response = client.get_object(settings.S3_BUCKET_NAME, minio_location, **kwargs)
+        bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
+        response = client.get_object(bucket_name, minio_location, **kwargs)
         data = io.BytesIO(response.data)
         tagger_pk = Tagger.import_resources(data, user_pk, self.project.pk)
         response.close()
