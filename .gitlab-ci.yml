@@ -41,7 +41,7 @@ services:
     command: [ "bin/elasticsearch", "-Ediscovery.type=single-node" ]
   - name: minio/minio
     alias: minio
-    command: [ "server --console-address ':9001' /minio" ]
+    command: ['server', '/minio']
 
 
 stages:
