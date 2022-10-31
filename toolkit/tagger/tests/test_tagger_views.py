@@ -163,6 +163,13 @@ class TaggerViewTests(APITransactionTestCase):
         bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
         minio_client.remove_object(bucket_name, self.minio_tagger_path)
 
+        # Delete using "remove_object"
+        # Additional safety:
+        if "test" in bucket_name.lower():
+            objects_to_delete = minio_client.list_objects(bucket_name)
+            for obj in objects_to_delete:
+                minio_client.remove_object(bucket_name, obj.object_name)
+
     def run_create_tagger_training_and_task_signal(self):
         """Tests the endpoint for a new Tagger, and if a new Task gets created via the signal"""
 
@@ -790,3 +797,4 @@ class TaggerViewTests(APITransactionTestCase):
 
     def run_check_that_s3_upload_file_must_be_a_zip(self):
         pass
+

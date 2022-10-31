@@ -437,7 +437,7 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
 
                 for tagger in model_json["taggers"]:
                     tagger.pop("favorited_users", None)
-
+                    tagger.pop("indices", None)
                     tagger_model = Tagger(**tagger)
 
                     task_object = Task.objects.create(tagger=tagger_model, status=Task.STATUS_COMPLETED)
