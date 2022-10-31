@@ -29,6 +29,7 @@ variables:
   TEXTA_S3_BUCKET_NAME: "texta-models-test"
   TEXTA_S3_ACCESS_KEY: $S3_ACCESS_KEY
   TEXTA_S3_SECRET_KEY: $S3_SECRET_KEY
+  TEXTA_S3_USE_SECURE: "true"
 
 
 services:
