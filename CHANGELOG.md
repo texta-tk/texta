@@ -1,3 +1,13 @@
+## 3.7.6 (2022-10-26)
+
+### Updates (1 change)
+
+- [update: Added support for changing default language code for MLP through env variables.](texta/texta-rest@894b3cf9fb6c036f416595901efd3a399b35ccd2) by @mkollo
+
+## 3.7.5 (2022-10-21)
+
+No changes.
+
 ## 3.7.4 (2022-09-27)
 
 ### Updates (1 change)

@@ -307,6 +307,7 @@ ES_CONNECTION_PARAMETERS = {
 # Consider that processed text might be the size of a simple comment
 # or a whole article.
 MLP_BATCH_SIZE = env.int("TEXTA_MLP_BATCH_SIZE", default=25)
+MLP_DEFAULT_LANGUAGE = env.str("TEXTA_MLP_DEFAULT_LANGUAGE", default="en")
 
 # By default, the DB with number 0 is used in Redis. Other applications or instances of TTK should avoid using the same DB number.
 BROKER_URL = env('TEXTA_REDIS_URL', default='redis://localhost:6379')
