@@ -18,15 +18,16 @@ from texta_elastic.searcher import ElasticSearcher
 
 from toolkit.bert_tagger import choices
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
-from toolkit.bert_tagger.serializers import (ApplyTaggerSerializer, BertDownloaderSerializer, BertTagTextSerializer, BertTaggerSerializer, DeleteBERTModelSerializer, EpochReportSerializer, TagRandomDocSerializer)
-from toolkit.bert_tagger.tasks import apply_tagger, apply_tagger_to_index
+from toolkit.bert_tagger.serializers import (ApplyTaggerSerializer, BertDownloaderSerializer, BertTagTextSerializer, BertTaggerSerializer, DeleteBERTModelSerializer,
+                                             EpochReportSerializer, TagRandomDocSerializer)
+from toolkit.bert_tagger.tasks import apply_tagger, apply_tagger_to_index, download_tagger_model, upload_tagger_files
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.exceptions import DownloadingModelsNotAllowedError, InvalidModelIdentifierError, NonExistantModelError, ProjectValidationFailed
-from toolkit.helper_functions import add_finite_url_to_feedback, download_bert_requirements, get_downloaded_bert_models
+from toolkit.helper_functions import add_finite_url_to_feedback, download_bert_requirements, get_downloaded_bert_models, minio_connection
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
-from toolkit.serializer_constants import ProjectResourceImportModelSerializer
+from toolkit.serializer_constants import ProjectResourceImportModelSerializer, S3UploadSerializer, S3DownloadSerializer
 from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing, FeedbackModelView
 from .tasks import apply_persistent_bert_tagger
 from ..filter_constants import FavoriteFilter
@@ -35,7 +36,6 @@ from ..filter_constants import FavoriteFilter
 class BertTaggerFilter(FavoriteFilter):
     description = filters.CharFilter('description', lookup_expr='icontains')
     task_status = filters.CharFilter('tasks__status', lookup_expr='icontains')
-
 
     class Meta:
         model = BertTaggerObject
@@ -52,7 +52,6 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Fa
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = BertTaggerFilter
     ordering_fields = ('id', 'author__username', 'description', 'fields', 'tasks__time_started', 'tasks__time_completed', 'f1_score', 'precision', 'recall', 'tasks__status')
-
 
     def perform_create(self, serializer, **kwargs):
         project = Project.objects.get(id=self.kwargs['project_pk'])
@@ -83,10 +82,8 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Fa
 
         tagger.train()
 
-
     def get_queryset(self):
         return BertTaggerObject.objects.filter(project=self.kwargs['project_pk']).order_by('-id')
-
 
     @action(detail=True, methods=['post'])
     def retrain_tagger(self, request, pk=None, project_pk=None):
@@ -94,7 +91,6 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Fa
         instance = self.get_object()
         instance.train()
         return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
-
 
     @action(detail=True, methods=['get'])
     def export_model(self, request, pk=None, project_pk=None):
@@ -107,16 +103,14 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Fa
         response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(zip_name)
         return response
 
-
     @action(detail=False, methods=["post"], serializer_class=ProjectResourceImportModelSerializer)
     def import_model(self, request, pk=None, project_pk=None):
         serializer = ProjectResourceImportModelSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         uploaded_file = serializer.validated_data['file']
-        tagger_id = BertTaggerObject.import_resources(uploaded_file, request, project_pk)
+        tagger_id = BertTaggerObject.import_resources(uploaded_file, request.user.pk, project_pk)
         return Response({"id": tagger_id, "message": "Successfully imported model and associated files."}, status=status.HTTP_201_CREATED)
-
 
     @action(detail=True, methods=['post'], serializer_class=TagRandomDocSerializer)
     def tag_random_doc(self, request, pk=None, project_pk=None):
@@ -156,7 +150,6 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Fa
         response = {"document": random_doc, "prediction": tagger_response}
         return Response(response, status=status.HTTP_200_OK)
 
-
     @action(detail=True, methods=['post'], serializer_class=BertTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
         serializer = BertTagTextSerializer(data=request.data)
@@ -179,7 +172,6 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Fa
         prediction = add_finite_url_to_feedback(prediction, request)
         return Response(prediction, status=status.HTTP_200_OK)
 
-
     @action(detail=True, methods=['post', 'get'], serializer_class=EpochReportSerializer)
     def epoch_reports(self, request, pk=None, project_pk=None):
         """Retrieve epoch reports"""
@@ -197,7 +189,6 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Fa
         filtered_reports = [{field: value for field, value in list(report.items()) if field not in ignore_fields} for report in reports]
 
         return Response(filtered_reports, status=status.HTTP_200_OK)
-
 
     @action(detail=False, methods=['post'], serializer_class=BertDownloaderSerializer, permission_classes=(IsAdminUser,))
     def download_pretrained_model(self, request, pk=None, project_pk=None):
@@ -226,6 +217,29 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Fa
             raise DownloadingModelsNotAllowedError()
         return Response("Download finished.", status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['post'], serializer_class=S3UploadSerializer)
+    @minio_connection
+    def upload_into_s3(self, request, pk=None, project_pk=None):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        minio_path = serializer.validated_data["minio_path"]
+        tagger = self.get_object()
+        task = Task.objects.create(tagger=tagger, status=Task.STATUS_QUEUED, task_type=Task.TYPE_UPLOAD)
+        tagger.tasks.add(task)
+        transaction.on_commit(lambda: upload_tagger_files.apply_async(args=(tagger.pk, minio_path), queue=settings.CELERY_LONG_TERM_TASK_QUEUE))
+        return Response({"message": "Started task for uploading model into S3!"})
+
+    @action(detail=False, methods=['post'], serializer_class=S3DownloadSerializer)
+    @minio_connection
+    def download_from_s3(self, request, pk=None, project_pk=None):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        minio_path = serializer.validated_data["minio_path"]
+        version_id = serializer.validated_data["version_id"]
+
+        transaction.on_commit(lambda: download_tagger_model.apply_async(args=(minio_path, request.user.pk, project_pk, version_id), queue=settings.CELERY_LONG_TERM_TASK_QUEUE))
+
+        return Response({"message": "Started task for downloading model from S3!"})
 
     @action(detail=False, methods=['get'])
     def available_models(self, request, pk=None, project_pk=None):
@@ -233,7 +247,6 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Fa
         available_models = get_downloaded_bert_models(settings.BERT_PRETRAINED_MODEL_DIRECTORY)
 
         return Response(available_models, status=status.HTTP_200_OK)
-
 
     # This is made into a POST request instead of DELETE, so it would be nice to use through the Browsable API.
     @action(detail=False, methods=['post'], serializer_class=DeleteBERTModelSerializer, permission_classes=(IsAdminUser,))
@@ -249,7 +262,6 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Fa
         path = safe_join(settings.BERT_PRETRAINED_MODEL_DIRECTORY, file_name)  # Use safe_join to prevent path traversal attacks.
         rmtree(path)  # Since Pathlib can't deal with directories.
         return Response({"detail": f"Deleted model {model_name} from the filesystem!"}, status=status.HTTP_200_OK)
-
 
     @action(detail=True, methods=['post'], serializer_class=ApplyTaggerSerializer)
     def apply_to_index(self, request, pk=None, project_pk=None):

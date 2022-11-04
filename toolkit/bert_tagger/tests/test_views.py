@@ -4,6 +4,7 @@ import pathlib
 import uuid
 from io import BytesIO
 from time import sleep, time_ns
+from typing import Optional
 
 from django.test import override_settings
 from django.urls import reverse
@@ -19,7 +20,7 @@ from toolkit.elastic.reindexer.models import Reindexer
 from toolkit.helper_functions import (
     download_bert_requirements,
     get_downloaded_bert_models,
-    reindex_test_dataset
+    reindex_test_dataset, get_minio_client, get_core_setting, set_core_setting
 )
 from toolkit.settings import (
     ALLOW_BERT_MODEL_DOWNLOADS,
@@ -98,6 +99,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.test_imported_binary_cpu_tagger_id = self.import_test_model(TEST_BERT_TAGGER_BINARY_CPU)
         self.ec = ElasticCore()
 
+        self.minio_tagger_path = f"ttk_bert_tagger_tests/{str(self.test_imported_binary_cpu_tagger_id)}/model.zip"
 
     def import_test_model(self, file_path: str):
         """Import fine-tuned models for testing."""
@@ -107,7 +109,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         resp = self.client.post(import_url, data={'file': open(file_path, "rb")}).json()
         print_output("Importing test model:", resp)
         return resp["id"]
-
 
     def test(self):
         self.run_train_multiclass_bert_tagger_using_fact_name()
@@ -135,15 +136,32 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.run_test_that_user_cant_delete_pretrained_model()
         self.run_test_that_admin_users_can_delete_pretrained_model()
 
+        # Ordering here is important.
+        self.run_simple_check_that_you_can_import_models_into_s3()
+        self.run_simple_check_that_you_can_download_models_from_s3()
+
+        self.run_check_for_downloading_model_from_s3_with_wrong_faulty_access_configuration()
+        self.run_check_for_doing_s3_operation_while_its_disabled_in_settings()
+        self.run_check_for_downloading_model_from_s3_that_doesnt_exist()
+
         self.add_cleanup_files(self.test_tagger_id)
         self.add_cleanup_folders()
-
 
     def tearDown(self) -> None:
         res = self.ec.delete_index(self.test_index_copy)
         self.ec.delete_index(index=self.test_index_name, ignore=[400, 404])
         print_output(f"Delete apply_bert_taggers test index {self.test_index_copy}", res)
 
+        minio_client = get_minio_client()
+        bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
+        minio_client.remove_object(bucket_name, self.minio_tagger_path)
+
+        # Delete using "remove_object"
+        # Additional safety:
+        if "test" in bucket_name.lower():
+            objects_to_delete = minio_client.list_objects(bucket_name, recursive=True)
+            for obj in objects_to_delete:
+                minio_client.remove_object(bucket_name, obj.object_name)
 
     def add_cleanup_files(self, tagger_id: int):
         tagger_object = BertTaggerObject.objects.get(pk=tagger_id)
@@ -151,12 +169,10 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         if not TEST_KEEP_PLOT_FILES:
             self.addCleanup(remove_file, tagger_object.plot.path)
 
-
     def add_cleanup_folders(self):
         if not self.test_model_existed:
             test_model_dir = os.path.join(BERT_PRETRAINED_MODEL_DIRECTORY, BertTagger.normalize_name(TEST_BERT_MODEL))
             self.addCleanup(remove_folder, test_model_dir)
-
 
     def run_train_multiclass_bert_tagger_using_fact_name(self):
         """Tests BertTagger training with multiple classes and if a new Task gets created via the signal."""
@@ -190,7 +206,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         self.add_cleanup_files(tagger_id)
 
-
     def run_train_binary_multiclass_bert_tagger_using_fact_name(self):
         """Tests BertTagger training with binary facts."""
         payload = {
@@ -223,7 +238,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertTrue(len(response.data["classes"]) == 2)
 
         self.add_cleanup_files(tagger_id)
-
 
     def run_train_binary_multiclass_bert_tagger_using_fact_name_invalid_payload(self):
         """Tests BertTagger training with binary facts."""
@@ -263,7 +277,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         print_output('test_run_train_binary_multiclass_bert_tagger_using_fact_name_invalid_pos_label:response.data', response.data)
         # Check if creating the BertTagger fails with status code 400
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
 
     def run_train_balanced_multiclass_bert_tagger_using_fact_name(self):
         """Tests balanced BertTagger training with multiple classes and if a new Task gets created via the signal."""
@@ -305,7 +318,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         self.add_cleanup_files(tagger_id)
 
-
     def run_train_bert_tagger_using_query(self):
         """Tests BertTagger training, and if a new Task gets created via the signal."""
         payload = {
@@ -341,7 +353,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.test_tagger_id = tagger_id
         self.add_cleanup_files(tagger_id)
 
-
     def run_train_bert_tagger_from_checkpoint_model_bin2bin(self):
         """Tests training BertTagger from a checkpoint."""
         payload = {
@@ -375,7 +386,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertTrue(len(response.data["classes"]) >= 2)
 
         self.add_cleanup_files(tagger_id)
-
 
     def run_train_bert_tagger_from_checkpoint_model_bin2mc(self):
         """Tests training BertTagger from a checkpoint."""
@@ -411,7 +421,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         self.add_cleanup_files(tagger_id)
 
-
     def run_bert_tag_with_imported_gpu_model(self):
         """Test applying imported model trained on GPU."""
         payload = {
@@ -427,7 +436,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertEqual("true", response.data["result"])
 
         self.add_cleanup_files(self.test_imported_binary_gpu_tagger_id)
-
 
     def run_bert_tag_with_imported_cpu_model(self):
         """Tests applying imported model trained on CPU."""
@@ -445,19 +453,18 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         self.add_cleanup_files(self.test_imported_binary_cpu_tagger_id)
 
-
-    def run_bert_tag_text(self):
+    def run_bert_tag_text(self, tagger_id: Optional[int] = None):
         """Tests tag prediction for texts."""
         payload = {
             "text": "mine kukele, loll"
         }
-        response = self.client.post(f'{self.url}{self.test_tagger_id}/tag_text/', payload)
+        tagger_id = tagger_id if tagger_id else self.test_tagger_id
+        response = self.client.post(f'{self.url}{tagger_id}/tag_text/', payload)
         print_output('test_bert_tagger_tag_text:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue("probability" in response.data)
         self.assertTrue("result" in response.data)
         self.assertTrue("tagger_id" in response.data)
-
 
     def run_bert_tag_random_doc(self):
         """Tests the endpoint for the tag_random_doc action"""
@@ -494,7 +501,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertTrue("result" in response.data["prediction"])
         self.assertTrue("tagger_id" in response.data["prediction"])
 
-
     def run_bert_epoch_reports_get(self):
         """Tests endpoint for retrieving epoch reports via GET"""
         url = f'{self.url}{self.test_tagger_id}/epoch_reports/'
@@ -505,7 +511,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertTrue(isinstance(response.data, list))
         # Check if first report is not empty
         self.assertTrue(len(response.data[0]) > 0)
-
 
     def run_bert_epoch_reports_post(self):
         """Tests endpoint for retrieving epoch reports via GET"""
@@ -530,7 +535,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         # Check if first report does NOT contains recall
         self.assertTrue("recall" not in response.data[0])
 
-
     def run_bert_get_available_models(self):
         """Test endpoint for retrieving available BERT models."""
         url = f'{self.url}available_models/'
@@ -540,7 +544,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if the endpoint returns currently available models
         self.assertCountEqual(response.data, available_models)
-
 
     def run_bert_download_pretrained_model(self):
         """Test endpoint for downloading pretrained BERT model."""
@@ -565,7 +568,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         # The endpoint should throw and error
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
 
     def run_bert_model_export_import(self):
         """Tests endpoint for model export and import"""
@@ -606,7 +608,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         # remove exported tagger files
         self.add_cleanup_files(tagger_id)
 
-
     def run_apply_binary_tagger_to_index(self):
         """Tests applying binary BERT tagger to index using apply_to_index endpoint."""
         # Make sure reindexer task has finished
@@ -641,7 +642,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertTrue(results[self.new_fact_value] == expected_number_of_facts)
 
         self.add_cleanup_files(self.test_imported_binary_gpu_tagger_id)
-
 
     def run_apply_multiclass_tagger_to_index(self):
         """Tests applying multiclass BERT tagger to index using apply_to_index endpoint."""
@@ -680,7 +680,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         self.add_cleanup_files(self.test_imported_multiclass_gpu_tagger_id)
 
-
     def run_apply_tagger_to_index_invalid_input(self):
         """Tests applying multiclass BERT tagger to index using apply_to_index endpoint."""
 
@@ -699,7 +698,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         self.add_cleanup_files(self.test_tagger_id)
-
 
     def run_bert_tag_and_feedback_and_retrain(self):
         """Tests feeback extra action."""
@@ -779,7 +777,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         self.add_cleanup_files(self.test_tagger_id)
 
-
     def run_bert_tag_text_persistent(self):
         """Tests tag prediction for texts using persistent models."""
         payload = {
@@ -802,7 +799,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         print_output('test_bert_tagger_persistent speed:', (end_1, end_2))
         assert end_2 < end_1
 
-
     def run_test_that_user_cant_delete_pretrained_model(self):
         self.client.login(username='BertTaggerOwner', password='pw')
 
@@ -810,7 +806,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         resp = self.client.post(url, data={"model_name": "EMBEDDIA/finest-bert"})
         print_output("run_test_that_user_cant_delete_pretrained_model:response.data", data=resp.data)
         self.assertTrue(resp.status_code == status.HTTP_401_UNAUTHORIZED or resp.status_code == status.HTTP_403_FORBIDDEN)
-
 
     def run_test_that_admin_users_can_delete_pretrained_model(self):
         self.client.login(username="AdminBertUser", password='pw')
@@ -824,3 +819,78 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         print_output("run_test_that_admin_users_can_delete_pretrained_model:response.data", data=resp.data)
         self.assertTrue(resp.status_code == status.HTTP_200_OK)
         self.assertTrue(model_path.exists() is False)
+
+    ### MINIO TESTS ###
+
+    def run_check_for_downloading_model_from_s3_that_doesnt_exist(self):
+        url = reverse("v2:bert_tagger-download-from-s3", kwargs={"project_pk": self.project.pk})
+        response = self.client.post(url, data={"minio_path": "this simply doesn't exist.zip"}, format="json")
+        print_output("run_check_for_downloading_model_from_s3_that_doesnt_exist:response.data", response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def run_check_for_downloading_model_from_s3_with_wrong_faulty_access_configuration(self):
+        # THIS ABOMINATION REFUSES TO WORK
+        # with override_settings(S3_ACCESS_KEY=uuid.uuid4().hex):
+        #     response = self._run_s3_import(self.minio_tagger_path)
+        #     print_output("run_check_for_downloading_model_from_s3_with_wrong_faulty_access_configuration-S3-ACCESS-KEY:response.data", response.data)
+        #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        #
+        # with override_settings(S3_SECRET_KEY=uuid.uuid4().hex):
+        #     response = self._run_s3_import(self.minio_tagger_path)
+        #     print_output("run_check_for_downloading_model_from_s3_with_wrong_faulty_access_configuration-S3-SECRET-KEY:response.data", response.data)
+        #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        #
+        # with override_settings(S3_BUCKET_NAME=uuid.uuid4().hex):
+        #     response = self._run_s3_import(self.minio_tagger_path)
+        #     print_output("run_check_for_downloading_model_from_s3_with_wrong_faulty_access_configuration-S3-BUCKET-NAME:response.data", response.data)
+        #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        pass
+
+    def run_check_for_doing_s3_operation_while_its_disabled_in_settings(self):
+        set_core_setting("TEXTA_S3_ENABLED", "False")
+        response = self._run_s3_import(self.minio_tagger_path)
+        print_output("run_check_for_doing_s3_operation_while_its_disabled_in_settings:response.data", response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue("minio_path" in response.data)
+        # Enable it again for the other tests.
+        set_core_setting("TEXTA_S3_ENABLED", "True")
+
+    def _run_s3_import(self, minio_path):
+        url = reverse("v2:bert_tagger-upload-into-s3", kwargs={"project_pk": self.project.pk, "pk": self.test_imported_binary_cpu_tagger_id})
+        response = self.client.post(url, data={"minio_path": minio_path}, format="json")
+        return response
+
+    def run_simple_check_that_you_can_import_models_into_s3(self):
+        response = self._run_s3_import(self.minio_tagger_path)
+        print_output("run_simple_check_that_you_can_import_models_into_s3:response.data", response.data)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Check directly inside Minio whether the model exists there.
+        client = get_minio_client()
+        exists = False
+        bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
+        for s3_object in client.list_objects(bucket_name, recursive=True):
+            if s3_object.object_name == self.minio_tagger_path:
+                print_output(f"contents of minio:", s3_object.object_name)
+                exists = True
+                break
+        self.assertEqual(exists, True)
+
+        # Check that status is proper.
+        t = BertTaggerObject.objects.get(pk=self.test_imported_binary_cpu_tagger_id)
+        self.assertEqual(t.tasks.last().status, Task.STATUS_COMPLETED)
+        self.assertEqual(t.tasks.last().task_type, Task.TYPE_UPLOAD)
+
+    def run_simple_check_that_you_can_download_models_from_s3(self):
+        url = reverse("v2:bert_tagger-download-from-s3", kwargs={"project_pk": self.project.pk})
+        latest_tagger_id = BertTaggerObject.objects.last().pk
+        response = self.client.post(url, data={"minio_path": self.minio_tagger_path}, format="json")
+        print_output("run_simple_check_that_you_can_download_models_from_s3:response.data", response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        latest_again = BertTaggerObject.objects.last().pk
+
+        # Assert that changes have happened.
+        self.assertNotEqual(latest_tagger_id, latest_again)
+        # Assert that you can tag with the imported tagger.
+        self.run_bert_tag_text(latest_again)

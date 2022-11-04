@@ -67,7 +67,7 @@ class TaggerViewTests(APITransactionTestCase):
 
         self.test_imported_binary_tagger_id = self.import_test_model(TEST_TAGGER_BINARY)
 
-        self.minio_tagger_path = f"{str(self.test_imported_binary_tagger_id)}/my_wonderful_tagger_folder/model.zip"
+        self.minio_tagger_path = f"ttk_tagger_tests/{str(self.test_imported_binary_tagger_id)}/model.zip"
 
     def import_test_model(self, file_path: str):
         """Import models for testing."""
@@ -801,6 +801,3 @@ class TaggerViewTests(APITransactionTestCase):
         self.assertNotEqual(latest_tagger_id, latest_again)
         # Assert that you can tag with the imported tagger.
         self.run_tag_text([latest_again])
-
-    def run_check_that_s3_upload_file_must_be_a_zip(self):
-        pass
