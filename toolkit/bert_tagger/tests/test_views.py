@@ -101,6 +101,8 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         self.minio_tagger_path = f"ttk_bert_tagger_tests/{str(self.test_imported_binary_cpu_tagger_id)}/model.zip"
         self.minio_client = get_minio_client()
+        self.bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
+
 
     def import_test_model(self, file_path: str):
         """Import fine-tuned models for testing."""
@@ -153,15 +155,14 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.ec.delete_index(index=self.test_index_name, ignore=[400, 404])
         print_output(f"Delete apply_bert_taggers test index {self.test_index_copy}", res)
 
-        bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
-        self.minio_client.remove_object(bucket_name, self.minio_tagger_path)
+        self.minio_client.remove_object(self.bucket_name, self.minio_tagger_path)
 
         # Delete using "remove_object"
         # Additional safety:
-        if "test" in bucket_name.lower():
-            objects_to_delete = self.minio_client.list_objects(bucket_name, recursive=True)
+        if "test" in self.bucket_name.lower():
+            objects_to_delete = self.minio_client.list_objects(self.bucket_name, recursive=True)
             for obj in objects_to_delete:
-                self.minio_client.remove_object(bucket_name, obj.object_name)
+                self.minio_client.remove_object(self.bucket_name, obj.object_name)
 
     def add_cleanup_files(self, tagger_id: int):
         tagger_object = BertTaggerObject.objects.get(pk=tagger_id)
@@ -868,8 +869,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         # Check directly inside Minio whether the model exists there.
         exists = False
-        bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
-        for s3_object in self.minio_client.list_objects(bucket_name, recursive=True):
+        for s3_object in self.minio_client.list_objects(self.bucket_name, recursive=True):
             if s3_object.object_name == self.minio_tagger_path:
                 print_output(f"contents of minio:", s3_object.object_name)
                 exists = True
