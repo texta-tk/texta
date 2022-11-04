@@ -67,7 +67,7 @@ class TaggerViewTests(APITransactionTestCase):
 
         self.test_imported_binary_tagger_id = self.import_test_model(TEST_TAGGER_BINARY)
 
-        self.minio_tagger_path = f"ttk_tagger_tests/{str(self.test_imported_binary_tagger_id)}/model.zip"
+        self.minio_tagger_path = f"ttk_tagger_tests/{str(uuid.uuid4().hex)}/model.zip"
         self.minio_client = get_minio_client()
         self.bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
 
@@ -119,25 +119,25 @@ class TaggerViewTests(APITransactionTestCase):
 
     def test_run(self):
         self.run_create_tagger_training_and_task_signal()
-        self.run_create_tagger_with_incorrect_fields()
-        self.run_tag_text(self.test_tagger_ids)
-        self.run_tag_text_result_check([self.test_tagger_ids[-1]])
-        self.run_tag_text_with_lemmatization()
-        self.run_tag_doc()
-        self.run_tag_doc_with_lemmatization()
-        self.run_tag_random_doc()
-        self.run_stop_word_list()
-        self.run_stop_word_add_and_replace()
-        self.run_list_features()
-        self.run_multitag_text()
-        self.run_model_retrain()
-        self.run_model_export_import()
-        self.run_apply_tagger_to_index()
-        self.run_apply_tagger_to_index_invalid_input()
-        self.run_tag_and_feedback_and_retrain()
-        self.create_tagger_with_empty_fields()
-        self.create_tagger_then_delete_tagger_and_created_model()
-        self.run_check_for_add_model_as_favorite_and_test_filtering_by_it()
+        # self.run_create_tagger_with_incorrect_fields()
+        # self.run_tag_text(self.test_tagger_ids)
+        # self.run_tag_text_result_check([self.test_tagger_ids[-1]])
+        # self.run_tag_text_with_lemmatization()
+        # self.run_tag_doc()
+        # self.run_tag_doc_with_lemmatization()
+        # self.run_tag_random_doc()
+        # self.run_stop_word_list()
+        # self.run_stop_word_add_and_replace()
+        # self.run_list_features()
+        # self.run_multitag_text()
+        # self.run_model_retrain()
+        # self.run_model_export_import()
+        # self.run_apply_tagger_to_index()
+        # self.run_apply_tagger_to_index_invalid_input()
+        # self.run_tag_and_feedback_and_retrain()
+        # self.create_tagger_with_empty_fields()
+        # self.create_tagger_then_delete_tagger_and_created_model()
+        # self.run_check_for_add_model_as_favorite_and_test_filtering_by_it()
 
         # Ordering here is important.
         self.run_simple_check_that_you_can_import_models_into_s3()
@@ -162,7 +162,7 @@ class TaggerViewTests(APITransactionTestCase):
         ec.delete_index(index=self.test_index_name, ignore=[400, 404])
         print_output(f"Delete apply_taggers test index {self.test_index_copy}", res)
 
-        # self.minio_client.remove_object(self.bucket_name, self.minio_tagger_path)
+        self.minio_client.remove_object(self.bucket_name, self.minio_tagger_path)
 
 
     def run_create_tagger_training_and_task_signal(self):

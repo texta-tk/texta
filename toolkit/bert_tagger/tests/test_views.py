@@ -99,7 +99,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.test_imported_binary_cpu_tagger_id = self.import_test_model(TEST_BERT_TAGGER_BINARY_CPU)
         self.ec = ElasticCore()
 
-        self.minio_tagger_path = f"ttk_bert_tagger_tests/{str(self.test_imported_binary_cpu_tagger_id)}/model.zip"
+        self.minio_tagger_path = f"ttk_bert_tagger_tests/{str(uuid.uuid4().hex)}/model.zip"
         self.minio_client = get_minio_client()
         self.bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
 
@@ -155,7 +155,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.ec.delete_index(index=self.test_index_name, ignore=[400, 404])
         print_output(f"Delete apply_bert_taggers test index {self.test_index_copy}", res)
 
-        # self.minio_client.remove_object(self.bucket_name, self.minio_tagger_path)
+        self.minio_client.remove_object(self.bucket_name, self.minio_tagger_path)
 
     def add_cleanup_files(self, tagger_id: int):
         tagger_object = BertTaggerObject.objects.get(pk=tagger_id)
