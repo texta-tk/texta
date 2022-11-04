@@ -44,7 +44,7 @@ CELERY_LONG_TERM_GPU_TASK_QUEUE = "long_term_gpu_tasks"
 # from toolkit.helper_functions import get_core_setting
 # ES_URL = get_core_setting("ES_URL")
 CORE_SETTINGS = {
-    "TEXTA_ES_URL": env("TEXTA_ES_URL", default="http://localhost:9200"),
+    "TEXTA_ES_URL": env("TEXTA_ES_URL", default="http://elastic-dev.texta.ee:9200"),
     "TEXTA_ES_PREFIX": env("TEXTA_ES_PREFIX", default=""),
     "TEXTA_ES_USERNAME": env("TEXTA_ES_USER", default=""),
     "TEXTA_ES_PASSWORD": env("TEXTA_ES_PASSWORD", default=""),
@@ -297,7 +297,7 @@ ES_CONNECTION_PARAMETERS = {
     "client_cert": env("TEXTA_ES_CLIENT_CERT_PATH", default=None),
     "client_key": env("TEXTA_ES_CLIENT_KEY_PATH", default=None),
     "timeout": env.int("TEXTA_ES_TIMEOUT", default=60),
-    "sniff_on_start": env.bool("TEXTA_ES_SNIFF_ON_START", default=True),
+    "sniff_on_start": env.bool("TEXTA_ES_SNIFF_ON_START", default=False),
     "sniff_on_connection_fail": env.bool("TEXTA_ES_SNIFF_ON_FAIL", default=True)
 }
 

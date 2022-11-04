@@ -8,11 +8,14 @@ from texta_elastic.aggregator import ElasticAggregator
 from texta_elastic.searcher import ElasticSearcher
 
 from toolkit.annotator.choices import MAX_VALUE
-from toolkit.annotator.models import Annotator, AnnotatorGroup, BinaryAnnotatorConfiguration, Category, Comment, EntityAnnotatorConfiguration, Label, Labelset, MultilabelAnnotatorConfiguration, Record
+from toolkit.annotator.models import (Annotator, AnnotatorGroup, BinaryAnnotatorConfiguration,
+    Category, Comment, EntityAnnotatorConfiguration, Label, Labelset,
+    MultilabelAnnotatorConfiguration, Record
+)
 from toolkit.core.project.models import Project
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.models import Index
-from toolkit.serializer_constants import CommonModelSerializerMixin, FieldParseSerializer, ToolkitTaskSerializer
+from toolkit.serializer_constants import CommonModelSerializerMixin, FieldParseSerializer, ToolkitTaskSerializer, IndicesSerializerMixin
 
 
 ANNOTATION_MAPPING = {
@@ -20,6 +23,49 @@ ANNOTATION_MAPPING = {
     "multilabel": MultilabelAnnotatorConfiguration,
     "binary": BinaryAnnotatorConfiguration
 }
+
+class MergedFactSerializer(serializers.Serializer):
+    fact_name = serializers.CharField(help_text="Name of the target fact.")
+    min_agreements = serializers.IntegerField(min_value=1, help_text="Minimum number of agreements between the annotators to add the fact with value 'true'.")
+
+
+class MergeIndicesSerializer(IndicesSerializerMixin):
+
+    target_facts = MergedFactSerializer(many=True, help_text="Names and thresholds used for generating the merged facts.")
+    add_negatives = serializers.BooleanField(required=False, default=True, help_text="If enabled, negative facts are added as well.")
+
+
+    def validate_indices(self, indices):
+
+        index_names = [index.get("name") for index in indices]
+
+        view = self.context.get("view", None)
+        pk = view.kwargs["pk"]
+        project_pk = view.kwargs["project_pk"]
+
+        allowed_indices = []
+
+        try:
+            annotator_group = AnnotatorGroup.objects.get(project=project_pk, parent=pk)
+            parent_pk = annotator_group.parent.pk
+
+            children_objs = [c.pk for c in annotator_group.children.all()]
+
+            for child_pk in children_objs:
+                child_indices = Annotator.objects.get(pk=child_pk).indices
+                child_index = child_indices.get().name
+                allowed_indices.append(child_index)
+
+        except:
+            parent_pk = None
+            pass
+
+        if parent_pk:
+            for name in index_names:
+                if name not in allowed_indices:
+                    raise serializers.ValidationError(f"Index '{name}' is not a valid option for the selected Annotator Task. Allowed options = {allowed_indices}.")
+
+        return indices
 
 
 class RecordSerializer(serializers.ModelSerializer):

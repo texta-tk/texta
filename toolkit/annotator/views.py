@@ -1,13 +1,15 @@
 import rest_framework.filters as drf_filters
+import json
 from django_filters import rest_framework as filters
+from django.db import transaction
 from rest_framework import mixins, permissions, status, viewsets
 # Create your views here.
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
+from toolkit.core.task.models import Task
 from toolkit.annotator.models import Annotator, AnnotatorGroup, Comment, Labelset, Record
 from toolkit.annotator.serializers import AnnotatorProjectSerializer, AnnotatorGroupSerializer, AnnotatorSerializer, BinaryAnnotationSerializer, CommentSerializer, DocumentEditSerializer, DocumentIDSerializer, EntityAnnotationSerializer, LabelsetSerializer, MultilabelAnnotationSerializer, RecordSerializer, \
-    ValidateDocumentSerializer
+    ValidateDocumentSerializer, MergeIndicesSerializer
 from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
@@ -98,6 +100,61 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         document = self._enrich_document_with_meta(document, annotator)
         document = self._flatten_document(document)
         return document
+
+
+    @action(detail=True, methods=["POST"], serializer_class=MergeIndicesSerializer)
+    def merge_indices(self, request, pk=None, project_pk=None):
+        with transaction.atomic():
+            annotator_obj: Annotator = self.get_object()
+
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            facts = serializer.validated_data["target_facts"]
+
+            #new_task = Task.objects.create(annotator=annotator_obj, status=Task.STATUS_CREATED, task_type=Task.TYPE_MERGE)
+            #annotator_obj.save()
+
+            #annotator_obj.tasks.add(new_task)
+
+
+            try:
+                # If the selected annotator task is a parent
+                annotator_group = AnnotatorGroup.objects.get(project=annotator_obj.project, parent=annotator_obj.pk)
+                parent_pk = annotator_group.parent.pk
+
+            except:
+                # If the selected annotator task is a child
+                # Will break, if the child is part of multiple groups.
+                annotator_group = AnnotatorGroup.objects.filter(children__in=[annotator_obj.pk]).distinct().first()
+                parent_pk = annotator_group.parent.pk
+
+
+            if annotator_obj.pk != parent_pk:
+                return Response(
+                    {
+                        "detail": f"The selected task object is a child object, but this action is only available for parent objects! Try using the parent task with id = {parent_pk}."
+                    },
+                    status=status.HTTP_405_METHOD_NOT_ALLOWED
+                )
+
+            #data = json.loads(serializer.validated_data["target_facts"])
+
+            children_objs = [c.pk for c in annotator_group.children.all()]
+
+            #indices = []
+            for child_pk in children_objs:
+                child_indices = Annotator.objects.get(pk=child_pk).annotator_users
+                print(child_indices.get().username)
+                #indices.extend(child_indices)
+
+            #print(child_indices)
+
+            parent_obj = annotator_group.parent
+
+
+            return Response("tere")
+
 
 
     @action(detail=True, methods=["POST"], serializer_class=EmptySerializer)

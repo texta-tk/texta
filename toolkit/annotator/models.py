@@ -152,7 +152,7 @@ class Annotator(TaskModel):
                         return
                     else:
                         return
-        fact = ed.add_fact(fact_value=self.binary_configuration.pos_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field)
+        fact = ed.add_fact(fact_value=self.binary_configuration.pos_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field, author=user.username)
         ed.add_annotated(annotator_model=self, user=user)
         ed.update()
         self.generate_record(document_id, index=index, user_pk=user.pk, fact=fact, do_annotate=True, fact_id=fact["id"])
@@ -189,7 +189,7 @@ class Annotator(TaskModel):
                         return
                     else:
                         return
-        fact = ed.add_fact(fact_value=self.binary_configuration.neg_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field)
+        fact = ed.add_fact(fact_value=self.binary_configuration.neg_value, fact_name=self.binary_configuration.fact_name, doc_path=self.target_field, author=user.username)
         ed.add_annotated(self, user)
         ed.update()
         self.generate_record(document_id, index=index, user_pk=user.pk, fact=fact, do_annotate=True, fact_id=fact["id"])
