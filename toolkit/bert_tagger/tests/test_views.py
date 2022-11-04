@@ -155,7 +155,7 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
         self.ec.delete_index(index=self.test_index_name, ignore=[400, 404])
         print_output(f"Delete apply_bert_taggers test index {self.test_index_copy}", res)
 
-        self.minio_client.remove_object(self.bucket_name, self.minio_tagger_path)
+        # self.minio_client.remove_object(self.bucket_name, self.minio_tagger_path)
 
     def add_cleanup_files(self, tagger_id: int):
         tagger_object = BertTaggerObject.objects.get(pk=tagger_id)

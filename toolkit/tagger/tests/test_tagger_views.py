@@ -162,7 +162,7 @@ class TaggerViewTests(APITransactionTestCase):
         ec.delete_index(index=self.test_index_name, ignore=[400, 404])
         print_output(f"Delete apply_taggers test index {self.test_index_copy}", res)
 
-        self.minio_client.remove_object(self.bucket_name, self.minio_tagger_path)
+        # self.minio_client.remove_object(self.bucket_name, self.minio_tagger_path)
 
 
     def run_create_tagger_training_and_task_signal(self):
@@ -769,7 +769,6 @@ class TaggerViewTests(APITransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Check directly inside Minio whether the model exists there.
-
         exists = False
         for s3_object in self.minio_client.list_objects(self.bucket_name, recursive=True):
             if s3_object.object_name == self.minio_tagger_path:
