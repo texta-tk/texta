@@ -164,12 +164,6 @@ class TaggerViewTests(APITransactionTestCase):
 
         self.minio_client.remove_object(self.bucket_name, self.minio_tagger_path)
 
-        # Delete using "remove_object"
-        # Additional safety:
-        if "test" in self.bucket_name.lower():
-            objects_to_delete = self.minio_client.list_objects(self.bucket_name, recursive=True)
-            for obj in objects_to_delete:
-                self.minio_client.remove_object(self.bucket_name, obj.object_name)
 
     def run_create_tagger_training_and_task_signal(self):
         """Tests the endpoint for a new Tagger, and if a new Task gets created via the signal"""

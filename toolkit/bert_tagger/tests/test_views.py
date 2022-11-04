@@ -157,13 +157,6 @@ class BertTaggerObjectViewTests(APITransactionTestCase):
 
         self.minio_client.remove_object(self.bucket_name, self.minio_tagger_path)
 
-        # Delete using "remove_object"
-        # Additional safety:
-        if "test" in self.bucket_name.lower():
-            objects_to_delete = self.minio_client.list_objects(self.bucket_name, recursive=True)
-            for obj in objects_to_delete:
-                self.minio_client.remove_object(self.bucket_name, obj.object_name)
-
     def add_cleanup_files(self, tagger_id: int):
         tagger_object = BertTaggerObject.objects.get(pk=tagger_id)
         self.addCleanup(remove_file, tagger_object.model.path)
