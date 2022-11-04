@@ -24,11 +24,11 @@ from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, Seriali
 from toolkit.filter_constants import FavoriteFilter
 from toolkit.helper_functions import add_finite_url_to_feedback, load_stop_words, minio_connection
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
-from toolkit.serializer_constants import ProjectResourceImportModelSerializer, EmptySerializer
+from toolkit.serializer_constants import ProjectResourceImportModelSerializer, EmptySerializer, S3DownloadSerializer, S3UploadSerializer
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.serializers import (ApplyTaggerSerializer, StopWordSerializer, TagRandomDocSerializer, TaggerListFeaturesSerializer,
                                         TaggerMultiTagSerializer, TaggerSerializer,
-                                        TaggerTagDocumentSerializer, TaggerTagTextSerializer, S3UploadSerializer, S3DownloadSerializer)
+                                        TaggerTagDocumentSerializer, TaggerTagTextSerializer)
 from toolkit.tagger.tasks import apply_tagger, apply_tagger_to_index, upload_tagger_files, download_tagger_model
 from toolkit.tagger.validators import validate_input_document
 from toolkit.tools.lemmatizer import CeleryLemmatizer

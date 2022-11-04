@@ -12,7 +12,7 @@ from toolkit.core.task.models import Task
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choices
 from toolkit.embedding.models import Embedding
-from toolkit.helper_functions import load_stop_words, get_core_setting
+from toolkit.helper_functions import load_stop_words
 from toolkit.serializer_constants import (CommonModelSerializerMixin, ElasticScrollMixIn, FavoriteModelSerializerMixin, FieldParseSerializer, IndicesSerializerMixin,
                                           ProjectFilteredPrimaryKeyRelatedField, ProjectResourceUrlSerializer)
 from toolkit.tagger import choices
@@ -294,46 +294,3 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
                 'balance_to_max_limit': first_tagger.balance_to_max_limit
             }
             return params
-
-
-class S3Mixin(serializers.Serializer):
-
-    def validate_minio_path(self, value: str):
-        use_s3 = get_core_setting("TEXTA_S3_ENABLED")
-        if use_s3 is False:
-            raise ValidationError("Usage of S3 is not enabled system-wide on this instance!")
-
-        self._validate_filename(value)
-        self._validate_file_existence_in_minio(value)
-        return value
-
-    def _validate_filename(self, value: str):
-        if value:
-            is_zip_file = value.endswith(".zip")
-            if is_zip_file is False:
-                raise ValidationError("Minio filename must be a zipfile and end with a .zip suffix!")
-
-    def _validate_file_existence_in_minio(self, minio_path: str):
-        client = Tagger.get_minio_client()
-        exists = False
-        bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
-        for s3_object in client.list_objects(bucket_name, recursive=True):
-            if s3_object.object_name == minio_path:
-                exists = True
-                break
-
-        if exists is False:
-            raise ValidationError(f"Object with the path '{minio_path}' does not exist!")
-
-
-class S3UploadSerializer(S3Mixin):
-    minio_path = serializers.CharField(required=False, default="", help_text="Specify file path to upload to minio, by default sets its to {project.title}_{uuid4}.")
-
-    # Overwrite it for uploads.
-    def _validate_file_existence_in_minio(self, minio_path: str):
-        pass
-
-
-class S3DownloadSerializer(S3Mixin):
-    minio_path = serializers.CharField(required=True, help_text="Full path with filename (excluding bucket name) from minio to download.")
-    version_id = serializers.CharField(required=False, default="", help_text="Which version of the file to download.")

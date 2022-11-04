@@ -22,10 +22,9 @@ from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, Seriali
 from toolkit.filter_constants import FavoriteFilter
 from toolkit.helper_functions import minio_connection
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
-from toolkit.serializer_constants import EmptySerializer, ProjectResourceImportModelSerializer
+from toolkit.serializer_constants import EmptySerializer, ProjectResourceImportModelSerializer, S3DownloadSerializer
 from toolkit.tagger.models import TaggerGroup
-from toolkit.tagger.serializers import (ApplyTaggerGroupSerializer, TagRandomDocSerializer, TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer,
-                                        S3DownloadSerializer)
+from toolkit.tagger.serializers import (ApplyTaggerGroupSerializer, TagRandomDocSerializer, TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer)
 from toolkit.tagger.tasks import apply_tagger_group, apply_tagger_to_index, get_mlp, get_tag_candidates, start_tagger_group, download_into_tagger_group
 from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing, TagLogicViews

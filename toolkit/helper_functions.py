@@ -16,6 +16,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import connections
 from django.views.static import serve
+from minio import Minio
 from minio.error import S3Error, ServerError
 from rest_framework import serializers, status
 from rest_framework.exceptions import APIException
@@ -453,3 +454,16 @@ def validate_aes_file(aes_keyfile_path: str, aes_key_env: str):
         except Exception:
             message = f"[x] Could not read AES key from {aes_keyfile_path}, are the permissions right!?"
             termcolor.cprint(text=message, color="red")
+
+
+def get_minio_client():
+    s3_host = get_core_setting("TEXTA_S3_HOST")
+    access_key = get_core_setting("TEXTA_S3_ACCESS_KEY")
+    secret_key = get_core_setting("TEXTA_S3_SECRET_KEY")
+    use_secure = get_core_setting("TEXTA_S3_USE_SECURE")
+    return Minio(
+        endpoint=s3_host,
+        access_key=access_key,
+        secret_key=secret_key,
+        secure=use_secure
+    )

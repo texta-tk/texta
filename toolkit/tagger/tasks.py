@@ -252,10 +252,11 @@ def upload_tagger_files(tagger_id: int, minio_path: str):
 
     try:
         info_logger.info(f"[Tagger] Starting to upload tagger with ID {tagger_id} into S3!")
-        kwargs = {"filepath": minio_path} if minio_path else {}
+        minio_path = minio_path if minio_path else tagger.generate_s3_location()
         data = tagger.export_resources()
-        tagger.upload_into_s3(data=data, **kwargs)
+        tagger.upload_into_s3(minio_path=minio_path, data=data)
         info_logger.info(f"[Tagger] Finished upload of tagger with ID {tagger_id} into S3!")
+        task_object.complete()
 
     except MinioException as e:
         task_object.handle_failed_task(f"Could not connect to S3, are you using the right credentials?")

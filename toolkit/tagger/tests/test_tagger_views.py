@@ -16,7 +16,7 @@ from texta_elastic.core import ElasticCore
 
 from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
-from toolkit.helper_functions import reindex_test_dataset, get_core_setting
+from toolkit.helper_functions import reindex_test_dataset, get_core_setting, get_minio_client, set_core_setting
 from toolkit.tagger.models import Tagger
 from toolkit.test_settings import (TEST_FIELD, TEST_FIELD_CHOICE, TEST_KEEP_PLOT_FILES, TEST_MATCH_TEXT, TEST_QUERY,
                                    TEST_TAGGER_BINARY, TEST_VERSION_PREFIX, VERSION_NAMESPACE)
@@ -159,14 +159,14 @@ class TaggerViewTests(APITransactionTestCase):
         ec.delete_index(index=self.test_index_name, ignore=[400, 404])
         print_output(f"Delete apply_taggers test index {self.test_index_copy}", res)
 
-        minio_client = Tagger.get_minio_client()
+        minio_client = get_minio_client()
         bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
         minio_client.remove_object(bucket_name, self.minio_tagger_path)
 
         # Delete using "remove_object"
         # Additional safety:
         if "test" in bucket_name.lower():
-            objects_to_delete = minio_client.list_objects(bucket_name)
+            objects_to_delete = minio_client.list_objects(bucket_name, recursive=True)
             for obj in objects_to_delete:
                 minio_client.remove_object(bucket_name, obj.object_name)
 
@@ -754,11 +754,13 @@ class TaggerViewTests(APITransactionTestCase):
         pass
 
     def run_check_for_doing_s3_operation_while_its_disabled_in_settings(self):
-        with override_settings(USE_S3=False):
-            response = self._run_s3_import(self.minio_tagger_path)
-            print_output("run_check_for_doing_s3_operation_while_its_disabled_in_settings:response.data", response.data)
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            self.assertTrue("minio_path" in response.data)
+        set_core_setting("TEXTA_S3_ENABLED", "False")
+        response = self._run_s3_import(self.minio_tagger_path)
+        print_output("run_check_for_doing_s3_operation_while_its_disabled_in_settings:response.data", response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue("minio_path" in response.data)
+        # Enable it again for the other tests.
+        set_core_setting("TEXTA_S3_ENABLED", "True")
 
     def _run_s3_import(self, minio_path):
         url = reverse("v2:tagger-upload-into-s3", kwargs={"project_pk": self.project.pk, "pk": self.test_imported_binary_tagger_id})
@@ -772,7 +774,7 @@ class TaggerViewTests(APITransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Check directly inside Minio whether the model exists there.
-        client = Tagger.get_minio_client()
+        client = get_minio_client()
         exists = False
         bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
         for s3_object in client.list_objects(bucket_name, recursive=True):
@@ -781,6 +783,11 @@ class TaggerViewTests(APITransactionTestCase):
                 exists = True
                 break
         self.assertEqual(exists, True)
+
+        # Check that status is proper.
+        t = Tagger.objects.get(pk=self.test_imported_binary_tagger_id)
+        self.assertEqual(t.tasks.last().status, Task.STATUS_COMPLETED)
+        self.assertEqual(t.tasks.last().task_type, Task.TYPE_UPLOAD)
 
     def run_simple_check_that_you_can_download_models_from_s3(self):
         url = reverse("v2:tagger-download-from-s3", kwargs={"project_pk": self.project.pk})
@@ -797,4 +804,3 @@ class TaggerViewTests(APITransactionTestCase):
 
     def run_check_that_s3_upload_file_must_be_a_zip(self):
         pass
-

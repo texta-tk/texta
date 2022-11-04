@@ -5,11 +5,9 @@ import os
 import pathlib
 import secrets
 import tempfile
-import uuid
 import zipfile
-from typing import Dict, List, Union, Optional
+from typing import Dict, List, Union
 
-import slugify
 from celery import chain, group
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -17,7 +15,6 @@ from django.core import serializers
 from django.db import models, transaction
 from django.dispatch import receiver
 from django.http import HttpResponse
-from minio import Minio
 from rest_framework.generics import get_object_or_404
 from texta_elastic.searcher import EMPTY_QUERY
 from texta_embedding.embedding import W2VEmbedding
@@ -31,15 +28,13 @@ from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choi
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.feedback import Feedback
 from toolkit.embedding.models import Embedding
-from toolkit.helper_functions import load_stop_words, get_core_setting
-from toolkit.model_constants import CommonModelMixin, FavoriteModelMixin
+from toolkit.helper_functions import load_stop_words, get_core_setting, get_minio_client
+from toolkit.model_constants import CommonModelMixin, FavoriteModelMixin, S3ModelMixin
 from toolkit.tagger import choices
 from toolkit.tools.lemmatizer import CeleryLemmatizer, ElasticAnalyzer
 
-S3_ZIP_NAME = "model.zip"
 
-
-class Tagger(FavoriteModelMixin, CommonModelMixin):
+class Tagger(FavoriteModelMixin, CommonModelMixin, S3ModelMixin):
     MODEL_TYPE = 'tagger'
     MODEL_JSON_NAME = "model.json"
 
@@ -99,105 +94,6 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
 
     def get_indices(self):
         return [index.name for index in self.indices.filter(is_open=True)]
-
-    @staticmethod
-    def download_from_s3(minio_location: str, user_pk: int, project_pk: int, version_id: str = "") -> int:
-        client = Tagger.get_minio_client()
-        kwargs = {"version_id": version_id} if version_id else {}
-        bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
-        response = client.get_object(bucket_name, minio_location, **kwargs)
-        data = io.BytesIO(response.data)
-        tagger_pk = Tagger.import_resources(data, user_pk, project_pk)
-        response.close()
-        return tagger_pk
-
-    def upload_into_s3(self, filename: str = S3_ZIP_NAME, data: Optional[bytes] = None, filepath: Optional[str] = None):
-        client = Tagger.get_minio_client()
-
-        minio_path = self.generate_s3_location(file_path=filepath, file_name=filename)
-        metadata = self.to_json()  # Adding this breaks things for some reason.
-        # Upload the model file directly.
-        # TODO Remove the path generation from the upload function.
-        response = self._upload_into_s3(client, data, filepath, minio_path)
-
-        return response
-
-    def _upload_into_s3(self, client: Minio, data: bytes, filepath: str, minio_path: str):
-        bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
-        if filepath and data is None:
-            response = client.fput_object(
-                bucket_name=bucket_name,
-                object_name=minio_path,
-                file_path=str(filepath)
-            )
-
-        # Upload a passed collection of bytes.
-        else:
-            data = io.BytesIO(data)
-            minio_path = self.generate_s3_location("model.zip", file_path=minio_path)
-            size = data.getbuffer().nbytes
-            response = client.put_object(
-                bucket_name=bucket_name,
-                object_name=minio_path,
-                data=data,
-                length=size
-            )
-        return response
-
-    def check_if_in_s3(self):
-        pass
-
-    @staticmethod
-    def get_minio_client():
-        s3_host = get_core_setting("TEXTA_S3_HOST")
-        access_key = get_core_setting("TEXTA_S3_ACCESS_KEY")
-        secret_key = get_core_setting("TEXTA_S3_SECRET_KEY")
-        use_secure = get_core_setting("TEXTA_S3_USE_SECURE")
-        return Minio(
-            endpoint=s3_host,
-            access_key=access_key,
-            secret_key=secret_key,
-            secure=use_secure
-        )
-
-    @staticmethod
-    def check_for_s3_access(s3_for_instance: bool) -> bool:
-        info_logger = logging.getLogger(settings.INFO_LOGGER)
-
-        if get_core_setting("TEXTA_S3_ENABLED") is False:
-            info_logger.info("[Tagger] Saving into S3 is disabled system wide!")
-            return False
-
-        # When user doesn't want the item to be uploaded.
-        if s3_for_instance is False:
-            info_logger.info("[Tagger] Saving into S3 is disabled tagger instance side!")
-            return False
-
-        try:
-            client = Tagger.get_minio_client()
-            bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
-            list(client.list_objects(bucket_name))
-            return True
-        except Exception as e:
-            logging.getLogger(settings.ERROR_LOGGER).exception(e)
-            return False
-
-    def generate_s3_location(self, file_name: str, file_path: Optional[str] = None):
-        """
-        Generates the full path to the file you wish to access.
-        :param file_path: Full filepath of the file without the filename.
-        :param file_name: Stem/name of the file in question, includes the filename and extension.
-        :return: Full path to be uploaded into the S3 instance.
-        """
-        if file_path:
-            path = pathlib.Path(file_path)
-            path = path / file_name if path.name != file_name else path
-        else:
-            project_slug = slugify.slugify(self.project.title)
-            path = pathlib.Path(f"{project_slug}_{uuid.uuid4().hex}") / file_name
-        return str(path)
-
-    ### S3 HELPERS ###
 
     def set_confusion_matrix(self, x):
         self.confusion_matrix = json.dumps(x)
@@ -476,7 +372,7 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
         return self.fact_name
 
     def add_from_s3(self, minio_location: str, user_pk: int, version_id: str = "") -> int:
-        client = Tagger.get_minio_client()
+        client = get_minio_client()
         kwargs = {"version_id": version_id} if version_id else {}
         bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
         response = client.get_object(bucket_name, minio_location, **kwargs)

@@ -1,6 +1,8 @@
 from django.core.management.base import BaseCommand
 import minio
 
+from toolkit.helper_functions import get_minio_client
+
 
 class Command(BaseCommand):
     help = 'Helper command to create a S3 bucket.'
@@ -10,7 +12,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         from toolkit.tagger.models import Tagger
-        wrapper = Tagger.get_minio_client()
+        wrapper = get_minio_client()
         try:
             response = wrapper.make_bucket(options["bucket_name"])
             self.stdout.write(self.style.SUCCESS("Successfully added bucket into MINIO"))
