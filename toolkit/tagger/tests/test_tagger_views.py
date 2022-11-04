@@ -68,6 +68,8 @@ class TaggerViewTests(APITransactionTestCase):
         self.test_imported_binary_tagger_id = self.import_test_model(TEST_TAGGER_BINARY)
 
         self.minio_tagger_path = f"ttk_tagger_tests/{str(self.test_imported_binary_tagger_id)}/model.zip"
+        self.minio_client = get_minio_client()
+
 
     def import_test_model(self, file_path: str):
         """Import models for testing."""
@@ -159,16 +161,15 @@ class TaggerViewTests(APITransactionTestCase):
         ec.delete_index(index=self.test_index_name, ignore=[400, 404])
         print_output(f"Delete apply_taggers test index {self.test_index_copy}", res)
 
-        minio_client = get_minio_client()
         bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
-        minio_client.remove_object(bucket_name, self.minio_tagger_path)
+        self.minio_client.remove_object(bucket_name, self.minio_tagger_path)
 
         # Delete using "remove_object"
         # Additional safety:
         if "test" in bucket_name.lower():
-            objects_to_delete = minio_client.list_objects(bucket_name, recursive=True)
+            objects_to_delete = self.minio_client.list_objects(bucket_name, recursive=True)
             for obj in objects_to_delete:
-                minio_client.remove_object(bucket_name, obj.object_name)
+                self.minio_client.remove_object(bucket_name, obj.object_name)
 
     def run_create_tagger_training_and_task_signal(self):
         """Tests the endpoint for a new Tagger, and if a new Task gets created via the signal"""
@@ -774,10 +775,10 @@ class TaggerViewTests(APITransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Check directly inside Minio whether the model exists there.
-        client = get_minio_client()
+
         exists = False
         bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
-        for s3_object in client.list_objects(bucket_name, recursive=True):
+        for s3_object in self.minio_client.list_objects(bucket_name, recursive=True):
             if s3_object.object_name == self.minio_tagger_path:
                 print_output(f"contents of minio:", s3_object.object_name)
                 exists = True
