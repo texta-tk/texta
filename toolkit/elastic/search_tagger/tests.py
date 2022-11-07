@@ -5,9 +5,10 @@ from django.test import override_settings
 from django.urls import reverse
 from elasticsearch_dsl import Search
 from rest_framework import status
-from rest_framework.test import APITestCase
-
+from rest_framework.test import APITestCase, APITransactionTestCase
+from texta_elastic.aggregator import ElasticAggregator
 from texta_elastic.document import ElasticDocument
+
 from toolkit.test_settings import VERSION_NAMESPACE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
@@ -40,18 +41,17 @@ class SearchFieldsTaggerIndexViewTests(APITestCase):
         self.ed.add(self.document)
         self.client.login(username='user', password='pw')
 
-
     def tearDown(self) -> None:
         from texta_elastic.core import ElasticCore
         ElasticCore().delete_index(index=self.new_test_index_name, ignore=[400, 404])
 
-
     def test_search_fields_tagger(self):
+        fact_name = f"test_name_{uuid.uuid4().hex}"
         payload = {
             "indices": [{"name": self.new_test_index_name}],
             "description": "test",
             "fields": ["Field_1"],
-            "fact_name": "test_name"
+            "fact_name": fact_name
         }
 
         response = self.client.post(self.url, payload, format="json")
@@ -59,7 +59,9 @@ class SearchFieldsTaggerIndexViewTests(APITestCase):
         print_output('test_search_fields_tagger:response', response)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
+        ea = ElasticAggregator()
+        facts = ea.facts(size=100, filter_by_fact_name=fact_name)
+        self.assertNotEqual(len(facts), 0)
 
     def test_new_line_break_into_facts(self):
         payload = {
@@ -84,7 +86,6 @@ class SearchFieldsTaggerIndexViewTests(APITestCase):
             print_output('test_new_line_break_into_facts:facts', facts)
             self.assertTrue(len(facts) == 4)
 
-
     def test_array_break_into_facts(self):
         payload = {
             "indices": [{"name": self.new_test_index_name}],
@@ -108,7 +109,6 @@ class SearchFieldsTaggerIndexViewTests(APITestCase):
             print_output('test_array_break_into_facts:facts', facts)
             self.assertTrue(len(facts) == 4)
 
-
     def test_search_fields_tagger_index(self):
         payload = {
             "indices": [{"name": "index_that_doesn't_exist"}],
@@ -122,7 +122,6 @@ class SearchFieldsTaggerIndexViewTests(APITestCase):
         print_output('test_search_fields_tagger_index:response', response)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
 
     def test_search_fields_tagger_fields(self):
         payload = {
@@ -140,7 +139,7 @@ class SearchFieldsTaggerIndexViewTests(APITestCase):
 
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
-class SearchQueryTaggerIndexViewTests(APITestCase):
+class SearchQueryTaggerIndexViewTests(APITransactionTestCase):
 
     def setUp(self):
         self.user = create_test_user('user', 'my@email.com', 'pw')
@@ -154,20 +153,20 @@ class SearchQueryTaggerIndexViewTests(APITestCase):
             "Field_1": "This is sentence1. This is sentence2. This is sentence3. This is sentence4. This is sentence5.",
             "Field_2": "This is a different sentence.",
             "Field_3": "This is test data.",
-            "uuid": self.uuid}
+            "uuid": self.uuid
+        }
 
         self.ed = ElasticDocument(index=self.new_test_index_name)
 
         self.ed.add(self.document)
         self.client.login(username='user', password='pw')
 
-
     def tearDown(self) -> None:
         from texta_elastic.core import ElasticCore
         ElasticCore().delete_index(index=self.new_test_index_name, ignore=[400, 404])
 
-
     def test_search_query_tagger(self):
+        fact_name = f"test_name_{uuid.uuid4().hex}"
         payload = {
             "indices": [{
                 "name": self.new_test_index_name
@@ -183,7 +182,7 @@ class SearchQueryTaggerIndexViewTests(APITestCase):
                 }
             }),
             "fields": ["Field_2"],
-            "fact_name": "test_name",
+            "fact_name": fact_name,
             "fact_value": "test_value"
         }
 
@@ -192,7 +191,9 @@ class SearchQueryTaggerIndexViewTests(APITestCase):
         print_output('test_search_query_tagger:response', response)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
+        ea = ElasticAggregator()
+        facts = ea.facts(size=100, filter_by_fact_name=fact_name)
+        self.assertNotEqual(len(facts), 0)
 
     def test_search_query_tagger_index(self):
         payload = {
@@ -219,7 +220,6 @@ class SearchQueryTaggerIndexViewTests(APITestCase):
         print_output('test_search_query_tagger_index:response', response)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
 
     def test_search_query_tagger_fields(self):
         payload = {

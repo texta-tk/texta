@@ -62,7 +62,7 @@ def update_search_query_generator(generator: ElasticSearcher, ec: ElasticCore, f
                 "_id": raw_doc["_id"],
                 "_type": raw_doc.get("_type", "_doc"),
                 "_op_type": "update",
-                "_source": {"doc": {"texta_facts": existing_facts}},
+                "doc": {"texta_facts": existing_facts},
                 "retry_on_conflict": 3
             }
 
@@ -143,8 +143,8 @@ def apply_search_query_tagger_on_index(object_id: int):
         # Get the necessary fields.
         indices: List[str] = search_query_tagger.get_indices()
         fields: List[str] = json.loads(search_query_tagger.fields)
-        fact_name: List[str] = search_query_tagger.fact_name
-        fact_value: List[str] = search_query_tagger.fact_value
+        fact_name: str = search_query_tagger.fact_name
+        fact_value: str = search_query_tagger.fact_value
         scroll_timeout = search_query_tagger.es_timeout
         scroll_size = search_query_tagger.bulk_size
 

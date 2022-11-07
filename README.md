@@ -101,6 +101,7 @@ Toolkit is installed:
 * TEXTA_MLP_MODEL_DIRECTORY_PATH - Relative path to the directory into which Stanza models will be stored under the "
   stanza" folder (setting this to ./home/texta will create ./home/texta/stanza which contains subfolders for every
   language like ./home/texta/stanza/et etc). (Default: "./data/external/mlp").
+* TEXTA_MLP_DEFAULT_LANGUAGE - Language code of the language the MLP module will default to when trying to analyze a document whichs language it could not detect properly (Default: en).
 * TEXTA_ALLOW_BERT_MODEL_DOWNLOADS - Boolean flag indicating if the users can download additional BERT models.
   (Default: True).
 * TEXTA_BERT_MODEL_DIRECTORY_PATH - Relative path to the directory into which pretrained and fine-tuned BERT models will

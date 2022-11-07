@@ -75,6 +75,7 @@ BuildTestImage:
     - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD docker.texta.ee
     - docker build --compress --force-rm --no-cache -t docker.texta.ee/texta/texta-rest/test:latest -f ./docker/Dockerfile .
     - docker push docker.texta.ee/texta/texta-rest/test:latest
+    - docker system prune -a
   only:
     - master
 
