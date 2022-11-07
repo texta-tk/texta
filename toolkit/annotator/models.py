@@ -134,6 +134,7 @@ class Annotator(TaskModel):
         annotator_task.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
 
+
     def add_pos_label(self, document_id: str, index: str, user):
         """
         Adds a positive label to the Elasticsearch document for Binary annotation.

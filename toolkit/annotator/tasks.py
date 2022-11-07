@@ -11,12 +11,13 @@ from texta_elastic.core import ElasticCore
 from texta_elastic.document import ESDocObject, ElasticDocument
 from texta_elastic.mapping_tools import get_selected_fields, update_field_types, update_mapping
 from texta_elastic.searcher import ElasticSearcher
+from texta_elastic.aggregator import ElasticAggregator
 
 from toolkit.annotator.models import Annotator, AnnotatorGroup
-from toolkit.base_tasks import BaseTask
+from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.core.project.models import Project
 from toolkit.elastic.index.models import Index
-from toolkit.settings import ERROR_LOGGER, INFO_LOGGER
+from toolkit.settings import ERROR_LOGGER, INFO_LOGGER, CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.tools.show_progress import ShowProgress
 
 
@@ -265,3 +266,209 @@ def annotator_task(self, annotator_task_id):
 
     logging.getLogger(INFO_LOGGER).info(f"Annotator with Task ID {annotator_obj.pk} successfully completed.")
     return True
+
+
+# ------------------------------------------------------------------------ #
+# TEMP STUFF
+# ------------------------------------------------------------------------ #
+
+import json
+import pprint
+
+def _get_nested_aggregation_query(
+    field: str = "texta_meta.document_uuid.keyword",
+    texta_facts_field: str = "str_val"
+    ):
+    aggs_query = {
+        "aggs_term": {
+            "terms": {
+                "field": field
+            },
+            "aggs": {
+                "agg_fact": {
+                    "nested": {
+                        "path": "texta_facts"
+                    },
+                    "aggs": {
+                        "agg_value":{
+                            "terms": {
+                                "field": f"texta_facts.{texta_facts_field}"
+                            }
+                         }
+                     }
+                 }
+            }
+        }
+    }
+    return aggs_query
+
+def _generate_restrictions(doc_ids):
+    restrictions = []
+    for doc_id in doc_ids:
+        new_restriction = {
+            "bool": {
+              "should": [
+                {
+                  "multi_match": {
+                    "query": doc_id,
+                    "type": "phrase_prefix",
+                    "fields": [
+                      "texta_meta.document_uuid"
+                    ]
+                  }
+                }
+              ],
+              "minimum_should_match": 1
+            }
+        }
+        restrictions.append(new_restriction)
+    return restrictions
+
+def get_filter_query(doc_ids):
+    restrictions = _generate_restrictions(doc_ids)
+    query = {
+        "query": {
+            "bool": {
+                "must": [],
+                "filter": [],
+                "must_not": [],
+                "should": [
+                    {
+                      "bool": {
+                        "should": restrictions
+
+                      }
+                    }
+                ],
+                "minimum_should_match": 1
+            }
+        }
+    }
+    return query
+
+def get_pos_counts(aggs_res, min_annotations=1, pos_fact_value="true"):
+    res = aggs_res["aggregations"]["aggs_term"]["buckets"]
+    #print(res)
+    pos_counts = {}
+    for doc in res:
+        key = doc["key"]
+        anno_count = doc["agg_fact"]["doc_count"]
+        if anno_count < min_annotations:
+            print(f"Doc {key} contains only {anno_count} annotations. Ignoring it!")
+        else:
+            buckets = doc["agg_fact"]["agg_value"]["buckets"]
+            pos_count = 0
+            for bucket in buckets:
+                if bucket["key"] == pos_fact_value:
+                    pos_count = bucket["doc_count"]
+                    break
+            pos_counts[key] = pos_count
+    return pos_counts
+
+def collect_ids(scroll_batch):
+    ids = []
+    for doc in scroll_batch:
+        doc_id = doc["_source"]["texta_meta"]["document_uuid"]
+        ids.append(doc_id)
+    return ids
+
+
+def generate_doc_facts(fact_restrictions, pos_count: int, add_negatives: bool = True):
+    new_facts = []
+    for fact_restriction in fact_restrictions:
+        min_agreements = fact_restriction.get("min_agreements")
+        if min_agreements <= pos_count:
+            # TODO: should use some elastic-tools stuff for that?
+            new_fact = {
+                "fact_name": fact_restriction.get("fact_name"),
+                "str_val": "true",
+                "doc_path": "",
+                "spans": json.dumps([[0,0]]),
+                "sent_index": 0,
+                "source": "annotator"
+            }
+            new_facts.append(new_fact)
+        elif add_negatives:
+            new_fact = {
+                "fact_name": fact_restriction.get("fact_name"),
+                "str_val": "false",
+                "doc_path": "",
+                "spans": json.dumps([[0,0]]),
+                "sent_index": 0,
+                "source": "annotator"
+            }
+            new_facts.append(new_fact)
+    return new_facts
+
+def update_texta_facts(scroll_batch, fact_restrictions, pos_counts):
+    for doc in scroll_batch:
+        facts = doc["_source"].get("texta_facts", [])
+        doc_id = doc["_source"]["texta_meta"]["document_uuid"]
+        pos_count = pos_counts[doc_id]
+        new_facts = generate_doc_facts(fact_restrictions, pos_count, add_negatives=False)
+        facts.extend(new_facts)
+        doc["_source"]["texta_facts"] = facts
+    return scroll_batch
+
+
+
+def tag_docs(elastic_searcher, elastic_aggregator, fact_restrictions):
+    aggs_query = _get_nested_aggregation_query("texta_meta.document_uuid.keyword", "str_val")
+    for i, scroll_batch in enumerate(elastic_searcher):
+        doc_ids = collect_ids(scroll_batch)
+        print("DOCS_IDS", doc_ids)
+        filter_query = get_filter_query(doc_ids)
+        elastic_aggregator.update_query(filter_query)
+        print(elastic_aggregator.query)
+        #res = elastic_aggregator.fact_aggs_test()
+        res = elastic_aggregator._aggregate(aggs_query)
+        print(res)
+        pos_counts = get_pos_counts(res, min_annotations=3, pos_fact_value="true")
+
+        scroll_batch = update_texta_facts(scroll_batch, fact_restrictions, pos_counts)
+        for doc in scroll_batch:
+            pprint.pprint(doc["_source"]["texta_facts"])
+
+@task(name="merge_annotator_indices_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
+def merge_annotator_indices_task(object_id: int, source_indices: List[str], target_index: str, facts: List[dict], bulk_size: int, max_chunk_bytes: int, es_timeout: int):
+    """Apply BERT Tagger to index."""
+    try:
+        annotator_object = Annotator.objects.get(pk=object_id)
+        base_indices = [index.name for index in annotator_object.indices.all()]
+
+
+        task_object = annotator_object.tasks.last()
+        progress = ShowProgress(task_object)
+
+        print("SOURCE INDICES", source_indices)
+        print("facts", facts)
+
+        #ec = ElasticCore()
+        #[ec.add_texta_facts_mapping(index) for index in indices]
+
+        searcher = ElasticSearcher(
+            indices=base_indices,
+            #field_data=fields + ["texta_facts"],  # Get facts to add upon existing ones.
+            #query=query,
+            output=ElasticSearcher.OUT_RAW,
+            #timeout=f"{es_timeout}m",
+            #callback_progress=progress,
+            scroll_size=5#bulk_size
+        )
+
+        aggregator = ElasticAggregator(indices=source_indices)
+        tag_docs(searcher, aggregator, facts)
+
+        #actions = update_generator(generator=searcher, ec=ec, fields=fields, fact_name=fact_name, fact_value=fact_value, tagger_object=tagger_object, tagger=tagger)
+        #for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes, max_retries=3):
+        #    if not success:
+        #        logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
+
+
+
+        task_object.complete()
+        return True
+
+    except Exception as e:
+        task_object.handle_failed_task(e)
+        raise e

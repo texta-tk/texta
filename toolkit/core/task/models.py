@@ -23,6 +23,7 @@ class Task(models.Model):
     TYPE_TRAIN = 'train'
     TYPE_APPLY = 'apply'
     TYPE_IMPORT = 'import'
+    TYPE_MERGE = 'merge'
 
     task_type = models.CharField(max_length=MAX_DESC_LEN, default=TYPE_TRAIN)
     status = models.CharField(max_length=MAX_DESC_LEN)

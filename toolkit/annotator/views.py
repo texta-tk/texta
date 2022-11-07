@@ -14,8 +14,12 @@ from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
 from toolkit.serializer_constants import EmptySerializer
-from toolkit.settings import TEXTA_ANNOTATOR_KEY
+from toolkit.settings import TEXTA_ANNOTATOR_KEY, CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.view_constants import BulkDelete
+
+from toolkit.annotator.tasks import merge_annotator_indices_task
+
+
 
 
 class RecordViewset(mixins.ListModelMixin, viewsets.GenericViewSet, BulkDelete):
@@ -111,11 +115,15 @@ class AnnotatorViewset(mixins.CreateModelMixin,
             serializer.is_valid(raise_exception=True)
 
             facts = serializer.validated_data["target_facts"]
+            indices = serializer.validated_data["indices"]
+            target_index = serializer.validated_data["new_index"]
 
-            #new_task = Task.objects.create(annotator=annotator_obj, status=Task.STATUS_CREATED, task_type=Task.TYPE_MERGE)
-            #annotator_obj.save()
+            bulk_size = serializer.validated_data["bulk_size"]
+            max_chunk_bytes = serializer.validated_data["max_chunk_bytes"]
+            es_timeout = serializer.validated_data["es_timeout"]
 
-            #annotator_obj.tasks.add(new_task)
+            indices_to_merge = [index.get("name") for index in indices]
+
 
 
             try:
@@ -138,19 +146,13 @@ class AnnotatorViewset(mixins.CreateModelMixin,
                     status=status.HTTP_405_METHOD_NOT_ALLOWED
                 )
 
-            #data = json.loads(serializer.validated_data["target_facts"])
+            new_task = Task.objects.create(annotator=annotator_obj, status=Task.STATUS_CREATED, task_type=Task.TYPE_MERGE)
+            annotator_obj.save()
 
-            children_objs = [c.pk for c in annotator_group.children.all()]
+            annotator_obj.tasks.add(new_task)
 
-            #indices = []
-            for child_pk in children_objs:
-                child_indices = Annotator.objects.get(pk=child_pk).annotator_users
-                print(child_indices.get().username)
-                #indices.extend(child_indices)
-
-            #print(child_indices)
-
-            parent_obj = annotator_group.parent
+            args = (annotator_obj.pk, indices_to_merge, target_index, facts, bulk_size, max_chunk_bytes, es_timeout)
+            transaction.on_commit(lambda: merge_annotator_indices_task.apply_async(args=args, queue=CELERY_LONG_TERM_TASK_QUEUE))
 
 
             return Response("tere")

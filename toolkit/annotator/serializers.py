@@ -6,6 +6,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from texta_elastic.aggregator import ElasticAggregator
 from texta_elastic.searcher import ElasticSearcher
+from texta_elastic.core import ElasticCore
 
 from toolkit.annotator.choices import MAX_VALUE
 from toolkit.annotator.models import (Annotator, AnnotatorGroup, BinaryAnnotatorConfiguration,
@@ -15,8 +16,15 @@ from toolkit.annotator.models import (Annotator, AnnotatorGroup, BinaryAnnotator
 from toolkit.core.project.models import Project
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.models import Index
-from toolkit.serializer_constants import CommonModelSerializerMixin, FieldParseSerializer, ToolkitTaskSerializer, IndicesSerializerMixin
+from toolkit.serializer_constants import CommonModelSerializerMixin, FieldParseSerializer, ToolkitTaskSerializer, IndicesSerializerMixin, ElasticScrollMixIn
 
+from toolkit.elastic.validators import (
+    check_for_banned_beginning_chars,
+    check_for_colons,
+    check_for_special_symbols,
+    check_for_upper_case,
+    check_for_wildcards
+)
 
 ANNOTATION_MAPPING = {
     "entity": EntityAnnotatorConfiguration,
@@ -29,10 +37,27 @@ class MergedFactSerializer(serializers.Serializer):
     min_agreements = serializers.IntegerField(min_value=1, help_text="Minimum number of agreements between the annotators to add the fact with value 'true'.")
 
 
-class MergeIndicesSerializer(IndicesSerializerMixin):
+class MergeIndicesSerializer(IndicesSerializerMixin, ElasticScrollMixIn):
 
     target_facts = MergedFactSerializer(many=True, help_text="Names and thresholds used for generating the merged facts.")
+    new_index = serializers.CharField(allow_blank=False, required=True,
+                                      validators=[
+                                          check_for_wildcards,
+                                          check_for_colons,
+                                          check_for_special_symbols,
+                                          check_for_banned_beginning_chars,
+                                          check_for_upper_case
+                                      ],
+                                      help_text='Name of the merged index.')
     add_negatives = serializers.BooleanField(required=False, default=True, help_text="If enabled, negative facts are added as well.")
+
+    def validate_new_index(self, value):
+        """ Check that new_index does not exist """
+        open_indices, closed_indices = ElasticCore().get_indices()
+        existing_indices = open_indices + closed_indices
+        if value in existing_indices:
+            raise serializers.ValidationError(f"Index '{value}' already exists. Please choose a different name for the new index.")
+        return value
 
 
     def validate_indices(self, indices):
