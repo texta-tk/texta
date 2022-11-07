@@ -1,8 +1,9 @@
 """Settings for unit tests"""
 import os
 
-from .settings import TEST_DATA_DIR as TEST_DATA_DIR_ROOT
+from django.conf import settings
 
+TEST_DATA_DIR_ROOT = settings.TEST_DATA_DIR
 TEST_DATA_DIR = os.path.join(TEST_DATA_DIR_ROOT, "import_test_data")
 
 TEST_INDEX = "texta_test_index"
@@ -46,9 +47,13 @@ TEST_QUERY = {"query": {"match": {TEST_FIELD: {"query": TEST_MATCH_TEXT}}}}
 TEST_RAKUN_QUERY = {"query": {"match": {TEST_FIELD: {"query": TEST_MATCH_RAKUN_TEXT}}}}
 TEST_EMPTY_QUERY = {"query": {"match_all": {}}}
 
-TEST_BIN_FACT_QUERY = {"query": {"bool": {"must": [{"bool": {"must": []}},{"bool": {"should": [{"bool": {"must": {"nested": {"query": {"bool": {"must": [{"match": {"texta_facts.fact": TEST_FACT_NAME}},{"match": {"texta_facts.str_val": TEST_VALUE_1}}]}},"path": "texta_facts","inner_hits": {"size": 100, "name": "FACT_1"}}}}},{"bool": {"must": {"nested": {"query": {"bool": {"must": [{"match": {"texta_facts.fact": TEST_FACT_NAME}},{"match": {"texta_facts.str_val": TEST_VALUE_2}}]}},"path": "texta_facts","inner_hits": {"size": 100, "name": "FACT_2"}}}}}]}},{"bool": {"must": []}},{"bool": {"must_not": [{"bool": {"must": {"nested": {"query": {"bool": {"must": [{"match": {"texta_facts.fact": TEST_FACT_NAME}},{"match": {"texta_facts.str_val": TEST_VALUE_3}}]}},"path": "texta_facts","inner_hits": {"size": 100, "name": "FACT_3"}}}}}]}}],"filter": [],"must_not": [],"should": [],"minimum_should_match": 0}}}
-
-
+TEST_BIN_FACT_QUERY = {"query": {"bool": {"must": [{"bool": {"must": []}}, {"bool": {"should": [{"bool": {"must": {
+    "nested": {"query": {"bool": {"must": [{"match": {"texta_facts.fact": TEST_FACT_NAME}}, {"match": {"texta_facts.str_val": TEST_VALUE_1}}]}}, "path": "texta_facts",
+               "inner_hits": {"size": 100, "name": "FACT_1"}}}}}, {"bool": {"must": {
+    "nested": {"query": {"bool": {"must": [{"match": {"texta_facts.fact": TEST_FACT_NAME}}, {"match": {"texta_facts.str_val": TEST_VALUE_2}}]}}, "path": "texta_facts",
+               "inner_hits": {"size": 100, "name": "FACT_2"}}}}}]}}, {"bool": {"must": []}}, {"bool": {"must_not": [{"bool": {"must": {
+    "nested": {"query": {"bool": {"must": [{"match": {"texta_facts.fact": TEST_FACT_NAME}}, {"match": {"texta_facts.str_val": TEST_VALUE_3}}]}}, "path": "texta_facts",
+               "inner_hits": {"size": 100, "name": "FACT_3"}}}}}]}}], "filter": [], "must_not": [], "should": [], "minimum_should_match": 0}}}
 
 TEST_DATASETS = (
     os.path.join(TEST_DATA_DIR, "import_test_data.csv"),

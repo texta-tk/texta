@@ -4,6 +4,7 @@ from collections import OrderedDict
 from json import JSONDecodeError
 
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from texta_elastic.searcher import EMPTY_QUERY
 
 from toolkit.choice_constants import DEFAULT_BULK_SIZE, DEFAULT_ES_TIMEOUT, DEFAULT_MAX_CHUNK_BYTES
@@ -12,9 +13,9 @@ from toolkit.core.task.serializers import TaskSerializer
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.elastic.index.serializers import IndexSerializer
 from toolkit.elastic.validators import check_for_existence
+from toolkit.helper_functions import get_core_setting, get_minio_client
 # Helptext constants to ensure consistent values inside Toolkit.
 from toolkit.settings import DESCRIPTION_CHAR_LIMIT, ES_BULK_SIZE_MAX, ES_TIMEOUT_MAX
-
 
 BULK_SIZE_HELPTEXT = "How many documents should be sent into Elasticsearch in a single batch for update."
 ES_TIMEOUT_HELPTEXT = "How many seconds should be allowed for the the update request to Elasticsearch."
@@ -32,13 +33,11 @@ class EmptySerializer(serializers.Serializer):
 class ProjectResourceUrlSerializer():
     '''For project serializers which need to construct the HyperLinked URL'''
 
-
     def get_url(self, obj):
         request = self.context['request']
         path = re.sub(r'\d+\/*$', '', request.path)
         resource_url = request.build_absolute_uri(f'{path}{obj.id}/')
         return resource_url
-
 
     def get_plot(self, obj):
         request = self.context['request']
@@ -62,7 +61,6 @@ class FieldsValidationSerializerMixin:
 
 class FieldValidationSerializerMixin:
 
-
     def validate_field(self, value):
         project_id = self.context['view'].kwargs['project_pk']
         project_obj = Project.objects.get(id=project_id)
@@ -77,7 +75,6 @@ class FieldParseSerializer(FieldsValidationSerializerMixin):
     For serializers that need to override to_representation and parse fields
     Serializers overriden with FieldParseSerializer will validate, if field input
     """
-
 
     def to_representation(self, instance):
         # self is the parent class obj in this case
@@ -114,7 +111,6 @@ class FeedbackSerializer(serializers.Serializer):
 # that don't subclass serializers.Serializer.
 class FavoriteModelSerializerMixin(metaclass=serializers.SerializerMetaclass):
     is_favorited = serializers.SerializerMethodField(read_only=True)
-
 
     def get_is_favorited(self, instance):
         return instance.favorited_users.filter(username=instance.author.username).exists()
@@ -190,3 +186,46 @@ class ToolkitTaskSerializer(IndicesSerializerMixin, FieldsValidationSerializerMi
 
     bulk_size = serializers.IntegerField(default=100, min_value=1, max_value=ES_BULK_SIZE_MAX, help_text=BULK_SIZE_HELPTEXT)
     es_timeout = serializers.IntegerField(default=10, min_value=1, max_value=ES_TIMEOUT_MAX, help_text=ES_TIMEOUT_HELPTEXT)
+
+
+class S3Mixin(serializers.Serializer):
+
+    def validate_minio_path(self, value: str):
+        use_s3 = get_core_setting("TEXTA_S3_ENABLED")
+        if use_s3 is False:
+            raise ValidationError("Usage of S3 is not enabled system-wide on this instance!")
+
+        self._validate_filename(value)
+        self._validate_file_existence_in_minio(value)
+        return value
+
+    def _validate_filename(self, value: str):
+        if value:
+            is_zip_file = value.endswith(".zip")
+            if is_zip_file is False:
+                raise ValidationError("Minio filename must be a zipfile and end with a .zip suffix!")
+
+    def _validate_file_existence_in_minio(self, minio_path: str):
+        client = get_minio_client()
+        exists = False
+        bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
+        for s3_object in client.list_objects(bucket_name, recursive=True):
+            if s3_object.object_name == minio_path:
+                exists = True
+                break
+
+        if exists is False:
+            raise ValidationError(f"Object with the path '{minio_path}' does not exist!")
+
+
+class S3UploadSerializer(S3Mixin):
+    minio_path = serializers.CharField(required=False, default="", help_text="Specify file path to upload to minio, by default sets its to {project.title}_{uuid4}.")
+
+    # Overwrite it for uploads.
+    def _validate_file_existence_in_minio(self, minio_path: str):
+        pass
+
+
+class S3DownloadSerializer(S3Mixin):
+    minio_path = serializers.CharField(required=True, help_text="Full path with filename (excluding bucket name) from minio to download.")
+    version_id = serializers.CharField(required=False, default="", help_text="Which version of the file to download.")

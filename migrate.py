@@ -2,16 +2,13 @@
 
 import argparse
 import os
-import subprocess
 import uuid
 from time import sleep
-from django.core import management
+
 import django  # For making sure the correct Python environment is used.
+from django.core import management
 from django.db import connections
 from django.db.utils import OperationalError
-
-from toolkit.settings import INSTALLED_APPS
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-u", "--username", help="Name of the admin user to create.", default="admin")
@@ -79,26 +76,35 @@ def migrate(arguments: argparse.Namespace):
     return True
 
 
-# CONNECT TO DATABASE & MIGRATE
-connected = False
-n_try = 0
-while connected is False and n_try <= 10:
-    connected = check_mysql_connection()
-    if connected:
-        migrate(args)
-    else:
-        n_try += 1
-        print('Toolkit migration attempt {}: No connection to database. Sleeping for 10 sec and trying again.'.format(n_try))
-        sleep(10)
+def wait_for_connect(try_count=10, wait_timer=10):
+    # CONNECT TO DATABASE & MIGRATE
+    connected = False
+    n_try = 0
+    while connected is False and n_try <= try_count:
+        connected = check_mysql_connection()
+        if connected:
+            return
+        else:
+            n_try += 1
+            print('Toolkit migration attempt {}: No connection to database. Sleeping for 10 sec and trying again.'.format(n_try))
+            sleep(wait_timer)
 
-# CREATE CORE VARIABLE ENTRIES TO DB
-log_message = 'Toolkit: Adding empty core variables to database if needed.'
-print(log_message)
 
-for core_variable_choice in CORE_VARIABLE_CHOICES:
-    variable_name = core_variable_choice[0]
-    matching_variables = CoreVariable.objects.filter(name=variable_name)
-    # if core variable not present in db
-    if not matching_variables:
-        new_core_variable = CoreVariable(name=variable_name, value=None)
-        new_core_variable.save()
+def initialize_core_variables():
+    # CREATE CORE VARIABLE ENTRIES TO DB
+    log_message = 'Toolkit: Adding empty core variables to database if needed.'
+    print(log_message)
+
+    for core_variable_choice in CORE_VARIABLE_CHOICES:
+        variable_name = core_variable_choice[0]
+        matching_variables = CoreVariable.objects.filter(name=variable_name)
+        # if core variable not present in db
+        if not matching_variables:
+            new_core_variable = CoreVariable(name=variable_name, value=None)
+            new_core_variable.save()
+
+
+if __name__ == '__main__':
+    wait_for_connect()
+    migrate(args)
+    initialize_core_variables()

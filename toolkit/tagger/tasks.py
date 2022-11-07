@@ -8,7 +8,9 @@ from typing import Dict, List, Union
 from celery import group, chain
 from celery.decorators import task
 from celery.result import allow_join_result
+from django.conf import settings
 from elasticsearch.helpers import streaming_bulk
+from minio.error import MinioException
 from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
 from texta_elastic.query import Query
@@ -22,7 +24,6 @@ from toolkit.elastic.tools.data_sample import DataSample
 from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import add_finite_url_to_feedback, get_indices_from_object, load_stop_words
 from toolkit.mlp.tasks import apply_mlp_on_list
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, MEDIA_URL
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.tools.plots import create_tagger_plot
 from toolkit.tools.show_progress import ShowProgress
@@ -36,7 +37,7 @@ def prepare_tagger_objects(tg: TaggerGroup, tags: List[str], tagger_serializer: 
     :param tag_queries: List of Elasticsearch queries for every tag.
     """
     # create tagger objects
-    logger = logging.getLogger(INFO_LOGGER)
+    logger = logging.getLogger(settings.INFO_LOGGER)
     logger.info(f"[Tagger Group] Starting task 'create_tagger_objects' for TaggerGroup with ID: {tg.pk}!")
     tagger_ids = []
 
@@ -89,7 +90,7 @@ def prepare_tagger_objects(tg: TaggerGroup, tags: List[str], tagger_serializer: 
     return tagger_ids
 
 
-@task(name="start_tagger_group", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
+@task(name="start_tagger_group", base=TransactionAwareTask, queue=settings.CELERY_LONG_TERM_TASK_QUEUE)
 def start_tagger_group(tagger_group_id: int, tags, tagger_serializer, tag_queries):
     tg = TaggerGroup.objects.get(pk=tagger_group_id)
     task_object = Task.objects.create(taggergroup=tg, task_type=Task.TYPE_TRAIN, status=Task.STATUS_RUNNING)
@@ -108,12 +109,12 @@ def start_tagger_group(tagger_group_id: int, tags, tagger_serializer, tag_querie
 
         # Put it into a transaction to ensure the task objects are created and accessible.
         from django.db import transaction
-        transaction.on_commit(lambda: task.apply_async(queue=CELERY_LONG_TERM_TASK_QUEUE))
+        transaction.on_commit(lambda: task.apply_async(queue=settings.CELERY_LONG_TERM_TASK_QUEUE))
     except Exception as e:
         task_object.handle_failed_task(e)
 
 
-@task(name="start_tagger_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
+@task(name="start_tagger_task", base=TransactionAwareTask, queue=settings.CELERY_LONG_TERM_TASK_QUEUE)
 def start_tagger_task(tagger_id: int):
     tagger = Tagger.objects.get(pk=tagger_id)
     task_object = tagger.tasks.last()
@@ -123,9 +124,9 @@ def start_tagger_task(tagger_id: int):
     return tagger_id
 
 
-@task(name="train_tagger_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
+@task(name="train_tagger_task", base=TransactionAwareTask, queue=settings.CELERY_LONG_TERM_TASK_QUEUE)
 def train_tagger_task(tagger_id: int):
-    info_logger = logging.getLogger(INFO_LOGGER)
+    info_logger = logging.getLogger(settings.INFO_LOGGER)
 
     info_logger.info(f"[Tagger] Starting task 'train_tagger' for tagger with ID: {tagger_id}!")
     tagger_object = Tagger.objects.get(id=tagger_id)
@@ -196,7 +197,7 @@ def train_tagger_task(tagger_id: int):
         # Save the image before its path.
         image_name = f'{secrets.token_hex(15)}.png'
         tagger_object.plot.save(image_name, create_tagger_plot(tagger.report.to_dict()), save=False)
-        image_path = pathlib.Path(MEDIA_URL) / image_name
+        image_path = pathlib.Path(settings.MEDIA_URL) / image_name
 
         # get num examples
         num_examples = {k: len(v) for k, v in data_sample.data.items()}
@@ -221,11 +222,56 @@ def train_tagger_task(tagger_id: int):
         raise e
 
 
-@task(name="save_tagger_results", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
+@task(name="download_tagger_model", base=TransactionAwareTask, queue=settings.CELERY_LONG_TERM_TASK_QUEUE)
+def download_tagger_model(minio_path: str, user_pk: int, project_pk: int, version_id: str):
+    info_logger = logging.getLogger(settings.INFO_LOGGER)
+    info_logger.info(f"[Tagger] Starting to download model from Minio with path {minio_path}!")
+    tagger_pk = Tagger.download_from_s3(minio_path, user_pk=user_pk, project_pk=project_pk, version_id=version_id)
+    info_logger.info(f"[Tagger] Finished to download model from Minio with path {minio_path}!")
+    return tagger_pk
+
+
+@task(name="download_into_tagger_group", base=TransactionAwareTask, queue=settings.CELERY_LONG_TERM_TASK_QUEUE)
+def download_into_tagger_group(tagger_group_pk: int, minio_path: str, version_id: str):
+    info_logger = logging.getLogger(settings.INFO_LOGGER)
+    info_logger.info(f"[Tagger Group] Starting to download model from Minio with path {minio_path}!")
+    tg = TaggerGroup.objects.get(pk=tagger_group_pk)
+    tg.add_from_s3(minio_path, tg.author.pk, version_id)
+    info_logger.info(f"[Tagger Group] Finished to download model from Minio with path {minio_path}!")
+
+
+@task(name="upload_tagger_files", base=TransactionAwareTask, queue=settings.CELERY_LONG_TERM_TASK_QUEUE)
+def upload_tagger_files(tagger_id: int, minio_path: str):
+    tagger = Tagger.objects.get(pk=tagger_id)
+    task_object: Task = tagger.tasks.last()
+    info_logger = logging.getLogger(settings.INFO_LOGGER)
+
+    task_object.update_status(Task.STATUS_RUNNING)
+    task_object.step = "uploading into S3"
+    task_object.save()
+
+    try:
+        info_logger.info(f"[Tagger] Starting to upload tagger with ID {tagger_id} into S3!")
+        minio_path = minio_path if minio_path else tagger.generate_s3_location()
+        data = tagger.export_resources()
+        tagger.upload_into_s3(minio_path=minio_path, data=data)
+        info_logger.info(f"[Tagger] Finished upload of tagger with ID {tagger_id} into S3!")
+        task_object.complete()
+
+    except MinioException as e:
+        task_object.handle_failed_task(f"Could not connect to S3, are you using the right credentials?")
+        raise e
+
+    except Exception as e:
+        task_object.handle_failed_task(e)
+        raise e
+
+
+@task(name="save_tagger_results", base=TransactionAwareTask, queue=settings.CELERY_LONG_TERM_TASK_QUEUE)
 def save_tagger_results(result_data: dict):
     try:
         tagger_id = result_data['id']
-        info_logger = logging.getLogger(INFO_LOGGER)
+        info_logger = logging.getLogger(settings.INFO_LOGGER)
 
         info_logger.info(f"[Tagger] Saving task results for tagger with ID: {tagger_id}!")
         tagger_object = Tagger.objects.get(pk=tagger_id)
@@ -272,17 +318,17 @@ def get_mlp(tagger_group_id: int, text: str, lemmatize: bool = False, use_ner: b
     taggers = {t.description.lower(): {"tag": t.description, "id": t.id} for t in hybrid_tagger_object.taggers.all()}
 
     if lemmatize or use_ner:
-        logging.getLogger(INFO_LOGGER).info(f"[Get MLP] Applying lemmatization and NER...")
+        logging.getLogger(settings.INFO_LOGGER).info(f"[Get MLP] Applying lemmatization and NER...")
         with allow_join_result():
-            mlp = apply_mlp_on_list.apply_async(kwargs={"texts": [text], "analyzers": ["all"]}, queue=CELERY_MLP_TASK_QUEUE).get()
+            mlp = apply_mlp_on_list.apply_async(kwargs={"texts": [text], "analyzers": ["all"]}, queue=settings.CELERY_MLP_TASK_QUEUE).get()
             mlp_result = mlp[0]
-            logging.getLogger(INFO_LOGGER).info(f"[Get MLP] Finished applying MLP.")
+            logging.getLogger(settings.INFO_LOGGER).info(f"[Get MLP] Finished applying MLP.")
 
     # lemmatize
     if lemmatize and mlp_result:
         text = mlp_result["text_mlp"]["lemmas"]
         lemmas_exists = True if text.strip() else False
-        logging.getLogger(INFO_LOGGER).info(f"[Get MLP] Lemmatization result exists: {lemmas_exists}")
+        logging.getLogger(settings.INFO_LOGGER).info(f"[Get MLP] Lemmatization result exists: {lemmas_exists}")
 
     # retrieve tags
     if use_ner and mlp_result:
@@ -298,7 +344,7 @@ def get_mlp(tagger_group_id: int, text: str, lemmatize: bool = False, use_ner: b
                 }
                 tags.append(fact_val_dict)
                 seen_tags[fact_val] = True
-        logging.getLogger(INFO_LOGGER).info(f"[Get MLP] Detected {len(tags)} with NER.")
+        logging.getLogger(settings.INFO_LOGGER).info(f"[Get MLP] Detected {len(tags)} with NER.")
 
     return text, tags
 
@@ -311,7 +357,7 @@ def get_tag_candidates(tagger_group_id: int, text: str, ignore_tags: List[str] =
     hybrid_tagger_object = TaggerGroup.objects.get(pk=tagger_group_id)
     field_paths = json.loads(hybrid_tagger_object.taggers.first().fields)
     indices = hybrid_tagger_object.get_indices()
-    info_logger = logging.getLogger(INFO_LOGGER)
+    info_logger = logging.getLogger(settings.INFO_LOGGER)
 
     info_logger.info(f"[Get Tag Candidates] Selecting from following indices: {indices}.")
     ignore_tags = {tag["tag"]: True for tag in ignore_tags}
@@ -345,7 +391,7 @@ def get_tag_candidates(tagger_group_id: int, text: str, ignore_tags: List[str] =
 def apply_tagger(tagger_id: int, content: Union[str, Dict[str, str]], input_type='text', lemmatize=False, feedback=None, use_logger=True):
     """Task for applying tagger to text. Wraps functions load_tagger and apply_loaded_tagger."""
     if use_logger:
-        logging.getLogger(INFO_LOGGER).info(
+        logging.getLogger(settings.INFO_LOGGER).info(
             f"Starting task 'apply_tagger' for tagger with ID: {tagger_id} with params (input_type : {input_type}, lemmatize: {lemmatize}, feedback: {feedback})!")
 
     tagger_object = Tagger.objects.get(pk=tagger_id)
@@ -362,22 +408,22 @@ def apply_tagger(tagger_id: int, content: Union[str, Dict[str, str]], input_type
 def apply_tagger_group(tagger_group_id: int, content: Union[str, Dict[str, str]], tag_candidates: List[str], request, input_type: str = 'text', lemmatize: bool = False,
                        feedback: bool = False, use_async: bool = True):
     # get tagger group object
-    logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Starting apply_tagger_group...")
+    logging.getLogger(settings.INFO_LOGGER).info(f"[Apply Tagger Group] Starting apply_tagger_group...")
     tagger_group_object = TaggerGroup.objects.get(pk=tagger_group_id)
     # get tagger objects
     candidates_str = "|".join(tag_candidates)
     tagger_objects = tagger_group_object.taggers.filter(description__iregex=f"^({candidates_str})$")
     # filter out completed
     tagger_objects = [tagger for tagger in tagger_objects if tagger.tasks.last().status == Task.STATUS_COMPLETED]
-    logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Loaded {len(tagger_objects)} tagger objects.")
+    logging.getLogger(settings.INFO_LOGGER).info(f"[Apply Tagger Group] Loaded {len(tagger_objects)} tagger objects.")
     # predict tags
     if use_async:
         with allow_join_result():
             group_task = group(apply_tagger.s(tagger.pk, content, input_type=input_type, lemmatize=lemmatize, feedback=feedback, use_logger=False) for tagger in tagger_objects)
-            group_results = group_task.apply_async(queue=CELERY_SHORT_TERM_TASK_QUEUE)
+            group_results = group_task.apply_async(queue=settings.CELERY_SHORT_TERM_TASK_QUEUE)
             result_tags = group_results.get()
 
-            logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Group task applied.")
+            logging.getLogger(settings.INFO_LOGGER).info(f"[Apply Tagger Group] Group task applied.")
 
     else:
         result_tags = []
@@ -388,11 +434,11 @@ def apply_tagger_group(tagger_group_id: int, content: Union[str, Dict[str, str]]
     # retrieve results & remove non-hits
     tags = [tag for tag in result_tags if tag]
 
-    logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Retrieved results for {len(tags)} taggers.")
+    logging.getLogger(settings.INFO_LOGGER).info(f"[Apply Tagger Group] Retrieved results for {len(tags)} taggers.")
     # remove non-hits
     tags = [tag for tag in tags if tag["result"]]
 
-    logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Retrieved {len(tags)} positive tags.")
+    logging.getLogger(settings.INFO_LOGGER).info(f"[Apply Tagger Group] Retrieved {len(tags)} positive tags.")
     # if feedback was enabled, add urls
     if feedback:
         tags = [add_finite_url_to_feedback(tag, request) for tag in tags]
@@ -418,7 +464,7 @@ def to_texta_fact(tagger_result: List[Dict[str, Union[str, int, bool]]], field: 
 def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[str], fact_name: str, fact_value: str, max_tags: int, object_id: int, object_type: str,
                      tagger_object: Union[Tagger, TaggerGroup], object_args: Dict, tagger: TextTagger = None):
     for i, scroll_batch in enumerate(generator):
-        logging.getLogger(INFO_LOGGER).info(f"[Tagger] Appyling {object_type} with ID {object_id} to batch {i + 1}...")
+        logging.getLogger(settings.INFO_LOGGER).info(f"[Tagger] Appyling {object_type} with ID {object_id} to batch {i + 1}...")
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
             flat_hit = ec.flatten(hit)
@@ -462,7 +508,7 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
             }
 
 
-@task(name="apply_tagger_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
+@task(name="apply_tagger_to_index", base=TransactionAwareTask, queue=settings.CELERY_LONG_TERM_TASK_QUEUE)
 def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str], fact_name: str, fact_value: str, query: dict, bulk_size: int, max_chunk_bytes: int,
                           es_timeout: int, object_type: str, object_args: Dict, max_tags: int = 10000):
     """Apply Tagger or TaggerGroup to index."""
@@ -493,7 +539,7 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
                                    object_type=object_type, tagger_object=tagger_object, object_args=object_args, tagger=tagger)
         for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes, max_retries=3):
             if not success:
-                logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
+                logging.getLogger(settings.ERROR_LOGGER).exception(json.dumps(info))
 
         task_object.complete()
         return True
@@ -503,9 +549,9 @@ def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str],
         task_object.handle_failed_task(e)
 
 
-@task(name="end_tagger_group", base=TransactionAwareTask, queue=CELERY_SHORT_TERM_TASK_QUEUE)
+@task(name="end_tagger_group", base=TransactionAwareTask, queue=settings.CELERY_SHORT_TERM_TASK_QUEUE)
 def end_tagger_group(previous_result, tagger_group_id: int):
-    logger = logging.getLogger(INFO_LOGGER)
+    logger = logging.getLogger(settings.INFO_LOGGER)
 
     tg = TaggerGroup.objects.get(pk=tagger_group_id)
     task_object = tg.tasks.last()

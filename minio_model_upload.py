@@ -1,19 +1,13 @@
 import argparse
-import os
 import io
-import subprocess
-import uuid
-from time import sleep
-from texta_tools.minio_wrapper import MinioWrapper
+import os
 
 import django  # For making sure the correct Python environment is used.
-from django.db import connections
-from django.db.utils import OperationalError
+from texta_tools.minio_wrapper import MinioWrapper
 
 # Setup Django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "toolkit.settings")
 django.setup()
-
 
 if __name__ == '__main__':
 

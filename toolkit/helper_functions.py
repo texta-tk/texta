@@ -1,19 +1,25 @@
 import hashlib
 import json
+import logging
 import os
 import pathlib
 import re
 import uuid
-from functools import partial
+from functools import partial, wraps
 from typing import List, Optional
 
 import elasticsearch_dsl
 import psutil
+from cryptography.fernet import Fernet
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import connections
 from django.views.static import serve
-from rest_framework import serializers
+from minio import Minio
+from minio.error import S3Error, ServerError
+from rest_framework import serializers, status
+from rest_framework.exceptions import APIException
 
 
 def is_float(element) -> bool:
@@ -40,12 +46,10 @@ def avoid_db_timeout(func):
     to modify it afterwards, as the connection has already expired at that point.
     """
 
-
     def inner_wrapper(*args, **kwargs):
         for conn in connections.all():
             conn.close_if_unusable_or_obsolete()
         func(*args, **kwargs)
-
 
     return inner_wrapper
 
@@ -108,6 +112,55 @@ def add_finite_url_to_feedback(decision_dict, request):
     return decision_dict
 
 
+def is_secret_core_setting(setting_name: str):
+    from django.conf import settings
+
+    setting = setting_name.lower()
+    for key in settings.PROTECTED_CORE_KEYS:
+        key = key.lower()
+        if key in setting:
+            return True
+
+    return False
+
+
+def encrypt(message: str) -> str:
+    """
+    Wrapper for encrypting files with a 128-bit AES recipe, mostly used for encrypting
+    secret API keys etc.
+    :param message: String you want to encrypt.
+    """
+    if pathlib.Path(settings.AES_KEYFILE_PATH).exists():
+        with open(settings.AES_KEYFILE_PATH, "r", encoding="utf8") as fp:
+            key = fp.read().strip()
+            message = message.encode("utf8")
+            encrypter = Fernet(key)
+            encrypted_text = encrypter.encrypt(message)
+            return encrypted_text.decode("utf8")
+
+    raise ValueError("Path for AES keyfile does not exist!")
+
+
+def decrypt(message: str) -> str:
+    """
+    Wrapper for decrypting encrypted tokens of the Fernet recipe.
+    :param message: Previously encrypted plaintext to decode.
+    """
+    if pathlib.Path(settings.AES_KEYFILE_PATH).exists():
+        with open(settings.AES_KEYFILE_PATH, "r", encoding="utf8") as fp:
+            key = fp.read().strip()
+            message = message.encode("utf8")
+            encrypter = Fernet(key)
+            try:
+                decrypted_text = encrypter.decrypt(message)
+                return decrypted_text.decode("utf8")
+            except Exception as e:
+                logging.getLogger(settings.ERROR_LOGGER).exception("Could not decrypt the contents!")
+                return ""
+
+    raise ValueError("Path for AES keyfile does not exist!")
+
+
 def get_core_setting(setting_name: str):
     """
     Retrieves value for a variable from core settings.
@@ -117,6 +170,9 @@ def get_core_setting(setting_name: str):
     from toolkit.core.core_variable.models import CoreVariable
     from toolkit.settings import CORE_SETTINGS
     # retrieve variable setting from db
+
+    is_secret = is_secret_core_setting(setting_name)
+
     try:
         variable_match = CoreVariable.objects.filter(name=setting_name)
         if not variable_match:
@@ -128,6 +184,11 @@ def get_core_setting(setting_name: str):
         else:
             # return value from db
             value = variable_match[0].value
+
+            # Return the decrypted value to avoid it going through type conversion.
+            if is_secret:
+                return decrypt(value)
+
             if is_float(value):
                 return float(value)
             elif str.isnumeric(value):
@@ -158,19 +219,24 @@ def set_core_setting(setting_name: str, setting_value: str):
         raise serializers.ValidationError(f"The type of the value should be {type('')}, not {type(setting_value)}.")
 
     data = {"name": setting_name, "value": setting_value}
-
     validated_data = CoreVariableSerializer().validate(data)
-    variable_matches = CoreVariable.objects.filter(name=validated_data["name"])
+    setting_name = validated_data["name"]
+    setting_value = validated_data["value"]
+    variable_matches = CoreVariable.objects.filter(name=setting_name)
+
+    # Encrypt the protected keys.
+    is_secret = is_secret_core_setting(setting_name)
+    value = encrypt(setting_value) if is_secret else setting_value
 
     if not variable_matches:
         # Add a new variable
-        new_variable = CoreVariable(name=validated_data["name"], value=validated_data["value"])
+        new_variable = CoreVariable(name=setting_name, value=value)
         new_variable.save()
 
     else:
         # Change existing variable
         variable_match = variable_matches[0]
-        variable_match.value = validated_data["value"]
+        variable_match.value = value
         variable_match.save()
 
 
@@ -198,7 +264,8 @@ def download_bert_requirements(model_directory: str, supported_models: List[str]
     """ Download pretrained BERT models & tokenizers.
     """
     from texta_bert_tagger.tagger import BertTagger
-    errors, failed_models = BertTagger.download_pretrained_models(bert_models=supported_models, save_dir=model_directory, cache_dir=cache_directory, logger=logger, num_labels=num_labels)
+    errors, failed_models = BertTagger.download_pretrained_models(bert_models=supported_models, save_dir=model_directory, cache_dir=cache_directory, logger=logger,
+                                                                  num_labels=num_labels)
     return (errors, failed_models)
 
 
@@ -317,7 +384,6 @@ def reindex_test_dataset(query: dict = None, from_index: Optional[str] = None, h
     from_scan = from_scan.index(from_index).using(ec.es)
     from_scan = from_scan.scan()
 
-
     def doc_actions(generator):
         for document in generator:
             yield {
@@ -326,7 +392,6 @@ def reindex_test_dataset(query: dict = None, from_index: Optional[str] = None, h
                 "_source": document.to_dict(),
                 "retry_on_conflict": 3
             }
-
 
     actions = doc_actions(from_scan)
     from elasticsearch.helpers import bulk
@@ -346,3 +411,59 @@ def prepare_mandatory_directories(*directories):
         path = pathlib.Path(directory_path)
         if not path.exists():
             path.mkdir(parents=True, exist_ok=True)
+
+
+def minio_connection(func):
+    """
+    Decorator for wrapping Elasticsearch functions that are used in views,
+    to return a properly formatted error message during connection issues
+    instead of the typical HTTP 500 one.
+    """
+
+    # Have to use wraps here, otherwise you can't use it with DRF action decorators.
+    @wraps(func)
+    def func_wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+
+        except S3Error as e:
+            logging.getLogger(settings.ERROR_LOGGER).exception(e.message)
+            raise APIException("There was an error from S3!", code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except ServerError as e:
+            s3_host = get_core_setting("TEXTA_S3_HOST")
+            logging.getLogger(settings.ERROR_LOGGER).exception(f"Fault in connecting to S3: {s3_host}")
+            raise APIException("There was an error from S3 response!", code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return func_wrapper
+
+
+def validate_aes_file(aes_keyfile_path: str, aes_key_env: str):
+    import termcolor
+
+    # Check whether file exists at all.
+    if pathlib.Path(aes_keyfile_path).exists() is False:
+        message = f"[x] File containing the encryption key at {aes_keyfile_path} (set by env variable '{aes_key_env}' does not exist! Please run 'python manage.py generate_aes for a key and save it to {aes_keyfile_path}'!"
+        termcolor.cprint(text=message, color="red")
+    # If it exists, check that it is readable.
+    else:
+        try:
+            with open(aes_keyfile_path, "r") as fp:
+                data = fp.read()
+                message = "[*] Successfully confirmed accessibility of AES key!"
+                termcolor.cprint(text=message, color="green")
+        except Exception:
+            message = f"[x] Could not read AES key from {aes_keyfile_path}, are the permissions right!?"
+            termcolor.cprint(text=message, color="red")
+
+
+def get_minio_client():
+    s3_host = get_core_setting("TEXTA_S3_HOST")
+    access_key = get_core_setting("TEXTA_S3_ACCESS_KEY")
+    secret_key = get_core_setting("TEXTA_S3_SECRET_KEY")
+    use_secure = get_core_setting("TEXTA_S3_USE_SECURE")
+    return Minio(
+        endpoint=s3_host,
+        access_key=access_key,
+        secret_key=secret_key,
+        secure=use_secure
+    )

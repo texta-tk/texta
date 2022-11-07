@@ -1,6 +1,5 @@
-from rest_framework.response import Response
-from rest_framework import status
 from toolkit.exceptions import InvalidInputDocument
+
 
 def validate_input_document(input_document, field_data):
     # check if document exists and is a dict
