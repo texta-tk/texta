@@ -6,8 +6,10 @@ import secrets
 from typing import Dict, List, Union
 
 from celery.decorators import task
+from django.conf import settings
 from django.db import connections
 from elasticsearch.helpers import streaming_bulk
+from minio.error import MinioException
 from texta_bert_tagger.tagger import BertTagger
 from texta_elastic.core import ElasticCore
 from texta_elastic.document import ElasticDocument
@@ -16,12 +18,12 @@ from texta_elastic.searcher import ElasticSearcher
 from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.bert_tagger import choices
 from toolkit.bert_tagger.models import BertTagger as BertTaggerObject
+from toolkit.core.task.models import Task
 from toolkit.elastic.tools.data_sample import DataSample
 from toolkit.helper_functions import get_indices_from_object
 from toolkit.settings import BERT_CACHE_DIR, BERT_FINETUNED_MODEL_DIRECTORY, BERT_PRETRAINED_MODEL_DIRECTORY, CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER
 from toolkit.tools.plots import create_tagger_plot
 from toolkit.tools.show_progress import ShowProgress
-
 
 # Global object for the worker so tagger models won't get reloaded on each task
 # Essentially an indefinite cache
@@ -45,6 +47,42 @@ def apply_persistent_bert_tagger(tagger_input: Union[str, Dict], tagger_id: int,
         return tagger_object.apply_loaded_tagger(loaded_tagger, tagger_input, input_type=input_type, feedback=feedback)
     except Exception as e:
         raise
+
+
+@task(name="bert_download_tagger_model", base=TransactionAwareTask, queue=settings.CELERY_LONG_TERM_TASK_QUEUE)
+def download_tagger_model(minio_path: str, user_pk: int, project_pk: int, version_id: str):
+    info_logger = logging.getLogger(settings.INFO_LOGGER)
+    info_logger.info(f"[Bert Tagger] Starting to download model from Minio with path {minio_path}!")
+    tagger_pk = BertTaggerObject.download_from_s3(minio_path, user_pk=user_pk, project_pk=project_pk, version_id=version_id)
+    info_logger.info(f"[Bert Tagger] Finished to download model from Minio with path {minio_path}!")
+    return tagger_pk
+
+
+@task(name="bert_upload_tagger_files", base=TransactionAwareTask, queue=settings.CELERY_LONG_TERM_TASK_QUEUE)
+def upload_tagger_files(tagger_id: int, minio_path: str):
+    tagger = BertTaggerObject.objects.get(pk=tagger_id)
+    task_object: Task = tagger.tasks.last()
+    info_logger = logging.getLogger(settings.INFO_LOGGER)
+
+    task_object.update_status(Task.STATUS_RUNNING)
+    task_object.step = "uploading into S3"
+    task_object.save()
+
+    try:
+        info_logger.info(f"[Bert Tagger] Starting to upload tagger with ID {tagger_id} into S3!")
+        minio_path = minio_path if minio_path else tagger.generate_s3_location()
+        data = tagger.export_resources()
+        tagger.upload_into_s3(minio_path=minio_path, data=data)
+        info_logger.info(f"[Bert Tagger] Finished upload of tagger with ID {tagger_id} into S3!")
+        task_object.complete()
+
+    except MinioException as e:
+        task_object.handle_failed_task(f"Could not connect to S3, are you using the right credentials?")
+        raise e
+
+    except Exception as e:
+        task_object.handle_failed_task(e)
+        raise e
 
 
 @task(name="train_bert_tagger", base=TransactionAwareTask)
@@ -247,7 +285,8 @@ def update_generator(generator: ElasticSearcher, ec: ElasticCore, fields: List[s
 
 
 @task(name="apply_bert_tagger_to_index", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
-def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str], fact_name: str, fact_value: str, query: dict, bulk_size: int, max_chunk_bytes: int, es_timeout: int):
+def apply_tagger_to_index(object_id: int, indices: List[str], fields: List[str], fact_name: str, fact_value: str, query: dict, bulk_size: int, max_chunk_bytes: int,
+                          es_timeout: int):
     """Apply BERT Tagger to index."""
     try:
         tagger_object = BertTaggerObject.objects.get(pk=object_id)

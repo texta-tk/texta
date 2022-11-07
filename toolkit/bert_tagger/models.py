@@ -22,11 +22,11 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.feedback import Feedback
 from toolkit.helper_functions import get_core_setting
-from toolkit.model_constants import CommonModelMixin, FavoriteModelMixin
+from toolkit.model_constants import CommonModelMixin, FavoriteModelMixin, S3ModelMixin
 from toolkit.settings import (BASE_DIR, BERT_CACHE_DIR, BERT_FINETUNED_MODEL_DIRECTORY, BERT_PRETRAINED_MODEL_DIRECTORY, CELERY_LONG_TERM_TASK_QUEUE)
 
 
-class BertTagger(FavoriteModelMixin, CommonModelMixin):
+class BertTagger(FavoriteModelMixin, CommonModelMixin, S3ModelMixin):
     MODEL_TYPE = 'bert_tagger'
     MODEL_JSON_NAME = "model.json"
 
@@ -107,7 +107,7 @@ class BertTagger(FavoriteModelMixin, CommonModelMixin):
 
 
     @staticmethod
-    def import_resources(zip_file, request, pk) -> int:
+    def import_resources(zip_file: io.BytesIO, user_pk: int, project_pk: int) -> int:
         with transaction.atomic():
             with zipfile.ZipFile(zip_file, 'r') as archive:
                 json_string = archive.read(BertTagger.MODEL_JSON_NAME).decode()
@@ -118,8 +118,8 @@ class BertTagger(FavoriteModelMixin, CommonModelMixin):
 
                 bert_tagger_model = BertTagger(**bert_tagger_json)
 
-                bert_tagger_model.author = User.objects.get(id=request.user.id)
-                bert_tagger_model.project = Project.objects.get(id=pk)
+                bert_tagger_model.author = User.objects.get(pk=user_pk)
+                bert_tagger_model.project = Project.objects.get(pk=project_pk)
 
                 bert_tagger_model.save()
 

@@ -54,6 +54,7 @@ dependencies:
       - -f https://download.pytorch.org/whl/torch_stable.html
       - pyjwt<2
       - beautifulsoup4
+      - python-slugify
       - nltk==3.6.*
       - sumy
       - django-environ
@@ -61,3 +62,4 @@ dependencies:
       - pelecanus
       - openpyxl
       - scipy==1.5.*
+      - cryptography
