@@ -24,7 +24,7 @@ variables:
   TEXTA_EXTERNAL_DATA_DIR: /cache
 
 services:
-  - name: redis:5
+  - name: redis:6
   - name: docker.texta.ee/texta/texta-uaa:latest
     alias: texta-uaa
   - name: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
