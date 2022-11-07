@@ -52,9 +52,9 @@ def apply_persistent_bert_tagger(tagger_input: Union[str, Dict], tagger_id: int,
 @task(name="bert_download_tagger_model", base=TransactionAwareTask, queue=settings.CELERY_LONG_TERM_TASK_QUEUE)
 def download_tagger_model(minio_path: str, user_pk: int, project_pk: int, version_id: str):
     info_logger = logging.getLogger(settings.INFO_LOGGER)
-    info_logger.info(f"[Tagger] Starting to download model from Minio with path {minio_path}!")
+    info_logger.info(f"[Bert Tagger] Starting to download model from Minio with path {minio_path}!")
     tagger_pk = BertTaggerObject.download_from_s3(minio_path, user_pk=user_pk, project_pk=project_pk, version_id=version_id)
-    info_logger.info(f"[Tagger] Finished to download model from Minio with path {minio_path}!")
+    info_logger.info(f"[Bert Tagger] Finished to download model from Minio with path {minio_path}!")
     return tagger_pk
 
 
@@ -69,11 +69,11 @@ def upload_tagger_files(tagger_id: int, minio_path: str):
     task_object.save()
 
     try:
-        info_logger.info(f"[Tagger] Starting to upload tagger with ID {tagger_id} into S3!")
+        info_logger.info(f"[Bert Tagger] Starting to upload tagger with ID {tagger_id} into S3!")
         minio_path = minio_path if minio_path else tagger.generate_s3_location()
         data = tagger.export_resources()
         tagger.upload_into_s3(minio_path=minio_path, data=data)
-        info_logger.info(f"[Tagger] Finished upload of tagger with ID {tagger_id} into S3!")
+        info_logger.info(f"[Bert Tagger] Finished upload of tagger with ID {tagger_id} into S3!")
         task_object.complete()
 
     except MinioException as e:

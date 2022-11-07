@@ -224,7 +224,7 @@ class BertTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView, Fa
         serializer.is_valid(raise_exception=True)
         minio_path = serializer.validated_data["minio_path"]
         tagger = self.get_object()
-        task = Task.objects.create(tagger=tagger, status=Task.STATUS_QUEUED, task_type=Task.TYPE_UPLOAD)
+        task = Task.objects.create(berttagger=tagger, status=Task.STATUS_QUEUED, task_type=Task.TYPE_UPLOAD)
         tagger.tasks.add(task)
         transaction.on_commit(lambda: upload_tagger_files.apply_async(args=(tagger.pk, minio_path), queue=settings.CELERY_LONG_TERM_TASK_QUEUE))
         return Response({"message": "Started task for uploading model into S3!"})

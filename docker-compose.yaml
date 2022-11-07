@@ -108,4 +108,4 @@ volumes:
   elastic-data:
   toolkit-data:
   mariadb-data:
-
+  minio-data:
