@@ -3,6 +3,7 @@ import logging
 import uuid
 from typing import List
 
+import requests
 import texta_mlp.settings
 from celery.decorators import task
 from django.contrib.auth.models import User
@@ -275,10 +276,58 @@ def annotator_task(self, annotator_task_id):
 import json
 import pprint
 
-def _get_nested_aggregation_query(
-    field: str = "texta_meta.document_uuid.keyword",
-    texta_facts_field: str = "str_val"
-    ):
+def get_mapping(es_url: str, es_index: str):
+    url = f"{es_url}/{es_index}/_mapping"
+    response = requests.get(url).json()
+    schema = response.get(es_index).get("mappings")
+    return schema
+
+
+def create_new_index(source_index: str, new_index: str):
+
+    ec = ElasticCore()
+    #es_url = "http://elastic-dev.texta.ee:9200"
+
+    #elastic_search = ElasticSearcher(indices=indices, field_data=all_fields, callback_progress=show_progress, query=query, scroll_size=scroll_size)
+    #elastic_doc = ElasticDocument(new_index)
+
+    logging.getLogger(INFO_LOGGER).info(f"Updating index schema for index {new_index}")
+    ''' the operations that don't require a mapping update have been completed '''
+    schema = ec.get_mapping(source_index).get(source_index).get("mappings")
+    print("scheeeema", schema)
+
+    # Remove annotator fields from the schema
+    del schema["properties"]["texta_annotator"]
+    #schema.get("properties", {}).pop("texta_annotator", None)
+    updated_schema = {"mappings": {"_doc": schema}}#{"mappings": schema} #{"mappings": {"_doc": schema}}#update_mapping(schema_input, new_index, add_facts_mapping=True, add_texta_meta_mapping=False)
+    print(updated_schema)
+
+    logging.getLogger(INFO_LOGGER).info(f"Creating new merged index {new_index}.")
+    # create new_index
+    create_index_res = ec.create_index(new_index, updated_schema)
+    print("create index res", create_index_res)
+
+    #ec.syncher()
+
+
+    from time import sleep
+    #sleep(5)
+
+    # Add texta facts mapping in case the source index doesn't contain facts
+    ec.add_texta_facts_mapping(new_index)
+    #project_obj.indices.add(index_model)
+
+    index_model, is_created = Index.objects.get_or_create(name=new_index)
+    # TODO: ADD THIS!!!
+    #project_obj.indices.add(index_model)
+
+
+    #logging.getLogger(INFO_LOGGER).info("Indexing documents.")
+    # set new_index name as mapping name
+    #bulk_add_documents(elastic_search, elastic_doc, index=new_index, chunk_size=scroll_size, flatten_doc=False)
+
+
+def _get_nested_aggregation_query(field: str, texta_facts_field: str):
     aggs_query = {
         "aggs_term": {
             "terms": {
@@ -302,49 +351,16 @@ def _get_nested_aggregation_query(
     }
     return aggs_query
 
-def _generate_restrictions(doc_ids):
-    restrictions = []
-    for doc_id in doc_ids:
-        new_restriction = {
-            "bool": {
-              "should": [
-                {
-                  "multi_match": {
-                    "query": doc_id,
-                    "type": "phrase_prefix",
-                    "fields": [
-                      "texta_meta.document_uuid"
-                    ]
-                  }
-                }
-              ],
-              "minimum_should_match": 1
-            }
-        }
-        restrictions.append(new_restriction)
-    return restrictions
-
-def get_filter_query(doc_ids):
-    restrictions = _generate_restrictions(doc_ids)
+def get_filter_query(doc_ids: List[str]):
     query = {
         "query": {
-            "bool": {
-                "must": [],
-                "filter": [],
-                "must_not": [],
-                "should": [
-                    {
-                      "bool": {
-                        "should": restrictions
-
-                      }
-                    }
-                ],
-                "minimum_should_match": 1
+            "terms": {
+              "texta_meta.document_uuid.keyword": doc_ids
             }
         }
     }
     return query
+
 
 def get_pos_counts(aggs_res, min_annotations=1, pos_fact_value="true"):
     res = aggs_res["aggregations"]["aggs_term"]["buckets"]
@@ -380,7 +396,7 @@ def generate_doc_facts(fact_restrictions, pos_count: int, add_negatives: bool = 
         if min_agreements <= pos_count:
             # TODO: should use some elastic-tools stuff for that?
             new_fact = {
-                "fact_name": fact_restriction.get("fact_name"),
+                "fact": fact_restriction.get("fact_name"),
                 "str_val": "true",
                 "doc_path": "",
                 "spans": json.dumps([[0,0]]),
@@ -390,7 +406,7 @@ def generate_doc_facts(fact_restrictions, pos_count: int, add_negatives: bool = 
             new_facts.append(new_fact)
         elif add_negatives:
             new_fact = {
-                "fact_name": fact_restriction.get("fact_name"),
+                "fact": fact_restriction.get("fact_name"),
                 "str_val": "false",
                 "doc_path": "",
                 "spans": json.dumps([[0,0]]),
@@ -412,22 +428,27 @@ def update_texta_facts(scroll_batch, fact_restrictions, pos_counts):
 
 
 
-def tag_docs(elastic_searcher, elastic_aggregator, fact_restrictions):
+def tag_docs_generator(elastic_searcher, elastic_aggregator, fact_restrictions, target_index):
     aggs_query = _get_nested_aggregation_query("texta_meta.document_uuid.keyword", "str_val")
     for i, scroll_batch in enumerate(elastic_searcher):
         doc_ids = collect_ids(scroll_batch)
-        print("DOCS_IDS", doc_ids)
         filter_query = get_filter_query(doc_ids)
         elastic_aggregator.update_query(filter_query)
-        print(elastic_aggregator.query)
         #res = elastic_aggregator.fact_aggs_test()
         res = elastic_aggregator._aggregate(aggs_query)
-        print(res)
+        #print(res)
+        # TODO: remove hardcoded values
         pos_counts = get_pos_counts(res, min_annotations=3, pos_fact_value="true")
 
         scroll_batch = update_texta_facts(scroll_batch, fact_restrictions, pos_counts)
         for doc in scroll_batch:
-            pprint.pprint(doc["_source"]["texta_facts"])
+            yield {
+                "_index": target_index,
+                "_type": doc.get("_type", "_doc"),
+                "_source": doc.get("_source")
+            }
+
+
 
 @task(name="merge_annotator_indices_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def merge_annotator_indices_task(object_id: int, source_indices: List[str], target_index: str, facts: List[dict], bulk_size: int, max_chunk_bytes: int, es_timeout: int):
@@ -443,6 +464,8 @@ def merge_annotator_indices_task(object_id: int, source_indices: List[str], targ
         print("SOURCE INDICES", source_indices)
         print("facts", facts)
 
+        create_new_index(base_indices[0], target_index)
+
         #ec = ElasticCore()
         #[ec.add_texta_facts_mapping(index) for index in indices]
 
@@ -457,7 +480,12 @@ def merge_annotator_indices_task(object_id: int, source_indices: List[str], targ
         )
 
         aggregator = ElasticAggregator(indices=source_indices)
-        tag_docs(searcher, aggregator, facts)
+        elastic_doc = ElasticDocument(target_index)
+        actions = tag_docs_generator(searcher, aggregator, facts, target_index)
+
+        elastic_doc.bulk_add_generator(actions=actions, chunk_size=bulk_size, refresh="wait_for")
+
+
 
         #actions = update_generator(generator=searcher, ec=ec, fields=fields, fact_name=fact_name, fact_value=fact_value, tagger_object=tagger_object, tagger=tagger)
         #for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes, max_retries=3):
