@@ -276,55 +276,34 @@ def annotator_task(self, annotator_task_id):
 import json
 import pprint
 
-def get_mapping(es_url: str, es_index: str):
-    url = f"{es_url}/{es_index}/_mapping"
-    response = requests.get(url).json()
-    schema = response.get(es_index).get("mappings")
-    return schema
-
 
 def create_new_index(source_index: str, new_index: str):
+    """ Creates an empty index with otherwise the same mapping as the original source index,
+    but adds texta_facts mapping (if not already present) and removes texta_annotator
+    fields mapping.
+    """
 
     ec = ElasticCore()
-    #es_url = "http://elastic-dev.texta.ee:9200"
 
-    #elastic_search = ElasticSearcher(indices=indices, field_data=all_fields, callback_progress=show_progress, query=query, scroll_size=scroll_size)
-    #elastic_doc = ElasticDocument(new_index)
-
-    logging.getLogger(INFO_LOGGER).info(f"Updating index schema for index {new_index}")
-    ''' the operations that don't require a mapping update have been completed '''
+    logging.getLogger(INFO_LOGGER).info(f"Updating index schema for index '{new_index}'.")
     schema = ec.get_mapping(source_index).get(source_index).get("mappings")
-    print("scheeeema", schema)
 
     # Remove annotator fields from the schema
-    del schema["properties"]["texta_annotator"]
-    #schema.get("properties", {}).pop("texta_annotator", None)
-    updated_schema = {"mappings": {"_doc": schema}}#{"mappings": schema} #{"mappings": {"_doc": schema}}#update_mapping(schema_input, new_index, add_facts_mapping=True, add_texta_meta_mapping=False)
-    print(updated_schema)
+    schema.get("properties").pop("texta_annotator", None)
+    updated_schema = {"mappings": {"_doc": schema}}
 
-    logging.getLogger(INFO_LOGGER).info(f"Creating new merged index {new_index}.")
-    # create new_index
+
+    logging.getLogger(INFO_LOGGER).info(f"Creating new index '{new_index}' with merged annotations.")
+
+    # Create the new_index
     create_index_res = ec.create_index(new_index, updated_schema)
-    print("create index res", create_index_res)
-
-    #ec.syncher()
-
-
-    from time import sleep
-    #sleep(5)
 
     # Add texta facts mapping in case the source index doesn't contain facts
     ec.add_texta_facts_mapping(new_index)
-    #project_obj.indices.add(index_model)
 
     index_model, is_created = Index.objects.get_or_create(name=new_index)
-    # TODO: ADD THIS!!!
-    #project_obj.indices.add(index_model)
 
-
-    #logging.getLogger(INFO_LOGGER).info("Indexing documents.")
-    # set new_index name as mapping name
-    #bulk_add_documents(elastic_search, elastic_doc, index=new_index, chunk_size=scroll_size, flatten_doc=False)
+    return index_model
 
 
 def _get_nested_aggregation_query(field: str, texta_facts_field: str):
@@ -464,34 +443,29 @@ def merge_annotator_indices_task(object_id: int, source_indices: List[str], targ
         print("SOURCE INDICES", source_indices)
         print("facts", facts)
 
-        create_new_index(base_indices[0], target_index)
+        # Create an empty index and add it to the project
+        # NB! Expects that all the parent indices have the same schema, which might
+        # not be true.
+        index_model = create_new_index(base_indices[0], target_index)
 
-        #ec = ElasticCore()
-        #[ec.add_texta_facts_mapping(index) for index in indices]
+        project_obj = Project.objects.get(id=annotator_object.project_id)
+        project_obj.indices.add(index_model)
+
 
         searcher = ElasticSearcher(
             indices=base_indices,
-            #field_data=fields + ["texta_facts"],  # Get facts to add upon existing ones.
-            #query=query,
             output=ElasticSearcher.OUT_RAW,
-            #timeout=f"{es_timeout}m",
-            #callback_progress=progress,
-            scroll_size=5#bulk_size
+            timeout=f"{es_timeout}m",
+            callback_progress=progress,
+            scroll_size=bulk_size
         )
 
         aggregator = ElasticAggregator(indices=source_indices)
         elastic_doc = ElasticDocument(target_index)
+
         actions = tag_docs_generator(searcher, aggregator, facts, target_index)
 
         elastic_doc.bulk_add_generator(actions=actions, chunk_size=bulk_size, refresh="wait_for")
-
-
-
-        #actions = update_generator(generator=searcher, ec=ec, fields=fields, fact_name=fact_name, fact_value=fact_value, tagger_object=tagger_object, tagger=tagger)
-        #for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes, max_retries=3):
-        #    if not success:
-        #        logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
-
 
 
         task_object.complete()
