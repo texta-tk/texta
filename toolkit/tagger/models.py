@@ -263,7 +263,7 @@ def auto_delete_file_on_delete(sender, instance: Tagger, **kwargs):
             os.remove(instance.model.path)
 
 
-class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
+class TaggerGroup(FavoriteModelMixin, CommonModelMixin, S3ModelMixin):
     MODEL_JSON_NAME = "model.json"
     MODEL_TYPE = "tagger_group"
 
@@ -314,7 +314,7 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
             return tmp.read()
 
     @staticmethod
-    def import_resources(zip_file, request, pk) -> int:
+    def import_resources(zip_file, user_pk: int, project_pk: int) -> int:
         with transaction.atomic():
             with zipfile.ZipFile(zip_file, 'r') as archive:
                 json_string = archive.read(Tagger.MODEL_JSON_NAME).decode()
@@ -324,8 +324,8 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
                 tg_data = {key: model_json[key] for key in model_json if key != 'taggers'}
                 tg_data.pop("favorited_users", None)
                 new_model = TaggerGroup(**tg_data)
-                new_model.author = User.objects.get(id=request.user.id)
-                new_model.project = Project.objects.get(id=pk)
+                new_model.author = User.objects.get(id=user_pk)
+                new_model.project = Project.objects.get(id=project_pk)
                 new_model.save()  # Save the intermediate results.
 
                 task_object = Task.objects.create(taggergroup=new_model, status=Task.STATUS_COMPLETED)
@@ -337,8 +337,8 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
                     tagger_model = Tagger(**tagger)
 
                     task_object = Task.objects.create(tagger=tagger_model, status=Task.STATUS_COMPLETED)
-                    tagger_model.author = User.objects.get(id=request.user.id)
-                    tagger_model.project = Project.objects.get(id=pk)
+                    tagger_model.author = User.objects.get(id=user_pk)
+                    tagger_model.project = Project.objects.get(id=project_pk)
                     tagger_model.save()
 
                     tagger_model.tasks.add(task_object)
@@ -366,6 +366,7 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
         del json_obj["project"]
         del json_obj["author"]
         del json_obj["tasks"]
+        json_obj.pop("indices", None)
         return json_obj
 
     def __str__(self):

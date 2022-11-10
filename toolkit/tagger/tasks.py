@@ -221,6 +221,7 @@ def train_tagger_task(tagger_id: int):
         task_object.handle_failed_task(e)
         raise e
 
+# S3 for Taggers
 
 @task(name="download_tagger_model", base=TransactionAwareTask, queue=settings.CELERY_LONG_TERM_TASK_QUEUE)
 def download_tagger_model(minio_path: str, user_pk: int, project_pk: int, version_id: str):
@@ -256,6 +257,43 @@ def upload_tagger_files(tagger_id: int, minio_path: str):
         data = tagger.export_resources()
         tagger.upload_into_s3(minio_path=minio_path, data=data)
         info_logger.info(f"[Tagger] Finished upload of tagger with ID {tagger_id} into S3!")
+        task_object.complete()
+
+    except MinioException as e:
+        task_object.handle_failed_task(f"Could not connect to S3, are you using the right credentials?")
+        raise e
+
+    except Exception as e:
+        task_object.handle_failed_task(e)
+        raise e
+
+### S3 for Tagger Groups
+
+@task(name="download_tagger_group_models", base=TransactionAwareTask, queue=settings.CELERY_LONG_TERM_TASK_QUEUE)
+def download_tagger_group_models(minio_path: str, user_pk: int, project_pk: int, version_id: str):
+    info_logger = logging.getLogger(settings.INFO_LOGGER)
+    info_logger.info(f"[Tagger Group] Starting to download model from Minio with path {minio_path}!")
+    tagger_pk = TaggerGroup.download_from_s3(minio_path, user_pk=user_pk, project_pk=project_pk, version_id=version_id)
+    info_logger.info(f"[Tagger Group] Finished to download model from Minio with path {minio_path}!")
+    return tagger_pk
+
+
+@task(name="upload_tagger_group_files", base=TransactionAwareTask, queue=settings.CELERY_LONG_TERM_TASK_QUEUE)
+def upload_tagger_group_files(tagger_id: int, minio_path: str):
+    tagger = TaggerGroup.objects.get(pk=tagger_id)
+    task_object: Task = tagger.tasks.last()
+    info_logger = logging.getLogger(settings.INFO_LOGGER)
+
+    task_object.update_status(Task.STATUS_RUNNING)
+    task_object.step = "uploading into S3"
+    task_object.save()
+
+    try:
+        info_logger.info(f"[Tagger Group] Starting to upload tagger with ID {tagger_id} into S3!")
+        minio_path = minio_path if minio_path else tagger.generate_s3_location()
+        data = tagger.export_resources()
+        tagger.upload_into_s3(minio_path=minio_path, data=data)
+        info_logger.info(f"[Tagger Group] Finished upload of tagger with ID {tagger_id} into S3!")
         task_object.complete()
 
     except MinioException as e:
