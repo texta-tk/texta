@@ -1,3 +1,14 @@
+## 3.7.8 (2022-11-10)
+
+### Features (1 change)
+
+- [feature: Added S3 support to taggers and bert taggers.](texta/texta-rest@6a49e91c157db61a3d5a4d5643db49b00e8f80f3) by @mkollo
+ ([merge request](texta/texta-rest!169))
+
+### Updates (1 change)
+
+- [update: Added S3 support for importing and exporting Tagger Groups from S3](texta/texta-rest@a7d1ab4724bb58cd01fb42f85604aa7f9ee13d19) by @mkollo
+
 ## 3.7.7 (2022-11-07)
 
 ### Features (1 change)
