@@ -341,12 +341,14 @@ def get_filter_query(doc_ids: List[str]):
     return query
 
 
-def get_pos_counts(aggs_res, min_annotations=1, pos_fact_value="true"):
+def get_pos_counts(aggs_res, min_annotations=3, pos_fact_value="true"):
     res = aggs_res["aggregations"]["aggs_term"]["buckets"]
     #print(res)
     pos_counts = {}
     for doc in res:
+        #print(doc)
         key = doc["key"]
+        pos_counts[key] = {}
         anno_count = doc["agg_fact"]["doc_count"]
         if anno_count < min_annotations:
             print(f"Doc {key} contains only {anno_count} annotations. Ignoring it!")
@@ -354,11 +356,15 @@ def get_pos_counts(aggs_res, min_annotations=1, pos_fact_value="true"):
             buckets = doc["agg_fact"]["agg_value"]["buckets"]
             pos_count = 0
             for bucket in buckets:
-                if bucket["key"] == pos_fact_value:
+                if pos_fact_value and bucket["key"] == pos_fact_value:
                     pos_count = bucket["doc_count"]
+                    pos_counts[key].update({pos_fact_value: pos_count})
                     break
-            pos_counts[key] = pos_count
+                else:
+                    pos_counts[key].update({bucket["key"]: bucket["doc_count"]})
     return pos_counts
+
+
 
 def collect_ids(scroll_batch):
     ids = []
@@ -368,7 +374,7 @@ def collect_ids(scroll_batch):
     return ids
 
 
-def generate_doc_facts(fact_restrictions, pos_count: int, add_negatives: bool = True):
+def generate_doc_facts(fact_restrictions, pos_count: int, pos_label: str, annotation_type: str,  add_negatives: bool = True):
     new_facts = []
     for fact_restriction in fact_restrictions:
         min_agreements = fact_restriction.get("min_agreements")
@@ -376,14 +382,14 @@ def generate_doc_facts(fact_restrictions, pos_count: int, add_negatives: bool = 
             # TODO: should use some elastic-tools stuff for that?
             new_fact = {
                 "fact": fact_restriction.get("fact_name"),
-                "str_val": "true",
+                "str_val": pos_label,
                 "doc_path": "",
                 "spans": json.dumps([[0,0]]),
                 "sent_index": 0,
                 "source": "annotator"
             }
             new_facts.append(new_fact)
-        elif add_negatives:
+        elif annotation_type == "binary" and add_negatives:
             new_fact = {
                 "fact": fact_restriction.get("fact_name"),
                 "str_val": "false",
@@ -395,19 +401,23 @@ def generate_doc_facts(fact_restrictions, pos_count: int, add_negatives: bool = 
             new_facts.append(new_fact)
     return new_facts
 
-def update_texta_facts(scroll_batch, fact_restrictions, pos_counts):
+def update_texta_facts(scroll_batch, fact_restrictions, pos_counts, annotation_type):
     for doc in scroll_batch:
         facts = doc["_source"].get("texta_facts", [])
         doc_id = doc["_source"]["texta_meta"]["document_uuid"]
-        pos_count = pos_counts[doc_id]
-        new_facts = generate_doc_facts(fact_restrictions, pos_count, add_negatives=False)
-        facts.extend(new_facts)
+        #pos_count = pos_counts[doc_id]
+        pos_count_list = pos_counts[doc_id].items()
+        for label, pos_count in pos_count_list:
+            new_facts = generate_doc_facts(fact_restrictions, pos_count, label, annotation_type, add_negatives=False)
+            facts.extend(new_facts)
+        #new_facts = generate_doc_facts(fact_restrictions, pos_count, add_negatives=False)
+        #facts.extend(new_facts)
         doc["_source"]["texta_facts"] = facts
     return scroll_batch
 
 
 
-def tag_docs_generator(elastic_searcher, elastic_aggregator, fact_restrictions, target_index):
+def tag_docs_generator(elastic_searcher, elastic_aggregator, fact_restrictions, target_index, annotation_type):
     aggs_query = _get_nested_aggregation_query("texta_meta.document_uuid.keyword", "str_val")
     for i, scroll_batch in enumerate(elastic_searcher):
         doc_ids = collect_ids(scroll_batch)
@@ -417,9 +427,14 @@ def tag_docs_generator(elastic_searcher, elastic_aggregator, fact_restrictions, 
         res = elastic_aggregator._aggregate(aggs_query)
         #print(res)
         # TODO: remove hardcoded values
-        pos_counts = get_pos_counts(res, min_annotations=3, pos_fact_value="true")
+        if annotation_type == "binary":
+            pos_counts = get_pos_counts(res, min_annotations=3, pos_fact_value="true")
+        else:
+            # TODO: the number of annotations should be determined in some other way!!!!
+            # (not by checking the existence of facts, cause multilabel doesn't have negative ones)
+            pos_counts = get_pos_counts(res, min_annotations=1)
 
-        scroll_batch = update_texta_facts(scroll_batch, fact_restrictions, pos_counts)
+        scroll_batch = update_texta_facts(scroll_batch, fact_restrictions, pos_counts, annotation_type)
         for doc in scroll_batch:
             yield {
                 "_index": target_index,
@@ -434,6 +449,8 @@ def merge_annotator_indices_task(object_id: int, source_indices: List[str], targ
     """Apply BERT Tagger to index."""
     try:
         annotator_object = Annotator.objects.get(pk=object_id)
+
+        annotation_type = annotator_object.annotation_type
         base_indices = [index.name for index in annotator_object.indices.all()]
 
 
@@ -463,7 +480,7 @@ def merge_annotator_indices_task(object_id: int, source_indices: List[str], targ
         aggregator = ElasticAggregator(indices=source_indices)
         elastic_doc = ElasticDocument(target_index)
 
-        actions = tag_docs_generator(searcher, aggregator, facts, target_index)
+        actions = tag_docs_generator(searcher, aggregator, facts, target_index, annotation_type)
 
         elastic_doc.bulk_add_generator(actions=actions, chunk_size=bulk_size, refresh="wait_for")
 

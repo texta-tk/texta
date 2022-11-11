@@ -50,6 +50,7 @@ class MergeIndicesSerializer(IndicesSerializerMixin, ElasticScrollMixIn):
                                       ],
                                       help_text='Name of the merged index.')
     add_negatives = serializers.BooleanField(required=False, default=True, help_text="If enabled, negative facts are added as well.")
+    ignore_unannotated = serializers.BooleanField(required=False, default=False, help_text="If enabled, the documents with missing annotations are disregarded.")
 
     def validate_new_index(self, value):
         """ Check that new_index does not exist """

@@ -111,6 +111,15 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         with transaction.atomic():
             annotator_obj: Annotator = self.get_object()
 
+            # TODO add types into an enum?
+            if annotator_obj.annotation_type == "entity":
+                return Response(
+                    {
+                        "detail": f"This method is not yet available for annotation type 'entity'."
+                    },
+                    status=status.HTTP_405_METHOD_NOT_ALLOWED
+                )
+
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
 
