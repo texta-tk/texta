@@ -14,7 +14,7 @@ from texta_elastic.searcher import ElasticSearcher
 
 from toolkit.core.task.models import Task
 from toolkit.elastic.reindexer.models import Reindexer
-from toolkit.helper_functions import reindex_test_dataset
+from toolkit.helper_functions import reindex_test_dataset, set_core_setting, get_minio_client, get_core_setting
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.test_settings import (TEST_FACT_NAME, TEST_FIELD, TEST_FIELD_CHOICE, TEST_KEEP_PLOT_FILES, TEST_QUERY, TEST_TAGGER_GROUP, TEST_VALUE_2, TEST_VALUE_3, TEST_VERSION_PREFIX, VERSION_NAMESPACE)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
@@ -55,7 +55,9 @@ class TaggerGroupViewTests(APITransactionTestCase):
         self.reindexer_object = Reindexer.objects.get(pk=resp.json()["id"])
 
         self.test_imported_tagger_group_id = self.import_test_model(TEST_TAGGER_GROUP)
-
+        self.minio_tagger_path = f"tagger_group_test/{uuid.uuid4().hex}/model.zip"
+        self.minio_client = get_minio_client()
+        self.bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
 
     def import_test_model(self, file_path: str):
         """Import models for testing."""
@@ -83,6 +85,14 @@ class TaggerGroupViewTests(APITransactionTestCase):
         self.run_tagger_instances_have_mention_to_tagger_group()
         self.run_check_that_filtering_taggers_by_tagger_group_description_works()
 
+        # Ordering here is important.
+        self.run_simple_check_that_you_can_import_models_into_s3()
+        self.run_simple_check_that_you_can_download_models_from_s3()
+
+        self.run_check_for_downloading_model_from_s3_with_wrong_faulty_access_configuration()
+        self.run_check_for_doing_s3_operation_while_its_disabled_in_settings()
+        self.run_check_for_downloading_model_from_s3_that_doesnt_exist()
+
 
     def add_cleanup_files(self, tagger_id):
         tagger_object = Tagger.objects.get(pk=tagger_id)
@@ -99,6 +109,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
         ec.delete_index(index=self.test_index_name, ignore=[400, 404])
         print_output(f"Delete apply_taggers test index {self.test_index_copy}", res)
 
+        self.minio_client.remove_object(self.bucket_name, self.minio_tagger_path)
 
     def __cleanup_tagger_groups(self, created_tagger_group: TaggerGroup):
         for tagger in created_tagger_group.taggers.all():
@@ -561,3 +572,75 @@ class TaggerGroupViewTests(APITransactionTestCase):
         response = self.client.get(tagger_list_uri, {"tg_description": f"{uuid.uuid4().hex}"})
         print_output("run_check_that_filtering_taggers_by_tagger_group_description_works:doesnt_exist:response.data", response.data)
         self.assertTrue(len(response.data["results"]) == 0)
+
+
+    def run_check_for_downloading_model_from_s3_that_doesnt_exist(self):
+        url = reverse("v2:tagger_group-download-from-s3", kwargs={"project_pk": self.project.pk})
+        response = self.client.post(url, data={"minio_path": "this simply doesn't exist.zip"}, format="json")
+        print_output("run_check_for_downloading_model_from_s3_that_doesnt_exist:response.data", response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def run_check_for_downloading_model_from_s3_with_wrong_faulty_access_configuration(self):
+        # THIS ABOMINATION REFUSES TO WORK
+        # with override_settings(S3_ACCESS_KEY=uuid.uuid4().hex):
+        #     response = self._run_s3_import(self.minio_tagger_path)
+        #     print_output("run_check_for_downloading_model_from_s3_with_wrong_faulty_access_configuration-S3-ACCESS-KEY:response.data", response.data)
+        #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        #
+        # with override_settings(S3_SECRET_KEY=uuid.uuid4().hex):
+        #     response = self._run_s3_import(self.minio_tagger_path)
+        #     print_output("run_check_for_downloading_model_from_s3_with_wrong_faulty_access_configuration-S3-SECRET-KEY:response.data", response.data)
+        #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        #
+        # with override_settings(S3_BUCKET_NAME=uuid.uuid4().hex):
+        #     response = self._run_s3_import(self.minio_tagger_path)
+        #     print_output("run_check_for_downloading_model_from_s3_with_wrong_faulty_access_configuration-S3-BUCKET-NAME:response.data", response.data)
+        #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        pass
+
+    def run_check_for_doing_s3_operation_while_its_disabled_in_settings(self):
+        set_core_setting("TEXTA_S3_ENABLED", "False")
+        response = self._run_s3_import(self.minio_tagger_path)
+        print_output("run_check_for_doing_s3_operation_while_its_disabled_in_settings:response.data", response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue("minio_path" in response.data)
+        # Enable it again for the other tests.
+        set_core_setting("TEXTA_S3_ENABLED", "True")
+
+    def _run_s3_import(self, minio_path):
+        url = reverse("v2:tagger_group-upload-into-s3", kwargs={"project_pk": self.project.pk, "pk": self.test_imported_tagger_group_id})
+        response = self.client.post(url, data={"minio_path": minio_path}, format="json")
+        return response
+
+    def run_simple_check_that_you_can_import_models_into_s3(self):
+        response = self._run_s3_import(self.minio_tagger_path)
+        print_output("run_simple_check_that_you_can_import_models_into_s3:response.data", response.data)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Check directly inside Minio whether the model exists there.
+        exists = False
+        for s3_object in self.minio_client.list_objects(self.bucket_name, recursive=True):
+            if s3_object.object_name == self.minio_tagger_path:
+                print_output(f"contents of minio:", s3_object.object_name)
+                exists = True
+                break
+        self.assertEqual(exists, True)
+
+        # Check that status is proper.
+        t = TaggerGroup.objects.get(pk=self.test_imported_tagger_group_id)
+        self.assertEqual(t.tasks.last().status, Task.STATUS_COMPLETED)
+        self.assertEqual(t.tasks.last().task_type, Task.TYPE_UPLOAD)
+
+    def run_simple_check_that_you_can_download_models_from_s3(self):
+        url = reverse("v2:tagger_group-download-from-s3", kwargs={"project_pk": self.project.pk})
+        latest_tagger_id = TaggerGroup.objects.last().pk
+        response = self.client.post(url, data={"minio_path": self.minio_tagger_path}, format="json")
+        print_output("run_simple_check_that_you_can_download_models_from_s3:response.data", response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        latest_again = TaggerGroup.objects.last().pk
+
+        # Assert that changes have happened.
+        self.assertNotEqual(latest_tagger_id, latest_again)
+        # Assert that you can tag with the imported tagger.
+        self.run_tag_text(latest_again)

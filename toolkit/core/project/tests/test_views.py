@@ -561,7 +561,7 @@ class ProjectViewTests(APITestCase):
         self.client.login(username="user", password="pw")
         url = reverse(f"{VERSION_NAMESPACE}:project-detail", kwargs={"pk": self.project.pk})
         response = self.client.delete(url)
-        print("test_that_normal_user_cant_delete_project:response.data", response.data)
+        print_output("test_that_normal_user_cant_delete_project:response.data", response.data)
         self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)
 
 

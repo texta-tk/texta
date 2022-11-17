@@ -4,6 +4,7 @@ import os
 import re
 
 import rest_framework.filters as drf_filters
+from django.conf import settings
 from django.db import transaction
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
@@ -19,12 +20,13 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, SerializerNotValid
 from toolkit.filter_constants import FavoriteFilter
+from toolkit.helper_functions import minio_connection
 from toolkit.permissions.project_permissions import ProjectAccessInApplicationsAllowed
-from toolkit.serializer_constants import EmptySerializer, ProjectResourceImportModelSerializer
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER
+from toolkit.serializer_constants import EmptySerializer, ProjectResourceImportModelSerializer, S3DownloadSerializer, S3UploadSerializer
 from toolkit.tagger.models import TaggerGroup
 from toolkit.tagger.serializers import (ApplyTaggerGroupSerializer, TagRandomDocSerializer, TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer)
-from toolkit.tagger.tasks import apply_tagger_group, apply_tagger_to_index, get_mlp, get_tag_candidates, start_tagger_group
+from toolkit.tagger.tasks import apply_tagger_group, apply_tagger_to_index, get_mlp, get_tag_candidates, start_tagger_group, download_into_tagger_group, upload_tagger_group_files, \
+    download_tagger_group_models
 from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import BulkDelete, FavoriteModelViewMixing, TagLogicViews
 
@@ -106,7 +108,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         )
 
         # Start the training process of the individual taggers that compose a Tagger Group.
-        start_tagger_group.apply_async(args=[tagger_group.pk, tags, validated_tagger_data, tag_queries], queue=CELERY_LONG_TERM_TASK_QUEUE)
+        start_tagger_group.apply_async(args=[tagger_group.pk, tags, validated_tagger_data, tag_queries], queue=settings.CELERY_LONG_TERM_TASK_QUEUE)
 
         # retrieve headers and create response
         headers = self.get_success_headers(serializer.data)
@@ -151,7 +153,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         serializer.is_valid(raise_exception=True)
 
         uploaded_file = serializer.validated_data['file']
-        tagger_id = TaggerGroup.import_resources(uploaded_file, request, project_pk)
+        tagger_id = TaggerGroup.import_resources(uploaded_file, request.user.pk, project_pk)
         return Response({"id": tagger_id, "message": "Successfully imported TaggerGroup models and associated files."}, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'], serializer_class=EmptySerializer)
@@ -164,12 +166,39 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
         return Response({'success': 'retraining tasks created', 'tagger_group_id': instance.id}, status=status.HTTP_200_OK)
 
+
+    @action(detail=True, methods=['post'], serializer_class=S3UploadSerializer)
+    @minio_connection
+    def upload_into_s3(self, request, pk=None, project_pk=None):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        minio_path = serializer.validated_data["minio_path"]
+        tagger = self.get_object()
+        task = Task.objects.create(taggergroup=tagger, status=Task.STATUS_QUEUED, task_type=Task.TYPE_UPLOAD)
+        tagger.tasks.add(task)
+        transaction.on_commit(lambda: upload_tagger_group_files.apply_async(args=(tagger.pk, minio_path), queue=settings.CELERY_LONG_TERM_TASK_QUEUE))
+        return Response({"message": "Started task for uploading models into S3!"})
+
+    @action(detail=False, methods=['post'], serializer_class=S3DownloadSerializer)
+    @minio_connection
+    def download_from_s3(self, request, pk=None, project_pk=None):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        minio_path = serializer.validated_data["minio_path"]
+        version_id = serializer.validated_data["version_id"]
+
+        transaction.on_commit(lambda: download_tagger_group_models.apply_async(args=(minio_path, request.user.pk, project_pk, version_id), queue=settings.CELERY_LONG_TERM_TASK_QUEUE))
+
+        return Response({"message": "Started task for downloading models from S3!"})
+
+
+
     @action(detail=True, methods=['post'], serializer_class=TaggerGroupTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging raw text with tagger group.
         """
-        logging.getLogger(INFO_LOGGER).info(f"[Tag Text] Starting tag_text...")
+        logging.getLogger(settings.INFO_LOGGER).info(f"[Tag Text] Starting tag_text...")
         data = request.data
         serializer = TaggerGroupTagTextSerializer(data=data)
         # check if valid request
@@ -204,7 +233,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         """
         API endpoint for tagging JSON documents with tagger group.
         """
-        logging.getLogger(INFO_LOGGER).info(f"[Tag Doc] Starting tag_doc...")
+        logging.getLogger(settings.INFO_LOGGER).info(f"[Tag Doc] Starting tag_doc...")
         data = request.data
         serializer = TaggerGroupTagDocumentSerializer(data=data)
         # check if valid request
@@ -247,12 +276,12 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         tags += apply_tagger_group(tagger_group_id, input_document, tag_candidates, request, input_type='doc', lemmatize=lemmatize, feedback=feedback)
         return Response(tags, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], serializer_class=EmptySerializer)
     def tag_random_doc(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging a random document.
         """
-        logging.getLogger(INFO_LOGGER).info(f"[Tag Random doc] Starting tag_random_doc...")
+        logging.getLogger(settings.INFO_LOGGER).info(f"[Tag Random doc] Starting tag_random_doc...")
         # get hybrid tagger object
         hybrid_tagger_object = self.get_object()
 
@@ -343,7 +372,21 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
             object_type = "tagger_group"
 
             args = (pk, indices, fields, fact_name, fact_value, query, bulk_size, max_chunk_bytes, es_timeout, object_type, object_args, max_tags)
-            transaction.on_commit(lambda: apply_tagger_to_index.apply_async(args=args, queue=CELERY_LONG_TERM_TASK_QUEUE))
+            transaction.on_commit(lambda: apply_tagger_to_index.apply_async(args=args, queue=settings.CELERY_LONG_TERM_TASK_QUEUE))
 
             message = "Started process of applying Tagger with id: {}".format(tagger_group_object.id)
             return Response({"message": message}, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], serializer_class=S3DownloadSerializer)
+    @minio_connection
+    def add_from_s3(self, request, pk=None, project_pk=None):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        item = self.get_object()
+        minio_path = serializer.validated_data["minio_path"]
+        version_id = serializer.validated_data["version_id"]
+
+        transaction.on_commit(lambda: download_into_tagger_group.apply_async(args=(item.pk, minio_path, version_id), queue=settings.CELERY_LONG_TERM_TASK_QUEUE))
+
+        message = "Started to download tagger and add it into the Tagger Group!"
+        return Response({"message": message}, status=status.HTTP_200_OK)

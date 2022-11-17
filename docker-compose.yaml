@@ -92,7 +92,20 @@ services:
   #           - capabilities:
   #             - gpu
 
+#  minio:
+#    image: minio/minio
+#    ports:
+#      - "9000:9000"
+#      - "9001:9001"
+#    volumes:
+#      - minio-data:/data
+#    environment:
+#      MINIO_ROOT_USER: admin
+#      MINIO_ROOT_PASSWORD: 12341234
+#    command: server --console-address ":9001" /data
+
 volumes:
   elastic-data:
   toolkit-data:
   mariadb-data:
+  minio-data:

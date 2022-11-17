@@ -10,6 +10,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from texta_elastic.core import ElasticCore
 
+from toolkit.elastic.decorators import elastic_connection
 from toolkit.elastic.exceptions import ElasticIndexAlreadyExists
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.index.serializers import (
@@ -26,7 +27,6 @@ class IndicesFilter(filters.FilterSet):
     name = filters.CharFilter('name', lookup_expr='icontains')
     is_open = filters.BooleanFilter("is_open")
 
-
     class Meta:
         model = Index
         fields = []
@@ -34,7 +34,6 @@ class IndicesFilter(filters.FilterSet):
 
 class ElasticGetIndices(views.APIView):
     permission_classes = (IsSuperUser,)
-
 
     def get(self, request):
         """
@@ -64,7 +63,6 @@ class IndexViewSet(mixins.CreateModelMixin,
         'is_open'
     )
 
-
     def _resolve_cluster_differences(self, mapping_dict: dict) -> Optional[dict]:
         # Trying to support ES6 and ES7 mapping structure.
         has_properties = True if "properties" in mapping_dict else False
@@ -75,7 +73,6 @@ class IndexViewSet(mixins.CreateModelMixin,
             for key in mapping_dict.keys():
                 if "properties" in mapping_dict[key]:
                     return mapping_dict[key]
-
 
     def _check_for_facts(self, index_mappings: dict, index_name: str):
         mapping_dict = index_mappings.get(index_name, {}).get("mappings", None)
@@ -97,7 +94,6 @@ class IndexViewSet(mixins.CreateModelMixin,
                 return False
         else:
             return False
-
 
     def list(self, request, *args, **kwargs):
         ec = ElasticCore()
@@ -128,7 +124,6 @@ class IndexViewSet(mixins.CreateModelMixin,
 
         return response
 
-
     def retrieve(self, request, *args, **kwargs):
         ec = ElasticCore()
         response = super(IndexViewSet, self).retrieve(*args, *kwargs)
@@ -142,7 +137,6 @@ class IndexViewSet(mixins.CreateModelMixin,
             response.data.update(size=0, doc_count=0, has_validated_facts=False)
 
         return response
-
 
     def create(self, request, **kwargs):
         data = IndexSerializer(data=request.data)
@@ -196,7 +190,6 @@ class IndexViewSet(mixins.CreateModelMixin,
 
             return Response({"message": f"Added index {index} into Elasticsearch!"}, status=status.HTTP_201_CREATED)
 
-
     def partial_update(self, request, pk=None, **kwargs):
         data = IndexUpdateSerializer(data=request.data, partial=True)
         data.is_valid(raise_exception=True)
@@ -219,7 +212,6 @@ class IndexViewSet(mixins.CreateModelMixin,
         index.save()
         return Response({"message": f"Updated index {index} into Elasticsearch!"}, status=status.HTTP_201_CREATED)
 
-
     def destroy(self, request, pk=None, **kwargs):
         with transaction.atomic():
             index_name = Index.objects.get(pk=pk).name
@@ -228,7 +220,6 @@ class IndexViewSet(mixins.CreateModelMixin,
 
             Index.objects.filter(pk=pk).delete()
             return Response({"message": f"Deleted index {index_name} from Elasticsearch!"})
-
 
     def _handle_bulk_deletion(self, index_names: List[str]):
         if index_names:
@@ -247,6 +238,26 @@ class IndexViewSet(mixins.CreateModelMixin,
             for index in failed_indices:
                 ec.delete_index(index)
 
+    @action(detail=False, methods=['post'], serializer_class=EmptySerializer)
+    @elastic_connection
+    def clear_read_only_blocks(self, request, project_pk=None):
+        """
+        Helper function for disabling read_only blocks from indices that are created
+        after the cluster reaches its disk-space flood warning threshold. Sets the value of
+        index.blocks.read_only_allow_delete in all indices (through a wildcard) to false.
+
+        WARNING! These flood thresholds and blocks are set by Elasticsearch for a good reason,
+        do not run this unless you have solved the problem and hand and want to unlock the indices.
+        """
+        ec = ElasticCore()
+        ec.es.indices.put_settings(index="*", body={
+            "index": {
+                "blocks": {
+                    "read_only_allow_delete": "false"
+                }
+            }
+        })
+        return Response({"message": "Set index.blocks.read_only_allow_delete to false!"})
 
     @action(detail=False, methods=['post'], serializer_class=IndexBulkDeleteSerializer)
     def bulk_delete(self, request, project_pk=None):
@@ -263,12 +274,10 @@ class IndexViewSet(mixins.CreateModelMixin,
         info = {"num_deleted": deleted[0], "deleted_types": deleted[1]}
         return Response(info, status=status.HTTP_200_OK)
 
-
     @action(detail=False, methods=['post'], serializer_class=EmptySerializer)
     def sync_indices(self, request, pk=None, project_pk=None):
         ElasticCore().syncher()
         return Response({"message": "Synched everything successfully!"}, status=status.HTTP_204_NO_CONTENT)
-
 
     @action(detail=True, methods=['patch'], serializer_class=EmptySerializer)
     def close_index(self, request, pk=None, project_pk=None):
@@ -278,7 +287,6 @@ class IndexViewSet(mixins.CreateModelMixin,
         index.is_open = False
         index.save()
         return Response({"message": f"Closed the index {index.name}"})
-
 
     @action(detail=True, methods=['patch'], serializer_class=EmptySerializer)
     def open_index(self, request, pk=None, project_pk=None):
@@ -290,7 +298,6 @@ class IndexViewSet(mixins.CreateModelMixin,
             index.save()
 
         return Response({"message": f"Opened the index {index.name}"})
-
 
     @action(detail=True, methods=['post'], serializer_class=EmptySerializer)
     def add_facts_mapping(self, request, pk=None, project_pk=None):

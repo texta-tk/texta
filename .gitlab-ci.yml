@@ -23,15 +23,22 @@ variables:
   TEXTA_LANGUAGE_CODES: et,en
   TEXTA_EXTERNAL_DATA_DIR: /cache
 
+  # S3 components
+  TEXTA_S3_ENABLED: "true"
+  TEXTA_S3_HOST: $S3_HOST_URI
+  TEXTA_S3_BUCKET_NAME: texta-models-test
+  TEXTA_S3_ACCESS_KEY: $S3_ACCESS_KEY
+  TEXTA_S3_SECRET_KEY: $S3_SECRET_KEY
+  TEXTA_S3_USE_SECURE: "true"
+
+
 services:
-  - name: redis:5
+  - name: redis:6
   - name: docker.texta.ee/texta/texta-uaa:latest
     alias: texta-uaa
   - name: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
     alias: texta-elastic
     command: [ "bin/elasticsearch", "-Ediscovery.type=single-node" ]
-
-
 
 stages:
   - test-back
@@ -45,6 +52,8 @@ TestBack:
   # Tests back-end locally
   before_script:
     - source activate texta-rest
+    # Cant use the manage.py command because the startup checks populate the stdout.
+    - python -c 'from cryptography.fernet import Fernet;print(Fernet.generate_key().decode("utf8").strip())' > secret.key
     - python import_test_data.py -es $TEXTA_ES_URL
     - python migrate.py
   stage: test-back
@@ -63,7 +72,7 @@ BuildTestImage:
   tags:
     - with-docker
   script:
-    - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD docker.texta.ee  
+    - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD docker.texta.ee
     - docker build --compress --force-rm --no-cache -t docker.texta.ee/texta/texta-rest/test:latest -f ./docker/Dockerfile .
     - docker push docker.texta.ee/texta/texta-rest/test:latest
     - docker system prune -a

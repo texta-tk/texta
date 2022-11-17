@@ -9,11 +9,13 @@ import zipfile
 from typing import Dict, List, Union
 
 from celery import chain, group
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import serializers
 from django.db import models, transaction
 from django.dispatch import receiver
 from django.http import HttpResponse
+from rest_framework.generics import get_object_or_404
 from texta_elastic.searcher import EMPTY_QUERY
 from texta_embedding.embedding import W2VEmbedding
 from texta_tagger.tagger import Tagger as TextTagger
@@ -26,14 +28,13 @@ from toolkit.elastic.choices import DEFAULT_SNOWBALL_LANGUAGE, get_snowball_choi
 from toolkit.elastic.index.models import Index
 from toolkit.elastic.tools.feedback import Feedback
 from toolkit.embedding.models import Embedding
-from toolkit.helper_functions import load_stop_words
-from toolkit.model_constants import CommonModelMixin, FavoriteModelMixin
-from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, RELATIVE_MODELS_PATH
+from toolkit.helper_functions import load_stop_words, get_core_setting, get_minio_client
+from toolkit.model_constants import CommonModelMixin, FavoriteModelMixin, S3ModelMixin
 from toolkit.tagger import choices
 from toolkit.tools.lemmatizer import CeleryLemmatizer, ElasticAnalyzer
 
 
-class Tagger(FavoriteModelMixin, CommonModelMixin):
+class Tagger(FavoriteModelMixin, CommonModelMixin, S3ModelMixin):
     MODEL_TYPE = 'tagger'
     MODEL_JSON_NAME = "model.json"
 
@@ -80,10 +81,12 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         """
         if indices:
             indices = self.indices.filter(name__in=indices, is_open=True)
-            if not indices:
-                indices = self.project.indices.all()
         else:
             indices = self.indices.all()
+
+        # Fall back to project indices when everything else fails.
+        if not indices:
+            indices = self.project.indices.all()
 
         indices = [index.name for index in indices]
         indices = list(set(indices))  # Leave only unique names just in case.
@@ -111,8 +114,8 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         Returns: Full and relative file paths, full for saving the model object and relative for actual DB storage.
         """
         model_file_name = f'{name}_{str(self.pk)}_{secrets.token_hex(10)}'
-        full_path = pathlib.Path(BASE_DIR) / RELATIVE_MODELS_PATH / "tagger" / model_file_name
-        relative_path = pathlib.Path(RELATIVE_MODELS_PATH) / "tagger" / model_file_name
+        full_path = pathlib.Path(settings.BASE_DIR) / settings.RELATIVE_MODELS_PATH / "tagger" / model_file_name
+        relative_path = pathlib.Path(settings.RELATIVE_MODELS_PATH) / "tagger" / model_file_name
         return str(full_path), str(relative_path)
 
     def to_json(self) -> dict:
@@ -121,6 +124,7 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         del json_obj["project"]
         del json_obj["author"]
         del json_obj["tasks"]
+        del json_obj["indices"]
         return json_obj
 
     def export_resources(self) -> HttpResponse:
@@ -139,26 +143,22 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
             return tmp.read()
 
     @staticmethod
-    def import_resources(zip_file, request, pk) -> int:
+    def import_resources(zip_file, user_pk: int, project_pk: int) -> int:
         with transaction.atomic():
             with zipfile.ZipFile(zip_file, 'r') as archive:
                 json_string = archive.read(Tagger.MODEL_JSON_NAME).decode()
                 model_json = json.loads(json_string)
-                indices = model_json.pop("indices")
+                model_json.pop("indices", None)
                 model_json.pop("favorited_users", None)
 
                 new_model = Tagger(**model_json)
 
                 task_object = Task.objects.create(tagger=new_model, status=Task.STATUS_COMPLETED)
-                new_model.author = User.objects.get(id=request.user.id)
-                new_model.project = Project.objects.get(id=pk)
+                new_model.author = User.objects.get(id=user_pk)
+                new_model.project = Project.objects.get(id=project_pk)
                 new_model.save()  # Save the intermediate results.
 
                 new_model.tasks.add(task_object)
-
-                for index in indices:
-                    index_model, is_created = Index.objects.get_or_create(name=index)
-                    new_model.indices.add(index_model)
 
                 full_tagger_path, relative_tagger_path = new_model.generate_name("tagger")
                 with open(full_tagger_path, "wb") as fp:
@@ -185,9 +185,9 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         task_object = Task.objects.create(tagger=self, task_type=Task.TYPE_TRAIN, status=Task.STATUS_CREATED)
         self.tasks.add(task_object)
         from toolkit.tagger.tasks import start_tagger_task, train_tagger_task, save_tagger_results
-        logging.getLogger(INFO_LOGGER).info(f"Celery: Starting task for training of tagger: {self.to_json()}")
+        logging.getLogger(settings.INFO_LOGGER).info(f"Celery: Starting task for training of tagger: {self.to_json()}")
         chain = start_tagger_task.s() | train_tagger_task.s() | save_tagger_results.s()
-        transaction.on_commit(lambda: chain.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE))
+        transaction.on_commit(lambda: chain.apply_async(args=(self.pk,), queue=settings.CELERY_LONG_TERM_TASK_QUEUE))
 
     def load_tagger(self, lemmatize: bool = False, use_logger: bool = True):
         """Loading tagger model from disc."""
@@ -237,7 +237,7 @@ class Tagger(FavoriteModelMixin, CommonModelMixin):
         }
         # add feedback if asked
         if feedback:
-            logging.getLogger(INFO_LOGGER).info(f"Adding feedback for Tagger id: {self.pk}")
+            logging.getLogger(settings.INFO_LOGGER).info(f"Adding feedback for Tagger id: {self.pk}")
             project_pk = self.project.pk
             feedback_object = Feedback(project_pk, model_object=self)
             processed_text = tagger.text_processor.process(content)
@@ -263,7 +263,7 @@ def auto_delete_file_on_delete(sender, instance: Tagger, **kwargs):
             os.remove(instance.model.path)
 
 
-class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
+class TaggerGroup(FavoriteModelMixin, CommonModelMixin, S3ModelMixin):
     MODEL_JSON_NAME = "model.json"
     MODEL_TYPE = "tagger_group"
 
@@ -291,7 +291,7 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
         task = chain(group(tasks), end_tagger_group.s(tagger_group_id=self.pk))
 
         # Put it into a transaction to ensure the task objects are created and accessible.
-        transaction.on_commit(lambda: task.apply_async(queue=CELERY_LONG_TERM_TASK_QUEUE))
+        transaction.on_commit(lambda: task.apply_async(queue=settings.CELERY_LONG_TERM_TASK_QUEUE))
 
     def retrain(self):
         tagger_ids = [tagger.pk for tagger in self.taggers.all()]
@@ -314,7 +314,7 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
             return tmp.read()
 
     @staticmethod
-    def import_resources(zip_file, request, pk) -> int:
+    def import_resources(zip_file, user_pk: int, project_pk: int) -> int:
         with transaction.atomic():
             with zipfile.ZipFile(zip_file, 'r') as archive:
                 json_string = archive.read(Tagger.MODEL_JSON_NAME).decode()
@@ -324,29 +324,24 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
                 tg_data = {key: model_json[key] for key in model_json if key != 'taggers'}
                 tg_data.pop("favorited_users", None)
                 new_model = TaggerGroup(**tg_data)
-                new_model.author = User.objects.get(id=request.user.id)
-                new_model.project = Project.objects.get(id=pk)
+                new_model.author = User.objects.get(id=user_pk)
+                new_model.project = Project.objects.get(id=project_pk)
                 new_model.save()  # Save the intermediate results.
 
                 task_object = Task.objects.create(taggergroup=new_model, status=Task.STATUS_COMPLETED)
                 new_model.tasks.add(task_object)
 
                 for tagger in model_json["taggers"]:
-                    indices = tagger.pop("indices")
                     tagger.pop("favorited_users", None)
-
+                    tagger.pop("indices", None)
                     tagger_model = Tagger(**tagger)
 
                     task_object = Task.objects.create(tagger=tagger_model, status=Task.STATUS_COMPLETED)
-                    tagger_model.author = User.objects.get(id=request.user.id)
-                    tagger_model.project = Project.objects.get(id=pk)
+                    tagger_model.author = User.objects.get(id=user_pk)
+                    tagger_model.project = Project.objects.get(id=project_pk)
                     tagger_model.save()
 
                     tagger_model.tasks.add(task_object)
-
-                    for index_name in indices:
-                        index, is_created = Index.objects.get_or_create(name=index_name)
-                        tagger_model.indices.add(index)
 
                     full_tagger_path, relative_tagger_path = tagger_model.generate_name("tagger")
                     with open(full_tagger_path, "wb") as fp:
@@ -371,10 +366,25 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
         del json_obj["project"]
         del json_obj["author"]
         del json_obj["tasks"]
+        json_obj.pop("indices", None)
         return json_obj
 
     def __str__(self):
         return self.fact_name
+
+    def add_from_s3(self, minio_location: str, user_pk: int, version_id: str = "") -> int:
+        client = get_minio_client()
+        kwargs = {"version_id": version_id} if version_id else {}
+        bucket_name = get_core_setting("TEXTA_S3_BUCKET_NAME")
+        response = client.get_object(bucket_name, minio_location, **kwargs)
+        data = io.BytesIO(response.data)
+        tagger_pk = Tagger.import_resources(data, user_pk, self.project.pk)
+        response.close()
+
+        tagger = get_object_or_404(Tagger.objects.all(), pk=tagger_pk)
+        self.taggers.add(tagger)
+
+        return tagger_pk
 
     def get_resource_paths(self):
         container = []
@@ -392,7 +402,7 @@ class TaggerGroup(FavoriteModelMixin, CommonModelMixin):
         tg_indices_in_project = list(set(tg_indices).intersection(set(project_indices)))
         # If no indices used for training are present in the current project, return all project indices
         if not tg_indices_in_project:
-            logging.getLogger(INFO_LOGGER).info(
+            logging.getLogger(settings.INFO_LOGGER).info(
                 f"[Tagger Group] Indices used for training ({tg_indices}) are not present in the current project. Using all the indices present in the project ({project_indices}).")
             return project_indices
         return tg_indices_in_project

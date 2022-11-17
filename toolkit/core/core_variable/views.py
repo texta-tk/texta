@@ -12,6 +12,5 @@ class CoreVariableViewSet(viewsets.ModelViewSet):
         IsSuperUser,
     )
 
-
     def get_queryset(self):
         return CoreVariable.objects.all()

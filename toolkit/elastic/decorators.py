@@ -1,10 +1,12 @@
 import logging
+from functools import wraps
 
 import elasticsearch
 from rest_framework.exceptions import APIException
 from texta_elastic.exceptions import ElasticsearchError, NotFoundError
 
-from toolkit.elastic.exceptions import ElasticAuthenticationException, ElasticAuthorizationException, ElasticIndexNotFoundException, ElasticTimeoutException, ElasticTransportException
+from toolkit.elastic.exceptions import ElasticAuthenticationException, ElasticAuthorizationException, ElasticIndexNotFoundException, ElasticTimeoutException, \
+    ElasticTransportException
 from toolkit.settings import ERROR_LOGGER
 
 
@@ -15,7 +17,7 @@ def elastic_connection(func):
     instead of the typical HTTP 500 one.
     """
 
-
+    @wraps(func)  # wraps is needed to use this decorator along with the extra action decorator
     def func_wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
@@ -44,7 +46,6 @@ def elastic_connection(func):
         except NotFoundError as e:
             raise APIException("Could not access requested resource.")
 
-
     return func_wrapper
 
 
@@ -54,7 +55,6 @@ def elastic_view(func):
     functional anymore, this is for putting into views that use Elasticsearch functionality
     to throw APIExceptions on Elasticsearch related errors.
     """
-
 
     def func_wrapper(*args, **kwargs):
         try:
@@ -67,6 +67,5 @@ def elastic_view(func):
         except NotFoundError as e:
             logging.getLogger(ERROR_LOGGER).exception(e)
             raise APIException("Could not connect to Elasticsearch, do you have the right URL set?")
-
 
     return func_wrapper
