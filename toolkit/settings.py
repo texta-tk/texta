@@ -44,7 +44,7 @@ CELERY_LONG_TERM_GPU_TASK_QUEUE = "long_term_gpu_tasks"
 # from toolkit.helper_functions import get_core_setting
 # ES_URL = get_core_setting("ES_URL")
 CORE_SETTINGS = {
-    "TEXTA_ES_URL": env("TEXTA_ES_URL", default="http://elastic-dev.texta.ee:9200"),
+    "TEXTA_ES_URL": env("TEXTA_ES_URL", default="http://localhost:9200"),
     "TEXTA_ES_PREFIX": env("TEXTA_ES_PREFIX", default=""),
     "TEXTA_ES_USERNAME": env("TEXTA_ES_USER", default=""),
     "TEXTA_ES_PASSWORD": env("TEXTA_ES_PASSWORD", default=""),

@@ -7,6 +7,7 @@ from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from toolkit.core.task.models import Task
+from toolkit.annotator.choices import AnnotationType
 from toolkit.annotator.models import Annotator, AnnotatorGroup, Comment, Labelset, Record
 from toolkit.annotator.serializers import AnnotatorProjectSerializer, AnnotatorGroupSerializer, AnnotatorSerializer, BinaryAnnotationSerializer, CommentSerializer, DocumentEditSerializer, DocumentIDSerializer, EntityAnnotationSerializer, LabelsetSerializer, MultilabelAnnotationSerializer, RecordSerializer, \
     ValidateDocumentSerializer, MergeIndicesSerializer
@@ -111,11 +112,10 @@ class AnnotatorViewset(mixins.CreateModelMixin,
         with transaction.atomic():
             annotator_obj: Annotator = self.get_object()
 
-            # TODO add types into an enum?
-            if annotator_obj.annotation_type == "entity":
+            if annotator_obj.annotation_type == AnnotationType.ENTITY.value:
                 return Response(
                     {
-                        "detail": f"This method is not yet available for annotation type 'entity'."
+                        "detail": f"This method is not yet available for annotation type '{AnnotationType.ENTITY.value}'."
                     },
                     status=status.HTTP_405_METHOD_NOT_ALLOWED
                 )
@@ -126,14 +126,14 @@ class AnnotatorViewset(mixins.CreateModelMixin,
             facts = serializer.validated_data["target_facts"]
             indices = serializer.validated_data["indices"]
             target_index = serializer.validated_data["new_index"]
+            add_negatives = serializer.validated_data["add_negatives"]
+            ignore_unannotated = serializer.validated_data["ignore_unannotated"]
 
             bulk_size = serializer.validated_data["bulk_size"]
             max_chunk_bytes = serializer.validated_data["max_chunk_bytes"]
             es_timeout = serializer.validated_data["es_timeout"]
 
             indices_to_merge = [index.get("name") for index in indices]
-
-
 
             try:
                 # If the selected annotator task is a parent
@@ -155,14 +155,26 @@ class AnnotatorViewset(mixins.CreateModelMixin,
                     status=status.HTTP_405_METHOD_NOT_ALLOWED
                 )
 
-            new_task = Task.objects.create(annotator=annotator_obj, status=Task.STATUS_CREATED, task_type=Task.TYPE_MERGE)
+            new_task = Task.objects.create(
+                annotator=annotator_obj,
+                status=Task.STATUS_CREATED,
+                task_type=Task.TYPE_MERGE
+            )
             annotator_obj.save()
-
             annotator_obj.tasks.add(new_task)
 
-            args = (annotator_obj.pk, indices_to_merge, target_index, facts, bulk_size, max_chunk_bytes, es_timeout)
+            args = (
+                annotator_obj.pk,
+                indices_to_merge,
+                target_index,
+                facts,
+                ignore_unannotated,
+                add_negatives,
+                bulk_size,
+                max_chunk_bytes,
+                es_timeout
+            )
             transaction.on_commit(lambda: merge_annotator_indices_task.apply_async(args=args, queue=CELERY_LONG_TERM_TASK_QUEUE))
-
 
             return Response("tere")
 

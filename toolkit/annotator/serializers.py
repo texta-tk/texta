@@ -8,7 +8,7 @@ from texta_elastic.aggregator import ElasticAggregator
 from texta_elastic.searcher import ElasticSearcher
 from texta_elastic.core import ElasticCore
 
-from toolkit.annotator.choices import MAX_VALUE
+from toolkit.annotator.choices import MAX_VALUE, AnnotationType
 from toolkit.annotator.models import (Annotator, AnnotatorGroup, BinaryAnnotatorConfiguration,
     Category, Comment, EntityAnnotatorConfiguration, Label, Labelset,
     MultilabelAnnotatorConfiguration, Record
@@ -27,9 +27,9 @@ from toolkit.elastic.validators import (
 )
 
 ANNOTATION_MAPPING = {
-    "entity": EntityAnnotatorConfiguration,
-    "multilabel": MultilabelAnnotatorConfiguration,
-    "binary": BinaryAnnotatorConfiguration
+    AnnotationType.ENTITY.value: EntityAnnotatorConfiguration,
+    AnnotationType.MULTILABEL.value: MultilabelAnnotatorConfiguration,
+    AnnotationType.BINARY.value: BinaryAnnotatorConfiguration
 }
 
 class MergedFactSerializer(serializers.Serializer):
@@ -48,20 +48,22 @@ class MergeIndicesSerializer(IndicesSerializerMixin, ElasticScrollMixIn):
                                           check_for_banned_beginning_chars,
                                           check_for_upper_case
                                       ],
-                                      help_text='Name of the merged index.')
-    add_negatives = serializers.BooleanField(required=False, default=True, help_text="If enabled, negative facts are added as well.")
+                                      help_text="Name of the merged index.")
+    add_negatives = serializers.BooleanField(required=False, default=True, help_text="If enabled, negative facts are added as well. NB! Only has effect for binary tasks.")
     ignore_unannotated = serializers.BooleanField(required=False, default=False, help_text="If enabled, the documents with missing annotations are disregarded.")
 
     def validate_new_index(self, value):
-        """ Check that new_index does not exist """
+        """ Check that new_index does not exist.
+        """
         open_indices, closed_indices = ElasticCore().get_indices()
         existing_indices = open_indices + closed_indices
         if value in existing_indices:
             raise serializers.ValidationError(f"Index '{value}' already exists. Please choose a different name for the new index.")
         return value
 
-
     def validate_indices(self, indices):
+        """ Check that the indices selected for merging are related to existing child tasks.
+        """
 
         index_names = [index.get("name") for index in indices]
 

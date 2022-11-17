@@ -11,6 +11,7 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.index.models import Index
 from toolkit.model_constants import TaskModel
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, DESCRIPTION_CHAR_LIMIT
+from toolkit.annotator.choices import ANNOTATION_CHOICES
 
 
 # Create your models here.
@@ -19,11 +20,7 @@ from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, DESCRIPTION_CHAR_LIMIT
 # Although ES fields and others don't follow this convention, it's best to keep them short for now.
 SIZE_LIMIT = 255
 
-ANNOTATION_CHOICES = (
-    ("binary", "binary"),
-    ("multilabel", "multilabel"),
-    ("entity", "entity")
-)
+
 
 
 class Category(models.Model):
